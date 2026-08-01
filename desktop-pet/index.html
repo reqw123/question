@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Live2D 桌面掛件</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+  }
+  #hint {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 20000;
+    pointer-events: none;
+    color: #fff;
+    font: 12px/1.5 monospace;
+    background: rgba(0,0,0,.4);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+<div id="hint">F8 還原預設位置/縮放　F9 切換互動／拖曳角色　F10 結束　（快捷鍵沒反應請用系統匣圖示右鍵選單）</div>
+
+<script>
+  // 桌寵唯一的聲音來源是 L2D 閒話家常的隨機音效（chatSounds），跟 multi/SoundSystem.js
+  // 一樣攔截 Audio 建構子做靜音控制，但不引入 SoundSystem.js 本身（那個是給遊戲 SFX/BGM
+  // 用的，桌寵不需要，也不想預先載入 sound/track1~7.mp3 這些用不到的檔案）。
+  var soundEnabled = false;  // 預設靜音
+  // 記錄所有建立過的音訊元素，讓靜音按鈕能立刻停掉當下正在播的聲音
+  // （不只是影響之後新建立的），跟 multi/SoundSystem.js 同樣手法
+  var _allAudio = new Set();
+  (function () {
+    const _Orig = window.Audio;
+    window.Audio = function (...args) {
+      const a = new _Orig(...args);
+      a.muted = !soundEnabled;
+      _allAudio.add(a);
+      a.addEventListener('ended', () => _allAudio.delete(a));
+      return a;
+    };
+    window.Audio.prototype = _Orig.prototype;
+  })();
+</script>
+
+<!-- 沿用專案既有函式庫（唯讀引用，未修改任何檔案）-->
+<script src="../lib/live2d.min.js"></script>
+<script src="../lib/live2dcubismcore.min.js"></script>
+<script src="../lib/pixi.min.js"></script>
+<script src="../lib/all.min.js"></script>
+<script src="../lib/live2d.js"></script>
+<script>
+  // 套用桌寵自己選好的 live2d_my_like 角色（只影響這個視窗；用獨立的 _d_ 命名空間
+  // 跟 host.html／player.html 的存檔區隔，三邊各自選各自的，不會互相覆蓋）
+  (function () {
+    const _dC1Pick = localStorage.getItem('l2d_mylike_d_char1');
+    const _dC2Pick = localStorage.getItem('l2d_mylike_d_char2');
+    if (_dC1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _dC1Pick;
+    if (_dC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _dC2Pick;
+  })();
+
+  // 跟網頁模式（multi/host.html、multi/player.html）用同一套「閒置動作＋表情」機制
+  // （lib/live2d.js 的 startIdleMotion／startIdleChat）與同一個間隔值，取代桌寵原本
+  // 自己那份 MOTION_SEQUENCE 依序循環（兩套機制都用 FORCE 優先度切動作，同時開會互相
+  // 打斷，所以只留一套；改用跟網頁模式一致的機制，職責分工也跟著一致：startIdleMotion
+  // 專管動作/表情，startIdleChat 專管講話泡泡+音效）。
+  // 桌寵這裡刻意跟 multi/multiplay.js 的 MP_CFG.IDLE_MOTION_MS（6000）不一樣，改成 15000：
+  // playRandom1() 現在角色一是依序輪流播放兩顆動作（idle → skill2 → idle...），
+  // 而 076 納茲的 skill_02 動作長達 12 秒，如果沿用 6 秒的 tick，播到一半就會被
+  // 下一輪 FORCE 優先度打斷，看不到完整的爆發跟淡出。拉長到 15 秒，確保 12 秒的
+  // 技能動作有機會完整播完，之後還留 3 秒緩衝才輪到下一次觸發。
+  const IDLE_MOTION_MS = 15000;
+
+  // 網頁模式是每題「開始作答／結果揭曉」時才開關這個循環（事件觸發），桌寵沒有這種
+  // 遊戲階段可以掛，這裡忽略事件觸發的部分，載入完就常駐開著，維持桌寵原本
+  // 「一開就持續動」的行為。
+  L2D.init().then(() => {
+    L2D.startIdleChat(IDLE_MOTION_MS);
+    L2D.startIdleMotion(IDLE_MOTION_MS);
+  });
+
+  // 聲音開關按鈕：跟 L2D 左下角 ⠿ 拖曳按鈕同一套視覺風格，bottom:114px 對齊
+  // multi/README.md 記載的既有版位慣例（⠿ 8px / 61px、🔇 114px）
+  (function () {
+    const btn = document.createElement('button');
+    btn.title = '開關聲音';
+    btn.textContent = soundEnabled ? '🔊' : '🔇';
+    btn.style.cssText =
+      'position:fixed;left:6px;bottom:114px;z-index:10000;width:45px;height:45px;' +
+      'border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
+      'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
+    btn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      btn.textContent = soundEnabled ? '🔊' : '🔇';
+      const mute = !soundEnabled;
+      _allAudio.forEach(a => {
+        if (a.ended) { _allAudio.delete(a); return; }
+        a.muted = mute;
+        if (mute) a.pause();
+      });
+    });
+    document.body.appendChild(btn);
+  })();
+</script>
+</body>
+</html>

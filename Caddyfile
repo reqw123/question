@@ -1,0 +1,9 @@
+:8080 {
+    root * .
+    file_server
+    reverse_proxy /mqtt localhost:9001 {
+        transport http {
+            versions 1.1
+        }
+    }
+}

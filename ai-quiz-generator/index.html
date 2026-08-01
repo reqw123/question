@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 題庫生成器</title>
+  <link rel="stylesheet" href="../style.css">
+  <!-- File parsing libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- JSON Schema validation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/6.12.6/ajv.min.js"></script>
+
+  <style>
+    /* ── Override base layout for scrollable page ── */
+    html, body { overflow: auto !important; height: auto !important; min-height: 100vh; }
+    body { display: block !important; padding: 0 0 60px; }
+
+    /* ── Top navigation ── */
+    .ai-topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 24px;
+      background: rgba(3,13,26,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .ai-topbar .logo { font-size: 1.5em; }
+    .ai-topbar h1 {
+      font-size: 1.1em; font-weight: 800; letter-spacing: 1px;
+      background: linear-gradient(130deg, var(--cyan), #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .ai-topbar .spacer { flex: 1; }
+    .ai-topbar .btn-back {
+      padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: .82em;
+      border: 1px solid var(--border); color: var(--text2);
+      background: rgba(255,255,255,.04); text-decoration: none;
+      transition: border-color .2s, color .2s;
+    }
+    .ai-topbar .btn-back:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    /* ── Page container ── */
+    .ai-page { max-width: 820px; margin: 0 auto; padding: 28px 20px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Section card ── */
+    .ai-card {
+      background: rgba(8,22,46,0.88); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px 28px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 20px rgba(0,212,255,0.08);
+    }
+    .ai-section-title {
+      font-size: .65em; color: var(--cyan); letter-spacing: 3px;
+      text-transform: uppercase; margin-bottom: 16px;
+      padding-bottom: 8px; border-bottom: 1px solid rgba(0,212,255,.18);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ai-section-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(0,212,255,.15); border: 1px solid rgba(0,212,255,.35);
+      font-size: .9em; display: flex; align-items: center; justify-content: center;
+      color: var(--cyan); font-weight: 700; flex-shrink: 0;
+    }
+
+    /* ── Form elements ── */
+    .ai-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .ai-label { font-size: .8em; color: var(--text2); width: 110px; flex-shrink: 0; }
+    .ai-input {
+      flex: 1; padding: 9px 13px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      border-radius: 9px; color: var(--text); font-size: .9em; outline: none;
+      transition: border-color .2s;
+    }
+    .ai-input:focus { border-color: var(--cyan); }
+    .ai-input::placeholder { color: var(--text2); }
+    .ai-select {
+      flex: 1; padding: 9px 13px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      border-radius: 9px; color: var(--text); font-size: .9em; outline: none;
+      cursor: pointer; transition: border-color .2s;
+      appearance: none; -webkit-appearance: none;
+    }
+    .ai-select:focus { border-color: var(--cyan); }
+    .ai-select option { background: #071428; color: var(--text); }
+    .ai-textarea {
+      width: 100%; box-sizing: border-box; padding: 11px 13px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      border-radius: 9px; color: var(--text); font-size: .88em; outline: none;
+      resize: vertical; min-height: 120px; font-family: inherit;
+      transition: border-color .2s; line-height: 1.55;
+    }
+    .ai-textarea:focus { border-color: var(--cyan); }
+    .ai-textarea::placeholder { color: var(--text2); }
+
+    /* ── API key row with toggle ── */
+    .key-wrap { position: relative; flex: 1; }
+    .key-wrap .ai-input { width: 100%; box-sizing: border-box; padding-right: 44px; }
+    .key-toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--text2);
+      font-size: .9em; padding: 4px; line-height: 1;
+      transition: color .2s;
+    }
+    .key-toggle:hover { color: var(--cyan); }
+
+    /* ── Drag-drop zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 32px 20px; text-align: center; cursor: pointer;
+      transition: all .25s; background: rgba(255,255,255,.02);
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--cyan); background: rgba(0,212,255,.05);
+    }
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-zone .dz-icon { font-size: 2.2em; margin-bottom: 10px; }
+    .drop-zone .dz-text { font-size: .88em; color: var(--text2); line-height: 1.5; }
+    .drop-zone .dz-hint { font-size: .72em; color: rgba(106,154,184,.7); margin-top: 4px; }
+
+    .file-info {
+      display: none; margin-top: 14px; padding: 12px 14px;
+      background: rgba(0,255,136,.06); border: 1px solid rgba(0,255,136,.25);
+      border-radius: 9px; font-size: .82em;
+    }
+    .file-info.show { display: flex; align-items: center; gap: 10px; }
+    .fi-name { flex: 1; color: var(--green); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fi-chars { color: var(--text2); font-size: .9em; flex-shrink: 0; }
+    .fi-clear {
+      width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
+      background: rgba(255,51,85,.12); border: 1px solid rgba(255,51,85,.3);
+      color: var(--red); cursor: pointer; font-size: .8em;
+      display: flex; align-items: center; justify-content: center; transition: all .18s;
+    }
+    .fi-clear:hover { background: rgba(255,51,85,.28); }
+
+    .text-preview { display: none; margin-top: 12px; }
+    .text-preview.show { display: block; }
+    .text-preview summary {
+      font-size: .75em; color: var(--text2); cursor: pointer; letter-spacing: 1px;
+      user-select: none; padding: 4px 0;
+    }
+    .text-preview-box {
+      margin-top: 8px; padding: 10px 13px;
+      background: rgba(0,0,0,.35); border: 1px solid var(--border);
+      border-radius: 8px; font-size: .75em; color: var(--text2);
+      max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+      line-height: 1.5;
+    }
+
+    /* ── Prompt character count ── */
+    .prompt-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .prompt-hint { font-size: .72em; color: var(--text2); }
+    .char-count   { font-size: .72em; color: var(--text2); }
+    .char-count.warn { color: var(--yellow); }
+
+    /* ── Buttons ── */
+    .btn-generate {
+      width: 100%; padding: 14px; border-radius: 12px; cursor: pointer;
+      font-size: 1em; font-weight: 700; letter-spacing: 1px;
+      background: linear-gradient(135deg, rgba(0,212,255,.18), rgba(121,40,202,.18));
+      border: 1px solid rgba(0,212,255,.45); color: var(--cyan);
+      transition: all .25s; position: relative; overflow: hidden;
+    }
+    .btn-generate:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(0,212,255,.32), rgba(121,40,202,.32));
+      box-shadow: 0 0 30px rgba(0,212,255,.25);
+    }
+    .btn-generate:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-generate.loading { cursor: wait; }
+
+    /* ── Progress bar ── */
+    .progress-wrap { margin-top: 14px; display: none; }
+    .progress-wrap.show { display: block; }
+    .progress-bar-track { height: 4px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, var(--cyan), #a78bfa);
+      border-radius: 2px; transition: width .4s ease;
+      animation: shimmer 1.5s infinite;
+      background-size: 200% 100%;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .progress-label { font-size: .78em; color: var(--text2); margin-top: 6px; text-align: center; }
+
+    /* ── Status / error box ── */
+    .status-box {
+      margin-top: 14px; padding: 11px 14px; border-radius: 9px;
+      font-size: .82em; display: none; line-height: 1.6; white-space: pre-wrap;
+    }
+    .status-box.show { display: block; }
+    .status-box.error   { background: rgba(255,51,85,.08);  border: 1px solid rgba(255,51,85,.3);  color: var(--red); }
+    .status-box.success { background: rgba(0,255,136,.07);  border: 1px solid rgba(0,255,136,.28); color: var(--green); }
+    .status-box.info    { background: rgba(0,212,255,.07);  border: 1px solid rgba(0,212,255,.25); color: var(--cyan); }
+
+    /* ── Preview section ── */
+    .preview-section { display: none; }
+    .preview-section.show { display: block; }
+    .preview-stats { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .p-stat {
+      padding: 8px 16px; border-radius: 8px;
+      background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.2);
+      font-size: .8em;
+    }
+    .p-stat strong { color: var(--cyan); font-size: 1.3em; margin-right: 4px; }
+
+    .q-preview-list { display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; }
+    .q-preview-item {
+      padding: 14px 16px; border-radius: 10px;
+      background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.07);
+      transition: border-color .2s;
+    }
+    .q-preview-item:hover { border-color: rgba(0,212,255,.25); }
+    .qp-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .qp-num { font-size: .72em; color: var(--cyan); font-weight: 700; flex-shrink: 0; letter-spacing: 1px; }
+    .qp-domain {
+      font-size: .65em; color: var(--text2);
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 4px; padding: 1px 7px; flex-shrink: 0;
+    }
+    .qp-question { flex: 1; font-size: .88em; font-weight: 600; line-height: 1.4; color: var(--text); }
+    .qp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+    .qp-opt {
+      display: flex; align-items: baseline; gap: 6px;
+      font-size: .78em; color: var(--text2); padding: 4px 8px;
+      border-radius: 6px; transition: background .15s;
+    }
+    .qp-opt.correct { color: var(--green); background: rgba(0,255,136,.07); border: 1px solid rgba(0,255,136,.2); }
+    .qp-opt-letter { font-weight: 700; flex-shrink: 0; }
+    .qp-expl {
+      margin-top: 8px; font-size: .75em; color: var(--text2);
+      padding: 6px 10px; background: rgba(0,0,0,.2); border-radius: 6px;
+      border-left: 2px solid rgba(0,212,255,.3); line-height: 1.5;
+    }
+
+    /* ── Export buttons ── */
+    .export-section { display: none; }
+    .export-section.show { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+    .btn-export {
+      flex: 1; min-width: 180px; padding: 12px 20px; border-radius: 10px;
+      cursor: pointer; font-size: .9em; font-weight: 700;
+      text-align: center; border: 1px solid; transition: all .2s;
+    }
+    .btn-export.json {
+      background: rgba(255,204,0,.1); border-color: rgba(255,204,0,.4); color: var(--yellow);
+    }
+    .btn-export.json:hover { background: rgba(255,204,0,.22); box-shadow: 0 0 16px rgba(255,204,0,.2); }
+    .btn-export.import {
+      background: rgba(0,255,136,.1); border-color: rgba(0,255,136,.4); color: var(--green);
+    }
+    .btn-export.import:hover { background: rgba(0,255,136,.22); box-shadow: 0 0 16px rgba(0,255,136,.2); }
+    .import-hint {
+      width: 100%; font-size: .72em; color: var(--text2);
+      padding: 8px 12px; border-radius: 7px;
+      background: rgba(0,212,255,.05); border: 1px solid rgba(0,212,255,.12);
+      line-height: 1.5;
+    }
+    .import-hint a { color: var(--cyan); }
+
+    /* ── Provider tabs (新增) ── */
+    .provider-tabs { display: flex; gap: 8px; flex: 1; }
+    .provider-tab {
+      flex: 1; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+      font-size: .84em; font-weight: 700; letter-spacing: .3px; line-height: 1.2;
+      border: 1px solid var(--border); color: var(--text2);
+      background: rgba(255,255,255,.03); transition: all .2s;
+    }
+    .provider-tab.active {
+      border-color: var(--cyan); color: var(--cyan);
+      background: rgba(0,212,255,.1);
+      box-shadow: 0 0 12px rgba(0,212,255,.12);
+    }
+    .provider-tab:hover:not(.active) {
+      border-color: rgba(255,255,255,.2); color: var(--text);
+    }
+
+    /* ── Ollama test button (新增) ── */
+    .btn-test {
+      padding: 9px 18px; border-radius: 9px; cursor: pointer;
+      font-size: .85em; font-weight: 700; white-space: nowrap;
+      border: 1px solid rgba(0,212,255,.35); color: var(--cyan);
+      background: rgba(0,212,255,.08); transition: all .2s;
+    }
+    .btn-test:hover:not(:disabled) {
+      background: rgba(0,212,255,.2);
+      box-shadow: 0 0 14px rgba(0,212,255,.18);
+    }
+    .btn-test:disabled { opacity: .4; cursor: wait; }
+
+    /* ── Ollama tips (新增) ── */
+    .ollama-tip {
+      margin-top: 10px; font-size: .72em; color: var(--text2); line-height: 1.6;
+      padding: 8px 12px; border-radius: 7px;
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+    }
+    .ollama-tip code { color: var(--cyan); background: rgba(0,212,255,.08); border-radius: 3px; padding: 1px 5px; }
+  </style>
+</head>
+<body>
+
+<!-- ===== Top Navigation ===== -->
+<div class="ai-topbar">
+  <span class="logo">🤖</span>
+  <h1>AI 題庫生成器</h1>
+  <span class="spacer"></span>
+  <a class="btn-back" href="../multi/host.html">← 返回遊戲主控台</a>
+</div>
+
+<!-- ===== Page Content ===== -->
+<div class="ai-page">
+
+  <!-- ── 1. API 設定 ── -->
+  <div class="ai-card">
+    <div class="ai-section-title">
+      <div class="ai-section-num">1</div>
+      API 設定
+    </div>
+
+    <!-- Provider 選擇 -->
+    <div class="ai-row" style="margin-bottom:16px">
+      <label class="ai-label">Provider</label>
+      <div class="provider-tabs">
+        <button class="provider-tab active" id="tab-openai" onclick="_setProvider('openai')">OpenAI</button>
+        <button class="provider-tab" id="tab-ollama" onclick="_setProvider('ollama')">Ollama (Local / LAN)</button>
+      </div>
+    </div>
+
+    <!-- ── OpenAI 欄位 ── -->
+    <div id="openai-section">
+      <div class="ai-row">
+        <label class="ai-label" for="api-key">API Key</label>
+        <div class="key-wrap">
+          <input id="api-key" class="ai-input" type="password"
+                 placeholder="sk-..." autocomplete="off" spellcheck="false">
+          <button class="key-toggle" id="key-toggle" title="顯示 / 隱藏 API Key">👁</button>
+        </div>
+      </div>
+
+      <div class="ai-row">
+        <label class="ai-label" for="model-select">模型</label>
+        <select id="model-select" class="ai-select">
+          <option value="gpt-4o-2024-08-06">gpt-4o-2024-08-06（最佳品質，支援 Structured Outputs）</option>
+          <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18（快速省錢，支援 Structured Outputs）</option>
+        </select>
+      </div>
+
+      <div style="font-size:.72em;color:var(--text2);margin-top:2px">
+        API Key 僅儲存於本機 localStorage，不會上傳至任何伺服器（除 OpenAI）。
+      </div>
+    </div>
+
+    <!-- ── Ollama 欄位 ── -->
+    <div id="ollama-section" style="display:none">
+      <div class="ai-row">
+        <label class="ai-label" for="ollama-url">Base URL</label>
+        <input id="ollama-url" class="ai-input" type="text"
+               value="http://127.0.0.1:11434"
+               placeholder="http://127.0.0.1:11434" autocomplete="off" spellcheck="false">
+        <button class="btn-test" id="btn-ollama-test">🔌 測試連線</button>
+      </div>
+
+      <!-- 測試連線回饋 -->
+      <div id="ollama-status" class="status-box" style="margin:-2px 0 10px"></div>
+
+      <div class="ai-row">
+        <label class="ai-label" for="ollama-model">Model</label>
+        <select id="ollama-model" class="ai-select">
+          <option value="">— 請先點「測試連線」以載入模型 —</option>
+        </select>
+      </div>
+
+      <div class="ollama-tip">
+        <b>跨 IP 存取（從區網其他裝置連線）</b>，需同時設定兩個環境變數後重新執行 <code>ollama serve</code>：<br>
+        <code>OLLAMA_HOST=0.0.0.0:11434</code>&nbsp;&nbsp;←&nbsp;允許所有網卡監聽<br>
+        <code>OLLAMA_ORIGINS=*</code>&nbsp;&nbsp;←&nbsp;允許所有瀏覽器來源（解決 405 CORS 錯誤）<br>
+        若在同一台電腦使用，改用 <code>http://localhost:11434</code> 即可避開 CORS 問題。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. 上傳教材 ── -->
+  <div class="ai-card">
+    <div class="ai-section-title">
+      <div class="ai-section-num">2</div>
+      上傳教材（可選）
+    </div>
+
+    <div id="drop-zone" class="drop-zone">
+      <input id="file-input" type="file" accept=".pdf,.docx,.pptx,.txt,.md" title="">
+      <div class="dz-icon">📄</div>
+      <div class="dz-text">拖曳教材至此，或點擊選擇檔案</div>
+      <div class="dz-hint">支援：PDF · DOCX · PPTX · TXT · MD</div>
+    </div>
+
+    <div id="file-info" class="file-info">
+      <span id="fi-name" class="fi-name"></span>
+      <span id="fi-chars" class="fi-chars"></span>
+      <div id="fi-clear" class="fi-clear" title="移除教材">✕</div>
+    </div>
+
+    <details id="text-preview" class="text-preview">
+      <summary>▶ 顯示已解析文字預覽</summary>
+      <div id="text-preview-box" class="text-preview-box"></div>
+    </details>
+
+    <div id="parse-status" class="status-box"></div>
+  </div>
+
+  <!-- ── 3. Prompt 設定 ── -->
+  <div class="ai-card">
+    <div class="ai-section-title">
+      <div class="ai-section-num">3</div>
+      Prompt 設定
+    </div>
+
+    <textarea id="user-prompt" class="ai-textarea" rows="7"
+              placeholder="範例：請根據以下教材生成 10 題資訊安全選擇題，難度偏高，著重 SQL Injection 與 XSS。&#10;&#10;【教材內容】&#10;{教材內容}"></textarea>
+    <div class="prompt-footer">
+      <span class="prompt-hint">使用 <code style="color:var(--cyan)">{教材內容}</code> 作為教材佔位符（上傳教材後自動替換）</span>
+      <span id="char-count" class="char-count">0 字元</span>
+    </div>
+  </div>
+
+  <!-- ── 4. 生成 ── -->
+  <div class="ai-card">
+    <div class="ai-section-title">
+      <div class="ai-section-num">4</div>
+      生成題庫
+    </div>
+
+    <button id="btn-generate" class="btn-generate" disabled>
+      ⚡ 開始生成
+    </button>
+
+    <div id="gen-progress" class="progress-wrap">
+      <div class="progress-bar-track">
+        <div id="gen-progress-bar" class="progress-bar-fill" style="width:60%"></div>
+      </div>
+      <div id="gen-progress-label" class="progress-label">呼叫 API 中，請稍候...</div>
+    </div>
+
+    <div id="gen-status" class="status-box"></div>
+  </div>
+
+  <!-- ── 5. 題庫預覽 ── -->
+  <div id="preview-section" class="ai-card preview-section">
+    <div class="ai-section-title">
+      <div class="ai-section-num">5</div>
+      題庫預覽與驗證
+    </div>
+
+    <div class="preview-stats">
+      <div class="p-stat"><strong id="stat-count">0</strong>題</div>
+      <div class="p-stat" id="stat-valid-wrap">
+        <strong id="stat-valid" style="color:var(--green)">✓</strong>JSON Schema 驗證通過
+      </div>
+    </div>
+
+    <div id="q-preview-list" class="q-preview-list"></div>
+  </div>
+
+  <!-- ── 6. 匯出 ── -->
+  <div id="export-section" class="ai-card">
+    <div class="ai-section-title">
+      <div class="ai-section-num">6</div>
+      匯出 / 匯入至遊戲
+    </div>
+    <div class="ai-row" style="margin-bottom:12px;align-items:center;gap:8px">
+      <label class="ai-label" for="bank-name" style="white-space:nowrap">題庫名稱</label>
+      <input id="bank-name" class="ai-input" type="text"
+             placeholder="例：資訊安全期末考（作為下載檔名與遊戲顯示名稱）"
+             maxlength="40" autocomplete="off" style="flex:1">
+    </div>
+    <div id="export-buttons" class="export-section">
+      <button id="btn-download" class="btn-export json">💾 下載 JSON</button>
+      <button id="btn-import"   class="btn-export import">🎮 直接匯入遊戲系統</button>
+      <div class="import-hint" id="import-hint" style="display:none">
+        ✓ 題庫已儲存！請在
+        <a href="../multi/host.html">主持人頁面</a>
+        的「題庫選擇」中選擇「🤖 <span id="hint-bank-name">AI 生成題庫</span>」即可使用。
+      </div>
+    </div>
+    <div id="export-section-note" style="font-size:.78em;color:var(--text2);margin-top:0">
+      生成題庫後，匯出按鈕將顯示於此。
+    </div>
+  </div>
+
+</div><!-- /ai-page -->
+
+<!-- ===== Scripts ===== -->
+<script>
+'use strict';
+
+/* ─────────────────────────────────────────────────────────────────────
+   Constants
+───────────────────────────────────────────────────────────────────── */
+const AI_CONFIG_KEY  = 'quiz_ai_config';
+const AI_BANK_KEY    = 'quiz_ai_bank';
+const MAX_TEXT_CHARS = 14000;
+
+/* PDF.js worker path */
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Module State
+───────────────────────────────────────────────────────────────────── */
+const AI = {
+  extractedText:      '',
+  fileName:           '',
+  generatedQuestions: [],
+};
+
+let _provider = 'openai';   // 'openai' | 'ollama'
+
+/* ─────────────────────────────────────────────────────────────────────
+   Provider Switching
+───────────────────────────────────────────────────────────────────── */
+function _setProvider(prov) {
+  _provider = prov;
+  el('tab-openai').classList.toggle('active', prov === 'openai');
+  el('tab-ollama').classList.toggle('active', prov === 'ollama');
+  el('openai-section').style.display = prov === 'openai' ? '' : 'none';
+  el('ollama-section').style.display = prov === 'ollama' ? '' : 'none';
+  updateGenerateBtn();
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   AJV JSON Schema Validator
+───────────────────────────────────────────────────────────────────── */
+const QUESTION_SCHEMA = {
+  type: 'array',
+  minItems: 1,
+  items: {
+    type: 'object',
+    required: ['question', 'options', 'answer', 'explanation', 'domain'],
+    additionalProperties: false,
+    properties: {
+      question:    { type: 'string', minLength: 1 },
+      options: {
+        type: 'object',
+        required: ['A', 'B', 'C', 'D'],
+        additionalProperties: false,
+        properties: {
+          A: { type: 'string', minLength: 1 },
+          B: { type: 'string', minLength: 1 },
+          C: { type: 'string', minLength: 1 },
+          D: { type: 'string', minLength: 1 },
+        },
+      },
+      answer:      { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+      explanation: { type: 'string' },
+      domain:      { type: 'string' },
+    },
+  },
+};
+
+let _ajvValidate = null;
+function getAjvValidator() {
+  if (!_ajvValidate) {
+    const ajv = new Ajv({ allErrors: true });
+    _ajvValidate = ajv.compile(QUESTION_SCHEMA);
+  }
+  return _ajvValidate;
+}
+
+function validateQuestions(questions) {
+  const validate = getAjvValidator();
+  const valid = validate(questions);
+  if (!valid) {
+    const msgs = (validate.errors || [])
+      .map(e => `  • ${e.dataPath || e.instancePath} ${e.message}`)
+      .join('\n');
+    throw new Error('JSON Schema 驗證失敗：\n' + msgs);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   File Parsing
+───────────────────────────────────────────────────────────────────── */
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = e => resolve(e.target.result);
+    r.onerror = () => reject(new Error('讀取檔案失敗'));
+    r.readAsText(file, 'UTF-8');
+  });
+}
+
+async function parsePDF(file) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js 尚未載入，請確認網路連線');
+  const buf  = await file.arrayBuffer();
+  const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page    = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
+async function parseDOCX(file) {
+  if (typeof mammoth === 'undefined') throw new Error('mammoth.js 尚未載入，請確認網路連線');
+  const buf    = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value.trim();
+}
+
+async function parsePPTX(file) {
+  if (typeof JSZip === 'undefined') throw new Error('JSZip 尚未載入，請確認網路連線');
+  const buf  = await file.arrayBuffer();
+  const zip  = await JSZip.loadAsync(buf);
+  const slideNames = Object.keys(zip.files)
+    .filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+    .sort((a, b) => {
+      const na = parseInt(a.match(/\d+/)[0], 10);
+      const nb = parseInt(b.match(/\d+/)[0], 10);
+      return na - nb;
+    });
+
+  let text = '';
+  for (const name of slideNames) {
+    const xml     = await zip.files[name].async('string');
+    const matches = xml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g) || [];
+    const line    = matches.map(m => m.replace(/<[^>]+>/g, '')).filter(s => s.trim()).join(' ');
+    if (line) text += line + '\n';
+  }
+  return text.trim();
+}
+
+async function parseFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  switch (ext) {
+    case 'txt': case 'md': return await readAsText(file);
+    case 'pdf':  return await parsePDF(file);
+    case 'docx': return await parseDOCX(file);
+    case 'pptx': return await parsePPTX(file);
+    default: throw new Error(`不支援的檔案格式：.${ext}（支援 pdf, docx, pptx, txt, md）`);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   System Prompt
+───────────────────────────────────────────────────────────────────── */
+const SYSTEM_PROMPT = `你是一位專業的教育測驗設計師。
+請依據教材或使用者指示，生成高品質的單選題題庫（ABCD 四選一）。
+每題要求：
+1. 題目清晰明確，不含歧義
+2. 四個選項互相排斥，只有一個正確答案
+3. 錯誤選項具有合理誘答性，不可一目了然
+4. 解說（explanation）需說明正確選項的理由，以及其他選項的錯誤原因
+5. 領域標籤（domain）簡短，如：資訊安全、機器學習、網路概論
+請以繁體中文回答。`;
+
+/* ─────────────────────────────────────────────────────────────────────
+   OpenAI API (Structured Outputs)
+───────────────────────────────────────────────────────────────────── */
+const OPENAI_JSON_SCHEMA = {
+  name: 'quiz_questions',
+  strict: true,
+  schema: {
+    type: 'object',
+    properties: {
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            question:    { type: 'string' },
+            options: {
+              type: 'object',
+              properties: {
+                A: { type: 'string' },
+                B: { type: 'string' },
+                C: { type: 'string' },
+                D: { type: 'string' },
+              },
+              required: ['A', 'B', 'C', 'D'],
+              additionalProperties: false,
+            },
+            answer:      { type: 'string', enum: ['A', 'B', 'C', 'D'] },
+            explanation: { type: 'string' },
+            domain:      { type: 'string' },
+          },
+          required: ['question', 'options', 'answer', 'explanation', 'domain'],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['questions'],
+    additionalProperties: false,
+  },
+};
+
+async function callOpenAI(apiKey, model, userPrompt) {
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      response_format: { type: 'json_schema', json_schema: OPENAI_JSON_SCHEMA },
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user',   content: userPrompt },
+      ],
+      max_tokens:  4096,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!resp.ok) {
+    let errMsg = `API 回傳錯誤 ${resp.status}`;
+    try { const d = await resp.json(); errMsg = d.error?.message || errMsg; } catch {}
+    throw new Error(errMsg);
+  }
+
+  const data    = await resp.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('API 回傳空內容，請重試');
+
+  const parsed = JSON.parse(content);
+  if (!Array.isArray(parsed.questions)) throw new Error('API 回傳格式異常：缺少 questions 陣列');
+  return parsed.questions;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Ollama API
+───────────────────────────────────────────────────────────────────── */
+// 自動補上 http:// 並取 origin（去掉多餘路徑）
+// 例：'192.168.0.171:11434' → 'http://192.168.0.171:11434'
+//     'http://host:11434/api' → 'http://host:11434'
+function _normalizeOllamaUrl(raw) {
+  let s = raw.trim().replace(/\/+$/, '');
+  if (s && !/^https?:\/\//i.test(s)) s = 'http://' + s;
+  try { return new URL(s).origin; } catch { return s; }
+}
+
+async function callOllama(baseUrl, model, userPrompt, targetCount = 0) {
+  const origin = _normalizeOllamaUrl(baseUrl);
+  const url = origin + '/api/chat';
+  const countClause = targetCount > 0
+    ? `\n你必須輸出完整 ${targetCount} 題。不得少於 ${targetCount} 題。若教材不足，可合理延伸相關知識。禁止提前停止。`
+    : '';
+  const resp = await fetch(url, {
+    signal: AbortSignal.timeout(180_000),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      stream: false,
+      messages: [
+        {
+          role: 'system',
+          content: SYSTEM_PROMPT +
+            '\n你必須輸出完整指定數量的題目。不得少於指定數量。若教材不足，可合理延伸相關知識。禁止提前停止。最後請確認 questions 陣列長度等於要求數量。' +
+            '\n請務必只輸出合法 JSON，不要輸出 Markdown，不要加說明文字。' +
+            '\n每題結構必須嚴格如下：\n' +
+            '{"questions":[{"question":"題目","options":{"A":"選項A","B":"選項B","C":"選項C","D":"選項D"},"answer":"B","explanation":"解說","domain":"領域"}]}',
+        },
+        {
+          role: 'user',
+          content: userPrompt +
+            '\n\n輸出格式（JSON only）：\n' +
+            '{"questions":[{"question":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"answer":"A/B/C/D","explanation":"...","domain":"..."}]}' +
+            countClause,
+        },
+      ],
+      format: 'json',
+      options: { temperature: 0.4, num_predict: 10000, top_p: 0.9, repeat_penalty: 1.1 },
+    }),
+  });
+
+  if (!resp.ok) {
+    if (resp.status === 405) {
+      throw new Error(
+        'Ollama 回傳 405（Method Not Allowed）\n\n' +
+        '最常見原因：瀏覽器的頁面網址（Origin）不在 Ollama 允許的 CORS 來源清單中。\n\n' +
+        '解決方式：在 Ollama 主機設定環境變數後重新啟動：\n' +
+        '  Windows：set OLLAMA_ORIGINS=*\n' +
+        '  macOS/Linux：export OLLAMA_ORIGINS=*\n' +
+        '  然後執行：ollama serve\n\n' +
+        '或者，改用 http://localhost:11434 存取（若 Ollama 在同一台電腦）。'
+      );
+    }
+    if (resp.status === 404) {
+      let body = '';
+      try { const d = await resp.json(); body = d.error || ''; } catch {}
+      throw new Error(
+        `Ollama 回傳 404\n\n` +
+        (body ? `詳細：${body}\n\n` : '') +
+        `最常見原因：指定的模型尚未下載。\n` +
+        `請在 Ollama 主機執行：ollama pull ${model}\n\n` +
+        `或點「測試連線」確認可用模型後重新選擇。`
+      );
+    }
+    let errMsg = `Ollama 回傳錯誤 ${resp.status}`;
+    try { const d = await resp.json(); errMsg = d.error || errMsg; } catch {}
+    throw new Error(errMsg);
+  }
+
+  const data    = await resp.json();
+  const content = data.message?.content;
+  if (!content) throw new Error('Ollama 回傳空內容，請重試');
+
+  let parsed;
+  try { parsed = JSON.parse(content); }
+  catch { throw new Error('Ollama 回傳的不是有效 JSON，請確認模型支援 format:json'); }
+
+  const raw = Array.isArray(parsed.questions) ? parsed.questions
+            : Array.isArray(parsed)            ? parsed
+            : null;
+  if (!raw) throw new Error('Ollama 回傳格式不是有效題庫 JSON（找不到 questions 陣列）');
+
+  // 容錯：統一將 options 正規化為 {A,B,C,D} 大寫物件
+  return raw.map(q => {
+    let opts = q.options;
+    if (Array.isArray(opts)) {
+      // ["A答","B答","C答","D答"] → {A,B,C,D}
+      opts = { A: opts[0], B: opts[1], C: opts[2], D: opts[3] };
+    } else if (opts && typeof opts === 'object') {
+      // {a,b,c,d} 或 {1,2,3,4} → {A,B,C,D}
+      const keys = Object.keys(opts);
+      if (keys.length === 4 && !opts['A']) {
+        const ABCD = ['A', 'B', 'C', 'D'];
+        opts = Object.fromEntries(keys.map((k, i) => [ABCD[i], opts[k]]));
+      }
+    }
+    // answer 統一大寫
+    const answer = typeof q.answer === 'string' ? q.answer.toUpperCase().trim() : q.answer;
+    return { ...q, options: opts, answer };
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Ollama 補題重試（最多 3 次，只補不足的題數）
+───────────────────────────────────────────────────────────────────── */
+async function callOllamaWithRetry(baseUrl, model, userPrompt, targetCount, onProgress) {
+  const MAX_RETRIES = 3;
+  let all = await callOllama(baseUrl, model, userPrompt, targetCount);
+
+  let attempt = 0;
+  while (targetCount > 0 && all.length < targetCount && attempt < MAX_RETRIES) {
+    attempt++;
+    const needed = targetCount - all.length;
+    // 只傳題目文字清單（不含選項/解說），讓模型知道哪些題已存在即可
+    const existingList = all.map((q, i) => `${i + 1}. ${q.question}`).join('\n');
+    const supplementPrompt =
+      `目前已有 ${all.length} 題，請補齊剩餘 ${needed} 題。\n` +
+      `不可與以下題目重複：\n${existingList}\n\n` +
+      `保持完全相同 JSON 格式，只輸出缺少的 ${needed} 題。`;
+
+    onProgress?.(`補題中（第 ${attempt}／${MAX_RETRIES} 次）：已有 ${all.length}／${targetCount} 題，補齊 ${needed} 題...`);
+
+    const more = await callOllama(baseUrl, model, supplementPrompt, needed);
+    all = [...all, ...more];
+  }
+
+  // 若最終超過需求數（模型多生），截回指定數量
+  return targetCount > 0 ? all.slice(0, targetCount) : all;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   統一 AI 呼叫入口
+───────────────────────────────────────────────────────────────────── */
+async function callAI(userPrompt, targetCount = 0, onProgress) {
+  if (_provider === 'openai') {
+    return await callOpenAI(
+      el('api-key').value.trim(),
+      el('model-select').value,
+      userPrompt
+    );
+  } else {
+    return await callOllamaWithRetry(
+      el('ollama-url').value.trim(),
+      el('ollama-model').value.trim(),
+      userPrompt,
+      targetCount,
+      onProgress
+    );
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Ollama 測試連線 / 讀取模型
+───────────────────────────────────────────────────────────────────── */
+async function testOllamaConnection() {
+  const baseUrl = el('ollama-url').value.trim();
+  if (!baseUrl) {
+    setStatus('gen-status', '× 請先填入 Ollama Base URL', 'error');
+    return;
+  }
+
+  const btn = el('btn-ollama-test');
+  btn.disabled = true;
+  btn.textContent = '連線中...';
+  setStatus('ollama-status', '正在連線 Ollama...', 'info');
+
+  try {
+    const origin = _normalizeOllamaUrl(baseUrl);
+    const url  = origin + '/api/tags';
+    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const data   = await resp.json();
+    const models = (data.models || []).map(m => m.name).filter(Boolean);
+
+    // 填充 <select> 下拉選單
+    const sel = el('ollama-model');
+    const preferred = sel.dataset.saved || sel.value;  // 優先還原已儲存的
+    sel.innerHTML = models.length > 0
+      ? models.map(m => `<option value="${escHtml(m)}">${escHtml(m)}</option>`).join('')
+      : '<option value="">（無可用模型，請先執行 ollama pull）</option>';
+    // 還原先前選擇，否則預設第一個
+    if (models.includes(preferred)) sel.value = preferred;
+    delete sel.dataset.saved;
+    updateGenerateBtn();
+    saveConfig();
+
+    const countStr = models.length > 0
+      ? `找到 ${models.length} 個模型` + (models.length > 3 ? `（${models.slice(0,3).join('、')}…）` : `（${models.join('、')}）`)
+      : '未找到已下載的模型，請先執行 ollama pull &lt;model&gt;';
+    setStatus('ollama-status', `✓ 連線成功！${countStr}`, 'success');
+
+  } catch (err) {
+    const hint = err.name === 'TimeoutError' ? '連線逾時' : err.message;
+    const normalizedUrl = _normalizeOllamaUrl(baseUrl);
+    setStatus('ollama-status',
+      `× 無法連線（${hint}）\n` +
+      `位址：${normalizedUrl}/api/tags\n\n` +
+      `• OLLAMA_HOST=0.0.0.0:11434（跨 IP 時必須設定）\n` +
+      `• OLLAMA_ORIGINS=*（解決 CORS 405）\n` +
+      `• URL 需含 http://，例：http://192.168.0.171:11434`,
+      'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔌 測試連線';
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   UI Helpers
+───────────────────────────────────────────────────────────────────── */
+const el   = id => document.getElementById(id);
+const show = (id, cls = 'show') => el(id)?.classList.add(cls);
+const hide = (id, cls = 'show') => el(id)?.classList.remove(cls);
+
+function setStatus(elId, msg, type = 'info') {
+  const box = el(elId);
+  if (!box) return;
+  box.textContent = msg;
+  box.className   = `status-box show ${type}`;
+}
+function clearStatus(elId) {
+  const box = el(elId);
+  if (!box) return;
+  box.className   = 'status-box';
+  box.textContent = '';
+}
+
+function updateGenerateBtn() {
+  let ready;
+  if (_provider === 'openai') {
+    ready = el('api-key').value.trim().startsWith('sk-');
+  } else {
+    ready = el('ollama-url').value.trim().length > 0 &&
+            el('ollama-model').value.trim().length > 0;
+  }
+  el('btn-generate').disabled = !ready;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Config persistence
+───────────────────────────────────────────────────────────────────── */
+function saveConfig() {
+  try {
+    localStorage.setItem(AI_CONFIG_KEY, JSON.stringify({
+      provider:    _provider,
+      apiKey:      el('api-key').value,
+      model:       el('model-select').value,
+      ollamaUrl:   el('ollama-url').value,
+      ollamaModel: el('ollama-model').value,
+      bankName:    el('bank-name').value,
+    }));
+  } catch {}
+}
+
+function loadConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem(AI_CONFIG_KEY) || '{}');
+    if (cfg.apiKey)      el('api-key').value      = cfg.apiKey;
+    if (cfg.bankName)    el('bank-name').value     = cfg.bankName;
+    if (cfg.ollamaUrl)   el('ollama-url').value    = cfg.ollamaUrl;
+    // select 在測試前為空，先暫存於 dataset，testOllamaConnection 填充後自動還原
+    if (cfg.ollamaModel) el('ollama-model').dataset.saved = cfg.ollamaModel;
+    if (cfg.model) {
+      const opt = el('model-select');
+      for (const o of opt.options) { if (o.value === cfg.model) { opt.value = cfg.model; break; } }
+    }
+    if (cfg.provider) _setProvider(cfg.provider);
+  } catch {}
+  _syncHintName();
+}
+
+function _syncHintName() {
+  const n = el('bank-name').value.trim() || 'AI 生成題庫';
+  el('hint-bank-name').textContent = n;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   File Handling
+───────────────────────────────────────────────────────────────────── */
+function showFileInfo(name, charCount) {
+  AI.fileName = name;
+  el('fi-name').textContent  = name;
+  el('fi-chars').textContent = charCount.toLocaleString() + ' 字元';
+  show('file-info');
+}
+
+function clearFile() {
+  AI.extractedText = '';
+  AI.fileName      = '';
+  hide('file-info');
+  hide('text-preview');
+  el('text-preview-box').textContent = '';
+  el('file-input').value = '';
+  clearStatus('parse-status');
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  clearFile();
+  clearStatus('parse-status');
+  setStatus('parse-status', `解析「${file.name}」中...`, 'info');
+
+  try {
+    let text = await parseFile(file);
+    if (!text.trim()) {
+      setStatus('parse-status', '警告：未能從檔案中提取任何文字，請改用 TXT 格式', 'error');
+      return;
+    }
+
+    const original = text;
+    if (text.length > MAX_TEXT_CHARS) {
+      text = text.slice(0, MAX_TEXT_CHARS) +
+        `\n\n...[內容過長，已截斷至前 ${MAX_TEXT_CHARS.toLocaleString()} 字]`;
+    }
+
+    AI.extractedText = text;
+    showFileInfo(file.name, original.length);
+
+    el('text-preview-box').textContent = text.slice(0, 1200) + (text.length > 1200 ? '\n...' : '');
+    show('text-preview');
+
+    clearStatus('parse-status');
+    setStatus('parse-status',
+      `✓ 解析完成（${original.length.toLocaleString()} 字元${original.length > MAX_TEXT_CHARS ? '，已截斷' : ''}）`,
+      'success');
+
+    if (!el('user-prompt').value.trim()) {
+      el('user-prompt').value =
+        `請根據以下教材內容生成 10 題選擇題，難度為中等。\n題目須涵蓋教材主要知識點，選項具有合理誘答性。\n\n【教材內容】\n{教材內容}`;
+      updateCharCount();
+    }
+  } catch (err) {
+    setStatus('parse-status', '× 解析失敗：' + err.message, 'error');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Prompt
+───────────────────────────────────────────────────────────────────── */
+function updateCharCount() {
+  const len  = el('user-prompt').value.length;
+  const ccEl = el('char-count');
+  ccEl.textContent = len.toLocaleString() + ' 字元';
+  ccEl.className   = 'char-count' + (len > 2000 ? ' warn' : '');
+}
+
+function buildFinalPrompt() {
+  const template = el('user-prompt').value.trim();
+  const text     = AI.extractedText;
+  if (text && template.includes('{教材內容}')) {
+    return template.replace('{教材內容}', text);
+  }
+  return template + (text ? '\n\n【教材內容】\n' + text : '');
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Preview Rendering
+───────────────────────────────────────────────────────────────────── */
+function renderPreview(questions) {
+  el('stat-count').textContent = questions.length;
+
+  const list = el('q-preview-list');
+  list.innerHTML = questions.map((q, i) => {
+    const opts = ['A', 'B', 'C', 'D'].map(k => {
+      const isCorrect = k === q.answer;
+      return `<div class="qp-opt${isCorrect ? ' correct' : ''}">
+        <span class="qp-opt-letter">${k}.</span>
+        <span>${escHtml(q.options[k])}</span>
+        ${isCorrect ? '<span style="margin-left:auto;font-size:.85em">✓</span>' : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="q-preview-item">
+      <div class="qp-header">
+        <span class="qp-num">Q${i + 1}</span>
+        <span class="qp-domain">${escHtml(q.domain || '—')}</span>
+        <span class="qp-question">${escHtml(q.question)}</span>
+      </div>
+      <div class="qp-opts">${opts}</div>
+      ${q.explanation ? `<div class="qp-expl">💡 ${escHtml(q.explanation)}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  show('preview-section');
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Generation Flow
+───────────────────────────────────────────────────────────────────── */
+async function generate() {
+  const prompt = buildFinalPrompt();
+
+  // 依 provider 驗證必要欄位
+  if (_provider === 'openai') {
+    const apiKey = el('api-key').value.trim();
+    if (!apiKey.startsWith('sk-')) {
+      setStatus('gen-status', '× 請先填入有效的 OpenAI API Key（以 sk- 開頭）', 'error');
+      return;
+    }
+  } else {
+    if (!el('ollama-url').value.trim()) {
+      setStatus('gen-status', '× 請填入 Ollama Base URL', 'error');
+      return;
+    }
+    if (!el('ollama-model').value.trim()) {
+      setStatus('gen-status', '× 請填入 Ollama 模型名稱（或先點「測試連線」）', 'error');
+      return;
+    }
+  }
+
+  if (!prompt) {
+    setStatus('gen-status', '× 請填寫 Prompt', 'error');
+    return;
+  }
+
+  // 從 prompt 解析要求題數（例：「生成10題」→ 10）
+  const countMatch = prompt.match(/(\d+)\s*題/);
+  const targetCount = countMatch ? parseInt(countMatch[1], 10) : 0;
+
+  // ── 生成前題數警告（在 UI 鎖定前彈出，讓用戶可取消）──
+  if (_provider === 'ollama' && targetCount > 0) {
+    const modelName = el('ollama-model').value.trim().toLowerCase();
+    const isSmall  = /0\.5b|1b(?!\d)|1\.5b|2b|3b/.test(modelName);
+    const isMedium = /7b|8b/.test(modelName);
+    let warnMsg = '';
+    if (isSmall && targetCount > 10) {
+      warnMsg = `⚠ 題數提醒\n\n目前模型：${modelName}\n要求題數：${targetCount} 題\n建議上限：10 題\n\n題數過多可能導致生成不足或超時（180秒）。\n確定繼續？`;
+    } else if (isMedium && targetCount > 30) {
+      warnMsg = `⚠ 題數提醒\n\n目前模型：${modelName}\n要求題數：${targetCount} 題\n建議上限：30 題\n\n題數過多可能導致生成不足或超時（180秒）。\n確定繼續？`;
+    }
+    if (warnMsg && !confirm(warnMsg)) return;  // 用戶取消 → 中止生成
+  }
+
+  saveConfig();
+  clearStatus('gen-status');
+  hide('preview-section');
+  hide('export-buttons', 'show');
+  el('import-hint').style.display = 'none';
+  el('export-section-note')?.setAttribute('style', '');
+
+  el('btn-generate').disabled = true;
+  el('btn-generate').textContent = '⏳ 生成中...';
+  const baseProgressLabel = _provider === 'openai'
+    ? '呼叫 OpenAI API 中，請稍候...'
+    : `呼叫 Ollama（${el('ollama-model').value.trim()}）中，請稍候...`;
+  el('gen-progress-label').textContent = baseProgressLabel;
+  show('gen-progress');
+
+  const onProgress = (msg) => { el('gen-progress-label').textContent = msg; };
+
+  try {
+    const questions = await callAI(prompt, targetCount, onProgress);
+
+    /* AJV Validation */
+    try {
+      validateQuestions(questions);
+      el('stat-valid').textContent = '✓';
+      el('stat-valid').style.color = 'var(--green)';
+      el('stat-valid-wrap').title  = 'AJV JSON Schema 驗證通過';
+    } catch (verr) {
+      el('stat-valid').textContent = '⚠';
+      el('stat-valid').style.color = 'var(--yellow)';
+      el('stat-valid-wrap').title  = verr.message;
+      setStatus('gen-status',
+        '⚠ 驗證警告（題目仍可使用，建議檢查）：\n' + verr.message, 'info');
+    }
+
+    AI.generatedQuestions = questions;
+    renderPreview(questions);
+    show('export-buttons', 'show');
+    el('export-section-note')?.setAttribute('style', 'display:none');
+    const shortNote = (targetCount > 0 && questions.length < targetCount)
+      ? `（已達重試上限，共補齊 ${questions.length}／${targetCount} 題）`
+      : '';
+    setStatus('gen-status',
+      `✓ 成功生成 ${questions.length} 題！${shortNote}請在下方預覽並匯出。`, 'success');
+
+  } catch (err) {
+    const isTimeout = err.name === 'TimeoutError' || err.name === 'AbortError';
+    const errMsg = isTimeout
+      ? `× 生成逾時（超過 180 秒）。建議減少題數，或確認模型是否正在運行。`
+      : `× 生成失敗：${err.message}`;
+    setStatus('gen-status', errMsg, 'error');
+  } finally {
+    hide('gen-progress');
+    el('btn-generate').disabled = false;
+    el('btn-generate').textContent = '⚡ 開始生成';
+    updateGenerateBtn();
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Export
+───────────────────────────────────────────────────────────────────── */
+function downloadJSON() {
+  if (!AI.generatedQuestions.length) return;
+  const json = JSON.stringify(AI.generatedQuestions, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const rawName = el('bank-name').value.trim() || `ai_quiz_${Date.now()}`;
+  const fileName = rawName.endsWith('.json') ? rawName : rawName + '.json';
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: fileName,
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importToGame() {
+  if (!AI.generatedQuestions.length) return;
+  const name = el('bank-name').value.trim() || 'AI 生成題庫';
+  try {
+    localStorage.setItem(AI_BANK_KEY, JSON.stringify({
+      name,
+      questions: AI.generatedQuestions,
+    }));
+    el('import-hint').style.display = '';
+    el('btn-import').textContent    = '✓ 已儲存！';
+    setTimeout(() => { el('btn-import').textContent = '🎮 直接匯入遊戲系統'; }, 2500);
+  } catch (e) {
+    alert('儲存失敗：' + e.message);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Event Bindings
+───────────────────────────────────────────────────────────────────── */
+el('key-toggle').addEventListener('click', () => {
+  const inp = el('api-key');
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+});
+
+el('api-key').addEventListener('input', updateGenerateBtn);
+el('user-prompt').addEventListener('input', () => { updateCharCount(); updateGenerateBtn(); });
+el('model-select').addEventListener('change', saveConfig);
+el('bank-name').addEventListener('input', () => { saveConfig(); _syncHintName(); });
+
+el('ollama-url').addEventListener('input',   () => { updateGenerateBtn(); saveConfig(); });
+el('ollama-model').addEventListener('change', () => { updateGenerateBtn(); saveConfig(); });
+el('btn-ollama-test').addEventListener('click', testOllamaConnection);
+
+/* File drag-drop */
+const dz = el('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const file = e.dataTransfer?.files[0];
+  if (file) handleFile(file);
+});
+el('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+el('fi-clear').addEventListener('click', clearFile);
+el('btn-generate').addEventListener('click', generate);
+el('btn-download').addEventListener('click', downloadJSON);
+el('btn-import').addEventListener('click', importToGame);
+
+/* ─────────────────────────────────────────────────────────────────────
+   Init
+───────────────────────────────────────────────────────────────────── */
+loadConfig();
+updateCharCount();
+updateGenerateBtn();
+</script>
+</body>
+</html>

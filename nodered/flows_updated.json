@@ -1,0 +1,638 @@
+    [
+        {
+            "id": "56abe4ae53a7c46f",
+            "type": "tab",
+            "label": "多人搶答",
+            "disabled": false,
+            "info": "監控 host.html / player.html 的 MQTT 訊息，並將結果橋接至 ESP32 音效板（quiz/sound）",
+            "env": [
+                {
+                    "name": "BROKER_IP",
+                    "value": "192.168.0.171",
+                    "type": "str"
+                }
+            ]
+        },
+        {
+            "id": "879c65d2d156e16d",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "玩家加入",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": true,
+            "complete": "payload",
+            "targetType": "msg",
+            "statusType": "auto",
+            "x": 380,
+            "y": 60,
+            "wires": []
+        },
+        {
+            "id": "a1b2c3d4e5f60006",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "加入回饋",
+            "func": "const d = msg.payload;\nmsg.payload = { ok: true, name: d.name, id: d.id };\nmsg.topic   = 'quiz/multi/join/ack';\nreturn msg;",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 380,
+            "y": 100,
+            "wires": [
+                [
+                    "a1b2c3d4e5f60007"
+                ]
+            ]
+        },
+        {
+            "id": "a1b2c3d4e5f60007",
+            "type": "mqtt out",
+            "z": "56abe4ae53a7c46f",
+            "name": "quiz/multi/join/ack",
+            "topic": "",
+            "qos": "1",
+            "retain": "false",
+            "respTopic": "",
+            "contentType": "",
+            "userProps": "",
+            "correl": "",
+            "expiry": "",
+            "broker": "ff1f1c66f72c9743",
+            "x": 620,
+            "y": 100,
+            "wires": []
+        },
+        {
+            "id": "c57024af8d783b52",
+            "type": "mqtt in",
+            "z": "56abe4ae53a7c46f",
+            "name": "quiz/multi/answer",
+            "topic": "quiz/multi/answer",
+            "qos": "1",
+            "datatype": "json",
+            "broker": "ff1f1c66f72c9743",
+            "nl": false,
+            "rap": false,
+            "rh": 0,
+            "inputs": 0,
+            "x": 140,
+            "y": 200,
+            "wires": [
+                [
+                    "ca7801684ca35066",
+                    "a1b2c3d4e5f60001"
+                ]
+            ]
+        },
+        {
+            "id": "ca7801684ca35066",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "搶答動作",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": true,
+            "complete": "payload",
+            "targetType": "msg",
+            "statusType": "auto",
+            "x": 380,
+            "y": 180,
+            "wires": []
+        },
+        {
+            "id": "a1b2c3d4e5f60001",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "搶答蜂鳴",
+            "func": "msg.payload = 'TRACK_7';\nmsg.topic   = 'quiz/sound';\nreturn msg;",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 380,
+            "y": 220,
+            "wires": [
+                [
+                    "f477675ca124c92b"
+                ]
+            ]
+        },
+        {
+            "id": "40f3eeb2721af76a",
+            "type": "mqtt in",
+            "z": "56abe4ae53a7c46f",
+            "name": "quiz/multi/state",
+            "topic": "quiz/multi/state",
+            "qos": "1",
+            "datatype": "json",
+            "broker": "ff1f1c66f72c9743",
+            "nl": false,
+            "rap": false,
+            "rh": 0,
+            "inputs": 0,
+            "x": 140,
+            "y": 340,
+            "wires": [
+                [
+                    "24941e8af908b828"
+                ]
+            ]
+        },
+        {
+            "id": "24941e8af908b828",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "解析狀態",
+            "func": "const d = msg.payload;\n\nconst fill = { answering:'green', prepare:'yellow', end:'blue' }[d.phase] || 'grey';\nnode.status({ fill, shape:'dot', text: `${d.phase}  Q${d.qNo||0}/${d.totalQ||0}` });\n\nconst players = (d.players || [])\n  .map(p => `${p.name}: ${(d.scores||{})[p.id]||0}`)\n  .join('  |  ');\nmsg.payload = { phase: d.phase, question: `${d.qNo}/${d.totalQ}`, players };\n\nconst endMsg = d.soundTrack\n  ? { payload: d.soundTrack, topic: 'quiz/sound' }\n  : null;\n\nreturn [msg, endMsg];",
+            "outputs": 2,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 360,
+            "y": 340,
+            "wires": [
+                [
+                    "071b403e36585f52"
+                ],
+                [
+                    "f477675ca124c92b"
+                ]
+            ]
+        },
+        {
+            "id": "071b403e36585f52",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "遊戲狀態",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": false,
+            "complete": "payload",
+            "targetType": "msg",
+            "x": 580,
+            "y": 300,
+            "wires": []
+        },
+        {
+            "id": "66d927d3ae3a4c1f",
+            "type": "mqtt in",
+            "z": "56abe4ae53a7c46f",
+            "name": "quiz/multi/result",
+            "topic": "quiz/multi/result",
+            "qos": "1",
+            "datatype": "json",
+            "broker": "ff1f1c66f72c9743",
+            "nl": false,
+            "rap": false,
+            "rh": 0,
+            "inputs": 0,
+            "x": 140,
+            "y": 480,
+            "wires": [
+                [
+                    "18b680a2ad10fc1d",
+                    "7649ae388465e5e1"
+                ]
+            ]
+        },
+        {
+            "id": "18b680a2ad10fc1d",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "音效對應",
+            "func": "const d = msg.payload;\nconst track = d.soundTrack || 'TRACK_1';\n\nnode.status({\n    fill:  d.hasWinner ? 'green' : 'red',\n    shape: 'dot',\n    text:  track + (d.winnerName ? `  → ${d.winnerName}` : '')\n});\n\nmsg.payload = track;\nmsg.topic   = 'quiz/sound';\nreturn msg;",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 380,
+            "y": 460,
+            "wires": [
+                [
+                    "f477675ca124c92b"
+                ]
+            ]
+        },
+        {
+            "id": "7649ae388465e5e1",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "本題結果",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": true,
+            "complete": "payload",
+            "targetType": "msg",
+            "statusType": "auto",
+            "x": 380,
+            "y": 540,
+            "wires": []
+        },
+        {
+            "id": "f477675ca124c92b",
+            "type": "mqtt out",
+            "z": "56abe4ae53a7c46f",
+            "name": "quiz/sound → ESP32",
+            "topic": "quiz/sound",
+            "qos": "0",
+            "retain": "",
+            "respTopic": "",
+            "contentType": "",
+            "userProps": "",
+            "correl": "",
+            "expiry": "",
+            "broker": "ff1f1c66f72c9743",
+            "x": 620,
+            "y": 460,
+            "wires": []
+        },
+        {
+            "id": "ff51beedbcc1ddcb",
+            "type": "comment",
+            "z": "56abe4ae53a7c46f",
+            "name": "── 監控（Debug 面板）──",
+            "info": "",
+            "x": 170,
+            "y": 30,
+            "wires": []
+        },
+        {
+            "id": "fdbcb2214370decb",
+            "type": "comment",
+            "z": "56abe4ae53a7c46f",
+            "name": "── 音效橋接（→ ESP32 TRACK）──",
+            "info": "音效對應規則（由 host.html 計算後附在 RESULT/STATE 的 soundTrack 欄位）：\nTRACK_1：有人答對（未達連勝門檻）\nTRACK_2：無人得分（未達連敗門檻）\nTRACK_3：連續答對 ≥ 3 題\nTRACK_4：連續無人得分 ≥ 3 題\nTRACK_5：遊戲結束，勝者答對題數 ≥ 60% 總題數\nTRACK_6：遊戲結束，勝者答對題數 < 60% 總題數\nTRACK_7：搶答蜂鳴（玩家按下搶答鍵，Node-RED 即時觸發）",
+            "x": 220,
+            "y": 410,
+            "wires": []
+        },
+        {
+            "id": "hostip-comment",
+            "type": "comment",
+            "z": "56abe4ae53a7c46f",
+            "name": "── 主機 IP 偵測（Discord 只送 1 次）──",
+            "info": "inject 每 20s 觸發 exec ipconfig。\n① 限流（只送1次）→ 解析IP → 送 Discord\n\n★ 若 Broker IP 改變，只需改 Tab「屬性→環境變數」的 BROKER_IP 值。",
+            "x": 270,
+            "y": 610,
+            "wires": []
+        },
+        {
+            "id": "45b11289fcbf8a33",
+            "type": "inject",
+            "z": "56abe4ae53a7c46f",
+            "name": "開機自動啟動",
+            "props": [],
+            "repeat": "20",
+            "crontab": "",
+            "once": true,
+            "onceDelay": "1",
+            "topic": "",
+            "x": 160,
+            "y": 660,
+            "wires": [
+                [
+                    "8dbb7ced35bdee51"
+                ]
+            ]
+        },
+        {
+            "id": "8dbb7ced35bdee51",
+            "type": "exec",
+            "z": "56abe4ae53a7c46f",
+            "command": "chcp 65001 > nul && ipconfig",
+            "addpay": "",
+            "append": "",
+            "useSpawn": "false",
+            "timer": "",
+            "winHide": true,
+            "name": "取得 ipconfig",
+            "x": 360,
+            "y": 660,
+            "wires": [
+                [
+                    "b2a632ea0c38843e"
+                ],
+                [
+                    "a1b2c3d4e5f60002"
+                ],
+                [
+                    "a1b2c3d4e5f60003"
+                ]
+            ]
+        },
+        {
+            "id": "b2a632ea0c38843e",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "限流（只送1次 Discord）",
+            "func": "let count = context.get('count') || 0;\ncount++;\ncontext.set('count', count);\n\nif (count <= 2) return msg;\nreturn null;",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 570,
+            "y": 660,
+            "wires": [
+                [
+                    "ff6766546b5e0d83"
+                ]
+            ]
+        },
+        {
+            "id": "ff6766546b5e0d83",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "解析 IP",
+            "func": "let raw = '';\nif (msg.payload && msg.payload.type === 'Buffer' && Array.isArray(msg.payload.data)) {\n    raw = Buffer.from(msg.payload.data).toString('utf8');\n} else if (Buffer.isBuffer(msg.payload)) {\n    raw = msg.payload.toString('utf8');\n} else if (typeof msg.payload === 'string') {\n    raw = msg.payload;\n} else {\n    raw = JSON.stringify(msg.payload);\n}\n\n// ★ Broker IP 從 Tab 環境變數讀取，只需在 Tab 屬性改一次 ★\nconst brokerIP = env.get('BROKER_IP') || '192.168.0.171';\nflow.set('brokerIP', brokerIP);\nconst brokerPrefix = brokerIP.split('.').slice(0, 3).join('.');\n\nconst re = /\\b(?!127\\.|169\\.254\\.|0\\.)(\\d{1,3}\\.){3}\\d{1,3}\\b/g;\nconst allIPs = [...raw.matchAll(re)].map(m => m[0]);\n\nif (allIPs.length === 0) { node.warn('未找到任何 IP'); return null; }\n\n// 優先選與 Broker 同 /24 網段的 IP（WiFi 接 broker 選 WiFi，Ethernet 接 broker 選 Ethernet）\nconst sameSubnet = allIPs.find(ip => ip.startsWith(brokerPrefix + '.'));\nconst ip = sameSubnet || allIPs[0];\n\nmsg.payload = ip;\nmsg._ipSource = sameSubnet ? '同網段' : '備用';\n\nnode.status({\n    fill:  sameSubnet ? 'green' : 'yellow',\n    shape: 'dot',\n    text:  (sameSubnet ? '同網段: ' : '備用: ') + ip\n});\n\nreturn msg;",
+            "outputs": 1,
+            "timeout": "",
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 760,
+            "y": 660,
+            "wires": [
+                [
+                    "9c6486e692844e8d"
+                ]
+            ]
+        },
+        {
+            "id": "9c6486e692844e8d",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "組成 Discord Webhook 格式",
+            "func": "const ip = String(msg.payload);\nconst source = msg._ipSource || '未知';\n\nif (!ip || ip === 'null') {\n    msg.payload = { username: 'Windows 主機', content: '❌ 未找到有效 IPv4' };\n    return msg;\n}\n\nconst brokerIP = flow.get('brokerIP') || '192.168.0.171';\nconst uiUrl      = `http://${ip}:1880/ui`;\nconst playerUrl  = `http://${ip}:5500/multi/player.html?ip=${brokerIP}&port=9001`;\nconst hostUrl    = 'http://127.0.0.1:5500/multi/host.html';\nconst lineDevUrl     = 'https://account.line.biz/login?redirectUri=https%3A%2F%2Fdevelopers.line.biz%2Fconsole%2Fchannel%2Fnew%3Ftype%3Dmessaging-api';\nconst lineManagerUrl = 'https://manager.line.biz/';\n\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.payload = {\n    username: 'Windows 主機',\n    embeds: [{\n        title: '📡 Windows 主機 IP 更新',\n        description:\n            `你的電腦目前 IP：**\\`${ip}\\`** (${source})\\n\\n` +\n            `🖥️ UI 介面：\\n👉 ${uiUrl}\\n\\n` +\n            `🎮 玩家加入連結：\\n👉 ${playerUrl}\\n\\n` +\n            `🎤 主持人頁面：\\n👉 ${hostUrl}\\n\\n` +\n            `💬 LINE Developers：\\n👉 ${lineDevUrl}\\n\\n` +\n            `📱 LINE Manager：\\n👉 ${lineManagerUrl}`,\n        color: 3447003,\n        fields: [\n            { name: '🌐 主機 IP',         value: `\\`${ip}\\` (${source})`,                  inline: true  },\n            { name: '📡 Broker IP',       value: `\\`${brokerIP}\\``,                         inline: true  },\n            { name: '🎮 玩家連結',        value: `[加入遊戲](${playerUrl})`,               inline: false },\n            { name: '🎤 主持人',          value: `[主持人頁面](${hostUrl})`,               inline: true  },\n            { name: '💬 LINE Developers', value: `[開啟 LINE Developers](${lineDevUrl})`,  inline: false },\n            { name: '📱 LINE Manager',    value: `[開啟 LINE Manager](${lineManagerUrl})`, inline: false },\n            { name: '🔧 來源',            value: 'Node-RED 自動回報',                      inline: false }\n        ],\n        footer: { text: '系統自動回報 · SmartCane Node-RED' },\n        timestamp: new Date().toISOString()\n    }]\n};\n\nreturn msg;",
+            "outputs": 1,
+            "timeout": "",
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 990,
+            "y": 660,
+            "wires": [
+                [
+                    "01b3117a9fb3c428"
+                ]
+            ]
+        },
+        {
+            "id": "01b3117a9fb3c428",
+            "type": "http request",
+            "z": "56abe4ae53a7c46f",
+            "name": "送到 Discord",
+            "method": "POST",
+            "ret": "txt",
+            "paytoqs": "ignore",
+            "url": "https://discord.com/api/webhooks/1507070766271959061/bAa1Pf55ixg0bJmqeoJTQVdPt2ScMyITxYr4ukHof8IfBUC6hCaQqysnqkn8paCXQcjO",
+            "tls": "",
+            "persist": false,
+            "proxy": "",
+            "insecureHTTPParser": false,
+            "authType": "",
+            "senderr": false,
+            "headers": [],
+            "x": 1200,
+            "y": 660,
+            "wires": [
+                [
+                    "86497527827e1e7b"
+                ]
+            ]
+        },
+        {
+            "id": "86497527827e1e7b",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "Discord 回應",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": false,
+            "complete": "true",
+            "targetType": "full",
+            "statusVal": "",
+            "statusType": "auto",
+            "x": 1390,
+            "y": 660,
+            "wires": []
+        },
+        {
+            "id": "a1b2c3d4e5f60002",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "ipconfig stderr",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": false,
+            "complete": "payload",
+            "targetType": "msg",
+            "x": 560,
+            "y": 700,
+            "wires": []
+        },
+        {
+            "id": "a1b2c3d4e5f60003",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "ipconfig 錯誤",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": false,
+            "complete": "payload",
+            "targetType": "msg",
+            "x": 560,
+            "y": 740,
+            "wires": []
+        },
+        {
+            "id": "a1b2c3d4e5f60004",
+            "type": "catch",
+            "z": "56abe4ae53a7c46f",
+            "name": "全域錯誤",
+            "scope": null,
+            "uncaught": false,
+            "x": 140,
+            "y": 780,
+            "wires": [
+                [
+                    "a1b2c3d4e5f60005"
+                ]
+            ]
+        },
+        {
+            "id": "a1b2c3d4e5f60005",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "錯誤日誌",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": false,
+            "complete": "true",
+            "targetType": "full",
+            "x": 380,
+            "y": 780,
+            "wires": []
+        },
+        {
+            "id": "hist_comment_01",
+            "type": "comment",
+            "z": "56abe4ae53a7c46f",
+            "name": "── 歷史成績持久化（存檔 / HTTP 讀取）──",
+            "info": "偵測 quiz/multi/state phase=end，將 history 物件寫入 history.json\nHTTP GET /quiz/history 讓 player.html 跨裝置讀取歷史紀錄",
+            "x": 270,
+            "y": 860,
+            "wires": []
+        },
+        {
+            "id": "hist_mqtt_in",
+            "type": "mqtt in",
+            "z": "56abe4ae53a7c46f",
+            "name": "quiz/multi/state (偵測 end)",
+            "topic": "quiz/multi/state",
+            "qos": "1",
+            "datatype": "json",
+            "broker": "ff1f1c66f72c9743",
+            "nl": false,
+            "rap": false,
+            "rh": 0,
+            "inputs": 0,
+            "x": 170,
+            "y": 920,
+            "wires": [["hist_fn_save"]]
+        },
+        {
+            "id": "hist_fn_save",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "儲存歷史紀錄",
+            "func": "const d = msg.payload;\nif (d.phase !== 'end' || !d.history || !Object.keys(d.history).length) return null;\nconst fs = require('fs');\n// 相對路徑（相對於啟動 Node-RED 時的工作目錄，需為專案根目錄 C:/question）\nconst filePath = 'multi/history.json';\ntry {\n    // 讀取現有完整紀錄\n    let existing = {};\n    try { existing = JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch(e) {}\n\n    // 智慧合併：前端 games >= 後端 → 直接覆蓋；後端較多（localStorage 曾被清除）→ 疊加本局數據\n    Object.entries(d.history).forEach(([name, newData]) => {\n        const e = existing[name];\n        if (!e || newData.games >= e.games) {\n            // 新資料 games 更多（前端紀錄完整）或全新玩家 → 直接覆蓋\n            existing[name] = newData;\n        } else {\n            // 後端 games 較多（前端曾重置）→ 疊加本局實際數據，不丟棄\n            existing[name].games      += newData.games;\n            existing[name].totalScore += newData.totalScore;\n            existing[name].highScore   = Math.max(e.highScore, newData.highScore);\n            existing[name].firstCount += newData.firstCount;\n            existing[name].lastSeen    = Math.max(e.lastSeen || 0, newData.lastSeen || 0);\n        }\n    });\n\n    const count = Object.keys(existing).length;\n    fs.writeFileSync(filePath, JSON.stringify(existing, null, 2), 'utf8');\n    node.status({ fill:'green', shape:'dot', text:`合計 ${count} 位玩家 · ${new Date().toLocaleTimeString()}` });\n    msg.payload = `歷史成績已合併儲存（共 ${count} 位玩家）`;\n    return msg;\n} catch(e) {\n    node.error('寫檔失敗：' + e.message);\n    return null;\n}",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 400,
+            "y": 920,
+            "wires": [["hist_debug_save"]]
+        },
+        {
+            "id": "hist_debug_save",
+            "type": "debug",
+            "z": "56abe4ae53a7c46f",
+            "name": "歷史儲存結果",
+            "active": true,
+            "tosidebar": true,
+            "console": false,
+            "tostatus": true,
+            "complete": "payload",
+            "targetType": "msg",
+            "statusType": "auto",
+            "x": 630,
+            "y": 920,
+            "wires": []
+        },
+        {
+            "id": "hist_comment_02",
+            "type": "comment",
+            "z": "56abe4ae53a7c46f",
+            "name": "── 歷史成績 HTTP API（GET /quiz/history）──",
+            "info": "player.html 以 fetch 呼叫此 API，含 CORS header，支援手機跨裝置查詢",
+            "x": 280,
+            "y": 1000,
+            "wires": []
+        },
+        {
+            "id": "hist_http_in",
+            "type": "http in",
+            "z": "56abe4ae53a7c46f",
+            "name": "GET /quiz/history",
+            "url": "/quiz/history",
+            "method": "get",
+            "upload": false,
+            "swaggerDoc": "",
+            "x": 160,
+            "y": 1060,
+            "wires": [["hist_fn_read"]]
+        },
+        {
+            "id": "hist_fn_read",
+            "type": "function",
+            "z": "56abe4ae53a7c46f",
+            "name": "讀取歷史 + CORS",
+            "func": "const fs = require('fs');\n// 相對路徑（相對於啟動 Node-RED 時的工作目錄，需為專案根目錄 C:/question）\nconst filePath = 'multi/history.json';\ntry {\n    msg.payload = fs.readFileSync(filePath, 'utf8');\n} catch(e) {\n    msg.payload = '{}';\n}\nmsg.headers = {\n    'Content-Type': 'application/json',\n    'Access-Control-Allow-Origin': '*',\n    'Cache-Control': 'no-cache'\n};\nnode.status({ fill:'blue', shape:'dot', text: new Date().toLocaleTimeString() });\nreturn msg;",
+            "outputs": 1,
+            "timeout": 0,
+            "noerr": 0,
+            "initialize": "",
+            "finalize": "",
+            "libs": [],
+            "x": 390,
+            "y": 1060,
+            "wires": [["hist_http_res"]]
+        },
+        {
+            "id": "hist_http_res",
+            "type": "http response",
+            "z": "56abe4ae53a7c46f",
+            "name": "",
+            "statusCode": "200",
+            "headers": {},
+            "x": 590,
+            "y": 1060,
+            "wires": []
+        },
+        {
+            "id": "ff1f1c66f72c9743",
+            "type": "mqtt-broker",
+            "name": "家裡電腦",
+            "broker": "192.168.0.199",
+            "port": 1883,
+            "clientid": "",
+            "autoConnect": true,
+            "usetls": false,
+            "protocolVersion": 4,
+            "keepalive": 60,
+            "cleansession": true,
+            "autoUnsubscribe": true,
+            "birthTopic": "",
+            "birthQos": "0",
+            "birthRetain": "false",
+            "birthPayload": "",
+            "birthMsg": {},
+            "closeTopic": "",
+            "closeQos": "0",
+            "closeRetain": "false",
+            "closePayload": "",
+            "closeMsg": {},
+            "willTopic": "",
+            "willQos": "0",
+            "willRetain": "false",
+            "willPayload": "",
+            "willMsg": {},
+            "userProps": "",
+            "sessionExpiry": ""
+        }
+    ]

@@ -1,0 +1,13 @@
+{
+  "name": "host-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "多人搶答主持人畫面的桌面殼層（獨立模組，載入既有 Caddy 網站 http://localhost:8080/multi/host.html，不修改任何既有檔案）",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^43.0.0"
+  }
+}

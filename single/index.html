@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手勢互動問答遊戲</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<!-- Live2D canvas 由 live2d.js 動態建立並 append 到 body -->
+
+<!-- ===== INTRO SCREEN ===== -->
+<div id="screen-intro" class="screen active">
+  <div class="card intro-card">
+    <div class="intro-logo">
+      <span id="intro-icon" class="logo-icon">🖐️</span>
+      <h1 class="game-title">手勢互動問答遊戲</h1>
+      <p class="game-subtitle">GESTURE QUIZ GAME</p>
+    </div>
+
+    <div class="gesture-guide">
+      <h3 class="section-label">手勢對應</h3>
+      <div class="gesture-grid">
+        <div class="gesture-item">
+          <span class="g-emoji">👊</span>
+          <span class="g-key">A</span>
+          <span class="g-name">Rock Fist</span>
+        </div>
+        <div class="gesture-item">
+          <span class="g-emoji">✌️</span>
+          <span class="g-key">B</span>
+          <span class="g-name">Victory</span>
+        </div>
+        <div class="gesture-item">
+          <span class="g-emoji">☝️</span>
+          <span class="g-key">C</span>
+          <span class="g-name">One Finger</span>
+        </div>
+        <div class="gesture-item">
+          <span class="g-emoji">✋</span>
+          <span class="g-key">D</span>
+          <span class="g-name">Open Palm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-info">
+      <div class="info-col">
+        <span class="info-label">每局題數</span>
+        <span id="total-q-count" class="info-value">10</span>
+      </div>
+      <div class="info-divider"></div>
+      <div class="info-col">
+        <span class="info-label">題庫總數</span>
+        <span id="pool-q-count" class="info-value">--</span>
+      </div>
+    </div>
+    <div id="bank-badge" class="bank-badge">📂 <span id="bank-name">questions.json</span></div>
+
+    <div class="cam-src-group">
+      <button id="btn-src-webcam" class="cam-src-btn" type="button">📷 USB 相機</button>
+      <button id="btn-src-esp32"  class="cam-src-btn" type="button">📡 ESP32-CAM</button>
+    </div>
+    <div id="esp32cam-url-wrap" class="hidden">
+      <div class="esp32cam-url-row">
+        <input id="esp32cam-url-input" class="esp32cam-url-input" type="text"
+               spellcheck="false" autocomplete="off"
+               placeholder="http://192.168.0.x:81/stream">
+        <button id="btn-esp32cam-check" class="btn-esp32cam-check" type="button">確認</button>
+      </div>
+    </div>
+
+    <div id="cam-status-wrap" class="cam-status-wrap cam-checking">
+      <span class="cam-dot"></span>
+      <span id="cam-status-text">偵測相機中...</span>
+    </div>
+
+    <button id="btn-start" class="btn-primary" disabled>▶ 開始遊戲</button>
+    <button id="btn-fullscreen" class="btn-secondary">⛶ 全螢幕模式</button>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="screen-game" class="screen">
+
+  <!-- Progress bar at very top -->
+  <div class="progress-bar-track">
+    <div id="progress-bar" class="progress-bar-fill"></div>
+  </div>
+
+  <!-- Top info bar -->
+  <div class="top-bar">
+    <div class="q-counter">
+      題目 <strong id="q-current">1</strong> / <span id="q-total">10</span>
+    </div>
+    <div id="score-badge" class="score-badge">✓ <span id="score-val">0</span></div>
+  </div>
+
+  <!-- Main game area -->
+  <div class="game-main">
+    <div id="q-card" class="q-card">
+      <div class="q-domain-wrap"><span id="q-domain" class="q-domain-badge"></span></div>
+      <div id="q-text" class="q-text">載入題目中...</div>
+      <div class="options-grid">
+        <div class="option" id="opt-A">
+          <div class="opt-letter">A</div>
+          <div class="opt-content">
+            <span id="opt-A-text" class="opt-text"></span>
+          </div>
+        </div>
+        <div class="option" id="opt-B">
+          <div class="opt-letter">B</div>
+          <div class="opt-content">
+            <span id="opt-B-text" class="opt-text"></span>
+          </div>
+        </div>
+        <div class="option" id="opt-C">
+          <div class="opt-letter">C</div>
+          <div class="opt-content">
+            <span id="opt-C-text" class="opt-text"></span>
+          </div>
+        </div>
+        <div class="option" id="opt-D">
+          <div class="opt-letter">D</div>
+          <div class="opt-content">
+            <span id="opt-D-text" class="opt-text"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer (top right) -->
+  <div id="timer-wrap" class="timer-wrap hidden">
+    <div class="timer-label">剩餘時間</div>
+    <div id="timer-num" class="timer-num">10</div>
+  </div>
+
+  <!-- Selected answer banner -->
+  <div id="selected-banner" class="selected-banner hidden">
+    你的答案：<span id="selected-letter" class="selected-letter"></span>
+  </div>
+
+  <!-- Camera + Gesture corner -->
+  <div id="cam-corner" class="cam-corner hidden">
+    <div class="cam-wrap" id="cam-wrap">
+      <video id="webcam" autoplay muted playsinline></video>
+      <img id="esp32cam-img" class="cam-esp32" crossorigin="anonymous" style="display:none" alt="">
+      <canvas id="cam-canvas"></canvas>
+      <div class="cam-badge">CAMERA</div>
+    </div>
+    <div class="gesture-display">
+      <div class="gd-label">Detected</div>
+      <div id="gd-text" class="gd-text">--</div>
+      <div class="gd-bar-track">
+        <div id="gd-bar" class="gd-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY: Prepare countdown -->
+  <div id="overlay-prepare" class="overlay hidden">
+    <div class="ov-prepare-label">準備作答</div>
+    <div id="prepare-count" class="big-count count-anim">3</div>
+  </div>
+
+  <!-- OVERLAY: Result (correct/wrong) -->
+  <div id="overlay-result" class="overlay hidden">
+    <div id="result-icon" class="result-icon"></div>
+    <div id="result-text" class="result-text"></div>
+    <div id="result-sub" class="result-sub"></div>
+  </div>
+
+  <!-- OVERLAY: Explanation -->
+  <div id="overlay-expl" class="overlay hidden">
+    <div class="expl-card">
+      <div class="expl-header">正確答案</div>
+      <div id="expl-answer" class="expl-answer"></div>
+      <div id="expl-text" class="expl-text"></div>
+      <div class="expl-next">繼續下一題...</div>
+    </div>
+  </div>
+
+  <!-- OVERLAY: Loading -->
+  <div id="overlay-loading" class="overlay hidden">
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">初始化手勢辨識...</div>
+      <div class="loading-sub">請允許相機存取權限</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== FINISH SCREEN ===== -->
+<div id="screen-finish" class="screen">
+  <div class="card finish-card">
+    <div id="finish-emoji" class="finish-emoji">🎉</div>
+    <h2 class="finish-title">遊戲結束！</h2>
+    <div class="score-grid">
+      <div class="score-cell">
+        <div class="sc-label">總題數</div>
+        <div id="f-total" class="sc-val">10</div>
+      </div>
+      <div class="score-cell c-rate">
+        <div class="sc-label">正確率</div>
+        <div id="f-rate" class="sc-val">0%</div>
+      </div>
+      <div class="score-cell c-correct">
+        <div class="sc-label">答對</div>
+        <div id="f-correct" class="sc-val">0</div>
+      </div>
+      <div class="score-cell c-wrong">
+        <div class="sc-label">答錯</div>
+        <div id="f-wrong" class="sc-val">0</div>
+      </div>
+    </div>
+    <button id="btn-restart" class="btn-primary">↩ 再玩一次</button>
+    <button id="btn-fullscreen2" class="btn-secondary">⛶ 全螢幕</button>
+  </div>
+</div>
+
+<!-- MQTT 連線狀態徽章（固定右下角，所有畫面都顯示） -->
+<div id="mqtt-status" class="s-off">
+  <span class="mqtt-dot"></span>
+  <span id="mqtt-status-text">MQTT</span>
+</div>
+
+<!-- MQTT.js (WebSocket MQTT for browser) -->
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="MQTTSound.js"></script>
+
+<!-- MediaPipe CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+<!-- Live2D: Cubism 2 Core → Cubism 3/4 Core → PIXI → pixi-live2d-display all bundle -->
+<script src="../lib/live2d.min.js"></script>
+<script src="../lib/live2dcubismcore.min.js"></script>
+<script src="../lib/pixi.min.js"></script>
+<script src="../lib/all.min.js"></script>
+<script src="../lib/live2d.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

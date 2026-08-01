@@ -1,0 +1,708 @@
+# 多人搶答系統 — 技術說明文件
+
+## 目錄
+
+1. [系統架構概覽](#系統架構概覽)
+2. [檔案與模組責任](#檔案與模組責任)
+3. [調整參數區（MP_CFG）](#調整參數區mpcfg)
+4. [MQTT 主題對應表](#mqtt-主題對應表)
+5. [遊戲流程與狀態機](#遊戲流程與狀態機)
+6. [遊戲模式說明](#遊戲模式說明)
+7. [計分公式](#計分公式)
+8. [題庫格式規範](#題庫格式規範)
+9. [Live2D 整合說明](#live2d-整合說明)
+10. [音效系統](#音效系統)
+11. [使用說明（快速上手）](#使用說明快速上手)
+12. [公網對外開放（ngrok + Caddy）](#公網對外開放ngrok--caddy)
+13. [常見問題與排除](#常見問題與排除)
+
+---
+
+## 系統架構概覽
+
+```
+瀏覽器 host.html  ──┐
+                    ├── MQTT Broker (WebSocket :9001) ──┬── 玩家 player.html (1~4 人)
+Node-RED (選配) ────┘                                   └── Node-RED 音效觸發 (選配)
+```
+
+- **通訊協定**：MQTT over WebSocket（mqtt.js 瀏覽器端）
+- **無需後端程式**：Broker（例如 Mosquitto）即為唯一伺服器
+- **人數上限**：主持人 + 玩家共 5 人，其中玩家最多 4 人
+- **網路需求**：所有裝置必須在同一區域網路（或可互連的網段）
+
+---
+
+## 檔案與模組責任
+
+### `multi/multiplay.js` — 共享邏輯層
+
+兩個頁面都載入此檔案，放置雙方共用的功能：
+
+| 區塊 | 內容 |
+|------|------|
+| `MP_CFG` | 所有可調整的遊戲參數（唯一需要改的地方） |
+| `MP_TOPICS` | MQTT 主題字串常數 |
+| `MP_MEDALS / MP_PLAYER_COLORS` | 獎牌表情符號、玩家顏色列表 |
+| `mpCalcPoints(timeLeft, isCorrect)` | 依剩餘秒數計算得分／扣分 |
+| `mpShuffle(arr)` | Fisher-Yates 亂序洗牌 |
+| `mpRankPlayers(players)` | 依分數降冪排名，回傳含 rank 的陣列 |
+| 音效子系統 | SFX 音效、BGM 背景音樂、toggleSound、playBeep 等 |
+| `createBGMControl(bottomPx)` | 動態建立 BGM 音量滑桿 UI |
+
+---
+
+### `multi/host.html` — 主持人端
+
+**責任**：控制整場遊戲流程，是唯一的權威方（所有狀態以主持人為準）。
+
+#### 主要狀態物件 `HS`
+
+```js
+HS = {
+  myId, myName,           // 主持人識別碼與名稱
+  phase,                  // 當前遊戲階段（見狀態機）
+  players,                // { id → { name, score, color } }
+  questions,              // 本局題目陣列（已洗牌）
+  qIdx,                   // 目前題號（0-based）
+  gameMode,               // 'all' 全員作答 | 'race' 搶答制
+  playerAnswers,          // { id → 字母 }（all 模式）
+  playerDeltas,           // { id → 得分 }（all 模式）
+  answeredIds,            // Set，已作答玩家（all 模式）
+  wrongIds,               // Set，已答錯玩家（race 模式）
+  buzzer,                 // 本題搶答者 { id, name, letter, delta }
+  reactionTimes,          // { id → [秒數, ...] }，反應時間記錄
+}
+```
+
+#### 核心函式流程
+
+```
+init()
+  └─ loadBankIndex() → mqttInit() → L2D.init()
+
+startGame()
+  └─ startQ(0)
+       └─ startPrepare()   ← 顯示倒數
+            └─ startAnswering()  ← 顯示題目、開始計時
+                 └─ onAnswer() / onTimeout()
+                      └─ showResult()
+                           └─ showExpl()
+                                └─ nextQ() → startQ(idx+1)
+                                          or endGame()
+```
+
+#### 主持人特殊能力
+
+- 主持人本身也是「玩家 1」，可直接點選選項 A/B/C/D 作答
+- 大廳可上傳自訂 JSON 題庫、使用表單手動建題、或選擇 AI 生成題庫
+- 遊戲結束後顯示**歷史成績**與**反應時間分析**（最快/最慢/平均）
+
+---
+
+### `multi/player.html` — 玩家端
+
+**責任**：接收主持人廣播狀態、顯示題目與選項、發送作答、顯示個人結果。
+
+#### 主要狀態物件 `PS`
+
+```js
+PS = {
+  myId,          // sessionStorage 持久化的識別碼（重新整理不變）
+  myName,        // 玩家名稱
+  score,         // 當前分數
+  localPhase,    // 玩家端目前顯示的 phase（避免重複處理同一 phase）
+  clockOffset,   // 與主持人的時鐘差（ms），消除裝置時間不一致
+  answered,      // 本題是否已作答
+  myAnswer,      // 本題所選字母（供結果顯示圈叉用）
+  prevScore,     // 作答前分數快照（計算 delta 用）
+  gameMode,      // 同步自 STATE
+}
+```
+
+#### 圈叉判斷邏輯（個人化結果）
+
+結果顯示以「**自己的作答**」為準，不受他人影響：
+
+```
+iAnsweredCorrect = (PS.myAnswer === correctAnswer) → ⭕ 綠色
+iAnsweredWrong   = (PS.myAnswer 存在 && 不等於正確答案) → ❌ 紅色
+未作答 / 被鎖定   = → ⏰ 灰色
+```
+
+---
+
+### `../lib/live2d.js` — Live2D 角色控制（共用）
+
+兩個頁面都載入，提供 `L2D` 全域物件。
+
+| 方法 | 用途 |
+|------|------|
+| `L2D.init()` | 初始化 PIXI 畫布與兩個角色模型 |
+| `L2D.speak(text, {type})` | 角色一說話（文字泡沫） |
+| `L2D.speak2(text, {type})` | 角色二說話 |
+| `L2D.playEmotion(type)` | 播放情緒動作（correct/wrong/celebrate/info） |
+| `L2D.startDialogue(intervalMs)` | 開始定時對話（題目出現時） |
+| `L2D.stopDialogue()` | 停止定時對話 |
+| `L2D.dismissAll()` | 立即清除所有文字泡沫 |
+| `L2D.startIdleMotion(ms)` | 開始閒置隨機動作 |
+| `L2D.stopIdleMotion()` | 停止閒置動作 |
+| `L2D.startDrag(key)` | 啟用拖曳模式（canvas z-index → 9999） |
+| `L2D.stopDrag()` | 停用拖曳模式（canvas z-index → 5） |
+
+**z-index 層級設計**：
+
+```
+Live2D canvas（預設）  z-index: 5
+Live2D speech bubble   z-index: 100
+.screen（host/player） z-index: 110   ← 蓋過泡沫
+.overlay（遮罩層）     z-index: 120   ← 蓋過選項
+Live2D canvas（拖曳）  z-index: 9999  ← 蓋過所有 UI
+```
+
+---
+
+### `../style.css` — 全域樣式
+
+所有畫面共用，包含：螢幕管理（`.screen`）、題卡（`.q-card`）、選項格（`.options-grid`）、遮罩層（`.overlay`）、結果動畫等。
+
+---
+
+## 調整參數區（MP_CFG）
+
+**位置**：`multiplay.js` 第 4–19 行，**改這裡即可影響整場遊戲**。
+
+```js
+const MP_CFG = {
+  brokerIP:     window.location.hostname || '192.168.0.171',
+  //  ^ MQTT Broker IP，預設自動跟隨頁面所在伺服器 IP
+  //    若手動指定，請改為 Mosquitto 所在機器的 IP
+
+  wsPort:       9001,
+  //  ^ MQTT WebSocket 埠號，Mosquitto 預設為 9001
+  //    需在 Mosquitto 設定檔中啟用 listener 9001 websockets
+
+  QUESTION_BANK: '../questions/business.json',
+  //  ^ 預設題庫路徑（主持人大廳可再動態切換）
+
+  GAME_Q_COUNT: 10,
+  //  ^ 預設每局題數（主持人大廳可修改，範圍 1–50）
+
+  PREPARE_TIME: 3,
+  //  ^ 準備倒數秒數（每題開始前的倒數，建議 3–5 秒）
+
+  ANSWER_TIME:  12,
+  //  ^ 每題作答秒數（計時器倒數，建議 10–20 秒）
+
+  LOCK_MS:      900,
+  //  ^ 搶答畫面停留時間（ms），讓玩家看清楚搶答者後才揭曉答案
+
+  RESULT_MS:    2500,
+  //  ^ 結果遮罩顯示時間（ms），顯示圈叉後停留多久才進入解說
+
+  EXPL_MS:      4000,
+  //  ^ 解說遮罩顯示時間（ms），顯示正確答案與說明後停留多久
+
+  enableLive2D: true,
+  //  ^ 玩家裝置是否載入 Live2D（true=載入，false=跳過，低效能裝置建議 false）
+
+  MAX_SCORE:    10,
+  //  ^ 立即作答答對的最高得分（建議與題數相符，使滿分 = 題數 × MAX_SCORE）
+
+  MIN_SCORE:    1,
+  //  ^ 最後一秒作答答對的最低得分
+
+  MAX_PENALTY:  5,
+  //  ^ 立即作答答錯的最高扣分
+
+  MIN_PENALTY:  1,
+  //  ^ 最後一秒作答答錯的最低扣分
+};
+```
+
+> **注意**：修改後重新整理所有頁面才會生效。`MP_CFG` 是前端常數，不會自動同步。
+
+---
+
+## MQTT 主題對應表
+
+| 主題 | 方向 | QoS | Retain | 用途 |
+|------|------|-----|--------|------|
+| `quiz/multi/join` | player → host | 1 | 否 | 玩家加入申請（含 id、name） |
+| `quiz/multi/state` | host → all | 1 | **是** | 遊戲狀態廣播（phase、題目、選項、分數等） |
+| `quiz/multi/answer` | player/host → host | 1 | 否 | 作答（含 id、name、letter） |
+| `quiz/multi/result` | host → all | 1 | 否 | 本題結果（正確答案、得分、解說） |
+| `quiz/multi/l2d` | host → all | 0 | 否 | Live2D 動作同步（說話、情緒） |
+| `quiz/sound` | Node-RED → all | 0 | 否 | 音效觸發指令（純文字 track 名稱，選配） |
+
+**Retain 說明**：`quiz/multi/state` 設定為 Retain，玩家晚加入時也能立即收到最新遊戲狀態。
+
+---
+
+## 遊戲流程與狀態機
+
+### 主持人端 `HS.phase`
+
+```
+lobby
+  │ 點擊「開始遊戲」
+  ↓
+prepare  ←── 每題開始（倒數 PREPARE_TIME 秒）
+  │
+  ↓
+answering  ←── 顯示題目、計時 ANSWER_TIME 秒
+  │ 所有人答完 / 時間到 / 搶答正確
+  ↓
+locked  ←── 停留 LOCK_MS ms（顯示搶答者）
+  │
+  ↓
+result  ←── 顯示圈叉、更新分數，停留 RESULT_MS ms
+  │
+  ↓
+expl  ←── 顯示正確答案與解說，停留 EXPL_MS ms
+  │ 還有題目
+  ↓ ──→ prepare（下一題）
+  │ 全部結束
+  ↓
+end
+  │ 點擊「再玩一次」
+  ↓
+lobby
+```
+
+### 玩家端收到 `STATE.phase` 的對應行為
+
+| phase | 玩家畫面動作 |
+|-------|------------|
+| `lobby` | 返回加入畫面，重置分數 |
+| `prepare` | 顯示倒數覆蓋層，隱藏選項 |
+| `answering` | 顯示題目與 ABCD 選項，啟動計時器 |
+| `locked` | 鎖定按鈕，若有搶答者顯示搶答提示 |
+| `result` | 由 `RESULT` 訊息（而非 STATE）觸發，顯示圈叉 |
+| `expl` | 顯示正確答案與解說 |
+| `end` | 切換至結算畫面 |
+| `host_left` | 返回加入畫面，顯示「主持人已離開」 |
+
+---
+
+## 遊戲模式說明
+
+### 📋 全員作答制（`gameMode: 'all'`）
+
+- 所有玩家（含主持人）均可作答
+- **等所有人答完，或時間到**，才一次公布答案
+- 先答並答對得分較高（線性縮放至剩餘秒數）
+- 答錯扣分，未作答不扣分
+
+### ⚡ 搶答制（`gameMode: 'race'`）
+
+- 最快答對的玩家結束本題（其他人停止作答）
+- 答錯者被排除在本題之外（加入 `wrongIds`），其餘人繼續作答
+- 所有人均答錯或時間到 → 顯示「無人答對」
+
+---
+
+## 計分公式
+
+**核心概念：越快答越多分，越慢答越少分。答錯也依速度扣分。**
+
+計時器從 12 秒倒數，剩餘時間越多代表「越快答」，得分也越高；反之剩越少時間，得分越低。答錯同理，越快答錯扣越多。
+
+```
+得分 / 扣分依「剩餘時間佔總時間的比例」線性縮放：
+
+  剩餘比例 = 剩餘秒數 ÷ 作答總秒數（介於 0 到 1 之間）
+
+  答對得分 = 最高得分 × 剩餘比例（最少拿到最低得分）
+  答錯扣分 = 最高扣分 × 剩餘比例（最少被扣最低扣分）
+```
+
+**白話舉例**（預設：作答時間 12 秒、答對最高 10 分、答錯最多扣 5 分）：
+
+| 情境 | 剩餘時間 | 答對得分 | 答錯扣分 |
+|------|----------|----------|----------|
+| 題目一出來馬上按 | 12 秒（全部剩餘） | **+10 分** | −5 分 |
+| 猶豫了一半時間 | 6 秒 | **+5 分** | −3 分 |
+| 最後一秒才按 | 1 秒 | **+1 分** | −1 分 |
+| 沒作答 | 0 秒 | 0 分 | 0 分 |
+
+> **未作答不扣分**，只有主動按錯才會被扣。  
+> **滿分計算**：若設 10 題、每題最高 10 分，完美全對可拿 100 分。
+
+---
+
+## 題庫格式規範
+
+### JSON 陣列，每題一個物件
+
+```json
+[
+  {
+    "question":    "題目文字（必填）",
+    "options": {
+      "A": "選項 A 文字（必填）",
+      "B": "選項 B 文字（必填）",
+      "C": "選項 C 文字（必填）",
+      "D": "選項 D 文字（必填）"
+    },
+    "answer":      "A",
+    "explanation": "正確答案解說（可空字串）",
+    "domain":      "分類標籤（選填，顯示於題卡左上角）"
+  }
+]
+```
+
+### 現有題庫列表（`questions/index.json`）
+
+| 檔案 | 名稱 |
+|------|------|
+| `business.json` | 📊 商業管理 |
+| `security.json` | 🔒 資訊安全 |
+| `ai.json` | 🤖 AI 概念 |
+| `english.json` | 🔤 英文 |
+| `questions.json` | 🔌 ESP32 硬體 |
+
+新增題庫：將 JSON 檔放入 `questions/` 目錄，並在 `index.json` 陣列中新增一筆 `{ "file": "xxx.json", "name": "顯示名稱" }`。
+
+### 題庫建立方式（三選一）
+
+1. **選擇預設題庫**：大廳下拉選單直接選取
+2. **上傳 JSON**：選「📂 自訂題庫」後上傳本機檔案
+3. **表單手動建題**：選「✏️ 自建題庫」，逐題填寫後儲存，重整後仍保留
+4. **AI 生成**：點擊「🤖 AI 題庫生成器」連結，生成後下載 JSON 再上傳
+
+---
+
+## Live2D 整合說明
+
+### 角色設定（`live2d.js` 頂部 `L2D_CFG`）
+
+每個頁面在 `init()` 時設定 `L2D_CFG.storageNS`：
+
+- 主持人端：`L2D_CFG.storageNS = 'h'`
+- 玩家端：`L2D_CFG.storageNS = 'p'`
+
+角色位置存入 `localStorage`，Key 格式為 `l2d_pos_{ns}_c1` / `l2d_pos_{ns}_c2`。
+
+### 大廳角色選單（`../live2d_my_like/`，僅主持人本機）
+
+大廳畫面「Live2D 角色」區塊有兩個下拉選單，列出 `live2d_my_like/manifest.json` 收藏庫裡的所有模型，選了之後存進 `localStorage`（`l2d_mylike_char1` / `l2d_mylike_char2`），重新整理頁面時 `init()` 會用它覆蓋 `L2D_CFG.char1.model` / `char2.model`。**只影響主持人自己的瀏覽器，不會同步給玩家**（玩家端固定用 `lib/live2d.js` 原本寫死的角色）。詳見 [live2d_my_like/README.md](../live2d_my_like/README.md)。
+
+### 左下角懸浮控制按鈕
+
+| 按鈕 | 功能 |
+|------|------|
+| `⠿`（下方，bottom:8px） | 拖曳角色一 |
+| `⠿`（上方，bottom:61px） | 拖曳角色二 |
+| `🔇`（bottom:114px） | 開關音效 |
+| 音量滑桿（bottom:167px） | 調整 BGM 音量 |
+
+**啟用拖曳時**：canvas 提升至 z-index:9999（蓋過所有 UI），可拖曳位置、雙指縮放、Shift+滾輪旋轉。  
+**取消拖曳後**：canvas 恢復 z-index:5，遊戲 UI 正常互動。
+
+### 主持人廣播 L2D 動作（玩家端同步）
+
+主持人播放的情緒、說話動作會透過 `quiz/multi/l2d` 主題廣播，玩家端 `onL2DCmd()` 接收後同步執行，讓雙方角色反應一致。
+
+### 不想啟用 Live2D
+
+在 `MP_CFG` 設定 `enableLive2D: false`，玩家端不載入 Live2D 腳本，效能較低的行動裝置建議關閉。
+
+---
+
+## 音效系統
+
+### 音效檔對應（`sound/` 目錄）
+
+| 常數 | 檔案 | 觸發時機 |
+|------|------|----------|
+| `TRACK_1` | track1.mp3 | 有人答對（連對 1–2 次） |
+| `TRACK_2` | track2.mp3 | 無人答對 / 全錯（連錯 1–2 次） |
+| `TRACK_3` | track3.mp3 | 答對連勝 ≥ 3 次 |
+| `TRACK_4` | track4.mp3 | 無人答對連敗 ≥ 3 次 |
+| `TRACK_5` | track5.mp3 | 遊戲結束（勝者答對率 < 60%） |
+| `TRACK_6` | track6.mp3 | 遊戲結束（勝者答對率 ≥ 60%） |
+| `TRACK_7` | track7.mp3 | 背景音樂（BGM，循環播放） |
+
+### 靜音控制
+
+- 預設**靜音**（`soundEnabled = false`），避免自動播放被瀏覽器封鎖
+- 點擊左下角 `🔇` 按鈕開啟音效
+- 音效開關狀態**不持久化**（每次整理頁面均預設靜音）
+- BGM 音量由滑桿調整，儲存至 `localStorage['bgm_volume']`
+
+### `playBeep()` 合成嗶聲
+
+使用 Web Audio API 即時合成嗶聲，無需額外 MP3 檔案，用於倒數提示與答題開始音效。
+
+---
+
+## 使用說明（快速上手）
+
+### 環境需求
+
+- **MQTT Broker**：Mosquitto（或其他支援 WebSocket 的 Broker）
+- **WebSocket 埠**：預設 9001（需在 Mosquitto 設定中啟用）
+- **Web 伺服器**：提供 HTML/JS 靜態檔案（Node.js http-server、nginx、Python http.server 均可）
+- **網路**：所有裝置須在同一局域網路
+
+### 步驟一：設定 Mosquitto
+
+`mosquitto.conf` 最低需求：
+```
+listener 1883
+listener 9001
+protocol websockets
+allow_anonymous true
+```
+
+### 步驟二：啟動靜態伺服器
+
+```bash
+# 在 c:\question 目錄下
+npx http-server -p 8080
+# 或
+python -m http.server 8080
+```
+
+### 步驟三：主持人開啟大廳
+
+瀏覽器前往：`http://{主機IP}:8080/multi/host.html`
+
+1. 輸入主持人名稱
+2. 選擇遊戲模式（全員作答 / 搶答制）
+3. 設定每局題數
+4. 選擇題庫
+5. 等待玩家加入（最多 4 人）
+
+### 步驟四：玩家掃描 QR Code 加入
+
+- 掃描大廳頁面的 QR Code，或手動開啟：`http://{主機IP}:8080/multi/player.html`
+- 輸入名稱後點擊「加入」
+
+### 步驟五：開始遊戲
+
+- 至少 1 位玩家加入後，「開始遊戲」按鈕解鎖
+- 主持人點擊「開始遊戲」，所有裝置同步進入遊戲
+
+### 步驟六：遊戲結束後
+
+- 結算畫面顯示名次、分數、歷史紀錄、反應時間分析
+- 點擊「再玩一局」回到大廳重置分數，玩家自動重新加入
+
+---
+
+## 公網對外開放（ngrok + Caddy）
+
+讓**區網外**（非同一 Wi-Fi/網段）的玩家也能加入遊戲。核心作法：用 [Caddy](../Caddyfile) 當本機網站伺服器 + MQTT 反向代理，再用 ngrok 把 Caddy 的對外連接埠曝露到公網。
+
+### 為什麼可以不改任何程式碼
+
+[`Caddyfile`](../Caddyfile) 除了當靜態網頁伺服器（`:8080`），還把 `/mqtt` 路徑反向代理到 `localhost:9001`（MQTT broker 的 WebSocket 埠）：
+
+```
+:8080 {
+    root * .
+    file_server
+    reverse_proxy /mqtt localhost:9001 {
+        transport http { versions 1.1 }
+    }
+}
+```
+
+而 `multiplay.js` 的 `mpMqttUrl()`（第 25–29 行）會依頁面協定自動切換連線方式：
+
+```js
+function mpMqttUrl() {
+  if (location.protocol === 'https:')
+    return `wss://${MP_CFG.brokerIP}/mqtt`;          // 走 Caddy 的 /mqtt 代理（公網用）
+  return `ws://${MP_CFG.brokerIP}:${MP_CFG.wsPort}`; // 區網內直連 9001（本機用）
+}
+```
+
+玩家透過 ngrok 的 `https://` 網址進來時，頁面協定是 `https:`，前端會自動改用 `wss://.../mqtt`，剛好對上 Caddy 的代理路徑 —— 不需要額外設定。
+
+### 三層服務架構
+
+公網對外開放時，主機端會同時跑三個本機服務，彼此只在「同一個 MQTT broker」這個點上匯合，網路路徑互不干擾：
+
+| 服務 | Port | 用途 | 誰會連 |
+|---|---|---|---|
+| MQTT Broker（Mosquitto） | 9001 | 所有訊息真正的匯合點 | 以下兩者都連到它 |
+| Live Server（VS Code） | 5500 | 主持人本機開 `host.html`（`host-app` 桌面殼層也是走這個） | 只有主持人，純區網內 `http:` 直連 broker `ws://127.0.0.1:9001` |
+| Caddy + ngrok | 8080 | 玩家端 `player.html`，含 `/mqtt` 反代 | 區網外玩家，走 `https:` → `wss://.../mqtt` |
+
+> **`host-app`（Electron 桌面殼層）不受公網開放影響**：它固定載入本機 `http://127.0.0.1:5500/multi/host.html`，協定是 `http:`，永遠走區網內直連 `ws://127.0.0.1:9001`，跟 ngrok/Caddy 是否啟動完全無關。
+
+### 設定步驟（含實際指令）
+
+這台機器的 Mosquitto 是裝成 **Windows 服務**，開機通常已在背景執行；ngrok 也已在本機完成 `authtoken` 登入，不用重新設定。
+
+**1. 確認 MQTT broker（Mosquitto 服務）是否在跑**
+
+```bat
+sc query mosquitto
+```
+
+看到 `STATE : 4 RUNNING` 即可略過下一步；若是 `STOPPED`，用系統管理員權限的終端機啟動：
+
+```bat
+net start mosquitto
+```
+
+**2. 啟動 Caddy**（另開一個終端機視窗，會佔用前景，關閉視窗即停止）
+
+```bash
+cd c:\question
+.\caddy.exe run
+```
+
+**3. 啟動 ngrok，對準 Caddy 的 8080**（再另開一個終端機視窗；⚠️ 不是對準 Live Server 的 5500——Live Server 沒有 `/mqtt` 反代路徑，遠端玩家會連不到 broker，搶答功能整個失效）
+
+```bash
+ngrok http 8080
+```
+
+**4. 取得公開網址**
+
+終端機畫面上 `Forwarding` 那一行就是網址，或用指令直接查（ngrok 執行中會在本機開一個查詢用 API）：
+
+```bash
+curl -s http://127.0.0.1:4040/api/tunnels | grep -o "https://[a-zA-Z0-9.-]*\.ngrok-free\.app"
+```
+
+把 `<該網址>/multi/player.html` 分享給區網外玩家（或轉成 QR code）。
+
+**5. 主持人端**：維持原本習慣的方式開 `host.html`（Live Server 5500 或 `host-app`），不需要改變。
+
+**結束時**：`Ctrl+C` 關閉 ngrok 與 Caddy 的終端機視窗即可；Mosquitto 是服務，預設會繼續留著背景執行，不影響其他用途，若真的要停用：
+
+```bat
+net stop mosquitto
+```
+
+> **注意**：免費版 ngrok 每次重啟通道網址會變（除非帳號有申請固定的 static domain），每次開放前需重新分享新網址給玩家。
+
+---
+
+## 常見問題與排除
+
+### 玩家無法加入（一直顯示「MQTT 離線」）
+
+1. 確認 Mosquitto 正在執行，且已啟用 WebSocket listener 9001
+2. 確認 `MP_CFG.brokerIP` 與 `MP_CFG.wsPort` 正確
+3. 防火牆是否開放 TCP 9001 埠
+4. 主持人與玩家是否在同一網路下
+
+### 玩家加入後畫面停在「等待主持人開始遊戲」
+
+- 正常現象，等主持人點擊「開始遊戲」後即會自動同步
+- 若主持人已開始但玩家沒動靜，檢查 MQTT 連線狀態徽章（右上角）
+
+### 修改 `MP_CFG` 後無效
+
+- 所有裝置均需**重新整理頁面**，`MP_CFG` 是前端常數，不會透過 MQTT 同步
+
+### Live2D 角色不顯示
+
+- 確認 `../lib/live2dcubismcore.min.js`、`../lib/pixi.min.js`、`../lib/all.min.js`、`../lib/live2d.js` 均可存取
+- 玩家端可設 `enableLive2D: false` 跳過載入
+
+### 拖曳角色時遊戲 UI 無法點擊
+
+- 屬於設計行為：拖曳模式下 canvas z-index 提升至 9999 以接收滑鼠事件
+- 再次點擊左下角對應的 `⠿` 按鈕取消拖曳即可恢復正常
+
+### 想修改得分規則
+
+調整 `MP_CFG` 中的四個參數：`MAX_SCORE`、`MIN_SCORE`、`MAX_PENALTY`、`MIN_PENALTY`，得分公式詳見[計分公式](#計分公式)章節。
+
+---
+
+## 響應式版面設計說明
+
+### 整體原則
+
+| 檔案 | 目標裝置 | 響應式設計 |
+|------|----------|-----------|
+| `host.html` | **電腦（桌面）** | 固定桌面版面，不考慮手機 |
+| `player.html` | **手機為主** | 針對手機直屏最佳化，兼顧桌面與橫屏 |
+
+---
+
+### `player.html` — CSS 斷點對照表
+
+以下為 `player.html` 內 `<style>` 區塊中所有與裝置相關的 CSS 規則：
+
+#### 1. Live2D 位移補償（桌面用）
+
+```css
+/* 套用條件：Live2D 載入完成（body.l2d-ready）且螢幕寬度 > 900px */
+body.l2d-ready #screen-game,
+body.l2d-ready #screen-end {
+  padding-left: 40vw;   /* 左側讓出 Live2D 角色空間 */
+}
+
+/* 套用條件：螢幕寬度 ≤ 900px（手機 / 小平板）*/
+@media (max-width:900px) {
+  body.l2d-ready #screen-game,
+  body.l2d-ready #screen-end {
+    padding-left: 0;    /* 手機：取消位移，全寬顯示 */
+  }
+}
+```
+
+| 情境 | padding-left |
+|------|-------------|
+| 桌面（> 900px）且 Live2D 已載入 | `40vw`（讓出角色空間） |
+| 手機 / 小平板（≤ 900px） | `0`（全寬） |
+
+---
+
+#### 2. 答題選項按鈕（`.p-opt` / `.player-opts`）
+
+```css
+/* 基礎（所有裝置）：2 欄，按鈕正方形（1:1） */
+.player-opts { grid-template-columns: 1fr 1fr; }
+.p-opt       { aspect-ratio: 1/1; font-size: clamp(.9em, 3.8vw, 1.15em); }
+
+/* 橫屏（手機橫放 + 桌面瀏覽器）：移除正方形限制 */
+@media (orientation:landscape) {
+  .p-opt { aspect-ratio: auto; min-height: 56px; padding: 8px 12px; }
+}
+
+/* 直屏手機（≤ 768px 直拿）：改為單欄，字體加大 */
+@media (orientation:portrait) and (max-width:768px) {
+  .player-opts { grid-template-columns: 1fr; }          /* 2欄 → 1欄（全寬） */
+  .p-opt {
+    aspect-ratio: auto;
+    min-height: 64px;
+    font-size: clamp(1.05em, 5.5vw, 1.4em);            /* 約 20px，明顯大於桌面 */
+  }
+}
+```
+
+**各裝置最終效果：**
+
+| 裝置 / 情境 | 排列 | 按鈕高度 | 字體大小 |
+|------------|------|----------|---------|
+| 手機直屏（≤768px portrait） | **1 欄**（每顆全寬） | auto（≥64px） | ≈ 20px（5.5vw） |
+| 手機橫屏（landscape） | 2 欄 | auto（≥56px） | ≈14px（預設） |
+| 桌面瀏覽器（landscape） | 2 欄 | auto（≥56px，由文字決定） | ≈14px（預設） |
+| 直立桌面顯示器（>768px portrait） | 2 欄 | 正方形（1:1） | ≈14px（預設） |
+
+---
+
+### `host.html` — 無響應式規則
+
+主持人畫面設計為**純桌面用途**，`host.html` 內部無任何 `@media` 斷點。  
+若在手機上開啟，版面會縮小但不會重排，屬於預期行為（主持人應使用電腦操作）。
+
+---
+
+### 修改注意事項
+
+- **只想改手機答題按鈕大小** → 修改 `player.html` 中 `@media (orientation:portrait) and (max-width:768px)` 規則內的 `min-height` 與 `font-size`
+- **只想改桌面答題按鈕** → 修改 `player.html` 基礎 `.p-opt` 規則（無 media query 包裹的那段）
+- **調整 Live2D 讓位寬度** → 修改 `body.l2d-ready #screen-game { padding-left: 40vw }` 的百分比（同步修改 `host.html` 中 Live2D canvas 的定位）
+- **任何改動都不影響 `host.html`** — 兩個檔案 CSS 完全獨立

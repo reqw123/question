@@ -1,0 +1,2539 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多人搶答 — 主持人</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* ── 確保畫面層級在 Live2D canvas(5) 及 speech bubble(100) 之上，角色透過透明背景在側邊顯示 */
+    .screen { z-index: 110; }
+    /* ── 大廳 ─────────────────────────────────────────────── */
+    .lobby-card { max-width: 620px; width: 94%; max-height: 92vh; overflow-y: auto; }
+    .h-name-row { display:flex; gap:10px; margin-bottom:14px; }
+    .h-name-input {
+      flex:1; padding:11px 14px;
+      background:rgba(255,255,255,0.05); border:1px solid var(--border);
+      border-radius:10px; color:var(--text); font-size:1.05em; outline:none;
+      transition:border-color .2s;
+    }
+    .h-name-input:focus { border-color:var(--cyan); }
+    .url-box {
+      background:rgba(0,0,0,0.45); border:1px solid var(--border); border-radius:10px;
+      padding:11px 16px; font-family:'Courier New',monospace; font-size:.82em;
+      color:var(--cyan); word-break:break-all; margin:12px 0;
+      user-select:all; cursor:text;
+    }
+    .url-label { font-size:.72em; color:var(--text2); letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; }
+    .join-slot {
+      display:flex; align-items:center; gap:10px; padding:10px 14px;
+      border:1px solid var(--border); border-radius:10px;
+      background:rgba(0,212,255,0.02); min-height:46px; transition:all .3s;
+    }
+    .join-slot.filled   { border-color:rgba(0,255,136,0.38); background:rgba(0,255,136,0.05); }
+    .join-slot.host-slot{ border-color:var(--cyan);           background:rgba(0,212,255,0.08); }
+    .join-dot { width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s; }
+    .join-slot.filled    .join-dot { background:var(--green); }
+    .join-slot.host-slot .join-dot { background:var(--cyan); }
+    .join-name  { flex:1; font-weight:700; font-size:.9em; }
+    .join-badge { font-size:.68em; color:var(--cyan); letter-spacing:1.5px; }
+    #lobby-slots { display:flex; flex-direction:column; gap:7px; margin:14px 0; max-height:280px; overflow-y:auto; }
+    .lobby-settings {
+      display:flex; align-items:center; gap:14px; font-size:.82em;
+      color:var(--text2); margin-bottom:14px; flex-wrap:wrap;
+    }
+    .lobby-settings label { display:flex; align-items:center; gap:6px; }
+    .q-count-input {
+      width:60px; padding:5px 8px; background:rgba(255,255,255,0.06);
+      border:1px solid var(--border); border-radius:6px; color:var(--cyan);
+      font-size:1em; text-align:center; outline:none;
+    }
+    #btn-start-hint { font-size:.75em; color:var(--text2); text-align:center; margin-top:4px; min-height:1.2em; }
+    .cfg-panel { border:1px solid var(--border); border-radius:10px; margin-top:14px; overflow:hidden; }
+    .cfg-toggle { padding:10px 14px; cursor:pointer; font-size:.82em; color:var(--text2); letter-spacing:1px; list-style:none; }
+    .cfg-toggle::-webkit-details-marker { display:none; }
+    details[open] > .cfg-toggle::before { content:'▼ '; }
+    .cfg-toggle::before { content:'▶ '; font-size:.75em; margin-right:2px; }
+    .cfg-body { padding:12px 14px 14px; border-top:1px solid var(--border); background:rgba(0,0,0,.25); }
+    .cfg-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .cfg-label { width:108px; font-size:.78em; color:var(--text2); flex-shrink:0; }
+    .cfg-input { flex:1; padding:8px 12px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.9em; outline:none; transition:border-color .2s; }
+    .cfg-input:focus { border-color:var(--cyan); }
+    #cfg-msg { font-size:.75em; color:var(--text2); min-height:1.2em; margin-top:6px; text-align:center; }
+
+    /* ── 題庫選擇 ─────────────────────────────────────────── */
+    .bank-select {
+      width:100%; padding:10px 14px; background:rgba(255,255,255,0.05);
+      border:1px solid var(--border); border-radius:10px; color:var(--text);
+      font-size:.95em; outline:none; cursor:pointer; transition:border-color .2s;
+      appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23aaa' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center; padding-right:36px;
+    }
+    .bank-select:focus { border-color:var(--cyan); }
+    .bank-select option { background:#0d1a2b; color:var(--text); }
+    /* ── AI 題庫生成器導引動畫 ── */
+    .ai-gen-hint {
+      display:inline-flex; flex-direction:column; align-items:center;
+      gap:1px; cursor:default; position:relative;
+    }
+    .ai-gen-hint-text {
+      font-size:.62em; font-weight:700; color:var(--cyan);
+      letter-spacing:.04em; line-height:1;
+      animation: aiHintPulse 1.8s ease-in-out infinite;
+    }
+    .ai-gen-hint-arrow {
+      font-size:.85em; line-height:1; color:var(--cyan);
+      animation: aiHintBounce 0.65s ease-in-out infinite alternate;
+      display:block;
+    }
+    @keyframes aiHintBounce {
+      from { transform:translateY(-4px); opacity:.7; }
+      to   { transform:translateY(2px);  opacity:1;  }
+    }
+    @keyframes aiHintPulse {
+      0%,100% { opacity:1; }
+      50%     { opacity:.55; }
+    }
+    .bank-upload-wrap {
+      display:none; margin-top:8px; padding:10px 12px;
+      border:1px dashed var(--border); border-radius:8px;
+      background:rgba(255,255,255,.02);
+    }
+    .bank-upload-wrap label { font-size:.78em; color:var(--text2); display:block; margin-bottom:6px; }
+    .bank-upload-wrap input[type=file] { font-size:.82em; color:var(--text2); width:100%; }
+    .bank-row { font-size:.72em; color:var(--text2); text-align:center; margin-top:6px; }
+
+    /* ── 題庫表單編輯器 ───────────────────────────────────── */
+    .bank-editor-wrap {
+      display:none; margin-top:8px;
+      border:1px solid var(--border); border-radius:10px; overflow:hidden;
+    }
+    .editor-form {
+      padding:12px; background:rgba(0,0,0,.22);
+      border-bottom:1px solid var(--border);
+    }
+    .editor-q-input {
+      width:100%; box-sizing:border-box; padding:8px 11px;
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:.88em; outline:none;
+      margin-bottom:7px; transition:border-color .2s;
+    }
+    .editor-q-input:focus { border-color:var(--cyan); }
+    .editor-opts-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:7px; }
+    .editor-opt-row { display:flex; align-items:center; gap:6px; }
+    .editor-opt-letter {
+      width:26px; height:26px; border-radius:6px; flex-shrink:0;
+      background:rgba(255,255,255,.07); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.78em; font-weight:700; cursor:pointer; transition:all .18s;
+      user-select:none;
+    }
+    .editor-opt-letter:hover { border-color:rgba(0,212,255,.5); }
+    .editor-opt-letter.selected {
+      background:rgba(0,212,255,.22); border-color:var(--cyan); color:var(--cyan);
+    }
+    .editor-bottom-row { display:flex; gap:7px; align-items:center; }
+    .btn-ed-add {
+      padding:7px 16px; border-radius:8px; cursor:pointer; font-size:.85em;
+      background:rgba(0,212,255,.14); border:1px solid rgba(0,212,255,.4);
+      color:var(--cyan); white-space:nowrap; transition:all .18s;
+    }
+    .btn-ed-add:hover:not(:disabled) { background:rgba(0,212,255,.28); }
+    .btn-ed-add:disabled { opacity:.38; cursor:default; }
+    .editor-q-list { max-height:180px; overflow-y:auto; }
+    .editor-q-item {
+      display:flex; align-items:center; gap:8px;
+      padding:7px 12px; border-bottom:1px solid rgba(255,255,255,.05);
+      font-size:.8em;
+    }
+    .editor-q-item:last-child { border-bottom:none; }
+    .editor-q-num { color:var(--cyan); font-weight:700; flex-shrink:0; width:20px; }
+    .editor-q-preview { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .editor-q-ans { color:var(--green); font-weight:700; flex-shrink:0; }
+    .editor-q-del {
+      width:20px; height:20px; border-radius:4px; flex-shrink:0;
+      background:rgba(255,51,85,.1); border:1px solid rgba(255,51,85,.28);
+      color:var(--red); cursor:pointer; font-size:.75em;
+      display:flex; align-items:center; justify-content:center; transition:all .18s;
+    }
+    .editor-q-del:hover { background:rgba(255,51,85,.28); }
+    .editor-footer {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 12px; background:rgba(0,0,0,.15);
+    }
+
+    /* ── 遊戲模式標籤 ─────────────────────────────────────── */
+    .mode-badge-buzz {
+      display:inline-block; font-size:.68em; color:var(--yellow);
+      background:rgba(255,204,0,.12); border:1px solid rgba(255,204,0,.35);
+      border-radius:5px; padding:2px 8px; letter-spacing:1.5px;
+      text-transform:uppercase; vertical-align:middle; margin-left:6px;
+    }
+
+    /* ── 遊戲畫面佈局 ──────────────────────────────────────── */
+    .host-game-wrap { flex:1; display:flex; min-height:0; overflow:hidden; }
+    .h-sidebar {
+      width:196px; flex-shrink:0;
+      border-right:1px solid var(--border);
+      background:rgba(0,0,0,0.28);
+      padding:10px 8px; overflow-y:auto;
+      display:flex; flex-direction:column; gap:5px;
+    }
+    .sb-title {
+      font-size:.65em; color:var(--cyan); letter-spacing:3px;
+      text-transform:uppercase; padding:2px 6px 8px; flex-shrink:0;
+    }
+    .h-main {
+      flex:1; display:flex; align-items:center; justify-content:center;
+      padding:10px 18px 62px; position:relative; min-width:0; overflow:hidden;
+    }
+
+    /* ── 計分板玩家行 ──────────────────────────────────────── */
+    .p-row {
+      display:flex; align-items:center; gap:7px; padding:8px 8px;
+      border-radius:10px; border:1px solid transparent; transition:all .3s;
+    }
+    .p-row.rank-1 { border-color:rgba(255,215,0,.42); background:rgba(255,215,0,.05); }
+    .p-row.rank-2 { border-color:rgba(192,192,192,.32); }
+    .p-row.rank-3 { border-color:rgba(205,127,50,.32); }
+    .p-row.is-wrong { opacity:.5; }
+    .p-row.is-me    { box-shadow:0 0 0 1px rgba(0,212,255,.5); }
+    .p-medal { font-size:1.15em; width:24px; text-align:center; flex-shrink:0; }
+    .p-info  { flex:1; min-width:0; }
+    .p-name  { font-size:.78em; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .p-badge { font-size:.6em; margin-top:1px; }
+    .p-score { font-size:1.1em; font-weight:900; color:var(--cyan); white-space:nowrap; }
+    .p-score.neg { color:var(--red); }
+
+    /* ── 搶答覆蓋層（center 內） ───────────────────────────── */
+    #buzz-overlay {
+      position:absolute; inset:0;
+      background:rgba(3,10,22,.92); backdrop-filter:blur(8px);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      z-index:70; border-radius:var(--radius);
+      animation:screenIn .2s ease;
+    }
+    #buzz-overlay.hidden { display:none; }
+    .buzz-who   { font-size:2.6em; font-weight:900; color:var(--yellow); text-shadow:0 0 40px rgba(255,204,0,.8); }
+    .buzz-label { font-size:.9em; color:var(--text2); letter-spacing:3px; text-transform:uppercase; margin:6px 0 18px; }
+    .buzz-ans   { font-size:4.5em; font-weight:900; color:var(--cyan); text-shadow:0 0 40px rgba(0,212,255,.8); }
+
+    /* ── 得分飄字 ──────────────────────────────────────────── */
+    .score-toast {
+      position:fixed; left:50%; top:45%; transform:translate(-50%,-50%);
+      font-size:2.4em; font-weight:900; pointer-events:none; z-index:500;
+      animation:toastUp 1.5s ease forwards; white-space:nowrap;
+    }
+    .score-toast.pos { color:var(--green); text-shadow:0 0 24px rgba(0,255,136,.8); }
+    .score-toast.neg { color:var(--red);   text-shadow:0 0 24px rgba(255,51,85,.8); }
+    @keyframes toastUp {
+      0%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+      60% { opacity:1; transform:translate(-50%,-90%) scale(1.1); }
+      100%{ opacity:0; transform:translate(-50%,-140%) scale(.9); }
+    }
+
+    /* ── 結果畫面：每位玩家答題狀況 ──────────────────────────────── */
+    /* position:fixed 讓它脫離 overlay 的 stacking context，
+       z-index:9999 確保浮在 Live2D canvas 與所有其他元素之上 */
+    #result-players {
+      position:fixed;
+      left:50%; bottom:24px;
+      transform:translateX(-50%);
+      z-index:9999;
+      display:flex; flex-direction:column; gap:5px;
+      width:max-content; max-width:min(420px,90vw);
+      max-height:40vh; overflow-y:auto;
+      pointer-events:none;   /* 結果期間不攔截底部按鈕點擊 */
+    }
+    .rp-row {
+      display:flex; align-items:center; gap:9px;
+      padding:6px 13px; border-radius:8px;
+      background:rgba(0,0,0,.38); border:1px solid transparent;
+      font-size:.85em;
+    }
+    .rp-row.correct { border-color:rgba(0,255,136,.32); background:rgba(0,255,136,.06); }
+    .rp-row.wrong   { border-color:rgba(255,51,85,.32);  background:rgba(255,51,85,.05); }
+    .rp-row.no-ans  { opacity:.5; }
+    .rp-name   { flex:1; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rp-chosen { font-size:1em; font-weight:900; width:20px; text-align:center; flex-shrink:0; }
+    .rp-delta  { font-size:.8em; flex-shrink:0; min-width:38px; text-align:right; }
+
+    /* ── 底部操控列（浮動，無分隔線）─────────────────────── */
+    .host-ctrl-bar {
+      position:absolute; bottom:0; left:0; right:0;
+      display:flex; align-items:center; gap:8px;
+      padding:10px 20px 16px;
+      pointer-events:none;
+      z-index:20;
+    }
+    .host-ctrl-bar > * { pointer-events:auto; }
+    .host-ctrl-bar .spacer { flex:1; pointer-events:none; }
+    .host-mode-badge {
+      font-size:.7em; color:var(--text2); letter-spacing:2px; text-transform:uppercase;
+      background:rgba(0,0,0,.5); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:7px; padding:4px 11px; white-space:nowrap;
+    }
+    .btn-ctrl {
+      padding:6px 18px; border-radius:9px; cursor:pointer; font-size:.88em;
+      background:rgba(3,10,22,.72); backdrop-filter:blur(12px);
+      border:1px solid; transition:all .2s; white-space:nowrap;
+    }
+    .btn-ctrl.yellow { border-color:rgba(255,204,0,.45); color:var(--yellow); }
+    .btn-ctrl.yellow:hover { background:rgba(255,204,0,.15); border-color:rgba(255,204,0,.7); }
+    .btn-ctrl.red    { border-color:rgba(255,51,85,.45);  color:var(--red); }
+    .btn-ctrl.red:hover    { background:rgba(255,51,85,.15); border-color:rgba(255,51,85,.7); }
+
+    /* ── 結算畫面 ──────────────────────────────────────────── */
+    .finish-multi { max-width:560px; width:94%; text-align:center; max-height:calc(100vh - 40px); overflow-y:auto; }
+    .final-table  { width:100%; border-collapse:collapse; margin:24px 0; font-size:1em; }
+    .final-table td { padding:12px 10px; border-bottom:1px solid var(--border); }
+    .final-table td:first-child { font-size:1.4em; width:40px; }
+    .final-table td:last-child  { text-align:right; font-weight:900; color:var(--cyan); }
+    .final-table td:last-child.neg { color:var(--red); }
+    .final-table tr:first-child td { border-color:rgba(255,215,0,.4); }
+    .finish-btns { display:flex; gap:10px; }
+    .finish-btns .btn-primary,.finish-btns .btn-secondary { margin:0; }
+
+    /* ── 歷史 / 分析區塊 ──────────────────────────────────── */
+    .history-scroll { max-height:260px; overflow-y:auto; border-radius:6px; }
+    .analysis-section { margin-top:16px; text-align:left; }
+    .analysis-title {
+      font-size:.65em; color:var(--cyan); letter-spacing:3px;
+      text-transform:uppercase; margin-bottom:8px;
+      padding-bottom:4px; border-bottom:1px solid rgba(0,212,255,.2);
+    }
+    .analysis-table { width:100%; border-collapse:collapse; font-size:.8em; }
+    .analysis-table th, .analysis-table td {
+      padding:7px 8px; border-bottom:1px solid var(--border); text-align:center;
+    }
+    .analysis-table th { color:var(--text2); font-weight:400; }
+    .analysis-table td:first-child, .analysis-table th:first-child { text-align:left; font-weight:700; }
+
+    /* ── 玩家加入區（網址 + QR Code 並排）─────────────────────── */
+    .url-join-row   { display:flex; gap:14px; align-items:flex-start; }
+    .url-join-left  { flex:1; min-width:0; }
+    .qr-wrap {
+      flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:6px;
+      padding:10px; border:1px solid var(--border); border-radius:10px;
+      background:rgba(255,255,255,.02); opacity:.25; transition:opacity .3s;
+    }
+    .qr-wrap.ready        { opacity:1; }
+    .qr-wrap.ready #qr-canvas { cursor:zoom-in; }
+    .qr-label             { font-size:.62em; color:var(--cyan); letter-spacing:2px; text-transform:uppercase; }
+    #qr-canvas canvas, #qr-canvas img { border-radius:6px; display:block; }
+
+    /* ── QR Code 放大燈箱 ──────────────────────────────────────── */
+    #qr-modal {
+      display:none; position:fixed; inset:0; z-index:9000;
+      background:rgba(2,8,20,.88); backdrop-filter:blur(10px);
+      align-items:center; justify-content:center;
+      animation:qrModalIn .22s ease;
+    }
+    #qr-modal.open { display:flex; }
+    @keyframes qrModalIn {
+      from { opacity:0; transform:scale(.88); }
+      to   { opacity:1; transform:scale(1); }
+    }
+    #qr-modal-box {
+      position:relative; display:flex; flex-direction:column; align-items:center; gap:14px;
+      padding:28px 32px; border-radius:18px;
+      border:1px solid rgba(0,212,255,.25);
+      background:rgba(4,12,28,.96);
+      box-shadow:0 0 60px rgba(0,212,255,.18), 0 8px 40px rgba(0,0,0,.7);
+    }
+    #qr-modal-canvas canvas, #qr-modal-canvas img { border-radius:10px; display:block; }
+    #qr-modal-label {
+      font-size:.75em; color:var(--cyan); letter-spacing:3px; text-transform:uppercase;
+    }
+    #qr-modal-url {
+      font-size:.7em; color:var(--text2); font-family:'Courier New',monospace;
+      word-break:break-all; text-align:center; max-width:320px;
+    }
+    #qr-modal-close {
+      position:absolute; top:-16px; right:-16px;
+      width:36px; height:36px; border-radius:50%;
+      background:rgba(255,51,85,.85); border:2px solid rgba(255,51,85,.6);
+      color:#fff; font-size:18px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .18s; box-shadow:0 2px 12px rgba(0,0,0,.5);
+    }
+    #qr-modal-close:hover { background:rgba(255,51,85,1); }
+    #btn-copy-url {
+      display:block; width:100%; margin-top:7px; padding:6px 14px;
+      border-radius:8px; cursor:pointer; font-size:.8em; text-align:center;
+      background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.3);
+      color:var(--cyan); transition:all .18s; box-sizing:border-box;
+    }
+    #btn-copy-url:hover { background:rgba(0,212,255,.2); }
+    #btn-copy-url.copied { background:rgba(0,255,136,.14); border-color:rgba(0,255,136,.4); color:var(--green); }
+
+    /* ── Live2D 佔位補償 ────────────────────────────────────── */
+    body.l2d-ready .host-game-wrap { padding-left: 0; padding-right: 0; }
+    body.l2d-ready #screen-lobby   { padding-left: 40vw; padding-right: 0; }
+    body.l2d-ready .host-ctrl-bar  { padding-left: 196px; }
+    @media (max-width:900px) {
+      body.l2d-ready .host-game-wrap,
+      body.l2d-ready #screen-lobby,
+      body.l2d-ready .host-ctrl-bar { padding-left: 0; }
+    }
+
+    /* ── 題卡透明化：移除遮蓋 Live2D canvas(z-index:5) 的不透明背景，
+          讓模型外觀能透過題卡區域顯現；backdrop-filter 一併移除避免模型被模糊 ── */
+    #screen-game .q-card {
+      background: transparent;
+      backdrop-filter: none;
+      box-shadow: none;
+    }
+
+    /* ── 題目文字與選項文字：黑色輪廓陰影，模型疊上時仍清晰可辨（同 player.html 手法）── */
+    #screen-game .q-text {
+      text-shadow:
+        0 1px 5px #000, 0 -1px 5px #000,
+        1px 0 5px #000, -1px 0  5px #000,
+        0 0 16px rgba(0,0,0,.92);
+    }
+    .opt-text {
+      font-weight: 700;
+      text-shadow:
+        0 1px 4px #000, 0 -1px 4px #000,
+        1px 0 4px #000, -1px 0  4px #000,
+        0 0 10px rgba(0,0,0,.85);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 大廳畫面 ===== -->
+<div id="screen-lobby" class="screen active">
+  <div class="card lobby-card">
+    <div class="intro-logo" style="margin-bottom:20px">
+      <span class="logo-icon" style="font-size:52px">🎮</span>
+      <h1 class="game-title">多人搶答</h1>
+      <p class="game-subtitle">MULTIPLAYER QUIZ — HOST</p>
+    </div>
+
+    <h3 class="section-label">主持人名稱（即玩家 1）</h3>
+    <div class="h-name-row">
+      <input id="host-name-input" class="h-name-input" type="text"
+             maxlength="12" placeholder="輸入你的名稱..." autocomplete="off" spellcheck="false">
+    </div>
+
+    <h3 class="section-label">玩家加入網址</h3>
+    <div class="url-join-row">
+      <div class="url-join-left">
+        <div class="url-box" id="player-url">—</div>
+        <button id="btn-copy-url">複製網址</button>
+      </div>
+      <div id="qr-wrap" class="qr-wrap">
+        <div id="qr-canvas"></div>
+        <div class="qr-label">📱 掃描加入</div>
+      </div>
+    </div>
+
+    <h3 class="section-label">已加入玩家（最多 9 人）</h3>
+    <div id="lobby-slots"></div>
+    <div id="hb-lobby-status" style="font-size:.76em;color:var(--text2);margin:4px 0 8px;min-height:1.2em"></div>
+
+    <div class="lobby-settings">
+      <label>每局題數
+        <input id="q-count-input" class="q-count-input" type="number" min="3" max="50" value="10">
+      </label>
+      <label>遊戲模式
+        <select id="game-mode-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em">
+          <option value="all">📋 全員作答（同步公布答案）</option>
+          <option value="race">⚡ 搶答制（最快正確者得勝）</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Live2D 角色選擇（live2d_my_like 收藏庫，只影響本機瀏覽器，不會同步給玩家） -->
+    <!-- 功能整組停用中（MYLIKE_FEATURE_ENABLED = false，見下方 script），這裡用 id="mylike-section" 讓 init() 隱藏，標籤/選單元素保留 -->
+    <div id="mylike-section">
+      <h3 class="section-label">Live2D 角色（僅本機顯示，不影響玩家端）</h3>
+      <div class="lobby-settings">
+        <label>角色一
+          <select id="char1-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em"></select>
+        </label>
+        <label>角色二
+          <select id="char2-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em"></select>
+        </label>
+      </div>
+    </div>
+
+    <!-- 在線偵測設定 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8em;color:var(--text2);margin:6px 0 0">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="hb-notify-check" checked> 玩家離線通知
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="hb-alloffline-check" checked> 全員離線時提示
+      </label>
+    </div>
+
+    <!-- 題庫選擇 -->
+    <h3 class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+      題庫選擇
+      <span class="ai-gen-hint">
+        <span class="ai-gen-hint-text">題目你來做</span>
+        <span class="ai-gen-hint-arrow">↓</span>
+        <a href="../ai-quiz-generator/index.html" target="_blank"
+           style="font-size:.72em;font-weight:400;color:var(--cyan);text-decoration:none;
+                  padding:2px 10px;border:1px solid rgba(0,212,255,.35);border-radius:12px;
+                  background:rgba(0,212,255,.07);white-space:nowrap">
+          🤖 AI 題庫生成器
+        </a>
+      </span>
+    </h3>
+    <select id="bank-select" class="bank-select">
+      <!-- 動態題庫由 loadBankIndex() 從 questions/index.json 讀取後插入 -->
+      <option value="__editor__">✏️ 自建題庫（表單輸入）</option>
+      <option value="__custom__">📂 自訂題庫（上傳 JSON）</option>
+      <option value="__ai__" id="opt-ai-bank">🤖 AI 生成題庫</option>
+    </select>
+    <div id="bank-upload-wrap" class="bank-upload-wrap">
+      <label>選擇本機 JSON 題庫檔案（格式需含 question / options / answer / explanation）</label>
+      <input id="bank-upload" type="file" accept=".json">
+      <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button onclick="downloadExampleBank()" class="btn-ctrl yellow" style="font-size:.78em;padding:4px 14px">⬇ 下載題庫範例</button>
+        <span style="font-size:.7em;color:var(--text2)">下載後可將範例貼給 AI，請 AI 依相同格式生成更多題目再上傳</span>
+      </div>
+    </div>
+
+    <!-- 題庫表單編輯器 -->
+    <div id="bank-editor-wrap" class="bank-editor-wrap">
+      <div class="editor-form">
+        <input id="ed-q" class="editor-q-input" type="text" placeholder="題目內容..." maxlength="200" autocomplete="off">
+        <div class="editor-opts-grid">
+          <div class="editor-opt-row">
+            <div class="editor-opt-letter" id="ed-lbl-A" data-k="A">A</div>
+            <input id="ed-A" class="editor-q-input" style="margin:0;flex:1" type="text" placeholder="選項 A" maxlength="100" autocomplete="off">
+          </div>
+          <div class="editor-opt-row">
+            <div class="editor-opt-letter" id="ed-lbl-B" data-k="B">B</div>
+            <input id="ed-B" class="editor-q-input" style="margin:0;flex:1" type="text" placeholder="選項 B" maxlength="100" autocomplete="off">
+          </div>
+          <div class="editor-opt-row">
+            <div class="editor-opt-letter" id="ed-lbl-C" data-k="C">C</div>
+            <input id="ed-C" class="editor-q-input" style="margin:0;flex:1" type="text" placeholder="選項 C" maxlength="100" autocomplete="off">
+          </div>
+          <div class="editor-opt-row">
+            <div class="editor-opt-letter" id="ed-lbl-D" data-k="D">D</div>
+            <input id="ed-D" class="editor-q-input" style="margin:0;flex:1" type="text" placeholder="選項 D" maxlength="100" autocomplete="off">
+          </div>
+        </div>
+        <div class="editor-bottom-row">
+          <input id="ed-domain" class="editor-q-input" style="margin:0;width:120px;flex-shrink:0" type="text" placeholder="領域（選填）" maxlength="20" autocomplete="off">
+          <input id="ed-expl"   class="editor-q-input" style="margin:0;flex:1" type="text" placeholder="解說（選填）" maxlength="200" autocomplete="off">
+          <button id="btn-ed-add" class="btn-ed-add" disabled>＋ 新增</button>
+        </div>
+        <div id="ed-hint" style="font-size:.72em;color:var(--text2);margin-top:5px;min-height:1em">點擊 A / B / C / D 字母標籤，選擇正確答案</div>
+      </div>
+      <div id="ed-q-list" class="editor-q-list"></div>
+      <div class="editor-footer">
+        <span id="ed-count" style="font-size:.8em;color:var(--text2)">尚未新增任何題目</span>
+        <span style="flex:1"></span>
+        <button id="btn-ed-clear" class="btn-ed-add" style="background:rgba(255,51,85,.1);border-color:rgba(255,51,85,.35);color:var(--red)" disabled>🗑 清空</button>
+        <button id="btn-ed-export" class="btn-ed-add" style="background:rgba(255,204,0,.1);border-color:rgba(255,204,0,.35);color:var(--yellow)" disabled>💾 儲存 player.json</button>
+        <button id="btn-ed-done" class="btn-ed-add" style="background:rgba(0,255,136,.14);border-color:rgba(0,255,136,.4);color:var(--green)" disabled>✓ 套用</button>
+      </div>
+    </div>
+
+    <button id="btn-start" class="btn-primary" style="margin-top:14px" disabled>▶ 開始遊戲</button>
+    <div id="btn-start-hint"></div>
+    <div class="bank-row">題庫：<span id="bank-label">business.json</span>，共 <span id="pool-count" style="color:var(--cyan)">…</span> 題</div>
+
+    <details class="cfg-panel" id="cfg-panel">
+      <summary class="cfg-toggle">⚙ 連線設定</summary>
+      <div class="cfg-body">
+        <div class="cfg-row">
+          <label class="cfg-label">Broker IP<br><span style="font-size:.72em;color:var(--text2)">同時作為主機 IP</span></label>
+          <input id="cfg-ip" class="cfg-input" type="text" placeholder="192.168.0.171" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="cfg-row">
+          <label class="cfg-label">WebSocket Port</label>
+          <input id="cfg-port" class="cfg-input" type="number" placeholder="9001" min="1" max="65535">
+        </div>
+        <button id="cfg-apply" class="btn-secondary" style="margin-top:8px;width:100%">套用並重連</button>
+        <div id="cfg-msg"></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ===== 遊戲畫面 ===== -->
+<div id="screen-game" class="screen">
+
+  <div class="progress-bar-track">
+    <div id="progress-bar" class="progress-bar-fill"></div>
+  </div>
+
+  <div class="top-bar">
+    <div class="q-counter">題目 <strong id="q-current">1</strong> / <span id="q-total">10</span></div>
+    <div id="mode-indicator" style="font-size:.75em;color:var(--text2);letter-spacing:1px">鍵盤 A / B / C / D 搶答</div>
+  </div>
+
+  <div class="host-game-wrap">
+
+    <!-- 左側計分板 -->
+    <div class="h-sidebar">
+      <div class="host-mode-badge" id="sidebar-mode-badge" style="text-align:center;width:100%;box-sizing:border-box;margin-bottom:2px">主持人模式</div>
+      <div class="sb-title">排行榜</div>
+      <div id="scoreboard"></div>
+    </div>
+
+    <!-- 中央題目區 -->
+    <div class="h-main">
+      <div id="q-card" class="q-card" style="max-width:760px">
+        <div class="q-domain-wrap"><span id="q-domain" class="q-domain-badge"></span></div>
+        <div id="q-text" class="q-text">載入題目中...</div>
+        <div class="options-grid">
+          <div class="option" id="opt-A">
+            <div class="opt-letter">A</div>
+            <div class="opt-content"><span id="opt-A-text" class="opt-text"></span></div>
+          </div>
+          <div class="option" id="opt-B">
+            <div class="opt-letter">B</div>
+            <div class="opt-content"><span id="opt-B-text" class="opt-text"></span></div>
+          </div>
+          <div class="option" id="opt-C">
+            <div class="opt-letter">C</div>
+            <div class="opt-content"><span id="opt-C-text" class="opt-text"></span></div>
+          </div>
+          <div class="option" id="opt-D">
+            <div class="opt-letter">D</div>
+            <div class="opt-content"><span id="opt-D-text" class="opt-text"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 搶答覆蓋（中央） -->
+      <div id="buzz-overlay" class="hidden">
+        <div class="buzz-who" id="buzz-who"></div>
+        <div class="buzz-label" id="buzz-label">搶答！</div>
+        <div class="buzz-ans" id="buzz-ans"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部主持操控（浮動，無分隔線） -->
+  <div class="host-ctrl-bar">
+    <span class="spacer"></span>
+    <button id="btn-danmaku" class="btn-ctrl" style="border-color:rgba(0,212,255,.45);color:var(--cyan)">💫 彈幕</button>
+    <button id="btn-h-chat"  class="btn-ctrl" style="border-color:rgba(0,255,136,.45);color:var(--green)">💬 發送</button>
+    <button id="btn-h-emoji" class="btn-ctrl" style="border-color:rgba(255,200,0,.45);color:var(--yellow)" title="快速表情（T 開啟聊天）">😄</button>
+    <button id="btn-skip" class="btn-ctrl yellow">⏭ 跳過本題</button>
+    <button id="btn-end"  class="btn-ctrl red">⏹ 結束遊戲</button>
+  </div>
+
+  <!-- 計時器 -->
+  <div id="timer-wrap" class="timer-wrap hidden">
+    <div class="timer-label">剩餘秒數</div>
+    <div id="timer-num" class="timer-num">15</div>
+  </div>
+
+  <!-- 覆蓋層：倒數 -->
+  <div id="overlay-prepare" class="overlay hidden">
+    <div class="ov-prepare-label">準備搶答</div>
+    <div id="prepare-count" class="big-count count-anim">3</div>
+  </div>
+
+  <!-- 覆蓋層：結果 -->
+  <div id="overlay-result" class="overlay hidden">
+    <div id="result-icon" class="result-icon"></div>
+    <div id="result-text" class="result-text"></div>
+    <div id="result-sub"  class="result-sub"></div>
+    <!-- 每位玩家的個別答題狀況（姓名 · 選擇 · ✓/✗ · 分數變化）-->
+    <div id="result-players" class="result-players"></div>
+  </div>
+
+  <!-- 覆蓋層：解說 -->
+  <div id="overlay-expl" class="overlay hidden">
+    <div class="expl-card">
+      <div class="expl-header">正確答案</div>
+      <div id="expl-answer" class="expl-answer"></div>
+      <div id="expl-text"   class="expl-text"></div>
+      <div class="expl-next">繼續下一題...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== 結算畫面 ===== -->
+<div id="screen-finish" class="screen">
+  <div class="card finish-multi">
+    <div id="finish-emoji" class="finish-emoji">🏆</div>
+    <h2 id="finish-title" class="finish-title">遊戲結束！</h2>
+    <table class="final-table">
+      <tbody id="final-tbody"></tbody>
+    </table>
+    <div class="finish-btns">
+      <button id="btn-restart" class="btn-primary">↩ 再玩一次</button>
+      <button id="btn-lobby"   class="btn-secondary">🏠 回大廳</button>
+    </div>
+
+    <!-- 反應時間分析 -->
+    <div class="analysis-section">
+      <div class="analysis-title">⏱ 反應時間分析</div>
+      <div id="time-analysis-wrap">
+        <div style="color:var(--text2);font-size:.82em;text-align:center;padding:8px 0">暫無資料</div>
+      </div>
+    </div>
+
+    <!-- 歷史成績 -->
+    <div class="analysis-section">
+      <div class="analysis-title">📊 玩家歷史成績</div>
+      <div id="history-wrap">
+        <div style="color:var(--text2);font-size:.82em;text-align:center;padding:8px 0">暫無紀錄</div>
+      </div>
+      <div style="text-align:right;margin-top:6px">
+        <button id="btn-clear-history" class="btn-ctrl red" style="font-size:.72em;padding:4px 12px">清除歷史</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR Code 放大燈箱 -->
+<div id="qr-modal">
+  <div id="qr-modal-box">
+    <button id="qr-modal-close" title="關閉">✕</button>
+    <div id="qr-modal-canvas"></div>
+    <div id="qr-modal-label">📱 掃描加入遊戲</div>
+    <div id="qr-modal-url"></div>
+  </div>
+</div>
+
+<!-- MQTT 狀態徽章 -->
+<div id="mqtt-status" class="s-off">
+  <span class="mqtt-dot"></span>
+  <span id="mqtt-status-text">MQTT</span>
+</div>
+
+<!-- Live2D: Cubism 2 Core → Cubism 3/4 Core → PIXI → pixi-live2d-display all bundle -->
+<script src="../lib/live2d.min.js"></script>
+<script src="../lib/live2dcubismcore.min.js"></script>
+<script src="../lib/pixi.min.js"></script>
+<script src="../lib/all.min.js"></script>
+<script src="../lib/live2d.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="multiplay.js"></script>
+<script src="SoundSystem.js"></script>
+<script src="AvatarModule.js"></script>
+<script src="PlayerBubbleChat.js"></script>
+<script src="DanmakuSystem.js"></script>
+<script src="VoiceBroadcastModule.js"></script>
+<!-- VFX 模式由 live2d.js 的 L2D_CFG.vfxMode 統一控制 -->
+<script>
+  (function(){
+    var m = (typeof L2D_CFG !== 'undefined') ? L2D_CFG.vfxMode : 'full';
+    if (m !== 'off')
+      document.write('<script src="' + (m === 'simple' ? 'MagicShotVFX_backup.js' : 'MagicShotVFX.js') + '"><\/script>');
+  })();
+</script>
+<script src="L2DGesturePlayer.js"></script>
+<script>
+'use strict';
+
+// ── 緊急備用題庫（無法讀取 JSON 時使用）───────────────────────────────────
+const FALLBACK_Q = [
+  { question:'MQTT 採用哪種通訊架構？', options:{A:'Client-Server',B:'Publish-Subscribe',C:'Peer-to-Peer',D:'Master-Slave'}, answer:'B', explanation:'MQTT 使用 Publish-Subscribe 架構，Publisher 發送至 Broker，Subscriber 訂閱主題。', domain:'IoT' },
+  { question:'HTTP 協定預設使用哪個埠號？', options:{A:'8080',B:'443',C:'80',D:'3000'}, answer:'C', explanation:'HTTP 預設 80 埠，HTTPS 預設 443 埠。', domain:'網路' },
+  { question:'TCP 三向交握的順序是？', options:{A:'ACK→SYN→SYN-ACK',B:'SYN→SYN-ACK→ACK',C:'SYN→ACK→FIN',D:'CONNECT→ACCEPT→DATA'}, answer:'B', explanation:'客戶端 SYN → 伺服器 SYN-ACK → 客戶端 ACK，完成三向交握。', domain:'網路' },
+  { question:'GPIO 全稱是？', options:{A:'General Purpose Input/Output',B:'Global Peripheral Interface Operation',C:'Gate Processing I/O',D:'Ground Power Input/Output'}, answer:'A', explanation:'GPIO 為通用輸入輸出，可程式化設定為輸入或輸出。', domain:'IoT' },
+  { question:'ADC 的功能是什麼？', options:{A:'數位訊號轉類比',B:'類比訊號轉數位',C:'訊號放大',D:'頻率調變'}, answer:'B', explanation:'ADC 將連續類比訊號轉為離散數位值，如感測器讀值。', domain:'IoT' },
+];
+
+// ── 主持人狀態 ────────────────────────────────────────────────────────────
+const HS = {
+  myId:     'h_' + Math.random().toString(16).slice(2, 6),
+  myName:   '',
+  phase:    'lobby',   // lobby|prepare|answering|locked|result|expl|end
+  players:  {},        // id → {name, score, color}
+  allQ:     [],
+  questions:[],
+  qIdx:     0,
+  wrongIds: new Set(),
+  startedAt:0,
+  prepareAt:0,
+  buzzer:        null,   // {id, name, letter, delta}
+  correctStreak: 0,
+  noScoreStreak: 0,
+  tid1:     null,
+  tid2:     null,
+  client:    null,
+  ok:        false,
+  clientSeq: 0,
+  // ── 遊戲模式 ────────────────────────────────────────────
+  gameMode:      'all',   // 'all' = 全員作答制  'race' = 搶答制（最快正確者得勝）
+  playerAnswers: {},      // gameMode 'all'：id → 作答字母
+  playerDeltas:  {},      // gameMode 'all'：id → 得分/扣分
+  answeredIds:   new Set(), // gameMode 'all'：已作答玩家集合
+  reactionTimes: {},      // id → [elapsed_sec, ...]  每次作答的反應秒數
+  correctCounts: {},      // id → 本局累計答對題數
+};
+
+// ── 題庫編輯器狀態（需在 init() 之前宣告）────────────────────────────────
+const edQuestions = [];
+
+// ── UI 快捷 ───────────────────────────────────────────────────────────────
+const el   = id => document.getElementById(id);
+const show = id => el(id)?.classList.remove('hidden');
+const hide = id => el(id)?.classList.add('hidden');
+const scr  = id => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); el(id).classList.add('active'); };
+const clr  = ()  => { clearInterval(HS.tid1); clearTimeout(HS.tid2); };
+const fmt  = n   => Number(n).toLocaleString();
+
+// ── MQTT ──────────────────────────────────────────────────────────────────
+function mqttInit() {
+  const mySeq = ++HS.clientSeq;
+  const stale = () => HS.clientSeq !== mySeq;
+
+  const url = mpMqttUrl();
+  HS.client = window.mqtt.connect(url, {
+    clientId: 'host_' + Math.random().toString(16).slice(2, 10),
+    reconnectPeriod: MP_CFG.MQTT_RECONNECT_MS,
+    clean: true,
+    will: {
+      topic: MP_TOPICS.STATE,
+      payload: JSON.stringify({ phase: 'host_left' }),
+      qos: 1,
+      retain: false,
+    },
+  });
+
+  HS.client.on('connect', () => {
+    if (stale()) return;
+    HS.ok = true;
+    mqttSts('esp32', '伺服器已連線');
+    HS.client.subscribe([MP_TOPICS.JOIN, MP_TOPICS.ANSWER], { qos: 1 });
+    HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING], { qos: 0 });
+    pubState();
+    updateStartBtn();
+    HB_HOST.start();
+  });
+  HS.client.on('offline',   () => { if (stale()) return; HS.ok = false; mqttSts('off', 'MQTT 離線'); updateStartBtn(); });
+  HS.client.on('error',     () => { if (stale()) return; mqttSts('error', '連線失敗'); });
+  HS.client.on('reconnect', () => { if (stale()) return; mqttSts('broker', '重連中...'); });
+  HS.client.on('disconnect',() => { if (stale()) return; HS.ok = false; mqttSts('off', 'MQTT 離線'); });
+
+  HS.client.on('message', (topic, buf) => {
+    if (stale()) return;
+    if (topic === MP_TOPICS.SOUND)     { playSound(buf.toString()); return; }
+    let data;
+    try { data = JSON.parse(buf.toString()); } catch { return; }
+    if (topic === MP_TOPICS.HEARTBEAT) { HB_HOST.onHeartbeat(data); return; }
+    if (topic === MP_TOPICS.PROFILE && typeof AvatarModule !== 'undefined') { AvatarModule.receive(data); renderScoreboard(); renderLobbySlots(); return; }
+    if (topic === MP_TOPICS.CHAT) {
+      if (typeof PlayerBubbleChat !== 'undefined') {
+        if (data.type === 'emoji') PlayerBubbleChat.showEmoji(data.playerId, data.message);
+        else                       PlayerBubbleChat.showMessage(data.playerId, data.message);
+      }
+      // 文字訊息同時送彈幕；emoji 只顯示在泡泡，不重複出現在彈幕
+      if (data.type !== 'emoji' && typeof DanmakuSystem !== 'undefined')
+        DanmakuSystem.receive({ player: data.name, text: data.message });
+      return;
+    }
+    if (topic === MP_TOPICS.DANMAKU && typeof DanmakuSystem !== 'undefined') { DanmakuSystem.receive(data); return; }
+    if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
+      if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
+      else             PlayerBubbleChat.hideTyping(data.playerId);
+      return;
+    }
+    if (topic === MP_TOPICS.JOIN)      onJoin(data);
+    if (topic === MP_TOPICS.ANSWER)    onAnswer(data);
+  });
+}
+
+function pub(topic, obj, retain = false, qos = 0) {
+  if (!HS.client || !HS.ok) return;
+  HS.client.publish(topic, JSON.stringify(obj), { qos, retain });
+}
+// L2D 同步廣播（qos 0，即丟即走，不影響遊戲邏輯）
+function pubL2D(cmd) { pub(MP_TOPICS.L2D, cmd, false, 0); }
+
+function mqttSts(cls, txt) {
+  const e = el('mqtt-status');
+  if (!e) return;
+  e.className = `s-${cls}`;
+  el('mqtt-status-text').textContent = txt;
+}
+
+// ── 發布遊戲狀態（retained）──────────────────────────────────────────────
+function pubState(extra = {}) {
+  const q = HS.questions[HS.qIdx] || {};
+  pub(MP_TOPICS.STATE, {
+    phase:        HS.phase,
+    qNo:          HS.qIdx + 1,
+    totalQ:       HS.questions.length,
+    question:     HS.phase === 'prepare' ? '' : q.question || '',
+    options:      HS.phase === 'prepare' ? {} : q.options  || {},
+    domain:       HS.phase === 'prepare' ? '' : q.domain   || '',
+    hostNow:      Date.now(),
+    startedAt:    HS.startedAt,
+    prepareAt:    HS.prepareAt,
+    wrongIds:     [...HS.wrongIds],
+    scores:       Object.fromEntries(Object.entries(HS.players).map(([id, p]) => [id, p.score])),
+    players:      Object.entries(HS.players).map(([id, p]) => ({ id, name: p.name, color: p.color })),
+    buzzerId:     HS.buzzer?.id     ?? null,
+    buzzerName:   HS.buzzer?.name   ?? null,
+    buzzerLetter: HS.buzzer?.letter ?? null,
+    gameMode:     HS.gameMode,
+    buzzMode:     HS.gameMode === 'race',
+    correctAnswer: null,
+    explanation:   '',
+    winnerId:      null,
+    winnerName:    null,
+    winnerDelta:   null,
+    ...extra,
+  }, true, 1);
+}
+
+// ── JOIN 處理 ─────────────────────────────────────────────────────────────
+function onJoin({ id, name }) {
+  if (id === HS.myId) return;
+
+  // ── 遊戲中重連（僅接受相同 ID，防止外人冒名）────────────────────────────
+  if (HS.phase !== 'lobby') {
+    if (!HS.players[id]) return;   // 不認識的 ID → 拒絕
+    HS.players[id].online   = true;
+    HS.players[id].lastSeen = Date.now();
+    pubState();
+    renderScoreboard();
+    renderLobbySlots();
+    showToast(`${name} 重新連線`, true);
+    return;
+  }
+
+  // ── 大廳加入（原有邏輯）─────────────────────────────────────────────────
+  if (Object.keys(HS.players).length >= 10) return;
+  if (HS.players[id]) {
+    HS.players[id].name = name;
+  } else {
+    const usedColors = Object.values(HS.players).map(p => p.color);
+    const color      = mpPlayerColor(id, usedColors);
+    HS.players[id] = { name, score: 0, color, online: true, lastSeen: Date.now() };
+    _speak(`${name}，${_pick(_L.join)}`, 'info');
+  }
+  renderLobbySlots();
+  updateStartBtn();
+  pubState();
+}
+
+// ── 選項 → 手勢對應表（改這裡換動作）────────────────────────────────────
+const ANSWER_GESTURES = {
+  A: 'random_1',
+  B: 'random_3',
+  C: 'random_4',
+  D: 'random_5',
+};
+
+// ── ANSWER 處理 ───────────────────────────────────────────────────────────
+function onAnswer({ id, name, letter }) {
+  if (HS.phase !== 'answering') return;
+  if (HS.wrongIds.has(id)) return;
+  if (!HS.players[id]) return;
+
+  const elapsed  = (Date.now() - HS.startedAt) / 1000;
+  const timeLeft = Math.max(0, MP_CFG.ANSWER_TIME - elapsed);
+  const q        = HS.questions[HS.qIdx];
+  const correct  = letter === q.answer;
+  const delta    = mpCalcPoints(timeLeft, correct);
+
+  // VFX：僅主持人自己作答時觸發（id === HS.myId），其他玩家的答題不在此畫面顯示
+  if (typeof MagicShotVFX !== 'undefined' && id === HS.myId) {
+    MagicShotVFX.fireExplosion(letter);
+  }
+  if (typeof L2DGesturePlayer !== 'undefined' && id === HS.myId) {
+    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing');
+  }
+
+  // 主持人作答時立即框選該選項
+  if (id === HS.myId) {
+    ['A','B','C','D'].forEach(j => el('opt-' + j)?.classList.remove('selected'));
+    el('opt-' + letter)?.classList.add('selected');
+  }
+
+  // 記錄反應時間與答對數（僅記錄有效作答）
+  if (!HS.reactionTimes[id]) HS.reactionTimes[id] = [];
+  HS.reactionTimes[id].push(parseFloat(elapsed.toFixed(2)));
+  if (correct) HS.correctCounts[name] = (HS.correctCounts[name] || 0) + 1;
+
+  if (HS.gameMode === 'all') {
+    // ── 模式1：全員作答制 — 所有人答完後才公布答案 ─────────────────────────
+    if (HS.answeredIds.has(id)) return;   // 去重：先檢查再計分，防止重複計算
+    HS.answeredIds.add(id);
+    HS.playerAnswers[id] = letter;
+    HS.playerDeltas[id]  = delta;
+    HS.players[id].score += delta;
+
+    const allAnswered = Object.keys(HS.players).every(pid =>
+      HS.answeredIds.has(pid) || HS.players[pid]?.online === false
+    );
+    if (allAnswered) {
+      HS.phase = 'locked';
+      clr();
+      hide('timer-wrap');
+      // 找出（最早記錄到的）答對者作為代表顯示
+      const winnerId = Object.keys(HS.players).find(pid => HS.playerAnswers[pid] === q.answer);
+      if (winnerId) {
+        const wp = HS.players[winnerId];
+        HS.buzzer = { id: winnerId, name: wp.name, letter: q.answer,
+                      delta: HS.playerDeltas[winnerId] };
+      } else {
+        HS.buzzer = null;
+      }
+      pubState();
+      HS.tid2 = setTimeout(() => showResult(!!HS.buzzer), MP_CFG.LOCK_MS);
+    } else {
+      pubState();
+    }
+
+  } else {
+    // ── 模式2：搶答制 — 最快答對者直接結束回合 ─────────────────────────────
+    HS.players[id].score += delta;   // 答對加分 / 答錯扣分
+    if (correct) {
+      HS.phase  = 'locked';
+      HS.buzzer = { id, name, letter, delta };
+      clr();
+      hide('timer-wrap');
+      el('buzz-who').textContent   = name;
+      el('buzz-ans').textContent   = letter;
+      el('buzz-label').textContent = '搶答！';
+      show('buzz-overlay');
+      pubState({
+        winnerId:    id,   winnerName:  name,  winnerDelta: delta,
+        buzzerId:    id,   buzzerName:  name,  buzzerLetter: letter,
+      });
+      HS.tid2 = setTimeout(() => showResult(true), MP_CFG.LOCK_MS);
+    } else {
+      HS.wrongIds.add(id);
+      HS.playerAnswers[id] = letter;   // 記錄搶答模式的錯誤選項，供結果畫面顯示
+      HS.playerDeltas[id]  = delta;
+      const active = Object.keys(HS.players).filter(pid => !HS.wrongIds.has(pid));
+      if (active.length === 0) {
+        HS.phase = 'locked';
+        clr();
+        hide('timer-wrap');
+        pubState();
+        HS.tid2 = setTimeout(() => showResult(false), MP_CFG.LOCK_MS);
+      } else {
+        pubState();
+      }
+    }
+  }
+}
+
+// ── 遊戲流程 ──────────────────────────────────────────────────────────────
+// ── Heartbeat Module (Host) ───────────────────────────────────────────────
+const HB_HOST = (() => {
+  const OFFLINE_MS = MP_CFG.OFFLINE_MS;
+  let _tid = null;
+
+  function _check() {
+    const now = Date.now();
+    let changed = false;
+    Object.entries(HS.players).forEach(([id, p]) => {
+      if (id === HS.myId || !p.lastSeen) return;
+      const isOnline = (now - p.lastSeen) <= OFFLINE_MS;
+      if (p.online !== isOnline) {
+        p.online = isOnline;
+        changed  = true;
+        if (!isOnline) {
+          if (el('hb-notify-check')?.checked !== false)
+            showToast(`⚠ ${p.name} 已離線`, false);
+          playBeep(440, 0.25, 0.35);
+          if (HS.phase === 'locked' && HS.gameMode === 'race' && HS.buzzer?.id === id)
+            _cancelBuzzer(id);
+        } else {
+          showToast(`${p.name} 重新連線`, true);
+          _dismissModal();
+        }
+      }
+    });
+    if (changed) { pubState(); renderScoreboard(); renderLobbySlots(); _checkAllOffline(); }
+  }
+
+  function _cancelBuzzer(id) {
+    clearTimeout(HS.tid2);
+    if (HS.players[id]) HS.players[id].score -= (HS.buzzer?.delta || 0);
+    HS.buzzer    = null;
+    HS.phase     = 'answering';
+    HS.startedAt = Date.now();
+    hide('buzz-overlay');
+    show('timer-wrap');
+    pubState();
+    showToast(`搶答者離線，重新開放搶答`, false);
+    const numEl = el('timer-num');
+    numEl.className = 'timer-num';
+    clr();
+    HS.tid1 = setInterval(() => {
+      const t = Math.max(0, Math.ceil(MP_CFG.ANSWER_TIME - (Date.now() - HS.startedAt) / 1000));
+      numEl.textContent = t;
+      numEl.className   = t <= 3 ? 'timer-num urgent' : 'timer-num';
+      if (t <= 0) { clearInterval(HS.tid1); onTimeout(); }
+    }, 250);
+  }
+
+  function _checkAllOffline() {
+    if (el('hb-alloffline-check')?.checked === false) return;
+    if (HS.phase === 'lobby' || HS.phase === 'end') return;
+    const guests = Object.entries(HS.players).filter(([id]) => id !== HS.myId);
+    if (guests.length && guests.every(([, p]) => p.online === false)) _showModal();
+  }
+
+  function _showModal() {
+    if (document.getElementById('hb-modal')) return;
+    const d = document.createElement('div');
+    d.id = 'hb-modal';
+    d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9000;display:flex;align-items:center;justify-content:center;';
+    d.innerHTML = `
+      <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.2);border-radius:16px;
+                  padding:32px 40px;text-align:center;max-width:320px">
+        <div style="font-size:2.2em;margin-bottom:8px">⚠️</div>
+        <div style="font-size:1.1em;font-weight:700;margin-bottom:6px">所有玩家皆已離線</div>
+        <div style="font-size:.85em;color:var(--text2);margin-bottom:24px">等待玩家重連，或結束本局遊戲</div>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button onclick="document.getElementById('hb-modal').remove()"
+            style="padding:8px 22px;border-radius:8px;border:1px solid rgba(255,255,255,.2);
+                   background:transparent;color:var(--text);cursor:pointer">等待重連</button>
+          <button onclick="document.getElementById('hb-modal').remove();resetToLobby()"
+            style="padding:8px 22px;border-radius:8px;border:none;background:var(--red);
+                   color:#fff;cursor:pointer;font-weight:700">結束遊戲</button>
+        </div>
+      </div>`;
+    document.body.appendChild(d);
+  }
+
+  function _dismissModal() { document.getElementById('hb-modal')?.remove(); }
+
+  return {
+    start() { if (!_tid) _tid = setInterval(_check, MP_CFG.HEARTBEAT_MS); },
+    onHeartbeat({ id }) {
+      const p = HS.players[id];
+      if (!p || id === HS.myId) return;
+      p.lastSeen = Date.now();
+      if (!p.online) { p.online = true; renderScoreboard(); renderLobbySlots(); _dismissModal(); }
+    },
+  };
+})();
+// ─────────────────────────────────────────────────────────────────────────
+
+async function init() {
+  HS.players[HS.myId] = { name: HS.myName || '主持人', score: 0, color: mpPlayerColor(HS.myId) };
+  setPlayerUrl();
+
+  // 同步題庫選擇與設定面板
+  loadSettings();
+  edLoad();  // 恢復已存題庫（需在 loadSettings 之後，才能判斷是否為 __editor__ 模式）
+
+  // 動態載入題庫清單，恢復使用者選擇，並載入題庫
+  await loadBankIndex();
+
+  // live2d_my_like 角色收藏庫：讀清單、填下拉選單
+  if (MYLIKE_FEATURE_ENABLED) {
+    await loadMyLikeManifest();
+    populateMyLikeSelects();
+  } else {
+    const _mylikeSection = el('mylike-section');
+    if (_mylikeSection) _mylikeSection.style.display = 'none';
+  }
+
+  renderLobbySlots();
+  mqttInit();
+
+  if (typeof L2D !== 'undefined') {
+    L2D_CFG.storageNS = 'h';
+    // 程式碼設定優先：清除舊存檔，讓 char1/char2 的 offsetX/Y 每次重整後確實生效
+    try { localStorage.removeItem('l2d_pos_h_c1'); localStorage.removeItem('l2d_pos_h_c2'); } catch {}
+    // 套用 live2d_my_like 下拉選單存的角色選擇（本機專屬，不影響 lib/live2d.js 原本的預設值）
+    if (MYLIKE_FEATURE_ENABLED) {
+      const _c1Pick = localStorage.getItem('l2d_mylike_char1');
+      const _c2Pick = localStorage.getItem('l2d_mylike_char2');
+      if (_c1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _c1Pick;
+      if (_c2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _c2Pick;
+    }
+    L2D.init();
+    if (typeof MagicShotVFX !== 'undefined') MagicShotVFX.init();
+
+    const hs = document.createElement('style');
+    hs.textContent = [
+      'body.l2d-ready #screen-game .top-bar{padding-left:196px;padding-right:0}',
+      'body.l2d-ready #overlay-expl{left:196px;right:0}',
+      'body.l2d-ready #overlay-result{left:0;right:0}',
+      '@media(max-width:900px){',
+      '  body.l2d-ready #screen-game .top-bar,',
+      '  body.l2d-ready #overlay-expl{left:0}',
+      '}',
+    ].join('\n');
+    document.head.appendChild(hs);
+
+    const sndBtn = document.createElement('button');
+    sndBtn.title = '開啟 / 關閉音效';
+    sndBtn.textContent = '🔇';
+    sndBtn.style.cssText = 'position:fixed;bottom:114px;left:6px;z-index:200;' +
+      'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
+      'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
+    sndBtn.addEventListener('click', () => {
+      const on = toggleSound();
+      sndBtn.textContent       = on ? '🔊' : '🔇';
+      sndBtn.style.background  = on ? 'rgba(0,212,255,.25)' : 'rgba(0,0,0,.5)';
+      sndBtn.style.color       = on ? 'var(--cyan)' : '#888';
+    });
+    document.body.appendChild(sndBtn);
+
+    // ── 特效開關按鈕（控制 MagicShotVFX 全模組所有攻擊特效）──────────────────
+    if (typeof MagicShotVFX !== 'undefined') {
+      const vfxBtn = document.createElement('button');
+      vfxBtn.title = '開啟 / 關閉攻擊特效';
+      vfxBtn.textContent = '⚡';   // ⚡ = 特效開啟；✖ = 關閉
+      // bottom:270px：BGM 控制項高約 96px（bottom:167-263px），再上方留 7px 間距
+      vfxBtn.style.cssText = 'position:fixed;bottom:270px;left:6px;z-index:200;' +
+        'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
+        'background:rgba(255,200,0,.22);color:#ffd700;font-size:21px;cursor:pointer;padding:0;';
+      vfxBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const on = !MagicShotVFX.isEnabled();
+        MagicShotVFX.setEnabled(on);
+        vfxBtn.textContent      = on ? '⚡' : '✖';
+        vfxBtn.style.background = on ? 'rgba(255,200,0,.22)' : 'rgba(0,0,0,.5)';
+        vfxBtn.style.color      = on ? '#ffd700' : '#888';
+      });
+      document.body.appendChild(vfxBtn);
+    }
+
+    createBGMControl(167);
+  }
+
+  // ── 彈幕 / 聊天控制 ──────────────────────────────────────────────────────
+  if (typeof DanmakuSystem !== 'undefined') {
+    DanmakuSystem.setSafeArea({ top: 44, bottom: 72, left: 196, right: 0 });
+  }
+
+  const dmkBtn = el('btn-danmaku');
+  if (dmkBtn) {
+    dmkBtn.addEventListener('click', () => {
+      if (typeof DanmakuSystem === 'undefined') return;
+      const on = !DanmakuSystem.isEnabled();
+      DanmakuSystem.setEnabled(on);
+      dmkBtn.style.opacity = on ? '1' : '.45';
+      dmkBtn.title = on ? '彈幕已開啟（點擊關閉）' : '彈幕已關閉（點擊開啟）';
+    });
+    dmkBtn.title = '彈幕已開啟（點擊關閉）';
+  }
+
+  // 主持人發送彈幕訊息
+  (() => {
+    const chatBtn = el('btn-h-chat');
+    if (!chatBtn) return;
+
+    const panel = document.createElement('div');
+    panel.style.cssText =
+      'position:fixed;bottom:54px;right:4px;z-index:10000;display:none;' +
+      'background:rgba(10,24,44,.97);border:1px solid rgba(0,255,136,.35);' +
+      'border-radius:12px;padding:10px 12px;display:none;align-items:center;gap:8px;' +
+      'box-shadow:0 4px 20px rgba(0,0,0,.6);min-width:260px;';
+    const inp = document.createElement('input');
+    inp.type        = 'text';
+    inp.maxLength   = 30;
+    inp.placeholder = '輸入彈幕訊息...';
+    inp.style.cssText =
+      'flex:1;padding:8px 12px;background:rgba(255,255,255,.08);' +
+      'border:1px solid rgba(0,255,136,.4);border-radius:8px;' +
+      'color:#fff;font-size:.92em;outline:none;';
+    const sendBtn = document.createElement('button');
+    sendBtn.textContent = '送出';
+    sendBtn.style.cssText =
+      'padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.88em;' +
+      'background:rgba(0,255,136,.18);border:1px solid rgba(0,255,136,.4);color:var(--green);';
+
+    function _send() {
+      const msg = inp.value.trim();
+      if (!msg) return;
+      pub(MP_TOPICS.CHAT, { playerId: HS.myId, name: HS.myName || '主持人', message: msg }, false, 0);
+      inp.value = '';
+      panel.style.display = 'none';
+    }
+
+    sendBtn.addEventListener('click', _send);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') _send(); if (e.key === 'Escape') { panel.style.display = 'none'; } });
+
+    panel.append(inp, sendBtn);
+    document.body.appendChild(panel);
+
+    chatBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const vis = panel.style.display === 'flex';
+      panel.style.display = vis ? 'none' : 'flex';
+      if (!vis) inp.focus();
+    });
+    document.addEventListener('click', e => {
+      if (!panel.contains(e.target) && e.target !== chatBtn) panel.style.display = 'none';
+    });
+
+    // T 鍵快捷：開啟 / 聚焦輸入框（不在 input/textarea 內時觸發）
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if ((e.key === 't' || e.key === 'T') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const vis = panel.style.display === 'flex';
+        panel.style.display = vis ? 'none' : 'flex';
+        if (!vis) inp.focus();
+      }
+    });
+  })();
+}
+
+function updateStartBtn() {
+  const ready = HS.ok && HS.allQ.length > 0;
+  el('btn-start').disabled = !ready;
+  el('btn-start-hint').textContent =
+    !HS.ok             ? 'MQTT 未連線，請確認 Broker 設定'
+    : HS.allQ.length === 0 ? '請選擇或上傳題庫後再開始'
+    : '';
+}
+
+function setName() {
+  const n = el('host-name-input').value.trim() || '主持人';
+  HS.myName = n;
+  HS.players[HS.myId].name = n;
+  renderLobbySlots();
+  updateStartBtn();
+}
+
+function startGame() {
+  if (!HS.myName) setName();
+  startBGM();
+
+  // 讀取遊戲模式
+  HS.gameMode = el('game-mode-select').value;   // 'all' | 'race'
+
+  const cnt = Math.max(1, parseInt(el('q-count-input').value) || MP_CFG.GAME_Q_COUNT);
+  HS.questions = mpShuffle(HS.allQ).slice(0, Math.min(cnt, HS.allQ.length));
+  HS.qIdx         = 0;
+  HS.correctStreak = 0;
+  HS.noScoreStreak = 0;
+  HS.reactionTimes = {};
+  HS.correctCounts = {};
+  Object.values(HS.players).forEach(p => { p.score = 0; });
+  el('q-total').textContent = HS.questions.length;
+
+  // 更新模式指示器
+  const modeEl = el('mode-indicator');
+  if (HS.gameMode === 'race') {
+    modeEl.innerHTML = '搶答制 — 最快正確者得勝 <span class="mode-badge-buzz">RACE</span>';
+  } else {
+    modeEl.textContent = '全員作答 — 同步公布答案';
+  }
+  const sbBadge = el('sidebar-mode-badge');
+  sbBadge.textContent = HS.gameMode === 'race' ? '⚡ 搶答制' : '📋 全員作答';
+  sbBadge.style.color = HS.gameMode === 'race' ? 'var(--yellow)' : '';
+
+  scr('screen-game');
+  startQ(0);
+}
+
+function startQ(idx) {
+  HS.qIdx = idx;
+  HS.wrongIds.clear();
+  HS.answeredIds.clear();
+  HS.playerAnswers = {};
+  HS.playerDeltas  = {};
+  HS.buzzer    = null;
+  HS.startedAt = 0;
+  HS.prepareAt = Date.now();
+  HS.phase     = 'prepare';
+
+  el('q-domain').textContent = '';
+  el('q-text').textContent   = '';
+  ['A','B','C','D'].forEach(k => {
+    el('opt-' + k + '-text').textContent = '';
+    el('opt-' + k).className = 'option';
+  });
+
+  el('q-current').textContent       = idx + 1;
+  el('progress-bar').style.width    = (idx / HS.questions.length * 100) + '%';
+
+  const card = el('q-card');
+  card.classList.remove('slide-out');
+  void card.offsetWidth;
+
+  hide('buzz-overlay');
+  hide('timer-wrap');
+  hide('overlay-result');
+  hide('overlay-expl');
+  el('buzz-label').textContent = '搶答！';
+
+  renderScoreboard();
+  pubState();
+  startPrepare();
+}
+
+function startPrepare() {
+  show('overlay-prepare');
+  let cnt = MP_CFG.PREPARE_TIME;
+  setCount(cnt);
+  playBeep(880, 0.08);
+  clr();
+  HS.tid1 = setInterval(() => {
+    cnt--;
+    if (cnt > 0) {
+      setCount(cnt);
+      playBeep(880, 0.08);
+    } else {
+      clearInterval(HS.tid1);
+      hide('overlay-prepare');
+      startAnswering();
+    }
+  }, 1000);
+}
+
+function setCount(n) {
+  const e = el('prepare-count');
+  e.textContent = n;
+  e.classList.remove('count-anim');
+  void e.offsetWidth;
+  e.classList.add('count-anim');
+}
+
+function startAnswering() {
+  const q = HS.questions[HS.qIdx];
+  if (!q) { endGame(); return; }   // 防止題庫為空時崩潰
+
+  playBeep(1200, 0.25);
+  HS.phase     = 'answering';
+  HS.startedAt = Date.now();
+  const _qLine = _pick(_L.question);
+  _speak(_qLine, 'info');
+  pubL2D({ cmd:'speak1', text:_qLine, type:'info' });
+  pubL2D({ cmd:'dialogue', start:true });
+  pubL2D({ cmd:'playRandom' });
+  if (typeof L2D !== 'undefined' && L2D.startDialogue) L2D.startDialogue();
+
+  el('q-domain').textContent   = q.domain    || '';
+  el('q-text').textContent     = q.question;
+  el('opt-A-text').textContent = q.options.A;
+  el('opt-B-text').textContent = q.options.B;
+  el('opt-C-text').textContent = q.options.C;
+  el('opt-D-text').textContent = q.options.D;
+
+  show('timer-wrap');
+  pubState();
+  if (typeof L2D !== 'undefined' && L2D.startIdleMotion) L2D.startIdleMotion(MP_CFG.IDLE_MOTION_MS);
+  // 作答期間啟動雙角色閒話（跟玩家端 player.html 一致）；stopIdleChat 在 showResult() 時統一停止
+  // 跟 startIdleMotion 用同一個間隔值：職責分開後（閒話只管講話+音效）不會互相重疊觸發動作
+  if (typeof L2D !== 'undefined' && L2D.startIdleChat) L2D.startIdleChat(MP_CFG.IDLE_MOTION_MS);
+
+  const numEl = el('timer-num');
+  numEl.className = 'timer-num';
+  clr();
+  HS.tid1 = setInterval(() => {
+    const timeLeft = Math.max(0, Math.ceil(MP_CFG.ANSWER_TIME - (Date.now() - HS.startedAt) / 1000));
+    numEl.textContent = timeLeft;
+    numEl.className   = timeLeft <= 3 ? 'timer-num urgent' : 'timer-num';
+    if (timeLeft <= 0) { clearInterval(HS.tid1); onTimeout(); }
+  }, 250);
+}
+
+function onTimeout() {
+  if (HS.phase !== 'answering') return;
+  HS.phase = 'locked';
+  clr();
+  hide('timer-wrap');
+  const q = HS.questions[HS.qIdx];
+
+  if (HS.gameMode === 'all') {
+    // 時間到：統計已作答的玩家，找出答對代表
+    const winnerId = Object.keys(HS.players).find(pid => HS.playerAnswers[pid] === q.answer);
+    if (winnerId) {
+      const wp = HS.players[winnerId];
+      HS.buzzer = { id: winnerId, name: wp.name, letter: q.answer,
+                    delta: HS.playerDeltas[winnerId] };
+    } else {
+      HS.buzzer = null;
+    }
+    pubState();
+    HS.tid2 = setTimeout(() => showResult(!!HS.buzzer), MP_CFG.LOCK_MS);
+  } else {
+    pubState();
+    HS.tid2 = setTimeout(() => showResult(false), MP_CFG.LOCK_MS);
+  }
+}
+
+function showResult(hasWinner) {
+  if (typeof L2D !== 'undefined' && L2D.stopDialogue)    L2D.stopDialogue();
+  if (typeof L2D !== 'undefined' && L2D.stopIdleChat)    L2D.stopIdleChat();
+  if (typeof L2D !== 'undefined' && L2D.stopIdleMotion)  L2D.stopIdleMotion();
+  HS.phase = 'result';
+  hide('buzz-overlay');
+
+  const q = HS.questions[HS.qIdx];
+
+  const iconEl = el('result-icon');
+  const textEl = el('result-text');
+  const subEl  = el('result-sub');
+
+  let soundTrack;
+
+  // 主持人本題的個人作答結果
+  const hostAnswer   = HS.playerAnswers[HS.myId];
+  const hostCorrect  = hostAnswer !== undefined && hostAnswer === q.answer;
+  const hostAnswered = hostAnswer !== undefined;
+
+  if (HS.gameMode === 'all') {
+    // ── 模式1：全員作答 ─────────────────────────────────────────────────
+    const correctCount  = Object.values(HS.playerAnswers).filter(l => l === q.answer).length;
+    const totalAnswered = Object.keys(HS.playerAnswers).length;
+    if (hasWinner) {
+      const { name } = HS.buzzer;
+      const myDelta  = HS.playerDeltas[HS.myId];
+      iconEl.textContent = hostCorrect ? '⭕' : (hostAnswered ? '❌' : '⏰');
+      textEl.textContent = correctCount > 1 ? `${correctCount} 人答對！` : `${name} 答對！`;
+      textEl.className   = hostCorrect ? 'result-text is-correct' : 'result-text is-wrong';
+      subEl.textContent  = (hostCorrect && myDelta != null)
+        ? `+${fmt(myDelta)} 分  共 ${totalAnswered} 人作答`
+        : `共 ${totalAnswered} 人作答`;
+      if (hostCorrect && myDelta > 0) showToast(`+${fmt(myDelta)}`, true);
+      const line = HS.correctStreak >= 2 ? _pick(_L.streak) : `${name}，${_pick(_L.correct)}`;
+      const _emType = HS.correctStreak >= 2 ? 'celebrate' : 'correct';
+      _speak(line, _emType);
+      pubL2D({ cmd:'speak1', text:line, type:_emType });
+      pubL2D({ cmd:'emotion', type:_emType });
+      if (typeof L2D !== 'undefined') L2D.playEmotion(_emType);
+      HS.noScoreStreak = 0;
+      HS.correctStreak++;
+      soundTrack = HS.correctStreak >= 3 ? 'TRACK_3' : 'TRACK_1';
+    } else {
+      iconEl.textContent = hostAnswered ? '❌' : '⏰';
+      textEl.textContent = totalAnswered > 0 ? '無人答對！' : '無人作答！';
+      textEl.className   = 'result-text is-wrong';
+      subEl.textContent  = `共 ${totalAnswered} 人作答`;
+      const _awLine = _pick(_L.all_wrong);
+      _speak(_awLine, 'wrong');
+      pubL2D({ cmd:'speak1', text:_awLine, type:'wrong' });
+      pubL2D({ cmd:'emotion', type:'wrong' });
+      if (typeof L2D !== 'undefined') L2D.playEmotion('wrong');
+      HS.correctStreak = 0;
+      HS.noScoreStreak++;
+      soundTrack = HS.noScoreStreak >= 3 ? 'TRACK_4' : 'TRACK_2';
+    }
+
+  } else if (hasWinner && HS.buzzer) {
+    // ── 模式2：搶答制 — 有人答對 ────────────────────────────────────────
+    const { name, letter, delta } = HS.buzzer;
+    const isHostWinner = HS.buzzer.id === HS.myId;
+    const myDelta = HS.playerDeltas[HS.myId];
+    iconEl.textContent = isHostWinner ? '⭕' : (hostAnswered ? '❌' : '⏰');
+    textEl.textContent = `${name} 答對！`;
+    textEl.className   = isHostWinner ? 'result-text is-correct' : 'result-text is-wrong';
+    subEl.textContent  = isHostWinner
+      ? `+${fmt(delta)} 分`
+      : (myDelta != null && myDelta !== 0 ? `${fmt(myDelta)} 分` : '');
+    if (isHostWinner) showToast(`+${fmt(delta)}`, true);
+    else if (myDelta != null && myDelta < 0) showToast(fmt(myDelta), false);
+    const line = HS.correctStreak >= 2 ? _pick(_L.streak) : `${name}，${_pick(_L.correct)}`;
+    const _emType = HS.correctStreak >= 2 ? 'celebrate' : 'correct';
+    _speak(line, _emType);
+    pubL2D({ cmd:'speak1', text:line, type:_emType });
+    pubL2D({ cmd:'emotion', type:_emType });
+    if (typeof L2D !== 'undefined') L2D.playEmotion(_emType);
+    HS.noScoreStreak = 0;
+    HS.correctStreak++;
+    soundTrack = HS.correctStreak >= 3 ? 'TRACK_3' : 'TRACK_1';
+
+  } else if (HS.wrongIds.size > 0) {
+    // ── 模式2：全部答錯 ─────────────────────────────────────────────────
+    iconEl.textContent = hostAnswered ? '❌' : '⏰';
+    textEl.textContent = '全部答錯！';
+    textEl.className   = 'result-text is-wrong';
+    subEl.textContent  = '無人得分';
+    const _awLine = _pick(_L.all_wrong);
+    _speak(_awLine, 'wrong');
+    pubL2D({ cmd:'speak1', text:_awLine, type:'wrong' });
+    pubL2D({ cmd:'emotion', type:'wrong' });
+    if (typeof L2D !== 'undefined') L2D.playEmotion('wrong');
+    HS.correctStreak = 0;
+    HS.noScoreStreak++;
+    soundTrack = HS.noScoreStreak >= 3 ? 'TRACK_4' : 'TRACK_2';
+
+  } else {
+    // ── 時間到，無人搶答 ────────────────────────────────────────────────
+    iconEl.textContent = '⏰';
+    textEl.textContent = '時間到！';
+    textEl.className   = 'result-text is-wrong';
+    subEl.textContent  = '無人搶答';
+    const _toLine = _pick(_L.timeout);
+    _speak(_toLine, 'wrong');
+    pubL2D({ cmd:'speak1', text:_toLine, type:'wrong' });
+    pubL2D({ cmd:'emotion', type:'wrong' });
+    if (typeof L2D !== 'undefined') L2D.playEmotion('wrong');
+    HS.correctStreak = 0;
+    HS.noScoreStreak++;
+    soundTrack = HS.noScoreStreak >= 3 ? 'TRACK_4' : 'TRACK_2';
+  }
+
+  pub(MP_TOPICS.RESULT, {
+    hasWinner,
+    gameMode:      HS.gameMode,
+    buzzMode:      HS.gameMode === 'race',
+    buzzedWrong:   false,
+    buzzerName:    HS.buzzer?.name   ?? null,
+    buzzerId:      HS.buzzer?.id     ?? null,
+    winnerId:      (hasWinner ? HS.buzzer?.id   : null) ?? null,
+    winnerName:    (hasWinner ? HS.buzzer?.name : null) ?? null,
+    letter:        HS.buzzer?.letter ?? null,
+    winnerDelta:   HS.buzzer?.delta  ?? null,
+    correctAnswer: q.answer,
+    explanation:   q.explanation,
+    scores:        Object.fromEntries(Object.entries(HS.players).map(([id, p]) => [id, p.score])),
+    soundTrack,
+  }, false, 1);
+  playSound(soundTrack);
+
+  // RESULT 訊息已發出，與玩家端同步揭曉正確答案
+  el('opt-' + q.answer).classList.add('correct');
+  if (HS.gameMode === 'all') {
+    // 全員作答：標示每位玩家自己的選擇（對=correct 已套，錯=wrong）
+    Object.entries(HS.playerAnswers).forEach(([pid, letter]) => {
+      if (letter !== q.answer) el('opt-' + letter).classList.add('wrong');
+    });
+  }
+  ['A','B','C','D'].forEach(k => {
+    if (k !== q.answer) el('opt-' + k).classList.add('result-dim');
+  });
+  show('overlay-result');
+  renderScoreboard();
+  renderResultPlayers(q);
+  HS.tid2 = setTimeout(() => showExpl(q), MP_CFG.RESULT_MS);
+}
+
+function showExpl(q) {
+  HS.phase = 'expl';
+  hide('overlay-result');
+  el('expl-answer').textContent = q.answer + '.  ' + q.options[q.answer];
+  el('expl-text').textContent   = q.explanation || '本題暫無解說';
+  show('overlay-expl');
+  pubState({
+    correctAnswer: q.answer,
+    explanation:   q.explanation,
+    winnerId:      HS.buzzer?.id    ?? null,
+    winnerName:    HS.buzzer?.name  ?? null,
+    winnerDelta:   HS.buzzer?.delta ?? null,
+  });
+  HS.tid2 = setTimeout(nextQ, MP_CFG.EXPL_MS);
+}
+
+function nextQ() {
+  hide('overlay-expl');
+  HS.qIdx++;
+  if (HS.qIdx >= HS.questions.length) { endGame(); return; }
+  const card = el('q-card');
+  card.classList.add('slide-out');
+  HS.tid2 = setTimeout(() => startQ(HS.qIdx), 320);
+}
+
+function endGame() {
+  HS.phase = 'end';
+  stopBGM();
+  clr();
+  el('progress-bar').style.width = '100%';
+
+  const ranked = mpRankPlayers(HS.players);
+  const tbody  = el('final-tbody');
+  tbody.innerHTML = '';
+  ranked.forEach(({ rank, id, name, score }) => {
+    const tr = document.createElement('tr');
+    const av = typeof AvatarModule !== 'undefined' ? AvatarModule.html(id, 28) + ' ' : '';
+    tr.innerHTML = `
+      <td>${MP_MEDALS[rank - 1] || rank}</td>
+      <td style="text-align:left;font-weight:700">${av}${name}</td>
+      <td class="${score < 0 ? 'neg' : ''}">${fmt(score)} 分</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const winner = ranked[0];
+  el('finish-emoji').textContent = winner ? '🏆' : '📚';
+  el('finish-title').textContent = winner ? `${winner.name} 獲勝！` : '遊戲結束！';
+  const endLine = winner ? `${winner.name}，${_pick(_L.win)}` : _pick(_L.end);
+  _speak(endLine, 'celebrate', 6000);
+  pubL2D({ cmd:'speak1', text:endLine, type:'celebrate' });
+  pubL2D({ cmd:'emotion', type:'celebrate' });
+  if (typeof L2D !== 'undefined') L2D.playEmotion('celebrate');
+
+  const winnerCorrect = winner ? (HS.correctCounts[winner.name] || 0) : 0;
+  const endSound = (winnerCorrect / HS.questions.length >= 0.6) ? 'TRACK_5' : 'TRACK_6';
+
+  // ── 儲存歷史成績並顯示分析 ─────────────────────────────────────────────
+  const hist = saveHistory(HS.players, ranked);
+
+  pub(MP_TOPICS.STATE, {
+    phase:      'end',
+    scores:     Object.fromEntries(Object.entries(HS.players).map(([id, p]) => [id, p.score])),
+    players:    Object.entries(HS.players).map(([id, p]) => ({ id, name: p.name })),
+    soundTrack: endSound,
+    history:    hist,
+  }, true, 1);
+  playSound(endSound);   // 主持人端直接播放，不依賴 Node-RED
+
+  renderTimeAnalysis(HS.reactionTimes, HS.players);
+  renderHistory(hist);
+
+  scr('screen-finish');
+}
+
+function resetToLobby() {
+  clr();
+  HS.phase         = 'lobby';
+  HS.correctStreak = 0;
+  HS.noScoreStreak = 0;
+  HS.reactionTimes = {};
+  Object.values(HS.players).forEach(p => { p.score = 0; });
+  pub(MP_TOPICS.STATE, { phase: 'host_left' }, false, 1);
+  pub(MP_TOPICS.STATE, {
+    phase:   'lobby',
+    players: Object.entries(HS.players).map(([id, p]) => ({ id, name: p.name })),
+  }, true, 1);
+  renderLobbySlots();
+  updateStartBtn();
+  scr('screen-lobby');
+}
+
+// ── 歷史成績 ──────────────────────────────────────────────────────────────
+function saveHistory(players, ranked) {
+  try {
+    const hist = JSON.parse(localStorage.getItem('quiz_player_history') || '{}');
+    ranked.forEach(({ id, name, score, rank }) => {
+      if (!hist[name]) hist[name] = { name, games: 0, totalScore: 0, highScore: -9999, firstCount: 0 };
+      const h = hist[name];
+      h.games++;
+      h.totalScore += score;
+      h.highScore = Math.max(h.highScore, score);
+      if (rank === 1) h.firstCount++;
+      h.lastSeen = Date.now();
+    });
+    // 前端只快取最近 10 筆，減輕 localStorage 負擔；Node-RED 才是完整紀錄
+    const cache = Object.fromEntries(
+      Object.entries(hist).sort((a, b) => (b[1].lastSeen || 0) - (a[1].lastSeen || 0)).slice(0, 10)
+    );
+    localStorage.setItem('quiz_player_history', JSON.stringify(cache));
+    return hist;   // 回傳完整（含本局新增）供 MQTT 廣播
+  } catch { return {}; }
+}
+
+function renderHistory(hist) {
+  const wrap = el('history-wrap');
+  if (!wrap) return;
+  const all  = Object.values(hist);
+  const top3 = [...all].sort((a, b) => b.highScore - a.highScore).slice(0, 3);
+  const top3Names = new Set(top3.map(h => h.name));
+  const rest = all.filter(h => !top3Names.has(h.name)).sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+  const entries = [...top3, ...rest];
+  if (!entries.length) {
+    wrap.innerHTML = '<div style="color:var(--text2);font-size:.82em;text-align:center;padding:8px 0">暫無紀錄</div>';
+    return;
+  }
+  let html = '<div class="history-scroll"><table class="analysis-table">' +
+    '<tr><th>名稱</th><th>場次</th><th>最高分</th><th>平均</th><th>第一名</th><th>勝率</th></tr>';
+  entries.forEach(h => {
+    const avg     = h.games > 0 ? Math.round(h.totalScore / h.games) : 0;
+    const winRate = h.games > 0 ? Math.round(h.firstCount / h.games * 100) : 0;
+    html += `<tr>
+      <td>${h.name}</td>
+      <td>${h.games}</td>
+      <td style="color:var(--cyan)">${fmt(h.highScore)}</td>
+      <td>${fmt(avg)}</td>
+      <td>${h.firstCount}</td>
+      <td>${winRate}%</td>
+    </tr>`;
+  });
+  html += '</table></div>';
+  wrap.innerHTML = html;
+}
+
+// ── 反應時間分析 ──────────────────────────────────────────────────────────
+function renderTimeAnalysis(reactionTimes, players) {
+  const wrap = el('time-analysis-wrap');
+  if (!wrap) return;
+  const entries = [];
+  Object.entries(reactionTimes).forEach(([id, times]) => {
+    if (!times.length) return;
+    const p = players[id];
+    if (!p) return;
+    const sum = times.reduce((s, t) => s + t, 0);
+    entries.push({
+      name:  p.name,
+      avg:   sum / times.length,
+      min:   Math.min(...times),
+      max:   Math.max(...times),
+      count: times.length,
+    });
+  });
+  entries.sort((a, b) => a.avg - b.avg);
+  if (!entries.length) {
+    wrap.innerHTML = '<div style="color:var(--text2);font-size:.82em;text-align:center;padding:8px 0">暫無資料</div>';
+    return;
+  }
+  let html = '<table class="analysis-table">' +
+    '<tr><th>名稱</th><th>平均</th><th>最快</th><th>最慢</th><th>作答數</th></tr>';
+  entries.forEach(e => {
+    html += `<tr>
+      <td>${e.name}</td>
+      <td style="color:var(--cyan)">${e.avg.toFixed(2)}s</td>
+      <td style="color:var(--green)">${e.min.toFixed(2)}s</td>
+      <td style="color:var(--red)">${e.max.toFixed(2)}s</td>
+      <td style="color:var(--text2)">${e.count}</td>
+    </tr>`;
+  });
+  html += '</table>';
+  wrap.innerHTML = html;
+}
+
+// ── 題庫載入 ──────────────────────────────────────────────────────────────
+async function loadBank(path) {
+  if (!path || path === '__custom__' || path === '__editor__') return;
+  const name = path.split('/').pop();
+  el('bank-label').textContent  = name;
+  el('pool-count').textContent  = '…';
+  try {
+    const r = await fetch(path);
+    const d = r.ok ? await r.json() : null;
+    HS.allQ = Array.isArray(d) && d.length ? d : FALLBACK_Q;
+  } catch { HS.allQ = FALLBACK_Q; }
+  el('pool-count').textContent = HS.allQ.length;
+  MP_CFG.QUESTION_BANK = path;
+  updateStartBtn();
+}
+
+// ── AI 題庫載入（Import Adapter — 透過 localStorage 低耦合整合）──────────
+function _refreshAILabel() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('quiz_ai_bank') || 'null');
+    if (raw && !Array.isArray(raw) && raw.name) {
+      const aiOpt = el('opt-ai-bank');
+      if (aiOpt) aiOpt.textContent = `🤖 ${raw.name}`;
+    }
+  } catch {}
+}
+
+function loadAIBank() {
+  try {
+    const raw       = JSON.parse(localStorage.getItem('quiz_ai_bank') || 'null');
+    const questions = Array.isArray(raw) ? raw : (raw?.questions || []);
+    const name      = (!Array.isArray(raw) && raw?.name) ? raw.name : 'AI 生成題庫';
+    if (questions.length) {
+      HS.allQ = questions;
+      el('bank-label').textContent = `${name}（${questions.length} 題）`;
+      el('pool-count').textContent  = questions.length;
+    } else {
+      HS.allQ = [];
+      el('bank-label').textContent = `${name}（尚未生成，請先前往 AI 題庫生成器）`;
+      el('pool-count').textContent  = 0;
+    }
+    const aiOpt = el('opt-ai-bank');
+    if (aiOpt) aiOpt.textContent = `🤖 ${name}`;
+  } catch { HS.allQ = []; }
+  updateStartBtn();
+}
+
+// ── 動態題庫清單（從 questions/index.json 讀取，並恢復使用者選擇）────────
+// ── Live2D 角色收藏庫（live2d_my_like/）：下拉選單只存在 localStorage，只影響本機 ──
+// 停用原因：加入這個功能後連線變得異常緩慢（init() 會 await 這裡的 fetch 才繼續跑 mqttInit()，
+// 等於把 MQTT 連線起點往後拖）。先整組關閉、不佔用資源，程式碼保留，之後要排查/重新啟用時改回 true。
+const MYLIKE_FEATURE_ENABLED = true;
+let _myLikeManifest = [];
+let _myLikeNames    = {};
+
+async function loadMyLikeManifest() {
+  try {
+    const [mRes, nRes] = await Promise.all([
+      fetch('../live2d_my_like/manifest.json'),
+      fetch('../live2d_my_like/names.json'),
+    ]);
+    _myLikeManifest = mRes.ok ? await mRes.json() : [];
+    _myLikeNames    = nRes.ok ? await nRes.json() : {};
+  } catch {
+    _myLikeManifest = [];
+    _myLikeNames    = {};
+  }
+}
+
+function populateMyLikeSelects() {
+  const opts = '<option value="">（預設，不覆蓋）</option>' +
+    _myLikeManifest
+      .map(e => `<option value="${e.path}">#${e.id} ${_myLikeNames[e.path] || e.character}</option>`)
+      .join('');
+  const c1 = el('char1-select'), c2 = el('char2-select');
+  if (!c1 || !c2) return;
+  c1.innerHTML = opts;
+  c2.innerHTML = opts;
+  c1.value = localStorage.getItem('l2d_mylike_char1') || '';
+  c2.value = localStorage.getItem('l2d_mylike_char2') || '';
+  c1.addEventListener('change', () => onMyLikeChange('char1', c1.value));
+  c2.addEventListener('change', () => onMyLikeChange('char2', c2.value));
+}
+
+function onMyLikeChange(key, val) {
+  if (val) localStorage.setItem('l2d_mylike_' + key, val);
+  else     localStorage.removeItem('l2d_mylike_' + key);
+  if (confirm('角色設定要重新整理頁面才會生效，現在重新整理嗎？')) location.reload();
+}
+
+async function loadBankIndex() {
+  const FALLBACK_INDEX = [
+    { file: 'business.json', name: '📊 商業管理' },
+    { file: 'security.json', name: '🔒 資訊安全' },
+    { file: 'ai.json',       name: '🤖 AI 概念'  },
+    { file: 'english.json',  name: '🔤 英文'      },
+  ];
+  let banks = FALLBACK_INDEX;
+  try {
+    const r = await fetch('../questions/index.json');
+    if (r.ok) banks = await r.json();
+  } catch {}
+
+  const sel    = el('bank-select');
+  const anchor = sel.querySelector('option[value="__editor__"]');
+  banks.forEach(({ file, name }) => {
+    const opt = document.createElement('option');
+    opt.value = `../questions/${file}`;
+    opt.textContent = name;
+    sel.insertBefore(opt, anchor);
+  });
+
+  _refreshAILabel();
+
+  const savedPath = (() => {
+    try { return JSON.parse(localStorage.getItem('quiz_cfg') || '{}').bankPath || ''; } catch { return ''; }
+  })();
+
+  if (savedPath) {
+    for (const opt of sel.options) {
+      if (opt.value === savedPath) { sel.value = savedPath; break; }
+    }
+  } else if (banks.length > 0) {
+    sel.value = `../questions/${banks[0].file}`;
+  }
+
+  const val = sel.value;
+  if (val === '__editor__') {
+    el('bank-editor-wrap').style.display = 'block';
+    HS.allQ = [...edQuestions];
+    el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
+    el('pool-count').textContent = HS.allQ.length;
+    updateStartBtn();
+  } else if (val === '__custom__') {
+    el('bank-upload-wrap').style.display = 'block';
+    HS.allQ = [];
+    el('bank-label').textContent = '等待上傳…';
+    el('pool-count').textContent = 0;
+    updateStartBtn();
+  } else if (val === '__ai__') {
+    loadAIBank();
+  } else {
+    await loadBank(val);
+  }
+}
+
+// ── UI 渲染 ───────────────────────────────────────────────────────────────
+function renderScoreboard() {
+  const ranked = mpRankPlayers(HS.players);
+  const sb = el('scoreboard');
+  sb.innerHTML = '';
+  ranked.forEach(({ id, name, score, rank, color }) => {
+    const wrong   = HS.wrongIds.has(id);
+    const buzzing = HS.buzzer?.id === id;
+    const isMe    = id === HS.myId;
+    const c       = color || '#888';
+    const d = document.createElement('div');
+    d.className = `p-row rank-${Math.min(rank, 4)}${wrong ? ' is-wrong' : ''}${isMe ? ' is-me' : ''}`;
+    d.style.borderLeft = `3px solid ${c}`;
+    const pd      = HS.players[id];
+    const offline = !isMe && pd?.lastSeen && pd?.online === false;
+    const onlineDot = isMe || !pd?.lastSeen ? ''
+      : `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;
+              background:${offline?'var(--red)':'#00e676'};
+              margin-right:4px;vertical-align:middle;flex-shrink:0;
+              box-shadow:0 0 4px ${offline?'var(--red)':'#00e676'}88"
+            title="${offline?'離線':'在線'}"></span>`;
+    const av = typeof AvatarModule !== 'undefined' ? AvatarModule.html(id, 28) : '';
+    d.innerHTML = `
+      <span class="p-medal">${MP_MEDALS[rank - 1] || rank}</span>
+      ${av}
+      <div class="p-info">
+        <div class="p-name">${onlineDot}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>${name}${isMe ? ' 👑' : ''}</div>
+        ${wrong   ? `<div class="p-badge" style="color:var(--red)">✗ 答錯</div>` : ''}
+        ${buzzing ? `<div class="p-badge" style="color:var(--yellow)">⚡ 搶答中</div>` : ''}
+        ${offline ? `<div class="p-badge" style="color:var(--red)">📵 離線</div>` : ''}
+      </div>
+      <div class="p-score${score < 0 ? ' neg' : ''}">${fmt(score)}</div>`;
+    sb.appendChild(d);
+  });
+  if (typeof PlayerBubbleChat !== 'undefined') PlayerBubbleChat.refresh();
+}
+
+// ── 結果畫面：每位玩家的個別答題狀況 ────────────────────────────────────
+function renderResultPlayers(q) {
+  const wrap = el('result-players');
+  if (!wrap) return;
+
+  wrap.innerHTML = Object.entries(HS.players).map(([id, p]) => {
+    let letter = null, isCorrect = false, delta = 0, answered = false;
+
+    if (HS.gameMode === 'all') {
+      answered  = HS.answeredIds.has(id);
+      letter    = HS.playerAnswers[id] ?? null;
+      isCorrect = letter === q.answer;
+      delta     = HS.playerDeltas[id]  ?? 0;
+    } else {
+      // 搶答模式：搶答成功者讀 buzzer，答錯者讀 wrongIds + playerAnswers
+      if (HS.buzzer?.id === id) {
+        answered = true; letter = HS.buzzer.letter; isCorrect = true; delta = HS.buzzer.delta;
+      } else if (HS.wrongIds.has(id)) {
+        answered = true; letter = HS.playerAnswers[id] ?? null; isCorrect = false;
+        delta = HS.playerDeltas[id] ?? 0;
+      }
+    }
+
+    const cls    = !answered ? 'no-ans' : isCorrect ? 'correct' : 'wrong';
+    const col    = p.color || '#888';
+    const letCol = isCorrect ? 'var(--green)' : 'var(--red)';
+    const dStr   = answered && delta !== 0 ? (delta > 0 ? '+' + delta : '' + delta) + '分' : '';
+    const dCol   = delta > 0 ? 'var(--green)' : 'var(--red)';
+
+    const rpAv = typeof AvatarModule !== 'undefined' ? AvatarModule.html(id, 24) : '';
+    return `<div class="rp-row ${cls}" style="border-left:3px solid ${col}">
+      ${rpAv}<span class="rp-name" style="color:${col}">${p.name}</span>
+      <span class="rp-chosen" style="color:${letter ? letCol : 'var(--text2)'}">${letter || '—'}</span>
+      ${dStr ? `<span class="rp-delta" style="color:${dCol}">${dStr}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderLobbySlots() {
+  const ranked = mpRankPlayers(HS.players);
+  const c = el('lobby-slots');
+  c.innerHTML = '';
+
+  // 在線統計
+  const guests     = ranked.filter(p => p.id !== HS.myId);
+  const onlineCnt  = guests.filter(p => p.lastSeen && HS.players[p.id]?.online !== false).length;
+  const offlineCnt = guests.filter(p => HS.players[p.id]?.online === false).length;
+  const sts = el('hb-lobby-status');
+  if (sts) {
+    sts.textContent = guests.length
+      ? `玩家人數：${guests.length}／9　🟢 在線 ${onlineCnt}　${offlineCnt ? `🔴 離線 ${offlineCnt}` : ''}`
+      : '';
+  }
+
+  // 渲染所有已加入的玩家（含主持人）
+  ranked.forEach((p, i) => {
+    const isMe    = p.id === HS.myId;
+    const col     = p.color || '#888';
+    const pd      = HS.players[p.id];
+    const offline = !isMe && pd?.lastSeen && pd?.online === false;
+    const onlineSvg = isMe || !pd?.lastSeen ? ''
+      : `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;
+              background:${offline?'var(--red)':'#00e676'};margin-right:5px;
+              vertical-align:middle;box-shadow:0 0 4px ${offline?'var(--red)':'#00e676'}88"></span>`;
+    const div = document.createElement('div');
+    div.className = `join-slot ${isMe ? 'host-slot' : 'filled'}${offline ? ' is-offline' : ''}`;
+    div.style.borderColor = col + '66';
+    const slotAv = typeof AvatarModule !== 'undefined'
+      ? AvatarModule.html(p.id, 32)
+      : `<div class="join-dot" style="background:${col}"></div>`;
+    div.innerHTML = `${slotAv}
+      <span class="join-name" style="color:${col}">${onlineSvg}${p.name || '(未填名稱)'}${offline ? ' <span style="color:var(--red);font-size:.75em">離線</span>' : ''}</span>
+      <span class="join-badge">${isMe ? '主持人 P1' : 'P' + (i + 1)}</span>`;
+    c.appendChild(div);
+  });
+
+  // 如果還有空位，顯示一個「等待加入」佔位列
+  if (ranked.length < 10) {
+    const div = document.createElement('div');
+    div.className = 'join-slot';
+    div.innerHTML = `<div class="join-dot"></div>
+      <span style="color:var(--text2);font-size:.85em">等待玩家加入...（還可加入 ${10 - ranked.length} 人）</span>`;
+    c.appendChild(div);
+  }
+  if (typeof PlayerBubbleChat !== 'undefined') PlayerBubbleChat.refresh();
+}
+
+function showToast(text, positive) {
+  const d = document.createElement('div');
+  d.className   = `score-toast ${positive ? 'pos' : 'neg'}`;
+  d.textContent = text;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), MP_CFG.TOAST_MS);
+}
+
+// ── 題庫表單編輯器 ────────────────────────────────────────────────────────
+let edAnswer = null;
+
+function edSelectAnswer(k) {
+  edAnswer = k;
+  ['A','B','C','D'].forEach(l => el('ed-lbl-' + l).classList.toggle('selected', l === k));
+  edValidate();
+}
+
+function edValidate() {
+  const ok = el('ed-q').value.trim()
+    && el('ed-A').value.trim() && el('ed-B').value.trim()
+    && el('ed-C').value.trim() && el('ed-D').value.trim()
+    && edAnswer;
+  el('btn-ed-add').disabled = !ok;
+  const hint = el('ed-hint');
+  if (edAnswer) {
+    hint.textContent = `正確答案：${edAnswer}`;
+    hint.style.color = 'var(--green)';
+  } else {
+    hint.textContent = '點擊 A / B / C / D 字母標籤，選擇正確答案';
+    hint.style.color = 'var(--text2)';
+  }
+}
+
+function edAddQ() {
+  edQuestions.push({
+    question:    el('ed-q').value.trim(),
+    options:     { A: el('ed-A').value.trim(), B: el('ed-B').value.trim(), C: el('ed-C').value.trim(), D: el('ed-D').value.trim() },
+    answer:      edAnswer,
+    explanation: el('ed-expl').value.trim() || '',
+    domain:      el('ed-domain').value.trim() || '',
+  });
+  ['ed-q','ed-A','ed-B','ed-C','ed-D','ed-expl'].forEach(id => el(id).value = '');
+  edAnswer = null;
+  ['A','B','C','D'].forEach(l => el('ed-lbl-' + l).classList.remove('selected'));
+  edValidate();
+  edRenderList();
+  edSave();
+  el('ed-q').focus();
+}
+
+function edDeleteQ(idx) {
+  edQuestions.splice(idx, 1);
+  edRenderList();
+  edSave();
+}
+
+function edRenderList() {
+  const list    = el('ed-q-list');
+  const count   = el('ed-count');
+  const doneBtn = el('btn-ed-done');
+
+  if (el('bank-select').value === '__editor__') {
+    HS.allQ = [...edQuestions];
+    el('pool-count').textContent = HS.allQ.length;
+    el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
+    updateStartBtn();
+  }
+
+  const hasQ = edQuestions.length > 0;
+  el('btn-ed-clear').disabled  = !hasQ;
+  el('btn-ed-export').disabled = !hasQ;
+  doneBtn.disabled             = !hasQ;
+
+  if (!hasQ) {
+    list.innerHTML    = '';
+    count.textContent = '尚未新增任何題目';
+    return;
+  }
+  count.textContent = `共 ${edQuestions.length} 題`;
+  list.innerHTML = edQuestions.map((q, i) => `
+    <div class="editor-q-item">
+      <span class="editor-q-num">${i + 1}</span>
+      <span class="editor-q-preview" title="${q.question}">${q.question}</span>
+      <span class="editor-q-ans">答：${q.answer}</span>
+      <div class="editor-q-del" onclick="edDeleteQ(${i})" title="刪除">✕</div>
+    </div>`).join('');
+}
+
+['A','B','C','D'].forEach(k => el('ed-lbl-' + k).addEventListener('click', () => edSelectAnswer(k)));
+['ed-q','ed-A','ed-B','ed-C','ed-D'].forEach(id => el(id).addEventListener('input', edValidate));
+el('btn-ed-add').addEventListener('click', edAddQ);
+let _playerJsonHandle = null;  // 同一 session 內記住選過的檔案，省去重複選檔
+
+el('btn-ed-export').addEventListener('click', async () => {
+  if (!edQuestions.length) return;
+  const json = JSON.stringify(edQuestions, null, 2);
+  const btn  = el('btn-ed-export');
+
+  if ('showSaveFilePicker' in window) {
+    try {
+      if (!_playerJsonHandle) {
+        _playerJsonHandle = await window.showSaveFilePicker({
+          suggestedName: 'player.json',
+          types: [{ description: 'JSON 題庫', accept: { 'application/json': ['.json'] } }],
+        });
+      }
+      const writable = await _playerJsonHandle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      btn.textContent = '✓ 已儲存！';
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        _playerJsonHandle = null;
+        btn.textContent = '× 儲存失敗';
+      }
+    }
+  } else {
+    alert('你的瀏覽器不支援選擇儲存路徑，請改用 Chrome 或 Edge。');
+  }
+  setTimeout(() => { btn.textContent = '💾 儲存 player.json'; }, 2000);
+});
+
+el('btn-ed-done').addEventListener('click', () => {
+  if (!edQuestions.length) return;
+  HS.allQ = [...edQuestions];
+  el('pool-count').textContent = HS.allQ.length;
+  el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
+  updateStartBtn();
+  const btn = el('btn-ed-done');
+  btn.textContent = '✓ 已套用！';
+  setTimeout(() => { btn.textContent = '✓ 套用'; }, 1500);
+});
+
+el('btn-ed-clear').addEventListener('click', () => {
+  if (!edQuestions.length) return;
+  if (!confirm(`確定要清空全部 ${edQuestions.length} 道題目？此動作無法復原。`)) return;
+  edQuestions.length = 0;
+  edSave();
+  edRenderList();
+});
+
+function downloadExampleBank() {
+  const example = [
+    {
+      "question": "MQTT 採用哪種通訊架構？",
+      "options": { "A": "Client-Server", "B": "Publish-Subscribe", "C": "Peer-to-Peer", "D": "Master-Slave" },
+      "answer": "B",
+      "explanation": "MQTT 使用 Publish-Subscribe 架構，Publisher 發送訊息至 Broker，Subscriber 訂閱主題接收。",
+      "domain": "IoT"
+    },
+    {
+      "question": "HTTP 協定預設使用哪個埠號？",
+      "options": { "A": "8080", "B": "443", "C": "80", "D": "3000" },
+      "answer": "C",
+      "explanation": "HTTP 預設 80 埠，HTTPS 預設 443 埠。",
+      "domain": "網路"
+    },
+    {
+      "question": "下列何者屬於資訊安全 CIA 三要素？",
+      "options": { "A": "速度、穩定、成本", "B": "機密性、完整性、可用性", "C": "硬體、軟體、網路", "D": "輸入、處理、輸出" },
+      "answer": "B",
+      "explanation": "CIA 三要素為 Confidentiality（機密性）、Integrity（完整性）、Availability（可用性）。",
+      "domain": "資安"
+    }
+  ];
+  const blob = new Blob([JSON.stringify(example, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'example.json' });
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function edSave() {
+  try { localStorage.setItem('quiz_editor_bank', JSON.stringify(edQuestions)); } catch {}
+}
+function edLoad() {
+  try {
+    const d = JSON.parse(localStorage.getItem('quiz_editor_bank') || '[]');
+    if (Array.isArray(d) && d.length) { edQuestions.push(...d); edRenderList(); }
+  } catch {}
+}
+
+// ── 事件綁定 ──────────────────────────────────────────────────────────────
+el('host-name-input').addEventListener('input', setName);
+el('btn-start').addEventListener('click', startGame);
+el('btn-skip').addEventListener('click', () => {
+  if (HS.phase === 'prepare') {
+    clr();
+    hide('overlay-prepare');
+    startAnswering();
+  } else if (HS.phase === 'answering') {
+    clr();
+    onTimeout();
+  }
+});
+el('btn-end').addEventListener('click', () => { clr(); endGame(); });
+el('btn-restart').addEventListener('click', resetToLobby);
+el('btn-lobby').addEventListener('click', resetToLobby);
+el('btn-clear-history').addEventListener('click', () => {
+  if (confirm('確定要清除所有玩家歷史成績？')) {
+    localStorage.removeItem('quiz_player_history');
+    renderHistory({});
+  }
+});
+
+// 鍵盤 A/B/C/D 作答（主持人同時參與計分）
+document.addEventListener('keydown', e => {
+  if (HS.phase !== 'answering') return;
+  const k = e.key.toUpperCase();
+  if ('ABCD'.includes(k) && k.length === 1) {
+    pub(MP_TOPICS.ANSWER, { id: HS.myId, name: HS.myName || '主持人', letter: k });
+  }
+});
+
+// 滑鼠左鍵點擊選項作答
+['A','B','C','D'].forEach(k => {
+  el('opt-' + k)?.addEventListener('pointerup', e => {
+    if (HS.phase !== 'answering') return;
+    if (e.pointerType !== 'touch' && e.pointerType !== 'mouse') return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pub(MP_TOPICS.ANSWER, { id: HS.myId, name: HS.myName || '主持人', letter: k });
+  });
+});
+
+// ── 題庫選擇事件 ──────────────────────────────────────────────────────────
+el('bank-select').addEventListener('change', async () => {
+  const val = el('bank-select').value;
+  el('bank-upload-wrap').style.display  = 'none';
+  el('bank-editor-wrap').style.display  = 'none';
+
+  if (val === '__custom__') {
+    el('bank-upload-wrap').style.display = 'block';
+    el('bank-label').textContent = '等待上傳…';
+    el('pool-count').textContent = '0';
+    HS.allQ = [];
+    updateStartBtn();
+  } else if (val === '__editor__') {
+    el('bank-editor-wrap').style.display = 'block';
+    HS.allQ = [...edQuestions];
+    el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
+    el('pool-count').textContent = HS.allQ.length;
+    updateStartBtn();
+    try {
+      const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
+      s.bankPath = '__editor__';
+      localStorage.setItem('quiz_cfg', JSON.stringify(s));
+    } catch {}
+  } else if (val === '__ai__') {
+    loadAIBank();
+  } else {
+    await loadBank(val);
+    try {
+      const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
+      s.bankPath = val;
+      localStorage.setItem('quiz_cfg', JSON.stringify(s));
+    } catch {}
+  }
+});
+
+el('bank-upload').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (Array.isArray(data) && data.length) {
+      HS.allQ = data;
+      el('bank-label').textContent = file.name;
+      el('pool-count').textContent = data.length;
+      updateStartBtn();
+    } else {
+      alert('題庫格式錯誤：需為 JSON 陣列，且至少含一題');
+    }
+  } catch {
+    alert('無法解析 JSON，請確認檔案格式正確');
+  }
+});
+
+// ── 玩家加入網址 ──────────────────────────────────────────────────────────
+function buildPlayerUrl(ip, port) {
+  ip   = (typeof ip   === 'string' ? ip.trim()  : '') || MP_CFG.brokerIP;
+  port = (typeof port === 'string' ? port.trim() : '') || MP_CFG.wsPort;
+  if (location.protocol === 'file:') return null;
+  let host      = location.hostname;
+  const srvPort = location.port ? `:${location.port}` : '';
+  if (host === 'localhost' || host === '127.0.0.1') host = ip;
+  const base = `${location.protocol}//${host}${srvPort}/multi/player.html`;
+  return `${base}?${new URLSearchParams({ ip, port })}`;
+}
+
+let _currentQrUrl  = '';
+let _settingsPoll  = null;
+
+function _buildQR(container, url, size) {
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: url, width: size, height: size,
+    colorDark: '#f0f8ff', colorLight: '#040a16',
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+}
+
+function setPlayerUrl() {
+  const ip   = el('cfg-ip')?.value   ?? '';
+  const port = el('cfg-port')?.value ?? '';
+  const url  = buildPlayerUrl(ip, port);
+  const box  = el('player-url');
+  const qrw  = el('qr-wrap');
+  const qrc  = el('qr-canvas');
+  _currentQrUrl = url || '';
+  const displayUrl = url ? url.split('?')[0] : null;  // 顯示不含 query params
+  if (url && typeof QRCode !== 'undefined') {
+    box.textContent  = displayUrl;
+    box.dataset.url  = url;          // 複製 / QR 用完整 URL
+    box.style.color  = '';
+    box.style.cursor = 'text';
+    _buildQR(qrc, url, 128);
+    qrw?.classList.add('ready');
+  } else if (url) {
+    box.textContent  = displayUrl;
+    box.dataset.url  = url;
+    box.style.color  = '';
+    box.style.cursor = 'text';
+  } else {
+    box.textContent  = '—';
+    box.style.cursor = 'default';
+    if (qrc) qrc.innerHTML = '';
+    qrw?.classList.remove('ready');
+  }
+}
+
+// ── QR Code 放大燈箱 ──────────────────────────────────────────────────────
+el('qr-canvas').addEventListener('click', () => {
+  if (!_currentQrUrl || typeof QRCode === 'undefined') return;
+  const mc = el('qr-modal-canvas');
+  _buildQR(mc, _currentQrUrl, 280);
+  el('qr-modal-url').textContent = _currentQrUrl;
+  el('qr-modal').classList.add('open');
+});
+
+function closeQrModal() { el('qr-modal').classList.remove('open'); }
+el('qr-modal-close').addEventListener('click', closeQrModal);
+el('qr-modal').addEventListener('click', e => { if (e.target === el('qr-modal')) closeQrModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQrModal(); });
+
+el('btn-copy-url').addEventListener('click', () => {
+  const box = el('player-url');
+  const url = box.dataset.url || box.textContent;  // 複製完整 URL（含 ip/port params）
+  if (!url || url === '—') return;
+  navigator.clipboard?.writeText(url).then(() => {
+    const b = el('btn-copy-url');
+    b.textContent = '✓ 已複製！';
+    b.classList.add('copied');
+    setTimeout(() => { b.textContent = '複製網址'; b.classList.remove('copied'); }, 2000);
+  }).catch(() => {});
+});
+
+// ── 設定面板 ──────────────────────────────────────────────────────────────
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
+    if (s.brokerIP) MP_CFG.brokerIP = s.brokerIP;
+    if (s.wsPort)   MP_CFG.wsPort   = +s.wsPort;
+    // 題庫選擇由 loadBankIndex() 在動態選項建立後恢復
+  } catch {}
+  el('cfg-ip').value   = MP_CFG.brokerIP;
+  el('cfg-port').value = MP_CFG.wsPort;
+}
+
+async function applySettings() {
+  const ip   = el('cfg-ip').value.trim();
+  const port = parseInt(el('cfg-port').value) || 9001;
+  if (!ip) { el('cfg-msg').textContent = '請輸入 Broker IP'; return; }
+
+  MP_CFG.brokerIP = ip;
+  MP_CFG.wsPort   = port;
+  try {
+    const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
+    s.brokerIP = ip;
+    s.wsPort   = port;
+    localStorage.setItem('quiz_cfg', JSON.stringify(s));
+  } catch {}
+
+  const oldClient = HS.client;
+  HS.client = null;
+  HS.ok     = false;
+  if (oldClient) { try { oldClient.end(true); } catch {} }
+
+  el('cfg-msg').textContent = `連接 ws://${ip}:${port}...`;
+  if (_settingsPoll) { clearInterval(_settingsPoll); _settingsPoll = null; }
+  mqttInit();
+  let tries = 0;
+  _settingsPoll = setInterval(() => {
+    tries++;
+    if (HS.ok) {
+      clearInterval(_settingsPoll); _settingsPoll = null;
+      el('cfg-msg').textContent = `✓ 已連線 ${ip}`;
+      setPlayerUrl();
+      setTimeout(() => { el('cfg-msg').textContent = ''; }, 2500);
+    } else if (tries >= 12) {
+      clearInterval(_settingsPoll); _settingsPoll = null;
+      el('cfg-msg').textContent = '× 連線失敗，請確認 IP / Port';
+    }
+  }, 500);
+}
+
+el('cfg-apply').addEventListener('click', applySettings);
+el('cfg-ip').addEventListener('input', setPlayerUrl);
+el('cfg-port').addEventListener('input', setPlayerUrl);
+init().then(() => {
+  if (typeof VoiceBroadcastModule !== 'undefined') {
+    VoiceBroadcastModule.initHost({
+      mqttClient: () => HS.client,
+      myId:       () => HS.myId,
+      name:       () => HS.myName || '主持人',
+      getPlayers: () => Object.keys(HS.players).filter(id => id !== HS.myId),
+    });
+  }
+});
+
+// ── AI 主持人回應文字庫 ────────────────────────────────────────────────────
+const _L = {
+  correct:   ['太棒了，答對囉！🎉','完美！繼續保持！✨','哇，反應超快！👏','正確！你真厲害！⭐'],
+  streak:    ['連續答對，勢如破竹！🔥','無人能擋！再接再厲！🔥'],
+  wrong:     ['再想想看，下次會更好！💪','可惜了，繼續加油！','沒關係，下題再來！😊','答錯沒關係，重點是學到了！📚'],
+  all_wrong: ['這題難倒大家了...來看解答吧！🤔','大家都答錯，一起來研究！'],
+  timeout:   ['時間到囉！來看正確答案吧～','超時了，我們一起揭曉！⏰'],
+  question:  ['思考一下，你有信心嗎？🤔','這題需要動動腦筋！','加油，相信自己！💡','準備好了嗎？'],
+  win:       ['恭喜你拿下第一名！👑','今天最強大腦誕生！🏆'],
+  end:       ['感謝大家參與！遊戲結束～🎊','今天大家都超厲害！下次見！'],
+  join:      ['歡迎加入！準備好大展身手嗎？🎮','又有新玩家加入！熱鬧了！'],
+};
+const _pick  = arr  => arr[Math.floor(Math.random() * arr.length)];
+const _speak = (text, type, duration) => {
+  if (typeof L2D !== 'undefined' && L2D.speak) L2D.speak(text, { type, duration });
+};
+
+// ── 主持人 Emoji 快速反應面板 ──────────────────────────────────────────────
+(() => {
+  const EMOJIS = ['😀','😂','😭','😡','👍','👏','🎉','❤️','🔥','❓'];
+  const emojiBtn = el('btn-h-emoji');
+  if (!emojiBtn) return;
+
+  const grid = document.createElement('div');
+  grid.style.cssText =
+    'position:fixed;bottom:60px;right:4px;z-index:10001;' +
+    'background:rgba(10,20,40,.97);border:1px solid rgba(0,212,255,.3);' +
+    'border-radius:14px;padding:8px;gap:4px;flex-wrap:wrap;width:196px;' +
+    'box-shadow:0 -4px 20px rgba(0,0,0,.6);display:none;';
+  EMOJIS.forEach(e => {
+    const btn = document.createElement('button');
+    btn.textContent = e;
+    btn.style.cssText =
+      'width:36px;height:36px;font-size:22px;background:none;border:none;' +
+      'cursor:pointer;border-radius:8px;transition:background .12s;line-height:1;color:inherit;';
+    btn.addEventListener('pointerenter', () => { btn.style.background = 'rgba(0,212,255,.15)'; });
+    btn.addEventListener('pointerleave', () => { btn.style.background = 'none'; });
+    btn.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (!HS.ok) return;
+      pub(MP_TOPICS.CHAT, { playerId: HS.myId, name: HS.myName || '主持人', message: e, type: 'emoji' }, false, 0);
+      grid.style.display = 'none';
+    });
+    grid.appendChild(btn);
+  });
+  document.body.appendChild(grid);
+
+  emojiBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    grid.style.display = grid.style.display === 'flex' ? 'none' : 'flex';
+  });
+  document.addEventListener('click', ev => {
+    if (!grid.contains(ev.target) && ev.target !== emojiBtn)
+      grid.style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1764 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>多人搶答 — 玩家</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* ── 確保畫面層級在 Live2D canvas(5) 及 speech bubble(100) 之上 */
+    .screen { z-index: 110; }
+    /* ── 手機全高佈局 ─────────────────────────────────────── */
+    html, body { overflow:hidden; height:100%; touch-action:manipulation; }
+
+    /* ── 加入畫面 ─────────────────────────────────────────── */
+    .join-card { max-width:380px; width:92%; text-align:center; }
+    .join-title { font-size:2em; font-weight:900; margin-bottom:6px;
+      background:linear-gradient(130deg,var(--cyan),var(--purple));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .join-sub { font-size:.82em; color:var(--text2); letter-spacing:2px; margin-bottom:28px; }
+    .join-input {
+      display:block; width:100%; padding:14px 16px; margin-bottom:14px;
+      background:rgba(255,255,255,0.06); border:1px solid var(--border);
+      border-radius:12px; color:var(--text); font-size:1.15em; outline:none;
+      text-align:center; transition:border-color .2s;
+    }
+    .join-input:focus { border-color:var(--cyan); }
+    #join-status { font-size:.8em; color:var(--text2); min-height:1.4em; margin-top:6px; }
+    /* #p-char1-select / #p-char2-select 的 <option> 清單：瀏覽器原生下拉彈出視窗
+       不會繼承頁面的深色主題，預設是系統白底黑字，這裡強制跟主題同色 */
+    #p-char1-select option, #p-char2-select option {
+      background: var(--bg2); color: var(--text);
+    }
+
+    /* ── 遊戲畫面 ─────────────────────────────────────────── */
+    #screen-game {
+      flex-direction:column; align-items:stretch;
+      justify-content:flex-start; overflow:hidden;
+    }
+
+    /* 頂列：玩家資訊 */
+    .player-topbar {
+      flex-shrink:0; display:flex; align-items:center;
+      padding:8px 16px; border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,0.3); gap:10px;
+    }
+    .my-rank   { font-size:1.5em; }
+    .my-name   { flex:1; font-size:.9em; font-weight:700; color:var(--text); }
+    .my-score  { font-size:1.4em; font-weight:900; color:var(--cyan); }
+    .my-score.neg { color:var(--red); }
+
+    /* 計時器 */
+    .player-timer-wrap {
+      text-align:center; padding:2px 0; flex-shrink:0;
+    }
+    .player-timer-num {
+      font-size:3em; font-weight:900; color:var(--cyan); line-height:1;
+      text-shadow:0 0 20px rgba(0,212,255,.5); transition:color .3s;
+    }
+    .player-timer-num.urgent {
+      color:var(--red); text-shadow:0 0 20px rgba(255,51,85,.6);
+      animation:urgentPulse .5s ease-in-out infinite;
+    }
+
+    /* 題目區 */
+    .player-q-wrap {
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:8px 16px; text-align:center; overflow:hidden;
+      min-height:72px;
+    }
+    .player-q-status {
+      font-size:1.05em; color:var(--text2); letter-spacing:2px; min-height:1.4em;
+      transition:font-size .3s, color .3s, letter-spacing .3s;
+    }
+    .player-q-status.status-waiting {
+      position:fixed; top:50%; left:50%; width:88vw;
+      font-size:2.3em; font-weight:900; color:var(--cyan); letter-spacing:5px;
+      text-align:center; z-index:7;
+      animation:waitingPulse 2.8s ease-in-out infinite;
+    }
+    @keyframes waitingPulse {
+      0%, 100% { transform:translate(-50%,-50%) scale(1);    text-shadow:0 0 14px rgba(0,212,255,.65), 0 0 36px rgba(0,212,255,.3);  }
+      50%       { transform:translate(-50%,-50%) scale(1.12); text-shadow:0 0 28px rgba(0,212,255,1),   0 0 60px rgba(0,212,255,.55); }
+    }
+    .player-q-text {
+      font-size:clamp(1em, 4.5vw, 1.5em); font-weight:600;
+      color:var(--text); line-height:1.5; margin-top:6px;
+    }
+
+    /* 選項按鈕 — z-index 90 浮於 overlay 之上，答案清晰可見 */
+    .player-opts {
+      flex-shrink:0; display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; padding:8px;
+      position:relative; z-index:90;
+    }
+    .p-opt {
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px; border-radius:14px; cursor:pointer;
+      border:2px solid var(--border);
+      background:rgba(0,212,255,0.03);
+      font-size:clamp(.9em, 3.8vw, 1.15em);
+      font-weight:600; color:var(--text);
+      transition:all .25s; text-align:left;
+      aspect-ratio:1/1; overflow:hidden;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .p-opt:active:not(:disabled) { transform:scale(.97); }
+    .p-opt:hover:not(:disabled)  { border-color:rgba(0,212,255,.5); background:rgba(0,212,255,.07); }
+    .p-opt .po-letter {
+      width:26px; height:26px; border-radius:50%; flex-shrink:0;
+      background:rgba(0,212,255,.1); border:2px solid rgba(0,212,255,.4);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.8em; font-weight:900; color:var(--cyan);
+    }
+    .p-opt .po-text   {
+      flex:1; min-width:0; line-height:1.35; font-weight:700; font-size:1em;
+      overflow-wrap:anywhere;
+      text-shadow:
+        0 1px 4px #000, 0 -1px 4px #000,
+        1px 0 4px #000, -1px 0  4px #000,
+        0 0 10px rgba(0,0,0,.85);
+    }
+
+    /* 選項狀態 */
+    .p-opt:disabled { opacity:.4; cursor:not-allowed; }
+    @keyframes _optPop {
+      0%   { transform:scale(1); }
+      35%  { transform:scale(1.07); box-shadow:0 0 26px rgba(0,212,255,.75); }
+      65%  { transform:scale(.97); }
+      100% { transform:scale(1); }
+    }
+    .p-opt.selected {
+      border-color:var(--cyan); background:rgba(0,212,255,.18);
+      box-shadow:0 0 20px rgba(0,212,255,.5), inset 0 0 12px rgba(0,212,255,.08);
+      animation:_optPop .45s cubic-bezier(.36,.07,.19,.97);
+    }
+    .p-opt.correct {
+      border-color:var(--green); background:rgba(0,255,136,.18);
+      box-shadow:0 0 0 2px var(--green), 0 0 40px rgba(0,255,136,.6), 0 0 70px rgba(0,255,136,.2);
+      animation:_optCorrectPop .55s cubic-bezier(.34,1.56,.64,1) both;
+      position:relative; z-index:2;
+    }
+    @keyframes _optCorrectPop {
+      from { transform:scale(0.92); opacity:0.4; }
+      to   { transform:scale(1);    opacity:1;   }
+    }
+    .p-opt.correct .po-letter {
+      border-color:var(--green); color:var(--green);
+      box-shadow:0 0 14px rgba(0,255,136,.5);
+    }
+    .p-opt.wrong    { border-color:var(--red);   background:rgba(255,51,85,.12); }
+    .p-opt.wrong   .po-letter { border-color:var(--red);   color:var(--red); }
+    /* 結果揭曉時錯誤選項退場 */
+    .p-opt.result-dim { opacity:0.12; pointer-events:none; transition:opacity .35s; }
+    /* 橫屏（含桌面瀏覽器）：移除 1:1 比例，按鈕高度由內容決定 */
+    @media (orientation:landscape) {
+      .p-opt { aspect-ratio:auto; min-height:56px; padding:8px 12px; }
+    }
+    /* 直屏手機（≤768px 直拿）：單欄全寬，字體加大，提升閱讀舒適度 */
+    /* ⚠ 桌面直立顯示器（>768px）不在此規則範圍，走預設 2 欄 */
+    @media (orientation:portrait) and (max-width:768px) {
+      .player-opts { grid-template-columns:1fr; }
+      .p-opt {
+        aspect-ratio:auto;
+        min-height:64px;
+        font-size:clamp(1.05em, 5.5vw, 1.4em);
+        /* 加深按鈕背景，防止 Live2D 對話泡沫（z-index:100）在透明底色下視覺穿透 */
+        background:rgba(2, 8, 22, 0.82);
+      }
+    }
+
+    /* ── 回合積分排行榜（左上角直式面板） ─────────────────── */
+    #p-scoreboard {
+      position:fixed; top:50px; left:0; z-index:200;
+      width:min(210px,56vw);
+      display:flex; flex-direction:column; gap:1px;
+      padding:5px 7px 7px;
+      background:rgba(2,8,20,.95);
+      border:1px solid rgba(255,255,255,.12);
+      border-left:3px solid var(--cyan);
+      border-radius:0 10px 10px 0;
+      box-shadow:3px 4px 18px rgba(0,0,0,.55);
+      max-height:calc(100vh - 130px);
+      overflow-y:auto;
+    }
+    #p-scoreboard.hidden { display:none; }
+    /* 主標語 */
+    .p-sb-title {
+      font-size:.6em; font-weight:900; color:var(--cyan);
+      letter-spacing:2px; padding-bottom:3px;
+      border-bottom:1px solid rgba(255,255,255,.1);
+      margin-bottom:1px; flex-shrink:0;
+    }
+    /* 欄位類別標頭 */
+    .p-sb-cats {
+      display:flex; align-items:center; gap:4px;
+      padding:0 3px 2px;
+      font-size:.58em; color:var(--text2); font-weight:600; letter-spacing:.5px;
+      flex-shrink:0;
+    }
+    .p-sb-cats .p-sb-medal { width:15px; font-size:1em; }
+    .p-sb-cats .p-sb-name  { flex:1; font-size:1em; }
+    .p-sb-cats .p-sb-score { font-size:1em; }
+    /* 資料列 */
+    .p-sb-row  { display:flex; align-items:center; gap:3px; padding:2px 4px;
+                 border-radius:5px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); }
+    .p-sb-row.is-me { background:rgba(0,212,255,.1); border-color:rgba(0,212,255,.35);
+                      box-shadow:0 0 0 1px rgba(0,212,255,.22); }
+    .p-sb-medal { font-size:.7em; width:15px; text-align:center; flex-shrink:0; }
+    .p-sb-name  { flex:1; font-size:.68em; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .p-sb-score { font-size:.72em; font-weight:900; color:var(--cyan); white-space:nowrap; }
+    .p-sb-score.neg { color:var(--red); }
+
+    /* 覆蓋層（全屏） */
+    .p-overlay {
+      position:fixed; inset:0; display:flex;
+      flex-direction:column; align-items:center; justify-content:center;
+      z-index:80; background:rgba(2,8,20,.88);
+      text-align:center; padding:24px;
+    }
+    /* 結果覆蓋層：全屏置中，與 host 一致的外觀 */
+    #result-overlay {
+      background:rgba(2,8,20,.82);
+      z-index:92;
+      justify-content:center;
+      padding:0;
+      pointer-events:none;
+    }
+    /* 圖示放大（圈叉為主視覺），隱藏文字欄，sub 微調字型 */
+    #result-overlay .result-icon { font-size:clamp(90px,24vw,150px); margin-bottom:8px; }
+    #result-overlay .result-text { display:none; }
+    #result-overlay .result-sub  { font-size:clamp(1.1em,4.5vw,1.5em); margin-top:0; text-align:center; }
+    /* 解說覆蓋層含排行榜，允許滾動 */
+    #expl-overlay { justify-content:flex-start; padding-top:20px; gap:12px; overflow-y:auto; }
+    /* 選項區低於結果覆蓋層，透過半透明背景可見 */
+    #answer-area { position:relative; z-index:88; }
+    .p-overlay.hidden { display:none; }
+
+    /* 搶答人覆蓋層 */
+    .buzz-who-big { font-size:2.4em; font-weight:900; color:var(--yellow);
+      text-shadow:0 0 40px rgba(255,204,0,.8); margin-bottom:6px; }
+    .buzz-lbl { font-size:.9em; color:var(--text2); letter-spacing:3px;
+      text-transform:uppercase; margin-bottom:18px; }
+    .buzz-ans-big { font-size:4em; font-weight:900; color:var(--cyan);
+      text-shadow:0 0 40px rgba(0,212,255,.8); }
+
+    /* 得分飄字 */
+    .score-toast {
+      position:fixed; left:50%; top:40%; transform:translate(-50%,-50%);
+      font-size:2.6em; font-weight:900; pointer-events:none; z-index:500;
+      animation:toastUp 1.5s ease forwards; white-space:nowrap;
+    }
+    .score-toast.pos { color:var(--green); text-shadow:0 0 24px rgba(0,255,136,.8); }
+    .score-toast.neg { color:var(--red);   text-shadow:0 0 24px rgba(255,51,85,.8); }
+    @keyframes toastUp {
+      0%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+      60% { opacity:1; transform:translate(-50%,-90%) scale(1.1); }
+      100%{ opacity:0; transform:translate(-50%,-140%) scale(.9); }
+    }
+
+    /* 結算畫面 */
+    .end-card { max-width:400px; width:92%; text-align:center; max-height:calc(100vh - 40px); overflow-y:auto; }
+    .end-emoji { font-size:56px; margin-bottom:8px; animation:float 3s ease-in-out infinite; }
+    .end-title { font-size:1.8em; font-weight:900; margin-bottom:20px;
+      background:linear-gradient(130deg,var(--cyan),var(--purple));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .end-table { width:100%; border-collapse:collapse; font-size:.95em; margin-bottom:20px; }
+    .end-table td { padding:10px 8px; border-bottom:1px solid var(--border); }
+    .end-table td:first-child { font-size:1.3em; width:36px; }
+    .end-table td:last-child  { text-align:right; font-weight:900; color:var(--cyan); }
+    .end-table td:last-child.neg { color:var(--red); }
+    .end-table tr.me td { color:var(--yellow); }
+
+    /* 結算分析區塊 */
+    .analysis-section { margin-top:16px; text-align:left; }
+    .analysis-title {
+      font-size:.65em; color:var(--cyan); letter-spacing:3px;
+      text-transform:uppercase; margin-bottom:8px;
+      padding-bottom:4px; border-bottom:1px solid rgba(0,212,255,.2);
+    }
+    .analysis-table { width:100%; border-collapse:collapse; font-size:.8em; }
+    .analysis-table th, .analysis-table td {
+      padding:7px 8px; border-bottom:1px solid var(--border); text-align:center;
+    }
+    .analysis-table th { color:var(--text2); font-weight:400; }
+    .analysis-table td:first-child, .analysis-table th:first-child { text-align:left; font-weight:700; }
+    .history-scroll { max-height:260px; overflow-y:auto; border-radius:6px; }
+
+    /* 題目計數器（左上角） */
+    .p-q-counter {
+      flex-shrink:0; white-space:nowrap; text-align:center;
+      line-height:1.15; min-width:36px;
+    }
+    .p-q-counter .qc-label { display:block; font-size:.58em; color:var(--text2); letter-spacing:1.5px; text-transform:uppercase; }
+    .p-q-counter .qc-nums  { font-size:.95em; font-weight:900; color:var(--cyan); }
+    .p-q-counter .qc-sep   { color:var(--text2); font-weight:400; margin:0 1px; }
+    .p-q-counter .qc-total { color:var(--text2); font-weight:400; }
+
+    /* MQTT 徽章位置 */
+    #mqtt-status { bottom:6px; right:8px; }
+
+    /* ── 搶答模式橫幅 ────────────────────────────────────── */
+    #buzz-mode-bar {
+      display:none; text-align:center; padding:5px 12px;
+      background:rgba(255,204,0,.12); border-bottom:1px solid rgba(255,204,0,.3);
+      font-size:.75em; color:var(--yellow); letter-spacing:2px;
+      flex-shrink:0;
+    }
+    #buzz-mode-bar.visible { display:block; }
+
+    /* 懸浮按鈕操作提示卡片 */
+    @keyframes fabHintIn {
+      from { opacity:0; transform:translateX(-14px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+    @keyframes fabHintOut {
+      to { opacity:0; transform:translateX(-14px); }
+    }
+    #fab-hint {
+      position:fixed; left:91px; bottom:8px; z-index:201;
+      max-width:calc(100vw - 99px); white-space:normal;
+      background:rgba(8,16,32,.88); border:1px solid rgba(0,212,255,.25);
+      border-radius:10px; padding:8px 14px; pointer-events:none;
+      color:#cdd; font-size:13px; line-height:2;
+      animation: fabHintIn .4s ease both;
+      box-shadow:0 4px 24px rgba(0,0,0,.5);
+    }
+    #fab-hint.hide { animation: fabHintOut .8s ease forwards; }
+    #fab-hint .row { display:flex; align-items:center; gap:8px; }
+    #fab-hint .ico { font-size:18px; width:25px; text-align:center; }
+    #fab-hint .lbl { font-size:13px; }
+    #fab-hint .sub { font-size:11px; color:#7af; margin-left:33px; margin-top:-4px; }
+
+    /* ── 懸浮面板收合 ───────────────────────────────────────── */
+    /* 所有浮動控制項共用：右移 32px（拉手 22px + 間隔 16px = 38px，減去 inline left:6px）*/
+    .fab-item {
+      transform:translateX(32px);
+      transition:opacity .3s ease, transform .3s ease;
+    }
+    body.fab-collapsed .fab-item {
+      opacity:0 !important;
+      pointer-events:none !important;
+      transform:translateX(-64px) !important;
+    }
+    /* 收合切換按鈕：左邊緣薄標籤，貼齊畫面左側 */
+    #fab-toggle {
+      position:fixed; left:0; bottom:100px; z-index:210;
+      width:22px; height:60px; padding:0;
+      display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(160deg, rgba(0,212,255,.12), rgba(0,80,180,.18));
+      border:1px solid rgba(0,212,255,.38); border-left:none;
+      border-radius:0 12px 12px 0;
+      color:rgba(0,212,255,.85); font-size:15px; font-weight:900;
+      cursor:pointer; -webkit-tap-highlight-color:transparent;
+      box-shadow:3px 0 14px rgba(0,212,255,.12);
+      transition:background .2s, box-shadow .2s, transform .15s;
+      user-select:none;
+    }
+    #fab-toggle:hover  { background:rgba(0,212,255,.22); box-shadow:3px 0 20px rgba(0,212,255,.28); }
+    #fab-toggle:active { transform:scaleX(.82); }
+    /* 展開狀態（面板收起時）：加強發光，提示可點擊 */
+    body.fab-collapsed #fab-toggle {
+      background:rgba(0,212,255,.18);
+      box-shadow:3px 0 18px rgba(0,212,255,.35);
+      color:rgba(0,212,255,1);
+    }
+
+    /* ── Live2D 佔位補償（對齊 host：模型佔 0-40vw，內容從 40vw 開始）── */
+    body.l2d-ready #screen-game,
+    body.l2d-ready #screen-end { padding-left: 40vw; padding-right: 0; }
+    @media (max-width:900px) {
+      body.l2d-ready #screen-game,
+      body.l2d-ready #screen-end { padding-left: 0; padding-right: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 加入畫面 ===== -->
+<div id="screen-join" class="screen active">
+  <div class="card join-card">
+    <div class="join-title">🎮 多人搶答</div>
+    <div class="join-sub">MULTIPLAYER QUIZ</div>
+    <input id="player-name" class="join-input" type="text"
+           maxlength="12" placeholder="輸入你的名稱..."
+           autocomplete="off" spellcheck="false">
+
+    <!-- 頭像上傳（選填）-->
+    <div id="avatar-wrap" style="margin-bottom:14px;text-align:left">
+      <div style="font-size:.75em;color:var(--text2);letter-spacing:1px;margin-bottom:8px">玩家頭像（選填）</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <img id="avatar-preview" src="default_avatar.png"
+             style="width:64px;height:64px;border-radius:50%;object-fit:cover;
+                    border:2px solid var(--border);flex-shrink:0"
+             onerror="this.onerror=null;this.style.display='none'">
+        <div style="flex:1;min-width:0">
+          <label style="display:block;padding:9px 12px;border:1px dashed var(--border);
+                        border-radius:10px;cursor:pointer;text-align:center;font-size:.85em;
+                        color:var(--text2);background:rgba(255,255,255,.03)">
+            📷 選擇圖片
+            <input id="avatar-input" type="file" accept="image/*" style="display:none">
+          </label>
+          <div id="avatar-msg" style="font-size:.72em;color:var(--text2);margin-top:4px;
+                                       min-height:1em;text-align:center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live2D 角色選擇（選填，live2d_my_like 收藏庫，進房前選，只影響自己這台裝置，只會請求所選的模型資源）-->
+    <div id="mylike-join-wrap" style="display:none;margin-bottom:14px;text-align:left">
+      <div style="font-size:.75em;color:var(--text2);letter-spacing:1px;margin-bottom:8px">我的 Live2D 角色（選填）</div>
+      <div style="display:flex;gap:8px">
+        <select id="p-char1-select" style="flex:1;min-width:0;padding:8px;border-radius:8px;
+                border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
+        <select id="p-char2-select" style="flex:1;min-width:0;padding:8px;border-radius:8px;
+                border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
+      </div>
+      <div style="font-size:.68em;color:var(--text2);margin-top:4px">選擇後需要重新整理頁面才會套用</div>
+    </div>
+
+    <button id="btn-join" class="btn-primary" disabled>加入遊戲</button>
+    <div id="join-status">連接 MQTT 中...</div>
+  </div>
+</div>
+
+<!-- ===== 遊戲畫面 ===== -->
+<div id="screen-game" class="screen">
+
+  <!-- 進度條 -->
+  <div class="progress-bar-track">
+    <div id="p-progress-bar" class="progress-bar-fill"></div>
+  </div>
+
+  <!-- 搶答模式橫幅 -->
+  <div id="buzz-mode-bar"></div>
+
+  <!-- 頂列 -->
+  <div class="player-topbar">
+    <div id="p-q-counter" class="p-q-counter hidden">
+      <span class="qc-label">題目</span>
+      <span class="qc-nums"><strong id="p-q-current">1</strong><span class="qc-sep">/</span><span id="p-q-total" class="qc-total">10</span></span>
+    </div>
+    <div id="my-rank"  class="my-rank">—</div>
+    <div id="my-name"  class="my-name">—</div>
+    <div id="my-score" class="my-score">0</div>
+  </div>
+
+  <!-- 計時器 -->
+  <div id="timer-area" class="player-timer-wrap hidden">
+    <div id="timer-num" class="player-timer-num">15</div>
+  </div>
+
+  <!-- 題目 -->
+  <div class="player-q-wrap">
+    <div id="q-status" class="player-q-status status-waiting">等待主持人開始遊戲...</div>
+    <div id="q-domain" class="q-domain-badge" style="margin:6px 0"></div>
+    <div id="q-text"   class="player-q-text"></div>
+  </div>
+
+  <!-- 選項按鈕 -->
+  <div id="answer-area" class="player-opts hidden">
+    <button class="p-opt" id="popt-A" data-letter="A">
+      <div class="po-letter">A</div>
+      <span id="popt-A-text" class="po-text"></span>
+    </button>
+    <button class="p-opt" id="popt-B" data-letter="B">
+      <div class="po-letter">B</div>
+      <span id="popt-B-text" class="po-text"></span>
+    </button>
+    <button class="p-opt" id="popt-C" data-letter="C">
+      <div class="po-letter">C</div>
+      <span id="popt-C-text" class="po-text"></span>
+    </button>
+    <button class="p-opt" id="popt-D" data-letter="D">
+      <div class="po-letter">D</div>
+      <span id="popt-D-text" class="po-text"></span>
+    </button>
+  </div>
+
+  <!-- 倒數覆蓋層 -->
+  <div id="prepare-overlay" class="p-overlay hidden">
+    <div style="font-size:.8em;letter-spacing:4px;color:var(--text2);text-transform:uppercase;margin-bottom:14px">準備搶答</div>
+    <div id="p-prepare-count" style="font-size:8em;font-weight:900;color:var(--cyan);line-height:1;text-shadow:0 0 60px rgba(0,212,255,.8)"></div>
+  </div>
+
+  <!-- 搶答覆蓋層 -->
+  <div id="buzz-overlay" class="p-overlay hidden">
+    <div id="buzz-who" class="buzz-who-big"></div>
+    <div class="buzz-lbl">搶答！</div>
+    <div id="buzz-ans" class="buzz-ans-big"></div>
+  </div>
+
+  <!-- 結果覆蓋層 -->
+  <div id="result-overlay" class="p-overlay hidden">
+    <div class="result-icon" id="res-icon"></div>
+    <div class="result-text" id="res-text"></div>
+    <div class="result-sub"  id="res-sub"></div>
+  </div>
+
+  <!-- 解說覆蓋層 -->
+  <div id="expl-overlay" class="p-overlay hidden">
+    <div class="expl-card" style="max-width:420px;width:94%">
+      <div class="expl-header">正確答案</div>
+      <div id="expl-answer" class="expl-answer"></div>
+      <div id="expl-text"   class="expl-text"></div>
+      <div class="expl-next">繼續下一題...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 回合結算排行榜（固定底部，結果公布後顯示） -->
+<div id="p-scoreboard" class="hidden"></div>
+
+<!-- ===== 結算畫面 ===== -->
+<div id="screen-end" class="screen">
+  <div class="card end-card">
+    <div id="end-emoji" class="end-emoji">🏆</div>
+    <div id="end-title" class="end-title">遊戲結束！</div>
+    <table class="end-table"><tbody id="end-tbody"></tbody></table>
+    <button id="btn-back" class="btn-secondary">↩ 回到加入畫面</button>
+
+    <!-- 歷史成績 -->
+    <div class="analysis-section">
+      <div class="analysis-title">📊 玩家歷史成績</div>
+      <div id="p-history-wrap">
+        <div style="color:var(--text2);font-size:.82em;text-align:center;padding:8px 0">暫無紀錄</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MQTT 徽章 -->
+<div id="mqtt-status" class="s-off">
+  <span class="mqtt-dot"></span>
+  <span id="mqtt-status-text">MQTT</span>
+</div>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="multiplay.js"></script>
+<script src="SoundSystem.js"></script>
+<script src="AvatarModule.js"></script>
+<script src="PlayerBubbleChat.js"></script>
+<script src="DanmakuSystem.js"></script>
+<script src="VoiceBroadcastModule.js"></script>
+<!-- VFX 由 initLive2D() 動態載入，live2d.js 載完後才能讀 L2D_CFG.vfxMode -->
+<script>
+'use strict';
+
+// ── 玩家狀態 ─────────────────────────────────────────────────────────────
+const PS = {
+  myId:      (() => {
+    let id = localStorage.getItem('quiz_pid');
+    if (!id) { id = 'p_' + Math.random().toString(16).slice(2, 8); localStorage.setItem('quiz_pid', id); }
+    return id;
+  })(),
+  myName:    '',
+  score:     0,
+  localPhase:'',   // 目前顯示的 phase
+  timerId:     null,
+  clockOffset: 0,
+  client:      null,
+  ok:        false,
+  answered:      false,
+  myAnswer:      null,   // 玩家本題所選字母
+  prevScore:     0,      // 題目開始時的分數快照（STATE 更新前）
+  prepareTimerId:null,
+  joined:        false,   // 加入遊戲後才顯示題目
+  colorMap:      {},      // id → color（從 STATE.players 更新）
+  players:       [],      // [{id,name,color}]（用於排行榜）
+  gameMode:      'all',   // 'all' 全員作答 | 'race' 搶答制
+};
+
+// ── UI 快捷 ───────────────────────────────────────────────────────────────
+const el   = id => document.getElementById(id);
+const show = id => el(id)?.classList.remove('hidden');
+const hide = id => el(id)?.classList.add('hidden');
+const scr  = id => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); el(id).classList.add('active'); };
+const fmt  = n  => Number(n).toLocaleString();
+const setQStatus = (text, waiting = false) => {
+  const e = el('q-status');
+  e.textContent = text;
+  e.classList.toggle('status-waiting', waiting);
+};
+
+// ── MQTT ──────────────────────────────────────────────────────────────────
+function mqttInit() {
+  const url = mpMqttUrl();
+  PS.client = window.mqtt.connect(url, {
+    clientId: PS.myId + '_' + Math.random().toString(16).slice(2, 6),
+    reconnectPeriod: MP_CFG.MQTT_RECONNECT_MS,
+    clean: true,
+  });
+
+  PS.client.on('connect', () => {
+    PS.ok = true;
+    mqttSts('broker', '伺服器已連線');
+    PS.client.subscribe([MP_TOPICS.STATE, MP_TOPICS.RESULT], { qos: 1 });
+    PS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.L2D, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING], { qos: 0 });
+    el('btn-join').disabled = !el('player-name').value.trim();
+    el('join-status').textContent = '已連線，輸入名稱後加入';
+  });
+  PS.client.on('offline',   () => { PS.ok = false; mqttSts('off', 'MQTT 離線'); el('btn-join').disabled = true; el('join-status').textContent = 'MQTT 離線'; });
+  PS.client.on('error',     ()  => mqttSts('error', '連線失敗'));
+  PS.client.on('reconnect', ()  => mqttSts('broker', '重連中...'));
+
+  PS.client.on('message', (topic, buf) => {
+    if (topic === MP_TOPICS.SOUND) { playSound(buf.toString()); return; }
+    let data;
+    try { data = JSON.parse(buf.toString()); } catch { return; }
+    if (topic === MP_TOPICS.STATE)   onState(data);
+    if (topic === MP_TOPICS.RESULT)  onResult(data);
+    if (topic === MP_TOPICS.L2D)     onL2DCmd(data);
+    if (topic === MP_TOPICS.PROFILE && typeof AvatarModule !== 'undefined') AvatarModule.receive(data);
+    if (topic === MP_TOPICS.CHAT) {
+      if (data.playerId === PS.myId) return;  // 已在發送時本機處理，略過 broker echo
+      if (typeof PlayerBubbleChat !== 'undefined') {
+        if (data.type === 'emoji') PlayerBubbleChat.showEmoji(data.playerId, data.message);
+        else                       PlayerBubbleChat.showMessage(data.playerId, data.message);
+      }
+      // 文字訊息同時送彈幕；emoji 只顯示在泡泡，不重複出現在彈幕
+      if (data.type !== 'emoji' && typeof DanmakuSystem !== 'undefined')
+        DanmakuSystem.receive({ player: data.name, text: data.message });
+    }
+    if (topic === MP_TOPICS.DANMAKU && typeof DanmakuSystem !== 'undefined') DanmakuSystem.receive(data);
+    if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
+      if (data.playerId !== PS.myId) {
+        if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
+        else             PlayerBubbleChat.hideTyping(data.playerId);
+      }
+    }
+  });
+}
+
+function pub(topic, obj, qos = 1) {
+  if (!PS.client || !PS.ok) return;
+  PS.client.publish(topic, JSON.stringify(obj), { qos });
+}
+
+// ── Heartbeat Module (Player) ─────────────────────────────────────────────
+const HB = (() => {
+  let _tid = null;
+  function _send() {
+    if (PS.joined && PS.ok)
+      pub(MP_TOPICS.HEARTBEAT, { id: PS.myId, name: PS.myName, ts: Date.now() }, 0);
+  }
+  return {
+    start() { if (!_tid) { _send(); _tid = setInterval(_send, MP_CFG.HEARTBEAT_MS); } },
+    stop()  { clearInterval(_tid); _tid = null; },
+  };
+})();
+// 分頁切換 / 手機待機時停發，回來後恢復
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) HB.stop();
+  else if (PS.joined)  HB.start();
+});
+// ─────────────────────────────────────────────────────────────────────────
+
+function mqttSts(cls, txt) {
+  const e = el('mqtt-status');
+  if (!e) return;
+  e.className = `s-${cls}`;
+  el('mqtt-status-text').textContent = txt;
+}
+
+// ── 加入 ──────────────────────────────────────────────────────────────────
+function joinGame() {
+  PS.myName = el('player-name').value.trim();
+  if (!PS.myName || !PS.ok) return;
+  localStorage.setItem('quiz_pname', PS.myName);   // 記住名稱供斷線重連使用
+  el('my-name').textContent  = PS.myName;
+  el('my-score').textContent = '0';
+  el('my-rank').textContent  = '—';
+  PS.joined = true;
+  HB.start();
+  if (typeof AvatarModule !== 'undefined') {
+    AvatarModule.cacheOwn(PS.myId);
+    AvatarModule.publish(PS.client, PS.myId, PS.myName);
+  }
+  pub(MP_TOPICS.JOIN, { id: PS.myId, name: PS.myName });
+  scr('screen-game');
+  const activePhase = ['prepare', 'answering', 'locked', 'result', 'expl'].includes(PS.localPhase);
+  if (!activePhase) {
+    hide('answer-area');
+    hide('timer-area');
+    hide('result-overlay');
+    hide('expl-overlay');
+    hide('buzz-overlay');
+    hide('prepare-overlay');
+    el('q-domain').textContent = '';
+    el('q-text').textContent   = '';
+  }
+  setQStatus(activePhase ? '等待上一輪結束..' : '等待主持人開始遊戲...', true);
+}
+
+// ── STATE 處理 ────────────────────────────────────────────────────────────
+function onState(state) {
+  const phase = state.phase;
+
+  // 用 host 時間戳同步時鐘偏差（消除裝置時鐘不一致）
+  if (state.hostNow) PS.clockOffset = state.hostNow - Date.now();
+
+  // 更新自己分數（作答/鎖定中不更新，等 RESULT 訊息才公布，避免提前洩漏正誤）
+  if (phase !== 'answering' && phase !== 'locked') {
+    if (state.scores && state.scores[PS.myId] !== undefined) {
+      PS.score = state.scores[PS.myId];
+    }
+  }
+
+  // 同步顏色表，並套用自己的顏色到頂列
+  if (state.players?.length) {
+    // 偵測在線狀態變化 → 對全體玩家顯示通知
+    state.players.forEach(curr => {
+      if (curr.id === PS.myId) return;
+      const prev = (PS.players || []).find(p => p.id === curr.id);
+      if (prev) {
+        const wasOnline = prev.online !== false;
+        const isOnline  = curr.online !== false;
+        if (wasOnline && !isOnline) showToast(`⚠ ${curr.name} 斷線`, false);
+        if (!wasOnline && isOnline)  showToast(`${curr.name} 已重連`, true);
+      }
+    });
+    PS.players = state.players;
+    state.players.forEach(p => { if (p.color) PS.colorMap[p.id] = p.color; });
+    const myColor = PS.colorMap[PS.myId];
+    if (myColor) {
+      el('my-name').style.color  = myColor;
+      el('my-rank').style.color  = myColor;
+      el('my-score').style.color = myColor;
+    }
+  }
+
+  // 遊戲模式橫幅
+  const buzzBar = el('buzz-mode-bar');
+  if (buzzBar) {
+    const isRace = state.gameMode === 'race';
+    if (isRace) buzzBar.textContent = '⚡ 搶答制 — 最快正確者得勝！';
+    buzzBar.classList.toggle('visible', isRace);
+  }
+  PS.gameMode = state.gameMode || 'all';
+
+  // ── 斷線自動重連 ──────────────────────────────────────────────────────────
+  // 頁面重整後 PS.joined=false，但若 STATE 顯示我的 ID 仍在局內 → 靜默重新加入
+  // 僅憑 ID 比對（不依賴名稱），杜絕外人冒充
+  if (!PS.joined && phase !== 'host_left') {
+    const savedName = localStorage.getItem('quiz_pname');
+    const inGame    = (state.players || []).some(p => p.id === PS.myId);
+    if (savedName && inGame) {
+      PS.myName = savedName;
+      el('player-name').value    = savedName;
+      el('my-name').textContent  = savedName;
+      el('my-score').textContent = state.scores?.[PS.myId] ?? 0;
+      PS.joined = true;
+      HB.start();
+      pub(MP_TOPICS.JOIN, { id: PS.myId, name: savedName });
+      el('_p-chat-btn')  && (el('_p-chat-btn').style.display  = 'flex');
+      el('_p-emoji-btn') && (el('_p-emoji-btn').style.display = 'flex');
+      el('_vb-btn')      && (el('_vb-btn').style.display      = 'block');
+      el('_p-dmk-btn')   && (el('_p-dmk-btn').style.display   = 'flex');
+      // 畫面切換由下方 phase switch 統一處理
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // 更新頂列（作答/鎖定中略過，分數由 RESULT 訊息統一公布）
+  if (phase !== 'answering' && phase !== 'locked') {
+    updateTopBar(state);
+  }
+
+  // 更新題目計數器 + 進度條
+  if (state.qNo && state.totalQ) {
+    el('p-q-current').textContent = state.qNo;
+    el('p-q-total').textContent   = state.totalQ;
+    el('p-q-counter').classList.remove('hidden');
+    el('p-progress-bar').style.width = ((state.qNo - 1) / state.totalQ * 100) + '%';
+  }
+
+  switch (phase) {
+    case 'host_left':
+      stopPrepare();
+      stopTimer();
+      PS.joined     = false;
+      PS.answered   = false;
+      PS.localPhase = '';
+      scr('screen-join');
+      el('join-status').style.color = '';
+      el('join-status').textContent = '主持人已離開，請稍後重新加入...';
+      break;
+
+    case 'lobby':
+      stopPrepare();
+      stopTimer();
+      // 從遊戲結束畫面回到大廳 → 重置加入狀態，讓玩家重新加入新的一局
+      if (PS.localPhase === 'end' || !PS.joined) {
+        PS.joined   = false;
+        PS.score    = 0;
+        PS.answered = false;
+        PS.colorMap = {};
+        PS.players  = [];
+        hide('p-q-counter');
+        el('p-progress-bar').style.width = '0%';
+        if (typeof AvatarModule !== 'undefined') AvatarModule.resetPublished();
+        scr('screen-join');
+        el('join-status').style.color = '';
+        el('join-status').textContent = '已連線，輸入名稱後加入';
+        break;
+      }
+      // 若已加入但主持人名單中沒有自己，重新宣告加入
+      // （發生在玩家比主持人更早連線時，主持人上線後推播 STATE，玩家藉此重送 JOIN）
+      if (!(state.players || []).some(p => p.id === PS.myId)) {
+        pub(MP_TOPICS.JOIN, { id: PS.myId, name: PS.myName });
+      }
+      scr('screen-game');
+      setQStatus('等待主持人開始遊戲...', true);
+      hide('answer-area');
+      hide('timer-area');
+      hide('buzz-overlay');
+      hide('result-overlay');
+      hide('expl-overlay');
+      if (PS.localPhase !== 'lobby' && typeof L2D !== 'undefined' && L2D.speakWhenReady)
+        L2D.speakWhenReady(_pPick(['準備好了嗎？等待主持人出題！', '加入成功，一起來挑戰！', '大家準備好，好戲開始！']), { type: 'info' });
+      break;
+
+    case 'prepare':
+      if (PS.localPhase !== 'prepare') {
+        startBGM();
+        if (!PS.joined) {
+          el('join-status').textContent = '🎮 遊戲已開始！請快速輸入名稱加入！';
+          el('join-status').style.color = '#ffd60a';
+        } else {
+          scr('screen-game');
+          PS.answered = false;
+          PS.myAnswer = null;
+          ['A','B','C','D'].forEach(k => {
+            const b = el('popt-' + k);
+            b.className = 'p-opt';
+            b.disabled  = false;
+            el('popt-' + k + '-text').textContent = '';
+          });
+          hide('answer-area');
+          hide('buzz-overlay');
+          hide('result-overlay');
+          hide('expl-overlay');
+          hide('p-scoreboard');
+          hide('timer-area');
+          el('q-domain').textContent = '';
+          el('q-text').textContent   = '';
+          setQStatus('準備搶答...');
+          startPrepareCountdown(state.prepareAt);
+          if (typeof L2D !== 'undefined' && L2D.speakWhenReady)
+            L2D.speakWhenReady(_pPick(['集中精神！倒數開始！', '新題目來了！準備好！', '全神貫注，倒數計時！']), { type: 'info' });
+        }
+      }
+      break;
+
+    case 'answering':
+      if (PS.localPhase !== 'answering') {
+        stopPrepare();
+        hide('buzz-overlay');
+        hide('result-overlay');
+        hide('expl-overlay');
+        hide('p-scoreboard');
+        if (PS.joined) {
+          if (typeof L2D !== 'undefined' && L2D.stopDialogue)    L2D.stopDialogue();
+          if (typeof L2D !== 'undefined' && L2D.dismissAll)      L2D.dismissAll();
+          if (typeof L2D !== 'undefined' && L2D.startIdleMotion) L2D.startIdleMotion(MP_CFG.IDLE_MOTION_MS);
+          if (typeof L2DGesturePlayer !== 'undefined') L2DGesturePlayer.stop();
+          setQStatus('搶答中！');
+          PS.answered  = false;
+          PS.myAnswer  = null;
+          PS.prevScore = PS.score;   // 快照：RESULT 時計算增減用
+          el('q-domain').textContent = state.domain || '';
+          el('q-text').textContent   = state.question;
+          ['A','B','C','D'].forEach(k => {
+            el('popt-' + k + '-text').textContent = state.options[k] || '';
+            const b = el('popt-' + k);
+            b.className = 'p-opt';
+            b.disabled  = false;
+          });
+          show('answer-area');
+          if (typeof L2D !== 'undefined' && L2D.dismissAll) L2D.dismissAll();
+          startTimer(state.startedAt);
+
+          // 作答期間啟動雙角色閒話（C1[idx]+C2[idx] 索引對應）
+          // stopIdleChat 在 onResult() 時統一停止；跟 startIdleMotion 用同一個間隔值，
+          // 職責分開後（閒話只管講話+音效）不會互相重疊觸發動作
+          if (typeof L2D !== 'undefined' && L2D.startIdleChat) L2D.startIdleChat(MP_CFG.IDLE_MOTION_MS);
+        } else {
+          el('join-status').textContent = '⏱ 遊戲進行中，請等待下一題加入…';
+          el('join-status').style.color = 'var(--text2)';
+        }
+      }
+      // 更新誰已答錯（按鈕鎖定）
+      if (state.wrongIds?.includes(PS.myId)) {
+        PS.answered = true;
+        lockMyButtons();
+        setQStatus('已作答，等待結果...');
+      }
+      break;
+
+    case 'locked':
+      stopTimer();
+      hide('timer-area');
+      if (state.buzzerId) {
+        el('buzz-who').textContent = state.buzzerName || '玩家';
+        el('buzz-ans').textContent = state.buzzerLetter || '';
+        show('buzz-overlay');
+        hide('result-overlay');
+      } else {
+        setQStatus('等待結果...');
+      }
+      lockMyButtons();
+      break;
+
+    case 'result':
+      break;
+
+    case 'expl':
+      hide('buzz-overlay');
+      hide('result-overlay');
+      hide('p-scoreboard');
+      hide('answer-area');
+      if (state.correctAnswer) {
+        el('expl-answer').textContent = state.correctAnswer + '.  ' + (state.options?.[state.correctAnswer] || '');
+        el('expl-text').textContent   = state.explanation || '本題暫無解說';
+        show('expl-overlay');
+      }
+      stopTimer();
+      break;
+
+    case 'end':
+      stopBGM();
+      if (state.soundTrack) playSound(state.soundTrack);
+      stopTimer();
+      renderEndScreen(state);
+      scr('screen-end');
+      break;
+  }
+
+  PS.localPhase = phase;
+}
+
+// ── RESULT 處理（本題結果揭曉）────────────────────────────────────────────
+function onResult(result) {
+  if (typeof L2D !== 'undefined' && L2D.stopDialogue)   L2D.stopDialogue();
+  if (typeof L2D !== 'undefined' && L2D.stopIdleChat)   L2D.stopIdleChat();
+  if (typeof L2D !== 'undefined' && L2D.stopIdleMotion) L2D.stopIdleMotion();
+  stopTimer();
+  hide('buzz-overlay');
+  hide('timer-area');
+
+  const resIcon = el('res-icon');
+  const resText = el('res-text');
+  const resSub  = el('res-sub');
+
+  // 重置上回合的 class/樣式，重新觸發動畫
+  resIcon.className = 'result-icon';
+  resText.className = 'result-text';
+  resSub.textContent = '';
+  resSub.style.color = '';
+
+  // 用 PS.myAnswer 判斷圈叉（不依賴 score delta，STATE 可能先到已更新 PS.score）
+  const correctAnswer    = result.correctAnswer;
+  const iAnsweredCorrect = PS.myAnswer !== null && PS.myAnswer === correctAnswer;
+  const iAnsweredWrong   = PS.myAnswer !== null && PS.myAnswer !== correctAnswer;
+  const myDelta          = PS.score - PS.prevScore;   // prevScore 在 answering 開始時快照
+
+  if (iAnsweredCorrect) {
+    // ── 我答對了 ⭕ ──────────────────────────────────────────────────────
+    resIcon.textContent = '⭕';
+    resText.className   = 'result-text is-correct';
+    resSub.textContent  = myDelta > 0 ? `+${fmt(myDelta)} 分` : '';
+    resSub.style.color  = 'var(--green)';
+    if (myDelta > 0) showToast('+' + fmt(myDelta), true);
+    if (typeof L2D !== 'undefined' && L2D.speak)
+      L2D.speak(_pPick(['太棒了，答對囉！🎉','正確！你真厲害！⭐','完美！繼續保持！✨']), { type:'correct' });
+    if (typeof L2D !== 'undefined') L2D.playEmotion('correct');
+
+  } else if (iAnsweredWrong) {
+    // ── 我答錯了 ❌ ──────────────────────────────────────────────────────
+    resIcon.textContent = '❌';
+    resText.className   = 'result-text is-wrong';
+    resSub.textContent  = myDelta < 0 ? `${fmt(myDelta)} 分` : '';
+    if (result.hasWinner && result.winnerName) {
+      const span = document.createElement('span');
+      span.style.cssText = 'display:block;font-size:.85em;margin-top:6px;color:var(--text2)';
+      span.textContent   = result.gameMode === 'race'
+        ? `${result.winnerName} 搶答` : `${result.winnerName} 答對`;
+      resSub.appendChild(span);
+    }
+    if (myDelta < 0) showToast(fmt(myDelta), false);
+    if (typeof L2D !== 'undefined' && L2D.speak)
+      L2D.speak(_pPick(['再想想看，下次會更好！💪','可惜了，繼續加油！','別灰心，下題再來！']), { type:'wrong' });
+    if (typeof L2D !== 'undefined') L2D.playEmotion('wrong');
+
+  } else {
+    // ── 未作答 / 搶答制被鎖 ─────────────────────────────────────────────
+    resIcon.textContent = '⏰';
+    resText.className   = 'result-text is-wrong';
+    resSub.textContent  = `正確答案：${correctAnswer}`;
+    if (result.hasWinner && result.winnerName) {
+      const span = document.createElement('span');
+      span.style.cssText = 'display:block;font-size:.85em;margin-top:6px;color:var(--text2)';
+      span.textContent   = result.gameMode === 'race'
+        ? `${result.winnerName} 搶答` : `${result.winnerName} 答對`;
+      resSub.appendChild(span);
+    }
+    if (typeof L2D !== 'undefined' && L2D.speak)
+      L2D.speak(_pPick(['時間到！下題繼續加油！⏰','沒關係，下一題再來！']), { type:'info' });
+    if (typeof L2D !== 'undefined') L2D.playEmotion('wrong');
+  }
+
+  if (result.soundTrack) playSound(result.soundTrack);
+  markCorrectAnswer(result.correctAnswer);
+  show('answer-area');
+  const newScore = result.scores?.[PS.myId];
+  if (newScore !== undefined) {
+    PS.score = newScore;
+    updateTopBar({ scores: result.scores, players: null });
+  }
+  renderPlayerScoreboard(result.scores);
+  show('p-scoreboard');
+  show('result-overlay');
+}
+
+// ── 準備倒數 ──────────────────────────────────────────────────────────────
+function startPrepareCountdown(prepareAt) {
+  stopPrepare();
+  if (!prepareAt) return;
+  const numEl = el('p-prepare-count');
+  show('prepare-overlay');
+  let lastRemaining = -1;
+  function tick() {
+    const remaining = Math.ceil(MP_CFG.PREPARE_TIME - (Date.now() + PS.clockOffset - prepareAt) / 1000);
+    if (remaining <= 0) { stopPrepare(); return; }
+    if (remaining !== lastRemaining) {
+      playBeep(880, 0.08);
+      lastRemaining = remaining;
+    }
+    numEl.textContent = remaining;
+  }
+  tick();
+  PS.prepareTimerId = setInterval(tick, 200);
+}
+
+function stopPrepare() {
+  clearInterval(PS.prepareTimerId);
+  PS.prepareTimerId = null;
+  hide('prepare-overlay');
+}
+
+// ── 計時器（用 startedAt 計算剩餘秒數，與主機同步）──────────────────────
+function startTimer(startedAt) {
+  stopTimer();
+  if (!startedAt) return;
+  playBeep(1200, 0.25);
+  const numEl = el('timer-num');
+  show('timer-area');
+
+  function tick() {
+    const elapsed  = (Date.now() + PS.clockOffset - startedAt) / 1000;
+    const timeLeft = Math.max(0, Math.ceil(MP_CFG.ANSWER_TIME - elapsed));
+    numEl.textContent = timeLeft;
+    numEl.className   = timeLeft <= 3 ? 'player-timer-num urgent' : 'player-timer-num';
+    if (timeLeft <= 0) { stopTimer(); hide('timer-area'); }
+  }
+  tick();
+  PS.timerId = setInterval(tick, 250);
+}
+
+function stopTimer() {
+  clearInterval(PS.timerId);
+  PS.timerId = null;
+}
+
+// ── 鎖定按鈕（已作答或被鎖定）────────────────────────────────────────────
+function lockMyButtons() {
+  ['A','B','C','D'].forEach(k => {
+    const b = el('popt-' + k);
+    if (!b.classList.contains('correct') && !b.classList.contains('wrong')) {
+      b.disabled = true;
+    }
+  });
+}
+
+// ── L2D 同步指令（由 host 廣播，player 鏡像執行）────────────────────────────
+function onL2DCmd({ cmd, text, type, start } = {}) {
+  if (typeof L2D === 'undefined' || !MP_CFG.enableLive2D) return;
+  switch (cmd) {
+    case 'speak1':
+      if (L2D.speak)       L2D.speak(text, { type });
+      break;
+    case 'speak2':
+      if (L2D.speak2)      L2D.speak2(text, { type });
+      break;
+    case 'emotion':
+      if (L2D.playEmotion) L2D.playEmotion(type);
+      break;
+    case 'playRandom':
+      if (L2D.playRandom1) L2D.playRandom1();
+      if (L2D.playRandom2) L2D.playRandom2();
+      break;
+    case 'dialogue':
+      if (start && L2D.startDialogue) L2D.startDialogue();
+      break;
+  }
+}
+
+function renderPlayerScoreboard(scores) {
+  const sb = el('p-scoreboard');
+  if (!sb || !scores) return;
+  const players = PS.players.length
+    ? PS.players
+    : [{ id: PS.myId, name: PS.myName || '我', color: PS.colorMap[PS.myId] || '#0df' }];
+  const ranked = players
+    .map(p => ({ ...p, score: scores[p.id] ?? 0 }))
+    .sort((a, b) => b.score - a.score)
+    .map((p, i) => ({ ...p, rank: i + 1 }));
+  sb.innerHTML =
+    `<div class="p-sb-title">📊 積分排行</div>` +
+    `<div class="p-sb-cats">` +
+      `<span class="p-sb-medal">#</span>` +
+      `<span class="p-sb-name">玩家</span>` +
+      `<span class="p-sb-score">分數</span>` +
+    `</div>` +
+    ranked.map(({ id, name, score, rank, color }) => {
+      const isMe = id === PS.myId;
+      const c    = color || PS.colorMap[id] || '#888';
+      const av   = typeof AvatarModule !== 'undefined' ? AvatarModule.html(id, 16) : '';
+      return `<div class="p-sb-row${isMe ? ' is-me' : ''}" style="border-left:3px solid ${c}">` +
+        `<span class="p-sb-medal">${MP_MEDALS[rank - 1] || rank}</span>` +
+        av +
+        `<span class="p-sb-name" style="color:${c}">${name}</span>` +
+        `<span class="p-sb-score${score < 0 ? ' neg' : ''}">${fmt(score)}</span>` +
+      `</div>`;
+    }).join('');
+  if (typeof PlayerBubbleChat !== 'undefined') PlayerBubbleChat.refresh();
+}
+
+function markCorrectAnswer(letter) {
+  if (!letter) return;
+  ['A','B','C','D'].forEach(k => {
+    const b = el('popt-' + k);
+    if (k === letter) {
+      b.classList.add('correct');
+    } else if (k === PS.myAnswer) {
+      b.classList.add('wrong');   // 玩家選錯的選項顯示紅色
+    } else {
+      b.classList.add('result-dim');
+    }
+  });
+}
+
+// ── 更新頂列 ──────────────────────────────────────────────────────────────
+function updateTopBar(state) {
+  if (!state) return;
+  const score = state.scores?.[PS.myId] ?? PS.score;
+  const ranked = state.scores
+    ? Object.entries(state.scores).sort((a, b) => b[1] - a[1]).findIndex(([id]) => id === PS.myId) + 1
+    : 0;
+  el('my-rank').textContent  = ranked > 0 ? (MP_MEDALS[ranked - 1] || ranked) : '—';
+  el('my-score').textContent = fmt(score);
+  el('my-score').className   = `my-score${score < 0 ? ' neg' : ''}`;
+}
+
+// ── 結算畫面 ──────────────────────────────────────────────────────────────
+function renderEndScreen(state) {
+  const players = state.players || [];
+  const scores  = state.scores  || {};
+  const ranked  = players
+    .map(p => ({ ...p, score: scores[p.id] ?? 0 }))
+    .sort((a, b) => b.score - a.score);
+
+  const tbody = el('end-tbody');
+  tbody.innerHTML = '';
+  ranked.forEach(({ id, name, score }, i) => {
+    const tr = document.createElement('tr');
+    const isMe  = id === PS.myId;
+    const color = PS.colorMap[id] || '';
+    if (isMe) tr.className = 'me';
+    const av = typeof AvatarModule !== 'undefined' ? AvatarModule.html(id, 28) + ' ' : '';
+    tr.innerHTML = `
+      <td>${MP_MEDALS[i] || i + 1}</td>
+      <td style="text-align:left;font-weight:700;color:${color || 'inherit'}">${av}${name}${isMe ? ' 👑' : ''}</td>
+      <td class="${score < 0 ? 'neg' : ''}">${fmt(score)} 分</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const myRank = ranked.findIndex(p => p.id === PS.myId) + 1;
+  el('end-emoji').textContent = myRank === 1 ? '🏆' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '📚';
+  el('end-title').textContent = myRank === 1 ? '你獲勝了！' : `你是第 ${myRank} 名`;
+  if (typeof L2D !== 'undefined' && L2D.speak) {
+    const endLine = myRank === 1
+      ? _pPick(['恭喜你拿下第一名！👑','今天最強大腦誕生！🏆'])
+      : _pPick(['感謝你的參與！你今天很棒！🎊','再接再厲，下次一定更好！💪']);
+    L2D.speak(endLine, { type: myRank === 1 ? 'celebrate' : 'info', duration: 6000 });
+  }
+  // 立即用 MQTT payload 顯示本局結果（不等 Node-RED 寫檔完成）
+  renderPlayerHistory(state.history || null);
+  // 背景拉 Node-RED 完整歷史，合併後刷新（解決時序問題）
+  const histUrl = `http://${MP_CFG.brokerIP}:1880/quiz/history`;
+  fetch(histUrl)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(nrData => renderPlayerHistory(_mergeHistory(state.history || {}, nrData)))
+    .catch(() => {});
+}
+
+function _mergeHistory(a, b) {
+  const result = {};
+  [a, b].forEach(src => {
+    Object.entries(src || {}).forEach(([name, data]) => {
+      const e = result[name];
+      if (!e || data.games > e.games) result[name] = data;
+    });
+  });
+  return result;
+}
+
+function renderPlayerHistory(hist) {
+  const wrap = el('p-history-wrap');
+  if (!wrap) return;
+  try {
+    if (!hist) hist = JSON.parse(localStorage.getItem('quiz_player_history') || '{}');
+    const entries = Object.values(hist).sort((a, b) => b.highScore - a.highScore);
+    if (!entries.length) return;
+    let html = '<div class="history-scroll"><table class="analysis-table">' +
+      '<tr><th>名稱</th><th>場次</th><th>最高分</th><th>平均</th><th>第一名</th><th>勝率</th></tr>';
+    entries.forEach(h => {
+      const avg     = h.games > 0 ? Math.round(h.totalScore / h.games) : 0;
+      const winRate = h.games > 0 ? Math.round(h.firstCount / h.games * 100) : 0;
+      html += `<tr>
+        <td>${h.name}</td>
+        <td>${h.games}</td>
+        <td style="color:var(--cyan)">${fmt(h.highScore)}</td>
+        <td>${fmt(avg)}</td>
+        <td>${h.firstCount}</td>
+        <td>${winRate}%</td>
+      </tr>`;
+    });
+    html += '</table></div>';
+    wrap.innerHTML = html;
+  } catch {}
+}
+
+// ── 得分飄字 ──────────────────────────────────────────────────────────────
+function showToast(text, positive) {
+  const d = document.createElement('div');
+  d.className   = `score-toast ${positive ? 'pos' : 'neg'}`;
+  d.textContent = text;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), MP_CFG.TOAST_MS);
+}
+
+// ── 答題核心 ──────────────────────────────────────────────────────────────
+// ── 選項 → 手勢對應表（改這裡換動作）────────────────────────────────────
+const ANSWER_GESTURES = {
+  A: 'random_1',
+  B: 'random_3',
+  C: 'random_4',
+  D: 'random_5',
+};
+
+function doAnswer(letter) {
+  if (PS.localPhase !== 'answering' || PS.answered) return;
+  PS.answered  = true;
+  PS.myAnswer  = letter;
+  el('popt-' + letter)?.classList.add('selected');
+  lockMyButtons();
+  pub(MP_TOPICS.ANSWER, { id: PS.myId, name: PS.myName, letter });
+  setQStatus(`已選 ${letter}，等待結果...`);
+
+  // VFX：角色朝選項發射魔法球（非侵入式）
+  if (typeof MagicShotVFX !== 'undefined') {
+    MagicShotVFX.fireExplosion(letter);
+  }
+  if (typeof L2DGesturePlayer !== 'undefined') {
+    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing');
+  }
+}
+
+// ── 輸入綁定 ─────────────────────────────────────────────────────────────
+// 觸控 或 滑鼠左鍵 皆可作答（鍵盤 A/B/C/D 見下方）
+document.querySelectorAll('.p-opt').forEach(btn => {
+  btn.addEventListener('pointerup', e => {
+    if (e.pointerType !== 'touch' && e.pointerType !== 'mouse') return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    doAnswer(btn.dataset.letter);
+  });
+});
+
+// 桌機：鍵盤 A/B/C/D
+document.addEventListener('keydown', e => {
+  if (PS.localPhase !== 'answering' || PS.answered) return;
+  const k = e.key.toUpperCase();
+  if ('ABCD'.includes(k) && k.length === 1) doAnswer(k);
+});
+
+// ── 事件綁定 ──────────────────────────────────────────────────────────────
+el('player-name').addEventListener('input', () => {
+  el('btn-join').disabled = !el('player-name').value.trim() || !PS.ok;
+});
+el('player-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') el('btn-join').click();
+});
+el('btn-join').addEventListener('click', joinGame);
+el('btn-back').addEventListener('click', () => {
+  PS.joined     = false;
+  PS.score      = 0;
+  PS.localPhase = '';
+  PS.answered   = false;
+  PS.colorMap   = {};
+  PS.players    = [];
+  hide('p-q-counter');
+  el('p-progress-bar').style.width = '0%';
+  if (typeof AvatarModule !== 'undefined') AvatarModule.resetPublished();
+  el('join-status').style.color = '';
+  el('join-status').textContent = PS.ok ? '已連線，輸入名稱後加入' : '連接 MQTT 中...';
+  scr('screen-join');
+});
+
+// ── Live2D 動態載入（MP_CFG.enableLive2D = true 才執行）──────────────────
+function initLive2D() {
+  if (!MP_CFG.enableLive2D) return;
+  const srcs = ['../lib/live2d.min.js','../lib/live2dcubismcore.min.js','../lib/pixi.min.js','../lib/all.min.js','../lib/live2d.js'];
+  let i = 0;
+  (function next() {
+    if (i >= srcs.length) {
+      // 玩家端使用獨立命名空間（l2d_pos_p_），不受主持端拖曳位置影響
+      L2D_CFG.storageNS = 'p';
+      if (L2D_CFG.playerPos) {
+        Object.assign(L2D_CFG.char1, L2D_CFG.playerPos.char1);
+        Object.assign(L2D_CFG.char2, L2D_CFG.playerPos.char2);
+        // 程式碼設定優先：清除舊存檔，讓 playerPos 在每次重整後確實生效
+        try { localStorage.removeItem('l2d_pos_p_c1'); localStorage.removeItem('l2d_pos_p_c2'); } catch {}
+      }
+      // 套用玩家在 join 畫面選好的 live2d_my_like 角色（只影響自己這台裝置；
+      // 這裡改完 L2D_CFG.char1/char2.model 之後才會呼叫 L2D.init()，
+      // 所以整個流程只會去請求「這裡指定的那個模型」的資源，不會多請求收藏庫裡其他角色）
+      const _pC1Pick = localStorage.getItem('l2d_mylike_p_char1');
+      const _pC2Pick = localStorage.getItem('l2d_mylike_p_char2');
+      if (_pC1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _pC1Pick;
+      if (_pC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _pC2Pick;
+      // 手機才套用行動端設定，桌機沿用 L2D_CFG 預設值
+      if (window.matchMedia('(pointer: coarse)').matches) {
+        Object.assign(L2D_CFG.char1, L2D_CFG.mobile.char1);
+        Object.assign(L2D_CFG.char2, L2D_CFG.mobile.char2);
+      }
+      // 根據 L2D_CFG.vfxMode 動態注入 VFX 腳本（只做一次，利用 srcs 鏈）
+      const _vm = L2D_CFG.vfxMode;
+      if (_vm !== 'off' && !srcs.some(s => s.includes('MagicShotVFX'))) {
+        srcs.push(_vm === 'simple' ? 'MagicShotVFX_backup.js' : 'MagicShotVFX.js');
+        next();
+        return;
+      }
+      if (!srcs.some(s => s.includes('L2DGesturePlayer'))) {
+        srcs.push('L2DGesturePlayer.js');
+        next();
+        return;
+      }
+      L2D.init();
+      if (typeof MagicShotVFX !== 'undefined') MagicShotVFX.init();
+
+      // 音效開關按鈕（預設靜音）
+      const sndBtn = document.createElement('button');
+      sndBtn.title = '開啟 / 關閉音效';
+      sndBtn.textContent = '🔇';
+      sndBtn.style.cssText = 'position:fixed;bottom:114px;left:6px;z-index:200;' +
+        'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
+        'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
+      sndBtn.addEventListener('click', () => {
+        const on = toggleSound();
+        sndBtn.textContent       = on ? '🔊' : '🔇';
+        sndBtn.style.background  = on ? 'rgba(0,212,255,.25)' : 'rgba(0,0,0,.5)';
+        sndBtn.style.color       = on ? '#0d4' : '#888';
+        if (typeof VoiceBroadcastModule !== 'undefined') VoiceBroadcastModule.setMuted(!on);
+      });
+      document.body.appendChild(sndBtn);
+
+      // ── 特效開關按鈕（控制 MagicShotVFX 全模組所有攻擊特效）────────────────
+      if (typeof MagicShotVFX !== 'undefined') {
+        const vfxBtn = document.createElement('button');
+        vfxBtn.title = '開啟 / 關閉攻擊特效';
+        vfxBtn.textContent = '⚡';   // ⚡ = 特效開啟；✖ = 關閉
+        // bottom:270px：BGM 頂端約 263px，上方 7px 間距
+        vfxBtn.style.cssText = 'position:fixed;bottom:270px;left:6px;z-index:200;' +
+          'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
+          'background:rgba(255,200,0,.22);color:#ffd700;font-size:21px;cursor:pointer;padding:0;';
+        vfxBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const on = !MagicShotVFX.isEnabled();
+          MagicShotVFX.setEnabled(on);
+          vfxBtn.textContent      = on ? '⚡' : '✖';
+          vfxBtn.style.background = on ? 'rgba(255,200,0,.22)' : 'rgba(0,0,0,.5)';
+          vfxBtn.style.color      = on ? '#ffd700' : '#888';
+        });
+        document.body.appendChild(vfxBtn);
+      }
+
+      createBGMControl(167);
+
+      // 操作提示卡片（加入前說明各按鈕功能，幾秒後淡出消失）
+      const hint = document.createElement('div');
+      hint.id = 'fab-hint';
+      hint.innerHTML =
+        '<div class="row"><span class="ico">‹</span><span class="lbl">收合工具列</span></div>' +
+        '<div class="row"><span class="ico">⚡</span><span class="lbl">開啟 / 關閉攻擊特效</span></div>' +
+        '<div class="row"><span class="ico">🔇</span><span class="lbl">音效開關</span></div>' +
+        '<div class="row"><span class="ico">⠿</span><span class="lbl">拖曳角色一 / 二</span></div>' +
+        '<div class="sub">拖曳模式開啟後：</div>' +
+        '<div class="sub">縮放：滾輪 / 雙指捏合</div>' +
+        '<div class="sub">旋轉：Shift+滾輪 / 三指滑動</div>';
+      document.body.appendChild(hint);
+      setTimeout(() => {
+        hint.classList.add('hide');
+        setTimeout(() => hint.remove(), 800);
+      }, 5000);
+
+      // 拖曳按鈕已由 live2d.js _initDragButtons() 統一建立
+
+      // 延一幀讓 _initDragButtons() 的元素也進入 DOM，再統一貼 fab-item class
+      setTimeout(() => {
+        document.querySelectorAll('body > *').forEach(el => {
+          if (!el.style || el.id === 'fab-toggle') return;
+          if (el.style.position === 'fixed' && el.style.left === '6px') {
+            el.classList.add('fab-item');
+          }
+        });
+
+        // 收合 / 展開按鈕
+        const toggle = document.createElement('button');
+        toggle.id    = 'fab-toggle';
+        toggle.title = '收合 / 展開控制面板';
+        toggle.textContent = '‹';
+        toggle.addEventListener('click', () => {
+          const collapsed = document.body.classList.toggle('fab-collapsed');
+          toggle.textContent = collapsed ? '›' : '‹';
+        });
+        document.body.appendChild(toggle);
+
+        // 4 秒後自動收合，讓玩家先看清楚再消失
+        setTimeout(() => {
+          document.body.classList.add('fab-collapsed');
+          toggle.textContent = '›';
+        }, 4000);
+      }, 0);
+
+      return;
+    }
+    const s = document.createElement('script');
+    s.src    = srcs[i++];
+    s.onload  = next;
+    s.onerror = next;   // 載入失敗時繼續，避免整條鏈卡死
+    document.head.appendChild(s);
+  })();
+}
+
+// ── live2d_my_like 角色收藏庫（玩家端，join 畫面選，只影響自己這台裝置）──────
+// 這裡只 fetch manifest.json / names.json（各幾百 bytes，純文字清單，跟哪個角色的
+// 模型資源完全無關），用來把 join 畫面的下拉選單填出選項文字；實際會被下載的
+// 模型檔案（model3.json + 材質等）只有 initLive2D() 那邊、依 L2D_CFG.char1/char2.model
+// 指定的「單一」路徑去請求，跟這裡列出多少個角色選項無關，不會因為收藏庫變大而多耗資源。
+async function initMyLikeJoinUI() {
+  if (!MP_CFG.enableLive2D) return;
+  let manifest = [], names = {};
+  try {
+    const [mRes, nRes] = await Promise.all([
+      fetch('../live2d_my_like/manifest.json'),
+      fetch('../live2d_my_like/names.json'),
+    ]);
+    manifest = mRes.ok ? await mRes.json() : [];
+    names    = nRes.ok ? await nRes.json() : {};
+  } catch { return; }
+  if (!manifest.length) return;
+
+  const wrap = el('mylike-join-wrap');
+  const c1   = el('p-char1-select');
+  const c2   = el('p-char2-select');
+  if (!wrap || !c1 || !c2) return;
+
+  const opts = '<option value="">（預設，不覆蓋）</option>' +
+    manifest.map(e => `<option value="${e.path}">#${e.id} ${names[e.path] || e.character}</option>`).join('');
+  c1.innerHTML = opts;
+  c2.innerHTML = opts;
+  c1.value = localStorage.getItem('l2d_mylike_p_char1') || '';
+  c2.value = localStorage.getItem('l2d_mylike_p_char2') || '';
+  wrap.style.display = '';
+
+  const onPick = (key, val) => {
+    if (val) localStorage.setItem('l2d_mylike_p_' + key, val);
+    else     localStorage.removeItem('l2d_mylike_p_' + key);
+    if (confirm('角色設定要重新整理頁面才會生效，現在重新整理嗎？')) location.reload();
+  };
+  c1.addEventListener('change', () => onPick('char1', c1.value));
+  c2.addEventListener('change', () => onPick('char2', c2.value));
+}
+
+// ── 啟動 ──────────────────────────────────────────────────────────────────
+if (MP_CFG.enableLive2D) {
+  const hint = document.createElement('p');
+  hint.style.cssText = 'font-size:.72em;color:rgba(255,255,255,.38);margin-top:18px;line-height:1.6;';
+  hint.innerHTML = '遊戲畫面左下角 <strong style="color:rgba(255,255,255,.65)">⠿</strong> 可拖曳調整角色位置';
+  el('screen-join').querySelector('.join-card').appendChild(hint);
+  initMyLikeJoinUI();
+}
+// ── URL 參數覆蓋 broker 設定（host 傳入的 ?ip=...&port=... 優先於 multiplay.js）
+(function() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('ip'))   MP_CFG.brokerIP = p.get('ip');
+  if (p.get('port')) MP_CFG.wsPort   = +p.get('port');
+})();
+
+const _pPick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+// 斷線重連時自動填入上次的名稱
+(function() {
+  const saved = localStorage.getItem('quiz_pname');
+  if (saved) el('player-name').value = saved;
+})();
+
+// ── 頭像上傳處理 ─────────────────────────────────────────────────────────────
+(function () {
+  if (typeof AvatarModule === 'undefined') return;
+  const inp  = el('avatar-input');
+  const prev = el('avatar-preview');
+  const msg  = el('avatar-msg');
+  if (!inp) return;
+  inp.addEventListener('change', async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    try {
+      msg.textContent = '處理中...';
+      msg.style.color = '';
+      const src = await AvatarModule.select(file);
+      prev.src        = src;
+      prev.style.display = '';
+      msg.textContent = '✓ 已設定';
+      msg.style.color = 'var(--green)';
+    } catch (err) {
+      msg.textContent = typeof err === 'string' ? err : '上傳失敗';
+      msg.style.color = 'var(--red)';
+    }
+    inp.value = '';
+  });
+})();
+
+// ── 彈幕安全區域 ──────────────────────────────────────────────────────────────
+if (typeof DanmakuSystem !== 'undefined') {
+  DanmakuSystem.setSafeArea({ top: 58, bottom: 90, left: 0, right: 0 });
+}
+
+// ── 聊天輸入 UI ────────────────────────────────────────────────────────────────
+(function () {
+  // 💬 按鈕（右下角，MQTT 徽章正上方）
+  const chatBtn = document.createElement('button');
+  chatBtn.id    = '_p-chat-btn';
+  chatBtn.title = '發送聊天（T）';
+  chatBtn.textContent = '💬';
+  chatBtn.style.cssText =
+    'position:fixed;bottom:44px;right:8px;z-index:201;' +
+    'width:36px;height:36px;border-radius:50%;' +
+    'background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.4);' +
+    'color:var(--cyan);font-size:18px;cursor:pointer;padding:0;' +
+    'display:none;align-items:center;justify-content:center;' +
+    'box-shadow:0 2px 10px rgba(0,0,0,.4);transition:background .18s;';
+  chatBtn.addEventListener('mouseenter', () => { chatBtn.style.background = 'rgba(0,212,255,.28)'; });
+  chatBtn.addEventListener('mouseleave', () => { chatBtn.style.background = 'rgba(0,212,255,.12)'; });
+  document.body.appendChild(chatBtn);
+
+  // 聊天輸入面板（底部滑出）
+  const panel = document.createElement('div');
+  panel.id = '_p-chat-panel';
+  panel.style.cssText =
+    'position:fixed;bottom:0;left:0;right:0;z-index:10001;' +
+    'background:rgba(8,18,38,.97);border-top:1px solid rgba(0,212,255,.3);' +
+    'padding:10px 14px 16px;display:none;align-items:center;gap:8px;' +
+    'box-shadow:0 -4px 20px rgba(0,0,0,.5);';
+
+  const inp = document.createElement('input');
+  inp.type        = 'text';
+  inp.maxLength   = 30;
+  inp.placeholder = '輸入訊息（最多30字）...';
+  inp.style.cssText =
+    'flex:1;padding:10px 14px;background:rgba(255,255,255,.07);' +
+    'border:1px solid rgba(0,212,255,.4);border-radius:10px;' +
+    'color:#fff;font-size:1em;outline:none;min-width:0;' +
+    '-webkit-appearance:none;';
+
+  const sendBtn = document.createElement('button');
+  sendBtn.textContent = '送出';
+  sendBtn.style.cssText =
+    'padding:10px 16px;border-radius:10px;cursor:pointer;font-size:.9em;' +
+    'background:rgba(0,212,255,.2);border:1px solid rgba(0,212,255,.5);' +
+    'color:var(--cyan);white-space:nowrap;flex-shrink:0;';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText =
+    'width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;' +
+    'background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);' +
+    'color:var(--text2);flex-shrink:0;';
+
+  let _typingTid = null;
+
+  function _openPanel() {
+    panel.style.display = 'flex';
+    chatBtn.style.display = 'none';
+    setTimeout(() => inp.focus(), 50);
+  }
+  function _closePanel() {
+    panel.style.display = 'none';
+    chatBtn.style.display = 'flex';
+    inp.value = '';
+  }
+  function _stopTyping() {
+    clearTimeout(_typingTid);
+    _typingTid = null;
+    if (PS.joined && PS.ok) pub(MP_TOPICS.TYPING, { playerId: PS.myId, typing: false }, 0);
+  }
+  function _send() {
+    const msg = inp.value.trim();
+    if (!msg || !PS.joined || !PS.ok) return;
+    _stopTyping();
+    pub(MP_TOPICS.CHAT, { playerId: PS.myId, name: PS.myName, message: msg }, 0);
+    // 本機立即顯示（MQTT broker 不 echo 回給自己）
+    if (typeof PlayerBubbleChat !== 'undefined') PlayerBubbleChat.showMessage(PS.myId, msg);
+    if (typeof DanmakuSystem !== 'undefined') DanmakuSystem.receive({ player: PS.myName, text: msg });
+    _closePanel();
+  }
+
+  chatBtn.addEventListener('click', _openPanel);
+  closeBtn.addEventListener('click', () => { _stopTyping(); _closePanel(); });
+  sendBtn.addEventListener('click', _send);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); _send(); }
+    if (e.key === 'Escape') { _stopTyping(); _closePanel(); }
+  });
+  inp.addEventListener('input', () => {
+    if (!PS.joined || !PS.ok) return;
+    pub(MP_TOPICS.TYPING, { playerId: PS.myId, typing: true }, 0);
+    clearTimeout(_typingTid);
+    _typingTid = setTimeout(_stopTyping, 2000);
+  });
+
+  panel.append(inp, sendBtn, closeBtn);
+  document.body.appendChild(panel);
+
+  // 加入遊戲後顯示，退出後隱藏
+  el('btn-join')?.addEventListener('click', () => {
+    setTimeout(() => { if (PS.joined) chatBtn.style.display = 'flex'; }, 80);
+  });
+  el('btn-back')?.addEventListener('click', () => { chatBtn.style.display = 'none'; _closePanel(); });
+
+  // 快捷鍵 T：開啟 / 聚焦輸入框（不在 input 內、且已加入遊戲時才觸發）
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if ((e.key === 't' || e.key === 'T') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (!PS.joined) return;
+      e.preventDefault();
+      if (panel.style.display !== 'flex') _openPanel();
+      else inp.focus();
+    }
+  });
+})();
+
+// ── Emoji 快速反應面板 ─────────────────────────────────────────────────────
+(() => {
+  const EMOJIS = ['😀','😂','😭','😡','👍','👏','🎉','❤️','🔥','❓'];
+
+  const emojiBtn = document.createElement('button');
+  emojiBtn.id    = '_p-emoji-btn';
+  emojiBtn.title = '快速表情（不開聊天）';
+  emojiBtn.textContent = '😄';
+  emojiBtn.style.cssText =
+    'position:fixed;bottom:44px;right:52px;z-index:201;' +
+    'width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;' +
+    'background:rgba(10,20,40,.9);border:1px solid rgba(255,200,0,.45);' +
+    'line-height:1;display:none;align-items:center;justify-content:center;';
+  document.body.appendChild(emojiBtn);
+
+  const grid = document.createElement('div');
+  grid.style.cssText =
+    'position:fixed;bottom:88px;right:8px;z-index:10001;' +
+    'background:rgba(10,20,40,.97);border:1px solid rgba(0,212,255,.3);' +
+    'border-radius:14px;padding:8px;gap:4px;flex-wrap:wrap;width:196px;' +
+    'box-shadow:0 -4px 20px rgba(0,0,0,.6);display:none;';
+  EMOJIS.forEach(e => {
+    const btn = document.createElement('button');
+    btn.textContent = e;
+    btn.style.cssText =
+      'width:36px;height:36px;font-size:22px;background:none;border:none;' +
+      'cursor:pointer;border-radius:8px;transition:background .12s;line-height:1;';
+    btn.addEventListener('pointerenter', () => { btn.style.background = 'rgba(0,212,255,.15)'; });
+    btn.addEventListener('pointerleave', () => { btn.style.background = 'none'; });
+    btn.addEventListener('click', () => {
+      if (!PS.joined || !PS.ok) return;
+      pub(MP_TOPICS.CHAT, { playerId: PS.myId, name: PS.myName, message: e, type: 'emoji' }, 0);
+      if (typeof PlayerBubbleChat !== 'undefined') PlayerBubbleChat.showEmoji(PS.myId, e);
+      grid.style.display = 'none';
+    });
+    grid.appendChild(btn);
+  });
+  document.body.appendChild(grid);
+
+  emojiBtn.addEventListener('click', () => {
+    grid.style.display = grid.style.display === 'flex' ? 'none' : 'flex';
+  });
+
+  document.addEventListener('click', ev => {
+    if (!grid.contains(ev.target) && ev.target !== emojiBtn)
+      grid.style.display = 'none';
+  });
+
+  el('btn-join')?.addEventListener('click', () => {
+    setTimeout(() => { if (PS.joined) emojiBtn.style.display = 'flex'; }, 80);
+  });
+  el('btn-back')?.addEventListener('click', () => {
+    emojiBtn.style.display = 'none';
+    grid.style.display = 'none';
+  });
+})();
+
+// ── 彈幕顯示切換按鈕（本機控制，不廣播）─────────────────────────────────────
+(() => {
+  if (typeof DanmakuSystem === 'undefined') return;
+
+  const btn = document.createElement('button');
+  btn.id           = '_p-dmk-btn';
+  btn.textContent  = '💫';
+  btn.title        = '彈幕已開啟（點擊關閉）';
+  btn.style.cssText =
+    'position:fixed;bottom:90px;right:8px;z-index:201;' +
+    'width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;' +
+    'background:rgba(10,20,40,.9);border:1px solid rgba(0,212,255,.4);' +
+    'color:var(--cyan);display:none;padding:0;' +
+    'user-select:none;-webkit-user-select:none;';
+  document.body.appendChild(btn);
+
+  btn.addEventListener('click', () => {
+    const on = !DanmakuSystem.isEnabled();
+    DanmakuSystem.setEnabled(on);
+    btn.style.opacity = on ? '1' : '.4';
+    btn.title = on ? '彈幕已開啟（點擊關閉）' : '彈幕已關閉（點擊開啟）';
+  });
+
+  el('btn-join')?.addEventListener('click', () => {
+    setTimeout(() => { if (PS.joined) btn.style.display = 'flex'; }, 80);
+  });
+  el('btn-back')?.addEventListener('click', () => { btn.style.display = 'none'; });
+})();
+
+initLive2D();
+mqttInit();
+// VoiceBroadcast：mqttInit() 後 PS.client 已建立，可安全初始化
+if (typeof VoiceBroadcastModule !== 'undefined') {
+  VoiceBroadcastModule.initPlayer({
+    mqttClient: () => PS.client,
+    myId:       () => PS.myId,
+    name:       () => PS.myName,
+    getPlayers: () => (PS.players || []).filter(p => p.id !== PS.myId).map(p => p.id),
+  });
+}
+</script>
+</body>
+</html>
