@@ -4,8 +4,7 @@
  * MagicShotVFX — 角色朝選項發射魔法球的視覺特效模組
  *
  * 公開 API:
- *   MagicShotVFX.fire({ fromX, fromY, toX, toY, letter, streak })
- *   MagicShotVFX.fireAtLetter(letter, streak)  ← 自動取角色位置
+ *   MagicShotVFX.fireExplosion(letter)  ← 唯一實際被呼叫的攻擊特效（內部會呼叫 fire()）
  *   MagicShotVFX.updateStreak(playerId, correct) → 新連續正解數
  *   MagicShotVFX.getStreak(playerId)
  *   MagicShotVFX.init()  ← 掛載到 L2D.app.stage（也會自動延遲嘗試）
@@ -22,6 +21,7 @@ const MagicShotVFX = (() => {
     CYAN:   0x06b6d4,
     GOLD:   0xffd60a,
     WHITE:  0xffffff,
+    PURPLE: 0xa855f7,
   };
 
   // ── 模組狀態 ──────────────────────────────────────────────────────────────
@@ -279,12 +279,7 @@ const MagicShotVFX = (() => {
     return { x: window.innerWidth * 0.82, y: window.innerHeight * 0.45 };
   }
 
-  /** 依連擊數決定魔法球顏色 */
-  function _orbColor(streak) {
-    if (streak >= 10) return COL.GOLD;
-    if (streak >= 5)  return COL.CYAN;
-    return streak >= 3 ? COL.ORANGE : COL.RED;
-  }
+  /** 依連擊數決定魔法球／爆炸特效顏色 */
   function _exColor(streak) {
     if (streak >= 10) return COL.GOLD;
     if (streak >= 5)  return COL.CYAN;
@@ -294,7 +289,7 @@ const MagicShotVFX = (() => {
   /**
    * 觸發 Live2D 動作
    * skill_01 → 'skill'，skill_02 → 'skill2'，excite_01 → 'excite'（別名表已定義）
-   * _go 會先查 mMap，若 _c1 沒有該動作則自然跳過
+   * 若 _c1 沒有該動作，_go() 會自然跳過
    */
   function _l2dMotion(streak) {
     try {
@@ -358,7 +353,7 @@ const MagicShotVFX = (() => {
 
     } else {
       // 1–4×：單顆魔法球（3× 升級為 fireball）
-      const color  = _orbColor(streak);
+      const color  = _exColor(streak);
       const radius = type === 'fireball' ? 18 : 14;
       const orb    = new MagicOrb(fromX, fromY, toX, toY, { color, radius });
       _effects.push(orb);
@@ -371,38 +366,6 @@ const MagicShotVFX = (() => {
     }
 
     _startTick();
-  }
-
-  /**
-   * 便捷方法：自動從角色位置朝指定選項發射
-   * @param {string} letter  'A' | 'B' | 'C' | 'D'
-   * @param {number} [streak=1]
-   */
-  function fireAtLetter(letter, streak = 1) {
-    if (!_container) return;
-    const opt = _optRect(letter);
-    if (!opt) return;
-    const orig = _charOrigin();
-    fire({ fromX: orig.x, fromY: orig.y, toX: opt.cx, toY: opt.cy, letter, streak });
-  }
-
-  /**
-   * 組合攻擊：依序發射 1×→3×→5×→10× 四段特效
-   * 每段間隔 280 ms，形成連續爆炸的視覺衝擊
-   * @param {string} letter  'A' | 'B' | 'C' | 'D'
-   */
-  function fireCombo(letter) {
-    if (!_container) return;
-    const opt = _optRect(letter);
-    if (!opt) return;
-    const orig = _charOrigin();
-    const fx = orig.x, fy = orig.y, tx = opt.cx, ty = opt.cy;
-    const stages = [1, 3, 5, 10];
-    stages.forEach((streak, i) => {
-      setTimeout(() => {
-        fire({ fromX: fx, fromY: fy, toX: tx, toY: ty, letter, streak });
-      }, i * 280);
-    });
   }
 
   function fireExplosion(letter) {
@@ -461,9 +424,6 @@ const MagicShotVFX = (() => {
   // ── 公開介面 ──────────────────────────────────────────────────────────────
   return {
     get container() { return _container; },
-    fire,
-    fireAtLetter,
-    fireCombo,
     fireExplosion,
     init,
     updateStreak,

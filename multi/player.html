@@ -537,6 +537,7 @@
 </div>
 
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="../lib/shuffle.js"></script>
 <script src="multiplay.js"></script>
 <script src="SoundSystem.js"></script>
 <script src="AvatarModule.js"></script>
@@ -1274,7 +1275,7 @@ function doAnswer(letter) {
     MagicShotVFX.fireExplosion(letter);
   }
   if (typeof L2DGesturePlayer !== 'undefined') {
-    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing');
+    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing', L2D_CFG.answerGestureChar);
   }
 }
 

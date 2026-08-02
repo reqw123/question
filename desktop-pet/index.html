@@ -81,10 +81,75 @@
   // 網頁模式是每題「開始作答／結果揭曉」時才開關這個循環（事件觸發），桌寵沒有這種
   // 遊戲階段可以掛，這裡忽略事件觸發的部分，載入完就常駐開著，維持桌寵原本
   // 「一開就持續動」的行為。
+  // L2D.init() 真正 resolve 才代表兩個角色都嘗試載入完成，比「腳本檔案載入完成」更準確的就緒判斷，
+  // 供系統匣選單（main.js 的 triggerMotion()）判斷要不要執行手動觸發的動作。
+  window._l2dReady = false;
   L2D.init().then(() => {
+    window._l2dReady = true;
     L2D.startIdleChat(IDLE_MOTION_MS);
     L2D.startIdleMotion(IDLE_MOTION_MS);
   });
+
+  // 對角線交叉飛行（角色一左上↔右下、角色二右上↔左下，兩條線在畫面中間交叉）。
+  // 定義好放這裡，供系統匣選單「動作測試」呼叫；呼叫時才需要 L2D.init() 已完成、角色已載入。
+  window._flyStop = { c1: false, c2: false };
+  const FLY_PATHS = {
+    c1: (mw, mh) => [{ x: 0, y: 0 }, { x: window.innerWidth - mw, y: window.innerHeight - mh }],
+    c2: (mw, mh) => [{ x: window.innerWidth - mw, y: 0 }, { x: 0, y: window.innerHeight - mh }],
+  };
+  function _flyOneLoop(charKey, legs, durationMs) {
+    const state = L2D['_' + charKey];
+    if (!state || !state.ready || !state.model) return;   // 角色還沒載入完成就安靜跳過，不拋錯
+    const m = state.model;
+    const mw = m.width, mh = m.height;
+    const [pointA, pointB] = (FLY_PATHS[charKey] || FLY_PATHS.c1)(mw, mh);
+    const easeIO = t => t < .5 ? 2*t*t : -1 + (4 - 2*t)*t;
+    const origin = { x: m.x, y: m.y };   // 記住開始前的位置，動作結束（或中途被停止）要飛回這裡
+
+    window._flyStop[charKey] = false;
+    let leg = 0;
+
+    // 用跟飛行同一條 easeInOut 曲線，從目前位置飛回 origin，不是瞬間傳送
+    function animateBackToOrigin() {
+      const from = { x: m.x, y: m.y };
+      const start = performance.now();
+      function tick(now) {
+        const t  = Math.min(1, (now - start) / durationMs);
+        const et = easeIO(t);
+        m.x = from.x + (origin.x - from.x) * et;
+        m.y = from.y + (origin.y - from.y) * et;
+        if (t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function runLeg() {
+      // legs 是 null/undefined（空值）視為沒有次數限制，一直飛到 window._flyStop 被設 true 為止
+      if ((legs != null && leg >= legs) || window._flyStop[charKey]) { animateBackToOrigin(); return; }
+      const from = leg % 2 === 0 ? pointA : pointB;
+      const to   = leg % 2 === 0 ? pointB : pointA;
+      const start = performance.now();
+
+      function tick(now) {
+        if (window._flyStop[charKey]) { animateBackToOrigin(); return; }
+        const t  = Math.min(1, (now - start) / durationMs);
+        const et = easeIO(t);
+        m.x = from.x + (to.x - from.x) * et;
+        m.y = from.y + (to.y - from.y) * et;
+        if (t < 1) requestAnimationFrame(tick);
+        else { leg++; runLeg(); }
+      }
+      requestAnimationFrame(tick);
+    }
+    runLeg();
+  }
+  // legs 預設值就是唯一的次數設定點：改這裡的 20 決定不帶參數呼叫 flyLoop() 時飛幾趟。
+  // 改成 null → 沒有次數限制，一直飛到呼叫 window._flyStop.c1/c2 = true 為止（main.js 的「⏹ 停止飛行」用的就是這個）。
+  // main.js 的 toggleFly() 呼叫時特意不帶 legs 參數，就是為了讓這裡的預設值說了算，不要兩邊各寫一份設定。
+  function flyLoop(charKey, legs = 4, durationMs = 1500) {
+    const chars = charKey ? [charKey] : ['c1', 'c2'];
+    chars.forEach(c => _flyOneLoop(c, legs, durationMs));
+  }
 
   // 聲音開關按鈕：跟 L2D 左下角 ⠿ 拖曳按鈕同一套視覺風格，bottom:114px 對齊
   // multi/README.md 記載的既有版位慣例（⠿ 8px / 61px、🔇 114px）

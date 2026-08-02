@@ -41,6 +41,11 @@ function loadMyLikeManifest() {
 // 視窗載入/重新整理完成後，跟 renderer 的 localStorage 對一次目前實際套用的選擇，
 // 避免主行程這邊的 current/pending 狀態跟畫面上實際生效的模型不同步
 function syncMyLikeSelectionFromRenderer() {
+  // 這裡掛在 did-finish-load，任何讓頁面重新整理的操作（F8 還原位置、套用角色選擇）都會觸發，
+  // 舊頁面裡飛行動畫用的 JS 執行環境會直接被砍掉重來，角色瞬間回到 L2D_CFG 預設位置，
+  // 但 isFlying 是 main.js 自己記的狀態，不會知道頁面重新整理過，這裡順便同步歸零，
+  // 選單 label 才不會卡在「⏹ 停止飛行」。
+  isFlying = false;
   return win.webContents
     .executeJavaScript(
       `({ c1: localStorage.getItem('l2d_mylike_d_char1') || '', c2: localStorage.getItem('l2d_mylike_d_char2') || '' })`
@@ -130,6 +135,61 @@ function resetPosition() {
     .catch((err) => console.error('[desktop-pet] 還原預設位置失敗：', err));
 }
 
+// 動作測試選單：手動觸發 lib/live2d.js 既有的公開動作方法，之後想加新動作
+// 只要在這個陣列多加一筆 { label, call }，buildMotionSubmenu()／triggerMotion() 都不用改。
+// （對角線交叉飛行是「開始/停止」合一的切換式選項，label 會動態變化，不適合放這種固定 label 的陣列，另外處理，見下方 toggleFly()）
+const MOTION_ACTIONS = [
+  { label: '角色一隨機動作（playRandom1）', call: 'L2D.playRandom1()' },
+  { label: '角色二隨機動作（playRandom2）', call: 'L2D.playRandom2()' },
+];
+
+let isFlying = false;
+
+function toggleFly() {
+  if (isFlying) {
+    triggerMotion('window._flyStop.c1 = window._flyStop.c2 = true');
+  } else {
+    // 特意不帶 legs 參數：飛幾趟由 index.html 的 flyLoop(charKey, legs = ...) 預設值唯一決定，
+    // 這樣次數設定只存在一個地方（main.js 跟 index.html 是 Electron 的兩個獨立行程，
+    // 沒辦法直接共用一個變數，硬要兩邊各存一份設定值反而更難維護）。
+    triggerMotion('flyLoop()');
+  }
+  isFlying = !isFlying;
+  if (tray) tray.setContextMenu(buildTrayMenu());
+}
+
+function triggerMotion(call) {
+  // 跟 resetPosition() 同樣手法：executeJavaScript 到 renderer 端執行，L2D 還沒就緒時安靜跳過，
+  // 這裡是單純觸發動作、不是改存檔狀態，所以不用像 resetPosition() 那樣重新整理頁面。
+  // 用 window._l2dReady（index.html 裡 L2D.init().then() 才會設 true）判斷，
+  // 比單純檢查 typeof L2D.playRandom1 準確——後者只代表 lib/live2d.js 腳本載入完成，
+  // 不代表角色模型（moc3/材質）真的抓完、L2D.init() 已經 resolve。
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        if (window._l2dReady) { ${call}; return true; }
+        return false;
+      })();`
+    )
+    .then((ok) => {
+      if (!ok) console.warn('[desktop-pet] L2D 尚未就緒（角色可能還在載入中），請稍後再試');
+    })
+    .catch((err) => console.error('[desktop-pet] 觸發動作失敗：', err));
+}
+
+function buildMotionSubmenu() {
+  return [
+    ...MOTION_ACTIONS.map(({ label, call }) => ({
+      label,
+      click: () => triggerMotion(call),
+    })),
+    {
+      label: isFlying ? '⏹ 停止飛行' : '對角線交叉飛行',
+      click: () => toggleFly(),
+    },
+  ];
+}
+
 function buildTrayMenu() {
   const hasPendingChange = pendingChar1 !== currentChar1 || pendingChar2 !== currentChar2;
   const charMenuItems = myLikeManifest.length
@@ -151,6 +211,7 @@ function buildTrayMenu() {
       click: () => setClickThrough(!clickThrough),
     },
     { label: '還原預設位置/縮放', click: () => resetPosition() },
+    { label: '動作測試', submenu: buildMotionSubmenu() },
     ...charMenuItems,
     { type: 'separator' },
     { label: '結束', click: () => app.quit() },

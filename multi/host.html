@@ -718,6 +718,7 @@
 <script src="../lib/live2d.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="../lib/shuffle.js"></script>
 <script src="multiplay.js"></script>
 <script src="SoundSystem.js"></script>
 <script src="AvatarModule.js"></script>
@@ -946,7 +947,7 @@ function onAnswer({ id, name, letter }) {
     MagicShotVFX.fireExplosion(letter);
   }
   if (typeof L2DGesturePlayer !== 'undefined' && id === HS.myId) {
-    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing');
+    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing', L2D_CFG.answerGestureChar);
   }
 
   // 主持人作答時立即框選該選項

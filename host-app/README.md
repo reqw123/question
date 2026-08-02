@@ -19,6 +19,25 @@ npm install   # 已裝過可省略
 npm start
 ```
 
+### 為什麼 `node_modules` 沒有進版本控制
+
+專案根目錄的 `.gitignore` 排除了 `node_modules/`（全專案共用這一條規則，`desktop-pet`／`host-app` 都一樣，不是漏傳）：
+```
+# 相依套件（可用 npm install 重新產生，不進版本控制）
+node_modules/
+```
+
+真正需要進版本控制、而且確實有進的是 `package.json`／`package-lock.json`——這兩個檔案記錄「要裝哪些套件、精確到哪個版本」，`node_modules` 是**根據這兩個檔案自動產生**出來的產物：
+- 體積大、檔案數量多，不適合塞進 git history
+- 內容通常是平台相關的編譯/安裝結果，換一台機器應該重新 `npm install` 出對應當下作業系統/Node 版本的內容，而不是直接複製別台機器裝好的東西過去
+
+所以在新環境（或 `git clone` 下來的專案）想跑起來，一定要先執行：
+```bash
+cd host-app
+npm install   # 讀 package.json/package-lock.json，自動重建 node_modules
+```
+上面「## 執行」那段指令本身就是完整流程，這裡只是額外說明為什麼那個 `npm install` 是必要步驟、`node_modules` 不見了不代表專案壞掉。
+
 ## 設計說明
 
 - 不內嵌、不重寫任何問答遊戲或 Live2D 邏輯，純粹是瀏覽器視窗的替代品

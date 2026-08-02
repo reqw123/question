@@ -26,6 +26,25 @@ npm install   # 已裝過可省略
 npm start
 ```
 
+### 為什麼 `node_modules` 沒有進版本控制
+
+專案根目錄的 `.gitignore` 排除了 `node_modules/`（全專案共用這一條規則，`desktop-pet`／`host-app` 都一樣，不是漏傳）：
+```
+# 相依套件（可用 npm install 重新產生，不進版本控制）
+node_modules/
+```
+
+真正需要進版本控制、而且確實有進的是 `package.json`／`package-lock.json`——這兩個檔案記錄「要裝哪些套件、精確到哪個版本」，`node_modules` 是**根據這兩個檔案自動產生**出來的產物：
+- 體積大、檔案數量多，不適合塞進 git history
+- 內容通常是平台相關的編譯/安裝結果，換一台機器應該重新 `npm install` 出對應當下作業系統/Node 版本的內容，而不是直接複製別台機器裝好的東西過去
+
+所以在新環境（或 `git clone` 下來的專案）想跑起來，一定要先執行：
+```bash
+cd desktop-pet
+npm install   # 讀 package.json/package-lock.json，自動重建 node_modules
+```
+上面「## 執行」那段指令本身就是完整流程，這裡只是額外說明為什麼那個 `npm install` 是必要步驟、`node_modules` 不見了不代表專案壞掉。
+
 ## 操作
 
 預設是「點擊穿透」模式，滑鼠事件會直接穿透視窗到桌面/其他程式，這時候點不到角色是正常的——先切到互動模式才能拖曳／點按鈕。
@@ -37,7 +56,7 @@ npm start
 | `F10` | 結束程式（無邊框視窗沒有內建關閉鈕） |
 | 左下角 `⠿`（bottom:8px / 61px） | 拖曳角色一 / 角色二（`lib/live2d.js` 既有功能） |
 | 左下角 `🔇`（bottom:114px） | 開關聲音（**預設靜音**），控制 L2D 閒話家常的隨機音效 |
-| 系統匣圖示右鍵選單 | 快捷鍵萬一跟其他軟體衝突而沒反應時的備援：一定能用的切換/結束方式；也是選擇 Live2D 角色的地方（見下方） |
+| 系統匣圖示右鍵選單 | 快捷鍵萬一跟其他軟體衝突而沒反應時的備援：一定能用的切換/結束方式；也是選擇 Live2D 角色、手動觸發動作的地方（見下方） |
 
 角色會自動閒置動作＋表情＋閒話家常（不用點擊，全自動），見下方「閒置動作／表情／閒聊」說明。
 
@@ -55,6 +74,38 @@ npm start
 - 只存在這個桌寵視窗自己的 localStorage（`l2d_mylike_d_char1` / `l2d_mylike_d_char2`），跟 `host.html`（無字首）、`player.html`（`_p_`）的選擇彼此獨立，互不影響
 - 沒有做成畫面上的按鈕/下拉選單，是刻意的：Electron 原生選單樣式跟著作業系統走，不會有 HTML `<select>` 選項清單在深色主題下變白底看不清楚的問題（`host.html`/`player.html` 那邊就是用額外的 CSS 去補這個坑，桌寵這裡直接繞開）
 - `main.js` 用 `fs` 直接讀 `live2d_my_like/manifest.json`、`names.json` 來建選單（跟 `host.html`/`player.html` 用 `fetch` 讀的是同一份檔案）；實際會下載的模型資源，仍然只有套用後 `index.html` 載入時指定的那一個路徑，跟收藏庫有幾個角色無關
+
+### 動作測試（系統匣圖示右鍵選單）
+
+系統匣選單裡有「動作測試」子選單，點了會直接觸發動作，不用開 F12：
+
+- 角色一隨機動作（`L2D.playRandom1()`，`lib/live2d.js` 既有方法）
+- 角色二隨機動作（`L2D.playRandom2()`，`lib/live2d.js` 既有方法）
+- 對角線交叉飛行 / ⏹ 停止飛行（同一個選項，開始/停止合一的切換式按鈕，`index.html` 自訂的位置動畫）
+
+`main.js` 用跟 `resetPosition()` 一樣的手法（`win.webContents.executeJavaScript(...)`）把呼叫送進 renderer 端執行；跟還原位置不一樣的是，這裡單純觸發動作，不會重新整理視窗。角色/L2D 還沒載入完成時點選會安靜跳過、在終端機印警告，不會讓程式出錯（判斷依據是 `window._l2dReady`，`index.html` 裡 `L2D.init().then()` 才會設 `true`，比單純檢查方法存不存在準確）。
+
+想加新的**固定 label、單純觸發一次**的項目，在 `main.js` 的 `MOTION_ACTIONS` 陣列多加一筆 `{ label, call }` 就好，選單跟觸發邏輯都不用改：
+
+```js
+const MOTION_ACTIONS = [
+  { label: '角色一隨機動作（playRandom1）', call: 'L2D.playRandom1()' },
+  { label: '角色二隨機動作（playRandom2）', call: 'L2D.playRandom2()' },
+  // { label: '...', call: 'L2D.playEmotion("correct")' },  // 之後照這個格式繼續加
+];
+```
+
+對角線交叉飛行因為需要「開始/停止合一、label 動態變化」，不適合放進上面這種固定 label 的陣列，是另外用 `isFlying` 狀態變數 + `toggleFly()` 處理的（`buildMotionSubmenu()` 裡 `MOTION_ACTIONS` 陣列之外多加的那一項）。
+
+**飛幾趟的設定只存在一個地方**——`index.html` 的 `flyLoop(charKey, legs = 20, ...)` 預設值。`main.js` 的 `toggleFly()` 特意呼叫 `flyLoop()` 不帶 `legs` 參數，讓這個預設值說了算：
+
+```js
+// index.html：改這裡的 20 決定不帶參數呼叫時飛幾趟
+// 改成 null → 沒有次數限制，一直飛到按「⏹ 停止飛行」（main.js 的 toggleFly() 用的就是這個機制）
+function flyLoop(charKey, legs = 20, durationMs = 1500) { ... }
+```
+
+`main.js`／`index.html` 是 Electron 的兩個獨立行程（main process／renderer process），沒辦法直接共用一個變數，`main.js` 只能透過 `executeJavaScript()` 送一段字串過去執行——所以次數設定刻意只放 `index.html` 一份，不要兩邊各存一次、兩套數字要對齊維護。
 
 ### 閒置動作／表情／閒聊（跟網頁模式共用同一套機制）
 

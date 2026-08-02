@@ -484,15 +484,7 @@ function processGestureInput(gesture) {
 }
 
 // ===== RANDOM SELECTION =====
-function shuffleArray(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
+// shuffleArray() 來自 ../lib/shuffle.js（single/ 與 multi/ 共用）
 function pickQuestions(pool, n) {
   return shuffleArray(pool).slice(0, Math.min(n, pool.length));
 }

@@ -83,13 +83,9 @@ function mpCalcPoints(timeLeft, isCorrect) {
   return                -Math.max(MP_CFG.MIN_PENALTY, Math.round(MP_CFG.MAX_PENALTY * r));
 }
 
+// 實作在 ../lib/shuffle.js（single/ 與 multi/ 共用）
 function mpShuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  return shuffleArray(arr);
 }
 
 // 回傳依分數降冪排序的玩家陣列，附上 rank（1-based）
