@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = __dirname;
+const PROJECT_ROOT = path.join(__dirname, '..');
+const SCAN_ROOT = path.join(PROJECT_ROOT, 'models');
 
 function isCubism2Manifest(name) {
   const n = name.toLowerCase();
@@ -20,16 +21,16 @@ function walk(dir) {
     if (it.isDirectory()) {
       walk(full);
     } else if (isCubism4Manifest(it.name) || isCubism2Manifest(it.name)) {
-      foundPaths.push(path.relative(ROOT, full).split(path.sep).join('/'));
+      foundPaths.push(path.relative(PROJECT_ROOT, full).split(path.sep).join('/'));
     }
   }
 }
-walk(ROOT);
+walk(SCAN_ROOT);
 foundPaths.sort();
 
 // 讀取舊 manifest.json，既有路徑沿用原本的流水號，只有新增的模型才會拿到新號碼，
 // 避免每次重新掃描時既有角色的編號被打亂（host.html 下拉選單存的是編號，不是路徑）。
-const manifestPath = path.join(ROOT, 'manifest.json');
+const manifestPath = path.join(__dirname, 'manifest.json');
 let oldIdByPath = {};
 let maxOldId = 0;
 try {
@@ -56,7 +57,7 @@ fs.writeFileSync(manifestPath, JSON.stringify(entries, null, 2));
 // names.json 是給你手動編輯顯示名稱用的，key 是 path、value 是你想要的名字。
 // 只在檔案不存在時建立，已經存在就不動，不會洗掉你編輯過的名字；
 // 新模型會用 character（資料夾名）當預設值，方便你知道要編輯哪一筆。
-const namesPath = path.join(ROOT, 'names.json');
+const namesPath = path.join(__dirname, 'names.json');
 let names = {};
 try { names = JSON.parse(fs.readFileSync(namesPath, 'utf8')); } catch {}
 let namesChanged = false;

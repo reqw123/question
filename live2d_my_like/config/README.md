@@ -2,13 +2,17 @@
 
 放你自己喜歡、收藏的 Live2D 模型的地方。數量會持續增加，資料夾名稱通常是一串不好辨識的編號，所以搭配一個簡單的流水號 + 可編輯名稱系統，並且在 `host.html` 大廳畫面提供下拉選單直接挑選角色一/角色二，不用再手動改 `lib/live2d.js`。
 
+## 資料夾結構
+
+- `models/`：所有角色模型資料夾（moc3、model3.json、motions、textures⋯）
+- `config/`：設定檔與工具（本檔案、`manifest.json`、`names.json`、`generate-manifest.js`、`scan-params.js`、`live2d角色指令說明.md`、各角色參數文件）
+
 ## 新增模型後要做的事
 
-把新的模型資料夾丟進這裡（支援 Cubism 2 的 `model.json` 跟 Cubism 3/4 的 `*.model3.json`），然後重新產生清單：
+把新的模型資料夾丟進 `models/`（支援 Cubism 2 的 `model.json` 跟 Cubism 3/4 的 `*.model3.json`），然後重新產生清單：
 
 ```bash
-cd live2d_my_like
-node generate-manifest.js
+node live2d_my_like/config/generate-manifest.js
 ```
 
 - `manifest.json`：自動產生，不要手動改。既有模型的流水號（`id`）不會因為重新掃描而改變，只有新加入的才會拿到新號碼

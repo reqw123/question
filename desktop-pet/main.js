@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, globalShortcut, screen, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, screen, Tray, Menu, nativeImage, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -26,9 +26,18 @@ let myLikeNames    = {};
 let currentChar1 = '', currentChar2 = '';
 let pendingChar1 = '', pendingChar2 = '';
 
+// 額外寵物（自由遊走，見 desktop-pet/index.html 的 loadExtraPet）：跟 char1/char2 那組
+// 「單選＋pending/套用」不同，這是複選＋即時生效（勾選/取消立刻新增或銷毀，不用整頁 reload），
+// 用 Menu 的 checkbox 型態自然對應這種語意。extraPetIds 是目前已勾選的 manifest id 清單。
+let extraPetIds = [];
+
+// 額外寵物隨機遊走總開關（全體共用一個，不分寵物）。刻意不存 localStorage——
+// 跟 clickThrough 一樣，每次重開桌寵預設「開」，不用像位置/縮放那樣記住上次設定。
+let extraPetWander = true;
+
 function loadMyLikeManifest() {
   try {
-    const dir = path.join(__dirname, '..', 'live2d_my_like');
+    const dir = path.join(__dirname, '..', 'live2d_my_like', 'config');
     myLikeManifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     myLikeNames    = JSON.parse(fs.readFileSync(path.join(dir, 'names.json'), 'utf8'));
   } catch (err) {
@@ -48,14 +57,64 @@ function syncMyLikeSelectionFromRenderer() {
   isFlying = false;
   return win.webContents
     .executeJavaScript(
-      `({ c1: localStorage.getItem('l2d_mylike_d_char1') || '', c2: localStorage.getItem('l2d_mylike_d_char2') || '' })`
+      `({
+        c1: localStorage.getItem('l2d_mylike_d_char1') || '',
+        c2: localStorage.getItem('l2d_mylike_d_char2') || '',
+        extra: localStorage.getItem('l2d_extra_pets_d') || '[]',
+      })`
     )
-    .then(({ c1, c2 }) => {
+    .then(({ c1, c2, extra }) => {
       currentChar1 = pendingChar1 = c1;
       currentChar2 = pendingChar2 = c2;
+      try { extraPetIds = JSON.parse(extra); } catch { extraPetIds = []; }
+      // extraPetWander 不像 c1/c2/extraPetIds 存在 localStorage 裡（本來就不打算存檔），
+      // 這裡反過來是主行程「推」目前的開關狀態給剛重整完的頁面，不是讀頁面的值——
+      // 頁面重新整理後 window._extraPetWanderEnabled 會回到腳本裡寫死的預設 true，
+      // 要蓋回 main.js 記的狀態，選單開關才不會跟畫面實際行為不同步。
+      win.webContents
+        .executeJavaScript(`window.setExtraPetWander && window.setExtraPetWander(${extraPetWander});`)
+        .catch(() => {});
       if (tray) tray.setContextMenu(buildTrayMenu());
     })
     .catch((err) => console.warn('[desktop-pet] 讀取目前角色選擇失敗：', err.message));
+}
+
+// 切換「額外寵物隨機遊走」總開關：全體共用，不分寵物，即時生效（不用整頁 reload）
+function toggleExtraPetWander() {
+  extraPetWander = !extraPetWander;
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        if (window.setExtraPetWander) { window.setExtraPetWander(${extraPetWander}); return true; }
+        return false;
+      })();`
+    )
+    .then((ok) => {
+      if (!ok) console.warn('[desktop-pet] 額外寵物遊走開關尚未就緒（L2D 可能還在載入中），下次重新整理後會生效');
+    })
+    .catch((err) => console.error('[desktop-pet] 切換額外寵物遊走開關失敗：', err))
+    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+}
+
+// 勾選/取消勾選某隻額外寵物：更新清單、寫回 localStorage、即時通知 renderer 新增或銷毀，
+// 不用像 char1/char2 那樣整頁 reload（reload 會把桌寵原本已經在跑的其他動畫都打斷重來）。
+function toggleExtraPet(id) {
+  const checked = !extraPetIds.includes(id);
+  extraPetIds = checked ? [...extraPetIds, id] : extraPetIds.filter((x) => x !== id);
+  const idsJson = JSON.stringify(extraPetIds);
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        localStorage.setItem('l2d_extra_pets_d', ${JSON.stringify(idsJson)});
+        if (window.updateExtraPet) { return window.updateExtraPet(${id}, ${checked}); }
+        return false;
+      })();`
+    )
+    .then((ok) => {
+      if (!ok) console.warn('[desktop-pet] 額外寵物尚未就緒（L2D 可能還在載入中），已存檔但畫面未即時更新，重新整理後會生效');
+    })
+    .catch((err) => console.error('[desktop-pet] 切換額外寵物失敗：', err))
+    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
 }
 
 function setPendingChar(key, val) {
@@ -101,6 +160,19 @@ function buildCharSubmenu(key) {
       click: () => setPendingChar(key, e.path),
     })),
   ];
+}
+
+// 額外寵物候選清單：manifest 裡除了 char1/char2 固定錨用的 id:1/2（納茲/露西）之外的角色。
+// 不預設全部打勾——「不限制」指的是引擎層沒有數量上限，實際載入幾隻要由使用者主動勾選決定。
+function buildExtraPetsSubmenu() {
+  return myLikeManifest
+    .filter((e) => e.id !== 1 && e.id !== 2)
+    .map((e) => ({
+      label: `#${e.id} ${myLikeNames[e.path] || e.character}`,
+      type: 'checkbox',
+      checked: extraPetIds.includes(e.id),
+      click: () => toggleExtraPet(e.id),
+    }));
 }
 
 function setClickThrough(value) {
@@ -158,6 +230,15 @@ function toggleFly() {
   if (tray) tray.setContextMenu(buildTrayMenu());
 }
 
+// renderer 端（index.html 的 flyLoop）飛行動畫真的播完、飛回原點時會透過 preload.js 的
+// petBridge.flyFinished() 送這個訊息過來——不管是自然播完（legs 數用完）還是被
+// 「⏹ 停止飛行」中途打斷，兩種情況最後都會呼叫 animateBackToOrigin()，等它真的跑完才會送這則訊息，
+// 所以這裡收到時直接同步 isFlying，不用再去猜當下狀態。
+ipcMain.on('fly-finished', () => {
+  isFlying = false;
+  if (tray) tray.setContextMenu(buildTrayMenu());
+});
+
 function triggerMotion(call) {
   // 跟 resetPosition() 同樣手法：executeJavaScript 到 renderer 端執行，L2D 還沒就緒時安靜跳過，
   // 這裡是單純觸發動作、不是改存檔狀態，所以不用像 resetPosition() 那樣重新整理頁面。
@@ -192,6 +273,7 @@ function buildMotionSubmenu() {
 
 function buildTrayMenu() {
   const hasPendingChange = pendingChar1 !== currentChar1 || pendingChar2 !== currentChar2;
+  const extraPetsSubmenu = buildExtraPetsSubmenu();
   const charMenuItems = myLikeManifest.length
     ? [
         { type: 'separator' },
@@ -202,6 +284,17 @@ function buildTrayMenu() {
           enabled: hasPendingChange,
           click: () => applyMyLikeSelection(),
         },
+        ...(extraPetsSubmenu.length
+          ? [
+              { label: '額外寵物（勾選即時生效，可複選）', submenu: extraPetsSubmenu },
+              {
+                label: '額外寵物隨機遊走',
+                type: 'checkbox',
+                checked: extraPetWander,
+                click: () => toggleExtraPetWander(),
+              },
+            ]
+          : []),
       ]
     : [];
 
@@ -248,7 +341,18 @@ function createWindow() {
     hasShadow: false,
     webPreferences: {
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
+  });
+
+  // 專案持續在開發，index.html／lib 底下的檔案隨時可能被改動，強制這個視窗永遠拿最新版，
+  // 不要被 Chromium 自己的磁碟快取卡住（跟瀏覽器分頁踩過的 Cache-Control 問題是同一類風險）：
+  // 1) 每次啟動先清掉舊視窗累積下來的快取
+  // 2) 之後每個回應都在 session 層強制蓋成 no-store，不管內容本身有沒有送這個標頭
+  win.webContents.session.clearCache().catch(() => {});
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    details.responseHeaders['Cache-Control'] = ['no-store'];
+    callback({ responseHeaders: details.responseHeaders });
   });
 
   win.setIgnoreMouseEvents(clickThrough, { forward: true });

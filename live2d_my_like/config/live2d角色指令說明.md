@@ -3,7 +3,7 @@
 這份文件記錄兩件事：
 
 1. `L2D.play()`（`lib/live2d.js`）跟 `L2DGesturePlayer.play()`（`multi/L2DGesturePlayer.js`）這兩套指令系統的差別
-2. `live2d_my_like/076`（納茲）跟 `live2d_my_like/1009109` 在資料夾/模型結構上的差別，以及這個差別為什麼直接決定了上面那套指令能不能用
+2. `live2d_my_like/models/076`（納茲）跟 `live2d_my_like/models/1009109` 在資料夾/模型結構上的差別，以及這個差別為什麼直接決定了上面那套指令能不能用
 
 兩套指令名字很像、都能讓角色動起來，但底層機制完全不同，混著用很容易誤判「這個角色是不是壞掉了」——實際上通常只是指令系統跟角色的參數命名對不起來。
 
@@ -51,30 +51,31 @@
 ### 檔案結構
 
 ```
-076/                              1009109/
-├─ c_7001.moc3                    └─ 1009109/                    ← 注意：多一層同名資料夾
-├─ c_7001.model3.json                ├─ 1009109.moc3
-├─ motions/                          ├─ 1009109.model3.json
-│  ├─ c_7001.motion3.json (idle)     ├─ .physics3.json           ← 注意：檔名沒有「1009109」前綴
-│  └─ skill_02.motion3.json (自製)   ├─ motions/                 ← 29 個官方風格動作檔
-├─ textures/texture_00.png           │  ├─ 00_Anger_01~03
-└─ 納茲.md                           │  ├─ 00_Appeal_01~02
-                                      │  ├─ 00_Cry_01~02
-                                      │  ├─ 00_Happy_01~02
-                                      │  ├─ 00_Pride_01
-                                      │  ├─ 00_Puzzle_01
-                                      │  ├─ 00_Sad_01
-                                      │  ├─ 00_Serious_01
-                                      │  ├─ 00_Shame_01
-                                      │  ├─ 00_Surprise_01~02
-                                      │  ├─ 00_Upset_01
-                                      │  ├─ 00_Wait_01
-                                      │  ├─ 20_Expression_*（12 個表情動作）
-                                      │  └─ bound / bound_double / bound_down
-                                      └─ textures/texture_00.png
+models/076/                      models/1009109/
+├─ c_7001.moc3                   ├─ 1009109.moc3
+├─ c_7001.model3.json            ├─ 1009109.model3.json
+├─ motions/                      ├─ .physics3.json           ← 注意：檔名沒有「1009109」前綴
+│  ├─ c_7001.motion3.json (idle) ├─ motions/                 ← 29 個官方風格動作檔
+│  └─ skill_02.motion3.json (自製)  │  ├─ 00_Anger_01~03
+└─ textures/texture_00.png       │  ├─ 00_Appeal_01~02
+                                  │  ├─ 00_Cry_01~02
+                                  │  ├─ 00_Happy_01~02
+                                  │  ├─ 00_Pride_01
+                                  │  ├─ 00_Puzzle_01
+                                  │  ├─ 00_Sad_01
+                                  │  ├─ 00_Serious_01
+                                  │  ├─ 00_Shame_01
+                                  │  ├─ 00_Surprise_01~02
+                                  │  ├─ 00_Upset_01
+                                  │  ├─ 00_Wait_01
+                                  │  ├─ 20_Expression_*（12 個表情動作）
+                                  │  └─ bound / bound_double / bound_down
+                                  └─ textures/texture_00.png
 ```
 
-`manifest.json`／`names.json` 裡 1009109 的路徑寫的是 `1009109/1009109/1009109.model3.json`——這**不是路徑寫錯**，資料夾本身真的多包了一層同名子資料夾。`generate-manifest.js` 是照實際掃到的路徑寫入的，跟 076 那種「檔案直接放在角色資料夾底下」的排法不一樣，屬於這批素材本身帶進來的結構差異，兩種排法程式都吃得下（`L2D_CFG.char1.model` 只是一個路徑字串），不影響功能，只是找檔案時要記得多點一層。
+角色文件（`納茲.md`／`露西.md`）搬到 `live2d_my_like/config/` 底下，不再放在角色資料夾裡，跟 `manifest.json`／`names.json`／`generate-manifest.js` 放一起，跟模型素材本體分開。
+
+兩個角色資料夾層級是一致的（都是「檔案直接放在角色資料夾底下」，沒有多包一層同名子資料夾），`generate-manifest.js` 掃到的路徑會照實際結構寫入。
 
 ### 動作檔數量與命名規則
 
@@ -87,7 +88,7 @@
 
 ### 骨架參數命名慣例——這是兩者最關鎮的差別
 
-用 `076/納茲.md`／`077/露西.md` 記錄的實測結果，加上直接讀取 moc3 二進位裡內嵌的參數 ID 字串表交叉驗證：
+用 `config/076-納茲.md`／`config/077-露西.md` 記錄的實測結果，加上直接讀取 moc3 二進位裡內嵌的參數 ID 字串表交叉驗證：
 
 | | 076（納茲）／077（露西） | 1009109（跟 1014107、1024100 一致） |
 |---|---|---|
@@ -153,35 +154,35 @@ moc3 是二進位格式，但參數/部件 ID 這類字串是以純 ASCII 直接
 #### 總體查詢：列出這個模型全部參數 ID（cmd/終端機）
 
 ```
-node live2d_my_like/scan-params.js <moc3 檔案路徑>
+node live2d_my_like/config/scan-params.js <moc3 檔案路徑>
 ```
 範例：
 ```
-node live2d_my_like/scan-params.js live2d_my_like/1009109/1009109/1009109.moc3
-node live2d_my_like/scan-params.js live2d_my_like/076/c_7001.moc3
-node live2d_my_like/scan-params.js live2d_my_like/077/c_7002.moc3
-node live2d_my_like/scan-params.js live2d_my_like/1014107/1014107.moc3
-node live2d_my_like/scan-params.js live2d_my_like/1024100/1024100.moc3
+node live2d_my_like/config/scan-params.js live2d_my_like/models/1009109/1009109.moc3
+node live2d_my_like/config/scan-params.js live2d_my_like/models/076/c_7001.moc3
+node live2d_my_like/config/scan-params.js live2d_my_like/models/077/c_7002.moc3
+node live2d_my_like/config/scan-params.js live2d_my_like/models/1014107/1014107.moc3
+node live2d_my_like/config/scan-params.js live2d_my_like/models/1024100/1024100.moc3
 ```
 
 #### 單一查詢：只問這個模型有沒有某一個參數 ID（cmd/終端機）
 
 在總體查詢的路徑後面**多帶一個參數**（要查的參數 ID 字串）：
 ```
-node live2d_my_like/scan-params.js <moc3 檔案路徑> <參數 ID>
+node live2d_my_like/config/scan-params.js <moc3 檔案路徑> <參數 ID>
 ```
 範例（實測結果）：
 ```
-$ node live2d_my_like/scan-params.js live2d_my_like/076/c_7001.moc3 PARAM_ARM_L_ROTATE
-live2d_my_like/076/c_7001.moc3
+$ node live2d_my_like/config/scan-params.js live2d_my_like/models/076/c_7001.moc3 PARAM_ARM_L_ROTATE
+live2d_my_like/models/076/c_7001.moc3
 PARAM_ARM_L_ROTATE → ❌ 不存在
 
-$ node live2d_my_like/scan-params.js live2d_my_like/1009109/1009109/1009109.moc3 PARAM_ARM_L_ROTATE
-live2d_my_like/1009109/1009109/1009109.moc3
+$ node live2d_my_like/config/scan-params.js live2d_my_like/models/1009109/1009109.moc3 PARAM_ARM_L_ROTATE
+live2d_my_like/models/1009109/1009109.moc3
 PARAM_ARM_L_ROTATE → ✅ 存在
 
-$ node live2d_my_like/scan-params.js live2d_my_like/076/c_7001.moc3 ParamAngleX
-live2d_my_like/076/c_7001.moc3
+$ node live2d_my_like/config/scan-params.js live2d_my_like/models/076/c_7001.moc3 ParamAngleX
+live2d_my_like/models/076/c_7001.moc3
 ParamAngleX → ✅ 存在
 ```
 帶第二個參數就是單一查詢模式（只印一行 ✅/❌，不印全部清單）；只帶路徑、不帶第二個參數就是總體查詢模式。想幫其他角色（例如把 `L2D_CFG.char1`/`char2` 換成別的模型之前）先確認某個 `L2DGesturePlayer` 動作能不能用，就用單一查詢把 `GESTURES` 裡會用到的每個 `PARAM_XXX` 都查一遍即可，不用自己手動掃。
@@ -205,7 +206,7 @@ ParamAngleX → ✅ 存在
 
 ### 4.1 `chatter`：碎嘴子（已正式收錄，這裡只留指令）
 
-完整定義在 `multi/L2DGesturePlayer.js` 的 `GESTURES`，設計過程/更正紀錄記在 `076/納茲.md` 第五節，露西的交叉引用在 `077/露西.md` 第五節。
+完整定義在 `multi/L2DGesturePlayer.js` 的 `GESTURES`，設計過程/更正紀錄記在 `config/076-納茲.md` 第五節，露西的交叉引用在 `config/077-露西.md` 第五節。
 
 ```js
 L2DGesturePlayer.play('chatter')          // 不帶 charKey → 納茲＋露西同時碎念（已實測確認）

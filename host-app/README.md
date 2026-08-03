@@ -40,6 +40,7 @@ npm install   # 讀 package.json/package-lock.json，自動重建 node_modules
 
 ## 設計說明
 
+- 永遠拿最新版，不被 Chromium 快取卡住：`createWindow()` 對這個視窗的 `session` 啟動時 `clearCache()`、`webRequest.onHeadersReceived` 強制每個回應都蓋成 `Cache-Control: no-store`。這裡是真的走 HTTP 向 Live Server 拿內容，比 `desktop-pet` 走 `file://` 更容易踩到快取問題，見 `launchers/README.md` 裡「為什麼到處都看得到 `Cache-Control: no-store`」
 - 不內嵌、不重寫任何問答遊戲或 Live2D 邏輯，純粹是瀏覽器視窗的替代品
 - 不會自動幫你啟動 Caddy 或 MQTT broker（避免把後端服務生命週期綁死在這個桌面程式上，維持低耦合）
 - 玩家端（`multi/player.html`）維持原本的手機瀏覽器 + 掃 QR code 加入方式，不受影響

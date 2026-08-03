@@ -14,6 +14,18 @@ function createWindow() {
       contextIsolation: true,
     },
   });
+
+  // 專案持續在開發，multi/ 底下的檔案隨時可能被改動，強制這個視窗永遠拿最新版，
+  // 不要被 Chromium 自己的磁碟快取卡住（這裡是真的走 HTTP 向 Live Server 拿內容，
+  // 比 desktop-pet 走 file:// 更容易踩到這個問題）：
+  // 1) 每次啟動先清掉舊視窗累積下來的快取
+  // 2) 之後每個回應都在 session 層強制蓋成 no-store，不管 Live Server 本身有沒有送這個標頭
+  win.webContents.session.clearCache().catch(() => {});
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    details.responseHeaders['Cache-Control'] = ['no-store'];
+    callback({ responseHeaders: details.responseHeaders });
+  });
+
   win.loadURL(HOST_URL);
 }
 

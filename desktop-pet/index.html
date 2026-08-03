@@ -57,27 +57,47 @@
 <script src="../lib/all.min.js"></script>
 <script src="../lib/live2d.js"></script>
 <script>
+  // ── 桌寵可調參數集中在這裡，方便找、方便改（其餘程式碼一律讀這個物件，不要散在各處寫死數字）──
+  const PET_CFG = {
+    // 閒置動作/表情/閒聊循環間隔（ms）。刻意跟 multi/multiplay.js 的 MP_CFG.IDLE_MOTION_MS（6000）不一樣：
+    // 076 納茲現在有兩顆動作輪流播放（idle → skill2 → idle...），skill_02 長達 12 秒，
+    // 沿用網頁模式的 6 秒 tick 會被下一輪 FORCE 優先度打斷、看不到完整的爆發跟淡出。
+    // 拉長到 15 秒，確保 12 秒的技能動作有機會完整播完，之後還留 3 秒緩衝才輪到下一次觸發。
+    idleMotionMs: 15000,
+    // 對角線交叉飛行預設趟數。改成 null = 沒有次數限制，一直飛到系統匣選單按「⏹ 停止飛行」為止
+    // （main.js 的 toggleFly() 呼叫 flyLoop() 時特意不帶 legs 參數，讓這裡的值說了算，不要兩邊各寫一份設定）
+    flyLegs: 4,
+    // 對角線交叉飛行每趟時長（ms）
+    flyDurationMs: 1500,
+    // 額外寵物滾輪縮放的上下限（見 loadExtraPet 的滾輪事件）；跟 L2D_CFG.scaleMin/Max
+    // 給主要角色用的範圍同一數量級，避免額外寵物想縮很小或放很大時卡到上限
+    extraPetScaleMin: 0.05,
+    extraPetScaleMax: 20,
+  };
+
   // 套用桌寵自己選好的 live2d_my_like 角色（只影響這個視窗；用獨立的 _d_ 命名空間
   // 跟 host.html／player.html 的存檔區隔，三邊各自選各自的，不會互相覆蓋）
   (function () {
-    const _dC1Pick = localStorage.getItem('l2d_mylike_d_char1');
-    const _dC2Pick = localStorage.getItem('l2d_mylike_d_char2');
+    let _dC1Pick = localStorage.getItem('l2d_mylike_d_char1');
+    let _dC2Pick = localStorage.getItem('l2d_mylike_d_char2');
+    // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
+    if (_dC1Pick && !_dC1Pick.startsWith('models/')) _dC1Pick = 'models/' + _dC1Pick;
+    if (_dC2Pick && !_dC2Pick.startsWith('models/')) _dC2Pick = 'models/' + _dC2Pick;
     if (_dC1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _dC1Pick;
     if (_dC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _dC2Pick;
   })();
 
-  // 跟網頁模式（multi/host.html、multi/player.html）用同一套「閒置動作＋表情」機制
-  // （lib/live2d.js 的 startIdleMotion／startIdleChat）與同一個間隔值，取代桌寵原本
-  // 自己那份 MOTION_SEQUENCE 依序循環（兩套機制都用 FORCE 優先度切動作，同時開會互相
-  // 打斷，所以只留一套；改用跟網頁模式一致的機制，職責分工也跟著一致：startIdleMotion
-  // 專管動作/表情，startIdleChat 專管講話泡泡+音效）。
-  // 桌寵這裡刻意跟 multi/multiplay.js 的 MP_CFG.IDLE_MOTION_MS（6000）不一樣，改成 15000：
-  // playRandom1() 現在角色一是依序輪流播放兩顆動作（idle → skill2 → idle...），
-  // 而 076 納茲的 skill_02 動作長達 12 秒，如果沿用 6 秒的 tick，播到一半就會被
-  // 下一輪 FORCE 優先度打斷，看不到完整的爆發跟淡出。拉長到 15 秒，確保 12 秒的
-  // 技能動作有機會完整播完，之後還留 3 秒緩衝才輪到下一次觸發。
-  const IDLE_MOTION_MS = 15000;
+  // 桌寵不限制主要角色 slots 數量（引擎層沒有上限；目前 slots 仍只定義 c1/c2 兩筆，
+  // 這行主要是明確表態「未來要加就直接加，不會被引擎擋」）。
+  // 「額外寵物」（見下方 loadExtraPet）走獨立系統，不受這個值影響。
+  L2D_CFG.maxChars = Infinity;
 
+  // 跟網頁模式（multi/host.html、multi/player.html）用同一套「閒置動作＋表情」機制
+  // （lib/live2d.js 的 startIdleMotion／startIdleChat），取代桌寵原本自己那份 MOTION_SEQUENCE
+  // 依序循環（兩套機制都用 FORCE 優先度切動作，同時開會互相打斷，所以只留一套；改用跟網頁模式
+  // 一致的機制，職責分工也跟著一致：startIdleMotion 專管動作/表情，startIdleChat 專管講話泡泡+音效）。
+  // 間隔值刻意跟網頁模式不一樣，原因見上方 PET_CFG.idleMotionMs 的註解。
+  //
   // 網頁模式是每題「開始作答／結果揭曉」時才開關這個循環（事件觸發），桌寵沒有這種
   // 遊戲階段可以掛，這裡忽略事件觸發的部分，載入完就常駐開著，維持桌寵原本
   // 「一開就持續動」的行為。
@@ -86,9 +106,235 @@
   window._l2dReady = false;
   L2D.init().then(() => {
     window._l2dReady = true;
-    L2D.startIdleChat(IDLE_MOTION_MS);
-    L2D.startIdleMotion(IDLE_MOTION_MS);
+    L2D.startIdleChat(PET_CFG.idleMotionMs);
+    L2D.startIdleMotion(PET_CFG.idleMotionMs);
+    loadExtraPets();
+
+    // lib/live2d.js 把畫布 CSS 設成 pointer-events:none（給網頁模式擋住其他 UI 用），
+    // 桌寵這邊完全靠 Electron 視窗層級的點擊穿透（main.js 的 setIgnoreMouseEvents／F9）
+    // 決定滑鼠事件收不收得到，畫布本身不需要再擋一層，否則額外寵物永遠收不到滑鼠事件。
+    // startDrag()/stopDrag()（角色一/二的 ⠿ 拖曳鈕）還是會把這個屬性搶回 'none'，
+    // 用 MutationObserver 顧住、搶回來，不改動 lib/live2d.js 本身。
+    const cv = L2D.app.view;
+    cv.style.pointerEvents = 'auto';
+    new MutationObserver(() => {
+      if (cv.style.pointerEvents !== 'auto') cv.style.pointerEvents = 'auto';
+    }).observe(cv, { attributes: true, attributeFilter: ['style'] });
   });
+
+  // ── 額外寵物（自由遊走）子系統 ──────────────────────────────────────────
+  // manifest 裡除了 char1/char2 對應的主角色之外，使用者透過系統匣複選勾選的其他角色。
+  // 不塞進 L2D_CFG 的 slots：額外寵物不需要手調版位、聊天台詞、情緒動作，只要隨機遊走＋
+  // 定期播放任一動作即可，硬套主要角色那套反而要多花心力調 offsetX/Y。
+  window._extraPets  = {};   // id -> { model, stopFlag, idleTimer }
+  window._extraManifestCache = null;
+
+  // 隨機遊走總開關（全體額外寵物共用，不分寵物）。main.js 系統匣選單勾選/取消時呼叫
+  // window.setExtraPetWander()；不存 localStorage，預設一律開，每次重開/重整都回到這個值，
+  // 頁面重整後 main.js 的 syncMyLikeSelectionFromRenderer 會把它記得的狀態推回來蓋掉。
+  window._extraPetWanderEnabled = true;
+  window.setExtraPetWander = function (enabled) {
+    window._extraPetWanderEnabled = enabled;
+    if (enabled) {
+      // 重新開啟：把目前沒在被拖曳的寵物都叫醒，從牠們現在的位置繼續遊走
+      Object.values(window._extraPets).forEach((pet) => {
+        if (!pet.stopFlag.dragging && pet.stopFlag.resumeWander) pet.stopFlag.resumeWander();
+      });
+    }
+  };
+
+  async function _getManifest() {
+    if (window._extraManifestCache) return window._extraManifestCache;
+    window._extraManifestCache = await fetch('../live2d_my_like/config/manifest.json')
+      .then(r => r.json()).catch(err => { console.error('[pet] manifest.json 讀取失敗:', err); return []; });
+    return window._extraManifestCache;
+  }
+
+  // 隨機挑目的地、easeInOut 移動過去、到了再挑下一個，無限循環直到 stopFlag.stopped。
+  // 暫停有兩種來源，判斷方式一致（tick() 直接不排下一幀，讓別的東西全權接管位置）：
+  // stopFlag.dragging（使用者正在拖曳這隻寵物）跟 window._extraPetWanderEnabled（系統匣的
+  // 總開關被關掉）。不管哪種恢復，都是呼叫 stopFlag.resumeWander()（= 這裡的 leg()）
+  // 從目前位置重新開始遊走——拖曳放開後在拖曳結束的地方呼叫，總開關重新打開後
+  // 在 window.setExtraPetWander() 裡呼叫。
+  function _wanderLoop(model, stopFlag) {
+    const easeIO = t => t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    function leg() {
+      if (stopFlag.stopped || stopFlag.dragging || !window._extraPetWanderEnabled) return;
+      const from = { x: model.x, y: model.y };
+      const to = {
+        x: Math.random() * Math.max(1, window.innerWidth  - model.width),
+        y: Math.random() * Math.max(1, window.innerHeight - model.height),
+      };
+      const durationMs = 2500 + Math.random() * 2500;
+      const start = performance.now();
+      function tick(now) {
+        if (stopFlag.stopped || stopFlag.dragging || !window._extraPetWanderEnabled) return;
+        const t  = Math.min(1, (now - start) / durationMs);
+        const et = easeIO(t);
+        model.x = from.x + (to.x - from.x) * et;
+        model.y = from.y + (to.y - from.y) * et;
+        if (t < 1) requestAnimationFrame(tick);
+        else leg();
+      }
+      requestAnimationFrame(tick);
+    }
+    stopFlag.resumeWander = leg;
+    leg();
+  }
+
+  // ── 額外寵物的滑鼠拖曳＋滾輪縮放 ──────────────────────────────────────────
+  // 每隻額外寵物的位置/縮放各自存一份到 localStorage（key 帶 manifest id），下次開機/
+  // 重新整理時還原；跟 char1/char2 那套 _lsKey 命名空間分開，互不干擾。
+  function _extraPetLsKey(id) { return 'l2d_extra_pet_state_' + id; }
+
+  function _loadExtraPetSavedState(id) {
+    try { return JSON.parse(localStorage.getItem(_extraPetLsKey(id))); } catch { return null; }
+  }
+
+  function _saveExtraPetState(id, model) {
+    try {
+      localStorage.setItem(_extraPetLsKey(id), JSON.stringify({ x: model.x, y: model.y, scale: model.scale.x }));
+    } catch {}
+  }
+
+  // 拖曳中滑鼠可能移出模型本體範圍，只在模型自己身上聽 pointermove 會漏接——
+  // 改成在 stage 上聽（PIXI v6 官方拖曳教學的標準寫法），用一個共用的「目前正在拖哪隻」
+  // 變數判斷要移動誰，多隻額外寵物共用這組 stage 監聽，不用每隻寵物各自重複註冊一份。
+  let _extraPetDragTarget = null;
+  let _extraPetDragStageReady = false;
+
+  function _ensureExtraPetDragStage() {
+    if (_extraPetDragStageReady) return;
+    _extraPetDragStageReady = true;
+    const stage = L2D.app.stage;
+    stage.interactive = true;
+    stage.hitArea = L2D.app.screen;
+    stage.on('pointermove', (e) => {
+      if (!_extraPetDragTarget) return;
+      const d = _extraPetDragTarget;
+      d.model.x = d.ox + (e.data.global.x - d.sx);
+      d.model.y = d.oy + (e.data.global.y - d.sy);
+    });
+    const onDragEnd = () => {
+      if (!_extraPetDragTarget) return;
+      const { model, stopFlag, id } = _extraPetDragTarget;
+      stopFlag.dragging = false;
+      model.cursor = 'grab';
+      _saveExtraPetState(id, model);
+      if (stopFlag.resumeWander) stopFlag.resumeWander();
+      _extraPetDragTarget = null;
+    };
+    stage.on('pointerup', onDragEnd);
+    stage.on('pointerupoutside', onDragEnd);
+  }
+
+  // 幫一隻額外寵物掛上拖曳/滾輪縮放互動；回傳 wheel handler 供 destroyExtraPet 卸載用
+  // （wheel 事件 PIXI v6 沒有內建，直接掛在共用畫布上，靠 hover 狀態判斷是不是滾在這隻寵物上）。
+  function _setupExtraPetInteraction(model, id, stopFlag) {
+    _ensureExtraPetDragStage();
+    model.interactive = true;
+    model.cursor = 'grab';
+
+    model.on('pointerdown', (e) => {
+      stopFlag.dragging = true;
+      model.cursor = 'grabbing';
+      _extraPetDragTarget = {
+        model, stopFlag, id,
+        sx: e.data.global.x, sy: e.data.global.y,
+        ox: model.x,         oy: model.y,
+      };
+    });
+
+    let hovering = false;
+    model.on('pointerover', () => { hovering = true; });
+    model.on('pointerout',  () => { hovering = false; });
+
+    const onWheel = (e) => {
+      if (!hovering) return;
+      e.preventDefault();
+      // 用比例縮放（乘除）而不是固定加減：範圍拉大到 0.05~20 後，固定加減在小尺寸時
+      // 一次跳太多、在大尺寸時要滾幾百次才到得了上限，乘除才能兩端都滾得順手。
+      const factor = e.deltaY > 0 ? 1 / 1.08 : 1.08;
+      const s = Math.max(PET_CFG.extraPetScaleMin, Math.min(PET_CFG.extraPetScaleMax, model.scale.x * factor));
+      model.scale.set(s);
+      _saveExtraPetState(id, model);
+    };
+    L2D.app.view.addEventListener('wheel', onWheel, { passive: false });
+    return onWheel;
+  }
+
+  async function loadExtraPet(manifestEntry) {
+    const model = await PIXI.live2d.Live2DModel.from('../live2d_my_like/' + manifestEntry.path);
+    L2D.app.stage.addChild(model);   // 塞進 L2D 既有的同一個 PIXI Application/WebGL context
+
+    // 有存檔（使用者拖曳/滾輪調整過）就還原上次的位置/大小，沒有才隨機找個起點
+    const saved = _loadExtraPetSavedState(manifestEntry.id);
+    if (saved && typeof saved.scale === 'number') model.scale.set(saved.scale);
+    model.x = (saved && typeof saved.x === 'number') ? saved.x
+      : Math.random() * Math.max(1, window.innerWidth  - model.width);
+    model.y = (saved && typeof saved.y === 'number') ? saved.y
+      : Math.random() * Math.max(1, window.innerHeight - model.height);
+
+    // 最簡易的動作群組表（不呼叫 L2D._buildGroupMap 私有方法，避免耦合到 lib/live2d.js 內部改動）
+    const motions = model.internalModel?.settings?.motions || {};
+    const gMap = {};
+    Object.entries(motions).forEach(([group, list]) => {
+      if (Array.isArray(list) && list.length) gMap[group] = list;
+    });
+
+    const stopFlag = { stopped: false, dragging: false };
+    const onWheel = _setupExtraPetInteraction(model, manifestEntry.id, stopFlag);
+    _wanderLoop(model, stopFlag);
+
+    const idleTimer = setInterval(() => {
+      const groups = Object.keys(gMap);
+      if (!groups.length) return;
+      const g = groups[Math.floor(Math.random() * groups.length)];
+      const list = gMap[g];
+      model.motion(g, Math.floor(Math.random() * list.length), 3);
+    }, PET_CFG.idleMotionMs);
+
+    return { model, stopFlag, idleTimer, onWheel };
+  }
+
+  function destroyExtraPet(id) {
+    const pet = window._extraPets[id];
+    if (!pet) return;
+    pet.stopFlag.stopped = true;
+    clearInterval(pet.idleTimer);
+    if (_extraPetDragTarget && _extraPetDragTarget.id === id) _extraPetDragTarget = null;
+    L2D.app.view.removeEventListener('wheel', pet.onWheel);
+    L2D.app.stage.removeChild(pet.model);
+    pet.model.removeAllListeners();
+    pet.model.destroy({ children: true });   // 確實釋放 GPU/貼圖資源，不是只設 visible:false
+    delete window._extraPets[id];
+  }
+
+  // main.js 的系統匣複選選單勾選/取消勾選時呼叫：add=true 新增、add=false 銷毀移除
+  window.updateExtraPet = async function (id, add) {
+    if (!window._l2dReady || !L2D.app) return false;
+    if (!add) { destroyExtraPet(id); return true; }
+    if (window._extraPets[id]) return true;   // 已載入，不重複載入
+    const manifest = await _getManifest();
+    const entry = manifest.find(e => e.id === id);
+    if (!entry) { console.warn('[pet] 額外寵物 id=' + id + ' 不存在於 manifest，已跳過'); return false; }
+    window._extraPets[id] = await loadExtraPet(entry);
+    return true;
+  };
+
+  // 開機/重新整理時讀取先前勾選存檔，逐一載入（不預設自動載入全部角色，只載入使用者主動勾選過的）
+  async function loadExtraPets() {
+    let ids = [];
+    try { ids = JSON.parse(localStorage.getItem('l2d_extra_pets_d') || '[]'); } catch {}
+    if (!ids.length) return;
+    const manifest = await _getManifest();
+    const byId = Object.fromEntries(manifest.map(e => [e.id, e]));
+    for (const id of ids) {
+      const entry = byId[id];
+      if (!entry) { console.warn('[pet] 額外寵物 id=' + id + ' 不存在於 manifest，已跳過'); continue; }
+      window._extraPets[id] = await loadExtraPet(entry);
+    }
+  }
 
   // 對角線交叉飛行（角色一左上↔右下、角色二右上↔左下，兩條線在畫面中間交叉）。
   // 定義好放這裡，供系統匣選單「動作測試」呼叫；呼叫時才需要 L2D.init() 已完成、角色已載入。
@@ -97,9 +343,11 @@
     c1: (mw, mh) => [{ x: 0, y: 0 }, { x: window.innerWidth - mw, y: window.innerHeight - mh }],
     c2: (mw, mh) => [{ x: window.innerWidth - mw, y: 0 }, { x: 0, y: window.innerHeight - mh }],
   };
-  function _flyOneLoop(charKey, legs, durationMs) {
+  // charKey 這隻角色真的完全結束（回到原點）時呼叫 onDone；不管是趟數自然飛完，還是中途被
+  // 「⏹ 停止飛行」打斷，兩條路徑最後都會走到 animateBackToOrigin() 播完才算數。
+  function _flyOneLoop(charKey, legs, durationMs, onDone) {
     const state = L2D['_' + charKey];
-    if (!state || !state.ready || !state.model) return;   // 角色還沒載入完成就安靜跳過，不拋錯
+    if (!state || !state.ready || !state.model) { if (onDone) onDone(); return; }   // 角色還沒載入完成就安靜跳過，不拋錯
     const m = state.model;
     const mw = m.width, mh = m.height;
     const [pointA, pointB] = (FLY_PATHS[charKey] || FLY_PATHS.c1)(mw, mh);
@@ -119,6 +367,7 @@
         m.x = from.x + (origin.x - from.x) * et;
         m.y = from.y + (origin.y - from.y) * et;
         if (t < 1) requestAnimationFrame(tick);
+        else if (onDone) onDone();   // 真的飛回原點、動畫完全停止才算這隻角色結束
       }
       requestAnimationFrame(tick);
     }
@@ -143,12 +392,18 @@
     }
     runLeg();
   }
-  // legs 預設值就是唯一的次數設定點：改這裡的 20 決定不帶參數呼叫 flyLoop() 時飛幾趟。
-  // 改成 null → 沒有次數限制，一直飛到呼叫 window._flyStop.c1/c2 = true 為止（main.js 的「⏹ 停止飛行」用的就是這個）。
-  // main.js 的 toggleFly() 呼叫時特意不帶 legs 參數，就是為了讓這裡的預設值說了算，不要兩邊各寫一份設定。
-  function flyLoop(charKey, legs = 4, durationMs = 1500) {
+  // legs/durationMs 預設值讀 PET_CFG，不帶參數呼叫 flyLoop() 時就是照 PET_CFG.flyLegs/flyDurationMs 走。
+  // main.js 的 toggleFly() 呼叫時特意不帶 legs 參數，就是為了讓 PET_CFG 說了算，不要兩邊各寫一份設定。
+  function flyLoop(charKey, legs = PET_CFG.flyLegs, durationMs = PET_CFG.flyDurationMs) {
     const chars = charKey ? [charKey] : ['c1', 'c2'];
-    chars.forEach(c => _flyOneLoop(c, legs, durationMs));
+    // 等這次呼叫涉及的角色全部真正結束（回到原點）才回報 main.js，
+    // 不是每隻角色各自回報一次——main.js 的 isFlying 是「整個飛行動作有沒有在跑」，不分角色。
+    let remaining = chars.length;
+    const onOneDone = () => {
+      remaining--;
+      if (remaining <= 0 && window.petBridge) window.petBridge.flyFinished();
+    };
+    chars.forEach(c => _flyOneLoop(c, legs, durationMs, onOneDone));
   }
 
   // 聲音開關按鈕：跟 L2D 左下角 ⠿ 拖曳按鈕同一套視覺風格，bottom:114px 對齊

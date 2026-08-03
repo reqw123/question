@@ -4,6 +4,10 @@ Live2D 桌面透明背景掛件（Electron 原型）。獨立模組，**不修�
 
 任何未預期的錯誤（包含系統匣建立失敗）都會印到 `npm start` 的終端機視窗，不會讓程式默默中止。
 
+### 永遠拿最新版，不被 Chromium 快取卡住
+
+`createWindow()` 裡對這個視窗的 `session` 做了兩件事：啟動時 `clearCache()` 清掉舊快取、`webRequest.onHeadersReceived` 強制每個回應都蓋成 `Cache-Control: no-store`。專案還在持續開發，`index.html`／`lib/` 隨時會改，這是跟 `launchers/README.md` 裡「為什麼到處都看得到 `Cache-Control: no-store`」同一個決策，不要因為看起來像樣板就砍掉。
+
 ### 系統匣圖示（`tray-icon.png`）
 
 `tray-icon.png` 是離線用 Python PIL 從 `multi/default_avatar.png`（那張橘貓照片）裁切、縮放成正規 32×32 PNG 產生的，屬於 `desktop-pet` 自己的產物，不是共用資源。之所以要事先處理好而不是在程式執行期用 `nativeImage` 現場讀檔+resize，是因為 `default_avatar.png` 實際上是 JPEG 資料只是副檔名寫成 `.png`，執行期用錯誤的解碼路徑處理會讓 Windows 系統匣建立直接崩潰（曾經發生過）；程式碼裡仍保留一個內嵌純色小圖當備援，若 `tray-icon.png` 讀取失敗會自動切換過去，不會再讓整個程式崩潰。
@@ -73,7 +77,7 @@ npm install   # 讀 package.json/package-lock.json，自動重建 node_modules
 - 在子選單裡點選只是**暫存**選擇（選單上的圓點會立刻換位置），要點選單最下面的「✅ 確定套用（重新整理）」才會真的寫入、重新整理視窗套用——沒有變更時這一項會反白不能點
 - 只存在這個桌寵視窗自己的 localStorage（`l2d_mylike_d_char1` / `l2d_mylike_d_char2`），跟 `host.html`（無字首）、`player.html`（`_p_`）的選擇彼此獨立，互不影響
 - 沒有做成畫面上的按鈕/下拉選單，是刻意的：Electron 原生選單樣式跟著作業系統走，不會有 HTML `<select>` 選項清單在深色主題下變白底看不清楚的問題（`host.html`/`player.html` 那邊就是用額外的 CSS 去補這個坑，桌寵這裡直接繞開）
-- `main.js` 用 `fs` 直接讀 `live2d_my_like/manifest.json`、`names.json` 來建選單（跟 `host.html`/`player.html` 用 `fetch` 讀的是同一份檔案）；實際會下載的模型資源，仍然只有套用後 `index.html` 載入時指定的那一個路徑，跟收藏庫有幾個角色無關
+- `main.js` 用 `fs` 直接讀 `live2d_my_like/config/manifest.json`、`names.json` 來建選單（跟 `host.html`/`player.html` 用 `fetch` 讀的是同一份檔案）；實際會下載的模型資源，仍然只有套用後 `index.html` 載入時指定的那一個路徑，跟收藏庫有幾個角色無關
 
 ### 動作測試（系統匣圖示右鍵選單）
 

@@ -283,6 +283,43 @@ lobby
 | `end` | 切換至結算畫面 |
 | `host_left` | 返回加入畫面，顯示「主持人已離開」 |
 
+### 唯一主持人保護
+
+`host.html` 可能從三個不同管道被打開（VS Code Live Server 直接瀏覽、`host-app`、`launchers/啟動-網頁遊戲.bat`），這三個管道彼此的 `localStorage` 因為 origin 不同互不相通，但底層連的是**同一個 MQTT broker**，所以同一時間如果真的打開多份 `host.html`，會變成多個主持人搶著發布 `STATE`/`RESULT`，互相打架、玩家端畫面閃爍矛盾。
+
+解法是拿 `STATE` 主題本身當唯一性判斷依據（不用額外開新主題），但**分成兩階段連線**，不是一條連線從頭用到尾：
+
+### Phase 1：哨兵連線（不帶 will）
+
+`mqttInit()` 一開始先開一條**刻意不帶 `will`** 的哨兵連線（`clientId: 'scout_...'`），訂閱 `STATE`（retained）並短暫等待（800ms）：
+- 收到 retained 訊息，且 `phase` 不是 `'host_left'` → 判定已有主持人在跑 → 顯示全螢幕「已有主持人在運作中」擋版，哨兵連線直接丟棄。
+- 沒收到訊息、或收到的剛好是 `'host_left'`（代表上一個主持人已經正常/異常離線）→ 判定可以安全接手，丟棄哨兵連線，進入 Phase 2。
+
+### Phase 2：正式連線（帶 will），只有確定要當主持人才會開
+
+```js
+will: {
+  topic: MP_TOPICS.STATE,
+  payload: JSON.stringify({ phase: 'host_left' }),
+  qos: 1,
+  retain: true,   // 不管正常關閉、當機、斷電，STATE 都會被覆蓋成 host_left，
+                   // 下一個嘗試開啟的 host.html 才能正確判斷「主持人已經不在了」
+},
+```
+
+`resetToLobby()` 裡手動發的那次 `host_left`（`retain:false`）不受影響，是刻意的重置訊號，用來強制玩家端重置狀態，不代表主持人真的離線，兩者不衝突。
+
+### 為什麼要分兩階段連線，不能只用一條連線判斷完再決定要不要留著
+
+這是**實測抓到的真實 bug**，過程分兩層：
+
+1. **第一版**：只用一條帶 `will` 的連線，判斷完是「第二主持人」就呼叫 `end(true)` 強制斷線。強制斷線不會送出正常的 MQTT DISCONNECT 封包，broker 當成非正常斷線，**觸發這條連線自己的 will**，把 `host_left` 蓋成 retained，蓋掉真正主持人原本正確的 `STATE`——結果「擋人」這個動作本身把證據銷毀掉了，被擋住的分頁重新整理一次就能繞過去。
+2. **第二版**：把 `end(true)` 改成 `end()`（正常斷線）修掉了上面那個情境，但問題的根本沒解決——**只要連線帶了 `will`，它在還沒確定自己是不是主持人之前，就是一顆不安全的地雷**。判斷過程中（訂閱 STATE、等 800ms）如果分頁被**快速連續重新整理**，瀏覽器來不及送出正常 DISCONNECT 就把分頁砍掉重載，broker 一樣把這條「還在判斷中」的連線當非正常斷線，一樣觸發它的 will，一樣蓋掉真正主持人的狀態。
+
+`will` 是連線建立當下就決定好、之後改不了的東西，沒辦法「連線先不帶 will，判斷完之後才補上」。唯一乾淨的解法就是分成兩條連線：**哨兵連線全程不帶 will**（不管怎麼被粗暴中斷都不會誤觸發任何東西），只有確定要接手了，才開一條帶 will 的正式連線——這樣「還在判斷中」的階段完全不存在被快速重新整理繞過的風險。
+
+**沒有「強制接管」機制**——只要偵測到的主持人還在，新開的 `host.html` 就會一路顯示擋版，唯一解除方式是原本那個主持人真的結束執行（正常關閉或斷線），不會因為等待逾時就自動放行。
+
 ---
 
 ## 遊戲模式說明
@@ -386,7 +423,7 @@ lobby
 
 ### 大廳角色選單（`../live2d_my_like/`，僅主持人本機）
 
-大廳畫面「Live2D 角色」區塊有兩個下拉選單，列出 `live2d_my_like/manifest.json` 收藏庫裡的所有模型，選了之後存進 `localStorage`（`l2d_mylike_char1` / `l2d_mylike_char2`），重新整理頁面時 `init()` 會用它覆蓋 `L2D_CFG.char1.model` / `char2.model`。**只影響主持人自己的瀏覽器，不會同步給玩家**（玩家端固定用 `lib/live2d.js` 原本寫死的角色）。詳見 [live2d_my_like/README.md](../live2d_my_like/README.md)。
+大廳畫面「Live2D 角色」區塊有兩個下拉選單，列出 `live2d_my_like/config/manifest.json` 收藏庫裡的所有模型，選了之後存進 `localStorage`（`l2d_mylike_char1` / `l2d_mylike_char2`），重新整理頁面時 `init()` 會用它覆蓋 `L2D_CFG.char1.model` / `char2.model`。**只影響主持人自己的瀏覽器，不會同步給玩家**（玩家端固定用 `lib/live2d.js` 原本寫死的角色）。詳見 [live2d_my_like/config/README.md](../live2d_my_like/config/README.md)。
 
 ### 左下角懸浮控制按鈕
 

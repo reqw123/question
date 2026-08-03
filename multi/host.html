@@ -790,61 +790,140 @@ const fmt  = n   => Number(n).toLocaleString();
 function mqttInit() {
   const mySeq = ++HS.clientSeq;
   const stale = () => HS.clientSeq !== mySeq;
-
   const url = mpMqttUrl();
-  HS.client = window.mqtt.connect(url, {
-    clientId: 'host_' + Math.random().toString(16).slice(2, 10),
-    reconnectPeriod: MP_CFG.MQTT_RECONNECT_MS,
-    clean: true,
-    will: {
-      topic: MP_TOPICS.STATE,
-      payload: JSON.stringify({ phase: 'host_left' }),
-      qos: 1,
-      retain: false,
-    },
-  });
 
-  HS.client.on('connect', () => {
-    if (stale()) return;
-    HS.ok = true;
-    mqttSts('esp32', '伺服器已連線');
-    HS.client.subscribe([MP_TOPICS.JOIN, MP_TOPICS.ANSWER], { qos: 1 });
-    HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING], { qos: 0 });
-    pubState();
-    updateStartBtn();
-    HB_HOST.start();
-  });
-  HS.client.on('offline',   () => { if (stale()) return; HS.ok = false; mqttSts('off', 'MQTT 離線'); updateStartBtn(); });
-  HS.client.on('error',     () => { if (stale()) return; mqttSts('error', '連線失敗'); });
-  HS.client.on('reconnect', () => { if (stale()) return; mqttSts('broker', '重連中...'); });
-  HS.client.on('disconnect',() => { if (stale()) return; HS.ok = false; mqttSts('off', 'MQTT 離線'); });
+  function _blockAsSecondHost() {
+    mqttSts('error', '已有主持人在運作中');
+    if (document.getElementById('host-blocked-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'host-blocked-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(3,10,22,.97);' +
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;' +
+      'color:#fff;font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif;text-align:center;padding:24px;';
+    ov.innerHTML =
+      '<div style="font-size:48px">⛔</div>' +
+      '<div style="font-size:22px;font-weight:700">已有主持人在運作中</div>' +
+      '<div style="font-size:15px;color:#9fb3c8;max-width:420px;line-height:1.6">' +
+        '偵測到另一個主持人畫面正在執行這場搶答。同一時間只能有一個主持人，' +
+        '請先關閉該畫面（或等它結束連線），再重新整理這個頁面。' +
+      '</div>' +
+      '<button style="margin-top:8px;padding:10px 28px;border-radius:8px;border:none;' +
+        'background:#00d4ff;color:#03101a;font-weight:700;font-size:15px;cursor:pointer">' +
+        '重新整理再試一次</button>';
+    ov.querySelector('button').addEventListener('click', () => location.reload());
+    document.body.appendChild(ov);
+  }
 
-  HS.client.on('message', (topic, buf) => {
+  // ── Phase 2：正式連線（帶 will），確定要當主持人才會走到這裡 ──────────────
+  function _connectAsHost() {
     if (stale()) return;
-    if (topic === MP_TOPICS.SOUND)     { playSound(buf.toString()); return; }
-    let data;
-    try { data = JSON.parse(buf.toString()); } catch { return; }
-    if (topic === MP_TOPICS.HEARTBEAT) { HB_HOST.onHeartbeat(data); return; }
-    if (topic === MP_TOPICS.PROFILE && typeof AvatarModule !== 'undefined') { AvatarModule.receive(data); renderScoreboard(); renderLobbySlots(); return; }
-    if (topic === MP_TOPICS.CHAT) {
-      if (typeof PlayerBubbleChat !== 'undefined') {
-        if (data.type === 'emoji') PlayerBubbleChat.showEmoji(data.playerId, data.message);
-        else                       PlayerBubbleChat.showMessage(data.playerId, data.message);
+    console.log('[主持人偵測] 開正式連線，準備接手');
+    HS.client = window.mqtt.connect(url, {
+      clientId: 'host_' + Math.random().toString(16).slice(2, 10),
+      reconnectPeriod: MP_CFG.MQTT_RECONNECT_MS,
+      clean: true,
+      will: {
+        topic: MP_TOPICS.STATE,
+        payload: JSON.stringify({ phase: 'host_left' }),
+        qos: 1,
+        // retain:true——這樣崩潰/斷線時 broker 自動發出的這則 will 也會覆蓋掉 retained
+        // 的 STATE，之後任何才連上的人（包含哨兵連線的搶佔檢查）都能立刻看到「主持人已離線」。
+        // resetToLobby() 手動發的那次 host_left（retain:false）不受影響，是刻意的重置訊號。
+        retain: true,
+      },
+    });
+
+    HS.client.on('connect', () => {
+      if (stale()) return;
+      HS.ok = true;
+      mqttSts('esp32', '伺服器已連線');
+      HS.client.subscribe([MP_TOPICS.JOIN, MP_TOPICS.ANSWER], { qos: 1 });
+      HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING], { qos: 0 });
+      pubState();
+      console.log('[主持人偵測] pubState() 已發布（retained），myId =', HS.myId, 'phase =', HS.phase);
+      updateStartBtn();
+      HB_HOST.start();
+    });
+    HS.client.on('offline',   () => { if (stale()) return; HS.ok = false; mqttSts('off', 'MQTT 離線'); updateStartBtn(); });
+    HS.client.on('error',     () => { if (stale()) return; mqttSts('error', '連線失敗'); });
+    HS.client.on('reconnect', () => { if (stale()) return; mqttSts('broker', '重連中...'); });
+    HS.client.on('disconnect',() => { if (stale()) return; HS.ok = false; mqttSts('off', 'MQTT 離線'); });
+
+    HS.client.on('message', (topic, buf) => {
+      if (stale()) return;
+      if (topic === MP_TOPICS.SOUND)     { playSound(buf.toString()); return; }
+      let data;
+      try { data = JSON.parse(buf.toString()); } catch { return; }
+      if (topic === MP_TOPICS.HEARTBEAT) { HB_HOST.onHeartbeat(data); return; }
+      if (topic === MP_TOPICS.PROFILE && typeof AvatarModule !== 'undefined') { AvatarModule.receive(data); renderScoreboard(); renderLobbySlots(); return; }
+      if (topic === MP_TOPICS.CHAT) {
+        if (typeof PlayerBubbleChat !== 'undefined') {
+          if (data.type === 'emoji') PlayerBubbleChat.showEmoji(data.playerId, data.message);
+          else                       PlayerBubbleChat.showMessage(data.playerId, data.message);
+        }
+        // 文字訊息同時送彈幕；emoji 只顯示在泡泡，不重複出現在彈幕
+        if (data.type !== 'emoji' && typeof DanmakuSystem !== 'undefined')
+          DanmakuSystem.receive({ player: data.name, text: data.message });
+        return;
       }
-      // 文字訊息同時送彈幕；emoji 只顯示在泡泡，不重複出現在彈幕
-      if (data.type !== 'emoji' && typeof DanmakuSystem !== 'undefined')
-        DanmakuSystem.receive({ player: data.name, text: data.message });
-      return;
-    }
-    if (topic === MP_TOPICS.DANMAKU && typeof DanmakuSystem !== 'undefined') { DanmakuSystem.receive(data); return; }
-    if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
-      if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
-      else             PlayerBubbleChat.hideTyping(data.playerId);
-      return;
-    }
-    if (topic === MP_TOPICS.JOIN)      onJoin(data);
-    if (topic === MP_TOPICS.ANSWER)    onAnswer(data);
+      if (topic === MP_TOPICS.DANMAKU && typeof DanmakuSystem !== 'undefined') { DanmakuSystem.receive(data); return; }
+      if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
+        if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
+        else             PlayerBubbleChat.hideTyping(data.playerId);
+        return;
+      }
+      if (topic === MP_TOPICS.JOIN)      onJoin(data);
+      if (topic === MP_TOPICS.ANSWER)    onAnswer(data);
+    });
+  }
+
+  // ── Phase 1：哨兵連線（刻意不帶 will）─────────────────────────────────────
+  // 同一場遊戲同時間只該有一個 host.html 在運作，不然多個主持人會搶著發布 STATE/RESULT
+  // 互相打架。will 是連線當下就決定好、之後改不了的東西——如果直接用「正式」帶 will 的
+  // 連線做這個檢查，檢查期間（還沒確定自己是不是主持人）萬一分頁被關掉/快速連續重新整理，
+  // 瀏覽器來不及送出正常 DISCONNECT，broker 會當非正常斷線觸發 will，把 host_left 誤蓋到
+  // 真正主持人的 retained STATE 上（這是實測抓到的真實 bug：快速連續重新整理能繞過保護）。
+  // 解法是先用一個完全不帶 will 的哨兵連線去問，問完就丟掉，確定真的要當主持人了才另外
+  // 開一個帶 will 的正式連線（見上面 _connectAsHost）。哨兵連線不管怎麼被粗暴中斷，都不會
+  // 誤觸發任何東西。不做逾時自動搶佔——只要偵測到的主持人還在，就一路擋著，除非他真的離線。
+  const scout = window.mqtt.connect(url, {
+    clientId: 'scout_' + Math.random().toString(16).slice(2, 10),
+    reconnectPeriod: 0,
+    clean: true,
   });
+
+  let _scoutSettled = false;
+  const _finishScout = (activeHostFound) => {
+    if (_scoutSettled || stale()) return;
+    _scoutSettled = true;
+    try { scout.end(true); } catch {}
+    if (activeHostFound) {
+      console.log('[主持人偵測] 哨兵判定已有主持人，擋住');
+      _blockAsSecondHost();
+    } else {
+      console.log('[主持人偵測] 哨兵判定沒有主持人，接手');
+      _connectAsHost();
+    }
+  };
+
+  scout.on('connect', () => {
+    if (stale()) { try { scout.end(true); } catch {} return; }
+    scout.on('message', (topic, buf) => {
+      if (topic !== MP_TOPICS.STATE) return;
+      console.log('[主持人偵測] 哨兵收到訊息', topic, buf.toString());
+      let data;
+      try { data = JSON.parse(buf.toString()); } catch (e) { data = {}; }
+      _finishScout(!!(data && data.phase && data.phase !== 'host_left'));
+    });
+    scout.subscribe(MP_TOPICS.STATE, { qos: 1 }, () => {
+      // 800ms 內沒收到 retained 訊息 → 這個主題從來沒人發布過 → 視為沒有主持人
+      setTimeout(() => {
+        console.log('[主持人偵測] 哨兵 800ms 內沒收到訊息 → 視為沒有主持人');
+        _finishScout(false);
+      }, 800);
+    });
+  });
+  scout.on('error', (e) => { console.log('[主持人偵測] 哨兵連線失敗，視為沒有主持人', e); _finishScout(false); });
 }
 
 function pub(topic, obj, retain = false, qos = 0) {
@@ -1146,12 +1225,16 @@ async function init() {
 
   if (typeof L2D !== 'undefined') {
     L2D_CFG.storageNS = 'h';
+    L2D_CFG.maxChars = 2;   // 網頁模式寫死上限，不開放使用者調整（雙人專屬功能不支援更多角色）
     // 程式碼設定優先：清除舊存檔，讓 char1/char2 的 offsetX/Y 每次重整後確實生效
     try { localStorage.removeItem('l2d_pos_h_c1'); localStorage.removeItem('l2d_pos_h_c2'); } catch {}
     // 套用 live2d_my_like 下拉選單存的角色選擇（本機專屬，不影響 lib/live2d.js 原本的預設值）
     if (MYLIKE_FEATURE_ENABLED) {
-      const _c1Pick = localStorage.getItem('l2d_mylike_char1');
-      const _c2Pick = localStorage.getItem('l2d_mylike_char2');
+      let _c1Pick = localStorage.getItem('l2d_mylike_char1');
+      let _c2Pick = localStorage.getItem('l2d_mylike_char2');
+      // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
+      if (_c1Pick && !_c1Pick.startsWith('models/')) _c1Pick = 'models/' + _c1Pick;
+      if (_c2Pick && !_c2Pick.startsWith('models/')) _c2Pick = 'models/' + _c2Pick;
       if (_c1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _c1Pick;
       if (_c2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _c2Pick;
     }
@@ -1848,8 +1931,8 @@ let _myLikeNames    = {};
 async function loadMyLikeManifest() {
   try {
     const [mRes, nRes] = await Promise.all([
-      fetch('../live2d_my_like/manifest.json'),
-      fetch('../live2d_my_like/names.json'),
+      fetch('../live2d_my_like/config/manifest.json'),
+      fetch('../live2d_my_like/config/names.json'),
     ]);
     _myLikeManifest = mRes.ok ? await mRes.json() : [];
     _myLikeNames    = nRes.ok ? await nRes.json() : {};

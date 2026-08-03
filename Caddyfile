@@ -1,5 +1,8 @@
 :8080 {
     root * .
+    # 這是本機開發用的伺服器設定，檔案隨時可能被改動，一律禁止快取，
+    # 避免瀏覽器用啟發式規則快取住舊版 .js/.html，改完程式碼重整卻看不到最新結果。
+    header Cache-Control "no-store"
     file_server
     reverse_proxy /mqtt localhost:9001 {
         transport http {

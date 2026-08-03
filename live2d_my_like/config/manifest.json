@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "path": "models/076/c_7001.model3.json",
+    "character": "076",
+    "cubism": 4
+  },
+  {
+    "id": 2,
+    "path": "models/077/c_7002.model3.json",
+    "character": "077",
+    "cubism": 4
+  },
+  {
+    "id": 3,
+    "path": "models/1009109/1009109.model3.json",
+    "character": "1009109",
+    "cubism": 4
+  },
+  {
+    "id": 4,
+    "path": "models/1014107/1014107.model3.json",
+    "character": "1014107",
+    "cubism": 4
+  },
+  {
+    "id": 5,
+    "path": "models/1024100/1024100.model3.json",
+    "character": "1024100",
+    "cubism": 4
+  },
+  {
+    "id": 6,
+    "path": "models/pinghai_4/pinghai_4.model3.json",
+    "character": "pinghai_4",
+    "cubism": 4
+  }
+]

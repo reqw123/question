@@ -1328,6 +1328,7 @@ function initLive2D() {
     if (i >= srcs.length) {
       // 玩家端使用獨立命名空間（l2d_pos_p_），不受主持端拖曳位置影響
       L2D_CFG.storageNS = 'p';
+      L2D_CFG.maxChars = 2;   // 網頁模式寫死上限，不開放使用者調整（雙人專屬功能不支援更多角色）
       if (L2D_CFG.playerPos) {
         Object.assign(L2D_CFG.char1, L2D_CFG.playerPos.char1);
         Object.assign(L2D_CFG.char2, L2D_CFG.playerPos.char2);
@@ -1337,8 +1338,11 @@ function initLive2D() {
       // 套用玩家在 join 畫面選好的 live2d_my_like 角色（只影響自己這台裝置；
       // 這裡改完 L2D_CFG.char1/char2.model 之後才會呼叫 L2D.init()，
       // 所以整個流程只會去請求「這裡指定的那個模型」的資源，不會多請求收藏庫裡其他角色）
-      const _pC1Pick = localStorage.getItem('l2d_mylike_p_char1');
-      const _pC2Pick = localStorage.getItem('l2d_mylike_p_char2');
+      let _pC1Pick = localStorage.getItem('l2d_mylike_p_char1');
+      let _pC2Pick = localStorage.getItem('l2d_mylike_p_char2');
+      // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
+      if (_pC1Pick && !_pC1Pick.startsWith('models/')) _pC1Pick = 'models/' + _pC1Pick;
+      if (_pC2Pick && !_pC2Pick.startsWith('models/')) _pC2Pick = 'models/' + _pC2Pick;
       if (_pC1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _pC1Pick;
       if (_pC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _pC2Pick;
       // 手機才套用行動端設定，桌機沿用 L2D_CFG 預設值
@@ -1465,8 +1469,8 @@ async function initMyLikeJoinUI() {
   let manifest = [], names = {};
   try {
     const [mRes, nRes] = await Promise.all([
-      fetch('../live2d_my_like/manifest.json'),
-      fetch('../live2d_my_like/names.json'),
+      fetch('../live2d_my_like/config/manifest.json'),
+      fetch('../live2d_my_like/config/names.json'),
     ]);
     manifest = mRes.ok ? await mRes.json() : [];
     names    = nRes.ok ? await nRes.json() : {};
