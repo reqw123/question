@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>live2d_my_like 檢視器</title>
+<style>
+  html, body {
+    margin: 0; height: 100%; background: #10151c; color: #ddd;
+    font-family: -apple-system, "Microsoft JhengHei", sans-serif;
+    overflow: hidden;
+  }
+  #panel {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 10px 12px; background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+  }
+  #panel select, #panel input {
+    background: #1c2530; color: #eee; border: 1px solid #3a4656;
+    border-radius: 6px; padding: 6px 8px; font-size: 13px; max-width: 260px;
+  }
+  #panel label { font-size: 12px; color: #9ab; }
+  #status {
+    position: fixed; top: 58px; left: 12px; z-index: 10;
+    font: 12px/1.5 monospace; color: #9fd; background: rgba(0,0,0,.5);
+    padding: 4px 10px; border-radius: 6px; max-width: 70vw; white-space: pre-wrap;
+  }
+  #actionsWrap {
+    position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 10;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  #expressions, #motions { display: flex; flex-wrap: wrap; gap: 6px; }
+  #motions button, #randomBtn {
+    background: rgba(0,212,255,.15); border: 1px solid rgba(0,212,255,.4);
+    color: #cdefff; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+  }
+  #motions button:hover, #randomBtn:hover { background: rgba(0,212,255,.3); }
+  #expressions button {
+    background: rgba(255,120,220,.15); border: 1px solid rgba(255,120,220,.4);
+    color: #ffd6f2; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+  }
+  #expressions button:hover { background: rgba(255,120,220,.3); }
+  #canvasWrap { position: fixed; inset: 0; }
+  #manualLoad { background: #1c2530; color: #9fd; border: 1px solid #3a4656;
+    border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="panel">
+  <label>角色 / 模型（manifest.json）</label>
+  <select id="charSelect"></select>
+  <label>搜尋</label>
+  <input id="filterInput" type="text" placeholder="輸入關鍵字篩選，或輸入數字跳到第幾筆...">
+  <span id="countLabel" style="font-size:12px;color:#789;"></span>
+  <label style="margin-left:10px;">手動路徑</label>
+  <input id="manualPathInput" type="text" placeholder="例如 models/girl120_test/l2d01.u.model3.json（不在 manifest 裡的資料夾也能測，例如 _test 工作副本）">
+  <button id="manualLoad">載入這個路徑</button>
+  <label style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:12px;color:#9ab;">
+    <input type="checkbox" id="freezeIdleToggle">
+    ❄️ 凍結待機動作(方便調 Parameter)
+  </label>
+  <button id="paramInspectorToggle" style="background:#1c2530;color:#9fd;
+    border:1px solid #3a4656;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">
+    🔍 Parameter 檢查器
+  </button>
+  <button id="partInspectorToggle" style="background:#1c2530;color:#fc9;
+    border:1px solid #3a4656;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">
+    🧩 Part 透明度檢查器
+  </button>
+</div>
+
+<div id="status"></div>
+<div id="canvasWrap"></div>
+<div id="actionsWrap">
+  <div id="expressions"></div>
+  <div id="motions"></div>
+</div>
+
+<!-- Parameter 檢查器：用來反查「哪個 Parameter 控制畫面上哪個視覺變化」。
+     用法：先不要點下面的動作按鈕（不然動作每一幀都會覆蓋你手動拉的數值），
+     直接拖動下面某一條滑桿，觀察角色身上哪裡跟著變化，就能確認那個 Param 負責什麼。 -->
+<div id="paramInspector" style="display:none;position:fixed;top:44px;right:0;bottom:0;width:320px;
+    z-index:15;background:rgba(10,14,20,.92);border-left:1px solid #3a4656;
+    overflow-y:auto;padding:10px;font:12px/1.5 monospace;color:#cde;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <b style="color:#9fd;">Parameter 檢查器</b>
+    <button id="paramResetAll" style="background:#1c2530;color:#f99;border:1px solid #3a4656;
+      border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;">重置全部</button>
+  </div>
+  <div id="paramList"></div>
+</div>
+
+<!-- Part 透明度檢查器：Parameter 跟 Part 是 Cubism 裡兩套獨立機制——Parameter 驅動變形，
+     Part 只負責整組的透明度開關（setPartOpacityById），很多部位（例如眼睛/裝飾/遮罩用途的
+     Drawable）只受 Part 控制、完全沒有對應的 Parameter，Parameter 檢查器天生看不到這些部位，
+     所以另外做這個面板，直接列出所有 Part 的透明度滑桿。
+     用法同 Parameter 檢查器：建議先勾上面的「凍結待機動作」，不然動作每一幀都會把你手動拉的
+     透明度蓋回去，滑桿等於白拉。 -->
+<div id="partInspector" style="display:none;position:fixed;top:44px;left:0;bottom:0;width:320px;
+    z-index:15;background:rgba(10,14,20,.92);border-right:1px solid #3a4656;
+    overflow-y:auto;padding:10px;font:12px/1.5 monospace;color:#cde;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <b style="color:#fc9;">Part 透明度檢查器</b>
+    <button id="partResetAll" style="background:#1c2530;color:#f99;border:1px solid #3a4656;
+      border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;">重置全部</button>
+  </div>
+  <div id="partList"></div>
+</div>
+
+<!-- 沿用專案既有函式庫（唯讀引用，未修改任何檔案），同時支援 Cubism 2 與 Cubism 3/4 模型。
+     這個檢視器是獨立頁面，不影響 multi/host.html、multi/player.html、desktop-pet 等既有系統。
+
+     ⚠️ 例外：多載入了 lib/live2d.js（下面這一行），但唯一目的是借用它裡面的
+     L2D._patchClippingMaskOverflow()——這不是採用整套 L2D 角色管理系統，viewer.html
+     仍然維持自己獨立的 loadPath()/PIXI Application 流程，不呼叫 L2D.init()、不讀
+     L2D_CFG，只在 loadPath() 成功建立 model 之後借用這一個相容性補丁函式。
+     為什麼需要它、補丁做了什麼，見 live2d_my_like/config/furina-顯示異常除錯筆記.md。 -->
+<script src="../lib/live2d.js"></script>
+<script src="../lib/live2d.min.js"></script>
+<script src="../lib/live2dcubismcore.min.js"></script>
+<script src="../lib/pixi.min.js"></script>
+<script src="../lib/all.min.js"></script>
+
+<script>
+'use strict';
+
+const statusEl   = document.getElementById('status');
+const charSel    = document.getElementById('charSelect');
+const filterEl   = document.getElementById('filterInput');
+const countLbl   = document.getElementById('countLabel');
+const motionsEl  = document.getElementById('motions');
+const exprEl     = document.getElementById('expressions');
+const manualPathInput = document.getElementById('manualPathInput');
+const manualLoadBtn   = document.getElementById('manualLoad');
+
+let manifest  = [];  // [{id, path, character, cubism, displayName}]
+let app       = null;
+let curModel  = null;
+let curVisibilitySync = null;  // 目前模型的 VISIBLE→Part 透明度同步函式（見 attachVisibilitySync）
+
+let motionDefs = [];  // 目前模型的動作攤平清單：[{ group, index, name }]
+let motionPos  = -1;  // , . 鍵目前停在攤平清單的第幾個
+let exprDefs   = [];  // 目前模型的表情清單：[{ index, name }]
+let exprPos    = -1;  // [ ] 鍵目前停在表情清單的第幾個
+
+function setStatus(msg) { statusEl.textContent = msg; }
+
+// ── 凍結待機動作：pixi-live2d-display 的 motionManager 每一幀都會自動判斷
+// 「該不該接一顆待機動作」，跟 Parameter 檢查器互相打架（動作每一幀都會覆蓋手動拉的數值）。
+// 這裡用「換掉 startRandomMotion 成空函式 + 立刻停掉目前動作」讓待機動作暫停。
+let freezeIdle = false;
+let idleFreezeOriginal = null;
+
+function applyIdleFreezeState() {
+  const mm = curModel && curModel.internalModel && curModel.internalModel.motionManager;
+  if (!mm) return;
+  if (freezeIdle) {
+    if (!idleFreezeOriginal) idleFreezeOriginal = mm.startRandomMotion.bind(mm);
+    mm.stopAllMotions();
+    mm.startRandomMotion = () => Promise.resolve(false);
+  } else if (idleFreezeOriginal) {
+    mm.startRandomMotion = idleFreezeOriginal;
+    idleFreezeOriginal = null;
+  }
+}
+
+function initPixi() {
+  app = new PIXI.Application({
+    resizeTo: window,
+    backgroundAlpha: 0,
+    antialias: true,
+    resolution: Math.min(window.devicePixelRatio || 1, 2),
+    autoDensity: true,
+  });
+  document.getElementById('canvasWrap').appendChild(app.view);
+}
+
+function populateChars() {
+  const kwRaw  = filterEl.value.trim();
+  // 純數字輸入 = 直接跳到清單裡第幾筆（跟 countLabel 顯示的「第 X / 共 Y 筆」同一套編號）
+  const isIndex = /^\d+$/.test(kwRaw);
+  const kw = kwRaw.toLowerCase();
+  const list = manifest.filter(e =>
+    isIndex || !kw ||
+    e.displayName.toLowerCase().includes(kw) ||
+    e.character.toLowerCase().includes(kw) ||
+    e.path.toLowerCase().includes(kw)
+  );
+  charSel.innerHTML = list.map((e, i) =>
+    `<option value="${i}">#${e.id} ${e.displayName}${e.cubism === 2 ? '  [C2]' : ''}</option>`
+  ).join('');
+  charSel._list = list;
+  updateCountLabel();
+
+  if (isIndex) {
+    const idx = parseInt(kwRaw, 10) - 1;
+    if (idx >= 0 && idx < list.length) {
+      charSel.selectedIndex = idx;
+      loadSelected();
+    } else {
+      setStatus(`索引超出範圍：輸入 ${kwRaw}，但清單只有 ${list.length} 筆。`);
+    }
+  }
+}
+
+function updateCountLabel() {
+  const total = charSel.options.length;
+  const cur   = charSel.selectedIndex;
+  countLbl.textContent = total ? `第 ${cur + 1} / 共 ${total} 筆` : '共 0 筆';
+}
+
+let _loadToken = 0;  // 快速連續切換時，用序號辨別「這次載入完成時是不是已經過期」，避免疊模型
+
+// manifest.json 的 partOverrides 套用：跟 lib/live2d.js 的 _applyPartOverrides() 同一套
+// 邏輯（這個模型專屬、載入時把物件裡列出的 Part 透明度設成指定值，空字串＝維持原樣），
+// 但這裡自己重寫一份小的，不透過 L2D.init()/L2D_CFG 那整套——viewer.html 刻意保持獨立
+// 頁面、只唯讀借用 L2D._patchClippingMaskOverflow()（見上方說明），不採用完整的 L2D
+// 角色管理系統。
+// 刻意放在 buildPartInspector() 之前呼叫：Part 檢查器的滑桿初始值（baseline）是讀
+// 「呼叫當下」的即時透明度，先套用 partOverrides 再建面板，滑桿才會如實顯示套用後的值，
+// 「重置全部」按鈕也才會是「回到這個材質正確的預設組合」而不是回到 moc3 原始未修正的樣子。
+//
+// 🚨 為什麼要先手動比對 ID 清單、不能只靠 try/catch：反解 lib/cubism4.min.js 確認過，
+// Cubism 3/4 的 setPartOpacityById(id, v) 內部呼叫 getPartIndex(id)，這個函式**永遠不會
+// 回傳 -1**——找不到對應 Part 時會配一個假索引、寫進一個跟畫面完全無關的幽靈陣列
+// （_notExistPartOpacities），呼叫本身不會 throw、也不會有任何副作用或警告，try/catch
+// 完全抓不到。這跟 live2d_my_like/config/live2d角色指令說明.md 已經記錄過的
+// getParameterIndex() 陷阱是同一套設計，只是這裡是 Part 版本。所以打錯 ID／抄錯模型時，
+// 畫面上什麼事都不會發生，也不會有任何錯誤訊息——必須在呼叫 setPartOpacityById 之前，
+// 自己先跟這個模型真實擁有的 Part ID 清單比對，才抓得到「這個 ID 根本不存在」。
+function getKnownPartIds(cm) {
+  try {
+    if (typeof cm.getPartCount === 'function' && cm._partIds) {
+      const n = cm.getPartCount();
+      return new Set(Array.from({ length: n }, (_, i) => cm._partIds[i]));
+    }
+    if (cm._$5S && Array.isArray(cm._$5S._$F2)) {
+      const arr = cm._$5S._$F2;
+      return new Set(arr.map(p => { try { return p.getPartsID().id; } catch { return null; } }).filter(Boolean));
+    }
+  } catch (err) {
+    console.warn('[viewer] partOverrides: 讀取 Part ID 清單失敗，這次跳過驗證', err);
+  }
+  return null;
+}
+
+function applyPartOverrides(model, partOverrides) {
+  if (!partOverrides || typeof partOverrides !== 'object') return;
+  const cm = model.internalModel && model.internalModel.coreModel;
+  if (!cm) return;
+  const knownIds = getKnownPartIds(cm);
+  Object.entries(partOverrides).forEach(([id, raw]) => {
+    if (raw === '' || raw == null) return;   // 空字串／未設定＝維持原樣，不覆蓋
+    const value = Number(raw);
+    if (Number.isNaN(value)) {
+      console.warn(`[viewer] partOverrides: "${id}" 的值 "${raw}" 不是合法數字，已跳過`);
+      return;
+    }
+    if (knownIds && !knownIds.has(id)) {
+      console.warn(`[viewer] partOverrides: 這個模型沒有 Part "${id}"（打錯字或抄錯模型？），` +
+        `底層 API 不會報錯但也完全沒效果，已主動跳過。目前這個模型的 Part ID 清單：`, [...knownIds]);
+      return;
+    }
+    try {
+      if (typeof cm.setPartOpacityById === 'function') {
+        cm.setPartOpacityById(id, value);        // Cubism 3/4
+      } else if (typeof cm.setPartsOpacity === 'function') {
+        cm.setPartsOpacity(id, value);            // Cubism 2
+      } else {
+        console.warn(`[viewer] partOverrides: 這個模型的 coreModel 沒有可用的 Part 透明度 API，"${id}" 沒套用`);
+      }
+    } catch (err) {
+      console.warn(`[viewer] partOverrides: 設定 Part "${id}" 失敗`, err);
+    }
+  });
+}
+
+// manifest.json 的 paramOverrides 套用：跟上面 applyPartOverrides() 同一套邏輯，套用
+// 對象換成 Parameter。刻意放在 buildParamInspector() 之前呼叫，理由跟 partOverrides
+// 一樣：滑桿初始值要讀套用後的狀態。
+//
+// 🚨 同一個陷阱：setParameterValueById(id, v) 內部的 getParameterIndex(id) 也永遠不會
+// 回傳 -1（見 live2d_my_like/config/live2d角色指令說明.md 第一節），打錯 ID 不會報錯、
+// 也不會有任何效果，所以一樣要先比對這個模型真實擁有的 Parameter ID 清單。
+//
+// ⚠️ 這裡設的值也可能被動作蓋掉：motion3.json 的曲線目標除了 Parameter 之外也可以是
+// PartOpacity（反解 cubism4.min.js 確認過 CubismMotionCurveTarget 有 Model／Parameter／
+// PartOpacity 三種），所以「會不會被蓋掉」看的是目前播放的動作有沒有對這個 ID 烤曲線，
+// 不是看它是 Parameter 還是 Part。
+function getKnownParamIds(cm) {
+  try {
+    if (cm._model && cm._model.parameters && cm._model.parameters.ids) {
+      return new Set([...cm._model.parameters.ids]);
+    }
+    if (cm._$5S && Array.isArray(cm._$5S._$pb)) {
+      return new Set(cm._$5S._$pb.map(p => p.id).filter(Boolean));
+    }
+  } catch (err) {
+    console.warn('[viewer] paramOverrides: 讀取 Parameter ID 清單失敗，這次跳過驗證', err);
+  }
+  return null;
+}
+
+function applyParamOverrides(model, paramOverrides) {
+  if (!paramOverrides || typeof paramOverrides !== 'object') return;
+  const cm = model.internalModel && model.internalModel.coreModel;
+  if (!cm) return;
+  const knownIds = getKnownParamIds(cm);
+  Object.entries(paramOverrides).forEach(([id, raw]) => {
+    if (raw === '' || raw == null) return;   // 空字串／未設定＝維持原樣，不覆蓋
+    const value = Number(raw);
+    if (Number.isNaN(value)) {
+      console.warn(`[viewer] paramOverrides: "${id}" 的值 "${raw}" 不是合法數字，已跳過`);
+      return;
+    }
+    if (knownIds && !knownIds.has(id)) {
+      console.warn(`[viewer] paramOverrides: 這個模型沒有 Parameter "${id}"（打錯字或抄錯模型？），` +
+        `底層 API 不會報錯但也完全沒效果，已主動跳過。目前這個模型的 Parameter ID 清單：`, [...knownIds]);
+      return;
+    }
+    try {
+      if (typeof cm.setParameterValueById === 'function') {
+        cm.setParameterValueById(id, value);     // Cubism 3/4
+      } else if (typeof cm.setParamFloat === 'function') {
+        cm.setParamFloat(id, value);              // Cubism 2
+      } else {
+        console.warn(`[viewer] paramOverrides: 這個模型的 coreModel 沒有可用的 Parameter 設值 API，"${id}" 沒套用`);
+      }
+    } catch (err) {
+      console.warn(`[viewer] paramOverrides: 設定 Parameter "${id}" 失敗`, err);
+    }
+  });
+}
+
+async function loadPath(path, label, partOverrides, paramOverrides) {
+  const myToken = ++_loadToken;
+  motionsEl.innerHTML = '';
+  setStatus('載入中... ' + path);
+
+  try {
+    const model = await PIXI.live2d.Live2DModel.from(encodeURI(path));
+    if (myToken !== _loadToken) {
+      model.destroy({ children: true });
+      return;
+    }
+    if (curVisibilitySync) {
+      PIXI.Ticker.shared.remove(curVisibilitySync);
+      curVisibilitySync = null;
+    }
+    if (curModel) {
+      app.stage.removeChild(curModel);
+      curModel.destroy({ children: true });
+    }
+    curModel = model;
+    idleFreezeOriginal = null; // 新模型是全新的 motionManager 實例，舊的换回函式參照已經沒意義
+    // ⚠️ 借用 lib/live2d.js 的裁切遮罩超額補丁（見上方 <script> 引入處的說明）：部分角色
+    // 收藏庫模型（例如 furina）裁切遮罩數量超過 Cubism 4 單張遮罩貼圖的硬性上限，沒有這個
+    // 補丁在 viewer.html 裡一樣會整段渲染崩潰、畫面空白。對正常模型完全沒有副作用。
+    // 完整原因見 live2d_my_like/config/furina-顯示異常除錯筆記.md。
+    if (typeof L2D !== 'undefined') L2D._patchClippingMaskOverflow(model);
+    app.stage.addChild(model);
+    applyPartOverrides(model, partOverrides);
+    applyParamOverrides(model, paramOverrides);
+    fitModel(model);
+    const fmtEntries = (obj) => obj ? Object.entries(obj).filter(([, v]) => v !== '' && v != null) : [];
+    const partEntries  = fmtEntries(partOverrides);
+    const paramEntries = fmtEntries(paramOverrides);
+    let overrideMsg = '';
+    if (partEntries.length)  overrideMsg += `\n已套用 partOverrides: {${partEntries.map(([k, v]) => `${k}:${v}`).join(', ')}}`;
+    if (paramEntries.length) overrideMsg += `\n已套用 paramOverrides: {${paramEntries.map(([k, v]) => `${k}:${v}`).join(', ')}}`;
+    setStatus('已載入：' + (label ? label + '  ' : '') + path + overrideMsg);
+    buildMotionButtons(model);
+    buildExpressionButtons(model);
+    buildParamInspector(model);
+    buildPartInspector(model);
+    curVisibilitySync = attachVisibilitySync(model);
+    applyIdleFreezeState();
+  } catch (err) {
+    if (myToken !== _loadToken) return;
+    setStatus('載入失敗（缺檔或格式有問題）：\n' + path + '\n' + (err && err.message || err));
+    console.error(err);
+  }
+}
+
+function loadSelected() {
+  const list = charSel._list || [];
+  const idx  = parseInt(charSel.value, 10);
+  const entry = list[idx];
+  if (!entry) return;
+  updateCountLabel();
+  loadPath(entry.path, `#${entry.id} ${entry.displayName}`, entry.partOverrides, entry.paramOverrides);
+}
+
+function fitModel(model) {
+  const W = app.screen.width, H = app.screen.height;
+  model.scale.set(1);
+  const nw = model.width || 2048, nh = model.height || 2048;
+  const s = Math.min((W * 0.8) / nw, (H * 0.8) / nh);
+  model.scale.set(s);
+  model.position.set((W - nw * s) / 2, (H - nh * s) / 2);
+}
+
+function playMotionAt(idx) {
+  const d = motionDefs[idx];
+  if (!d || !curModel) return;
+  curModel.motion(d.group, d.index, PIXI.live2d.MotionPriority.FORCE);
+  setStatus(`播放動作：${d.group}[${d.index}] (${d.name})`);
+}
+
+function stepMotion(delta) {
+  if (!motionDefs.length) return;
+  motionPos = ((motionPos < 0 ? 0 : motionPos) + delta + motionDefs.length) % motionDefs.length;
+  playMotionAt(motionPos);
+}
+
+function buildMotionButtons(model) {
+  motionsEl.innerHTML = '';
+  motionDefs = [];
+  motionPos  = -1;
+  let groups = {};
+  try {
+    groups = model.internalModel?.settings?.motions || {};
+  } catch {}
+
+  Object.keys(groups).forEach(g => {
+    (groups[g] || []).forEach((m, i) => {
+      const name = (m.File || m.file || `${g}_${i}`).split('/').pop().replace(/\.(motion3\.json|mtn)$/i, '');
+      motionDefs.push({ group: g, index: i, name });
+    });
+  });
+
+  const randomBtn = document.createElement('button');
+  randomBtn.id = 'randomBtn';
+  randomBtn.textContent = '🎲 隨機動作';
+  randomBtn.addEventListener('click', () => {
+    if (!motionDefs.length) return;
+    motionPos = Math.floor(Math.random() * motionDefs.length);
+    playMotionAt(motionPos);
+  });
+  motionsEl.appendChild(randomBtn);
+
+  motionDefs.forEach((d, idx) => {
+    const btn = document.createElement('button');
+    btn.textContent = d.name;
+    btn.addEventListener('click', () => { motionPos = idx; playMotionAt(idx); });
+    motionsEl.appendChild(btn);
+  });
+
+  if (!motionDefs.length) {
+    const none = document.createElement('span');
+    none.style.cssText = 'color:#789;font-size:12px;padding:5px;';
+    none.textContent = '（此模型沒有偵測到動作清單）';
+    motionsEl.appendChild(none);
+  }
+}
+
+function playExpressionAt(idx) {
+  const d = exprDefs[idx];
+  if (!d || !curModel) return;
+  curModel.expression(d.index);
+  setStatus(`播放表情：${d.name}`);
+}
+
+function stepExpr(delta) {
+  if (!exprDefs.length) return;
+  exprPos = ((exprPos < 0 ? 0 : exprPos) + delta + exprDefs.length) % exprDefs.length;
+  playExpressionAt(exprPos);
+}
+
+function buildExpressionButtons(model) {
+  exprEl.innerHTML = '';
+  exprPos = -1;
+  let defs = [];
+  try {
+    defs = model.internalModel?.settings?.expressions || [];
+  } catch {}
+  exprDefs = defs.map((d, i) => ({ index: i, name: d.Name || d.name || `expr_${i}` }));
+
+  const randomBtn = document.createElement('button');
+  randomBtn.textContent = '🎭 隨機表情';
+  randomBtn.addEventListener('click', () => {
+    if (!exprDefs.length || !curModel) return;
+    curModel.expression();
+    exprPos = -1;
+    setStatus('播放表情：隨機');
+  });
+  exprEl.appendChild(randomBtn);
+
+  exprDefs.forEach((d, idx) => {
+    const btn = document.createElement('button');
+    btn.textContent = d.name;
+    btn.addEventListener('click', () => { exprPos = idx; playExpressionAt(idx); });
+    exprEl.appendChild(btn);
+  });
+
+  if (!exprDefs.length) {
+    const none = document.createElement('span');
+    none.style.cssText = 'color:#789;font-size:12px;padding:5px;';
+    none.textContent = '（此模型沒有偵測到表情清單）';
+    exprEl.appendChild(none);
+  }
+}
+
+// ── Parameter 檢查器：列出目前模型全部 Parameter，用滑桿直接改數值即時看畫面反應 ──
+function appendParamRow(listEl, id, min, max, cur, onInput) {
+  const row = document.createElement('div');
+  row.style.cssText = 'margin-bottom:8px;';
+
+  const label = document.createElement('div');
+  label.style.cssText = 'display:flex;justify-content:space-between;color:#9ab;';
+  const valueSpan = document.createElement('span');
+  valueSpan.textContent = cur.toFixed(2);
+  const idSpan = document.createElement('span');
+  idSpan.textContent = id;
+  label.appendChild(idSpan);
+  label.appendChild(valueSpan);
+
+  const slider = document.createElement('input');
+  slider.type  = 'range';
+  slider.min   = min;
+  slider.max   = max;
+  slider.step  = (max - min) / 200 || 0.01;
+  slider.value = cur;
+  slider.style.width = '100%';
+  slider.addEventListener('input', () => {
+    const v = parseFloat(slider.value);
+    onInput(v);
+    valueSpan.textContent = v.toFixed(2);
+  });
+
+  row.appendChild(label);
+  row.appendChild(slider);
+  listEl.appendChild(row);
+}
+
+// Cubism 3/4：官方有完整的 getParameterCount/getParameterMinimumValue/…系列 API。
+function buildParamInspectorC34(cm) {
+  const listEl = document.getElementById('paramList');
+  listEl.innerHTML = ''; // 「重置全部」會直接重呼叫這個函式，先清空避免疊出重複列
+  const n = cm.getParameterCount();
+  for (let i = 0; i < n; i++) {
+    // 這個版本的函式庫沒有公開 getParameterId(index)，id 清單只存在內部欄位 _parameterIds
+    const id  = String((cm._parameterIds && cm._parameterIds[i]) || ('#' + i));
+    const min = cm.getParameterMinimumValue(i);
+    const max = cm.getParameterMaximumValue(i);
+    const cur = cm.getParameterValueByIndex(i);
+    appendParamRow(listEl, id, min, max, cur, (v) => cm.setParameterValueByIndex(i, v));
+  }
+  document.getElementById('paramResetAll').onclick = () => {
+    for (let i = 0; i < n; i++) cm.setParameterValueByIndex(i, cm.getParameterDefaultValue(i));
+    buildParamInspectorC34(cm);
+  };
+}
+
+// Cubism 2：核心物件沒有 Cubism 3/4 那套 API，改用 getModelContext()／getParamMax(i)／
+// getParamMin(i)／getParamFloat(i)／setParamFloat(i,v)，這幾個方法名稱沒有官方文件。
+function buildParamInspectorC2(cm, mc, n, ids) {
+  const listEl = document.getElementById('paramList');
+  listEl.innerHTML = ''; // 「重置全部」會直接重呼叫這個函式，先清空避免疊出重複列
+  const baseline = [];
+  for (let i = 0; i < n; i++) {
+    try { baseline[i] = mc.getParamFloat(i); } catch { baseline[i] = 0; }
+  }
+
+  for (let i = 0; i < n; i++) {
+    const id  = ids && ids[i] ? String(ids[i]) : ('#' + i);
+    let min = 0, max = 1;
+    try { min = mc.getParamMin(i); max = mc.getParamMax(i); } catch {}
+    appendParamRow(listEl, id, min, max, baseline[i], (v) => {
+      try { cm.setParamFloat(i, v); } catch {}
+    });
+  }
+  document.getElementById('paramResetAll').onclick = () => {
+    for (let i = 0; i < n; i++) { try { cm.setParamFloat(i, baseline[i]); } catch {} }
+    buildParamInspectorC2(cm, mc, n, ids);
+  };
+}
+
+// 警示清單：列出 parentPartIndex === -1 的 Drawable——這些沒有掛在任何 Part 底下，
+// 下面的滑桿清單天生不會出現對應項目，因為它們根本沒有 Part 可以控制。目前這個函式庫
+// 沒有公開 setDrawableOpacity 這類 API，所以這些 Drawable 在執行期完全無法關閉/淡出，
+// 唯一能動它們外觀的方式是直接改材質圖的 Alpha（例如 home_cat 那個獨立鼻子 Piece 的做法）。
+// parentPartIndices 是讀取自 _model.drawables 的內部欄位，沒有官方文件；少數模型（例如
+// girl120 系列）實測發現這個欄位全部回傳 0、不太可靠，所以這裡列出的名單只供參考方向，
+// 實際控制關係還是建議搭配下面的滑桿逐一測試確認。
+function appendOrphanDrawableWarning(listEl, cm) {
+  const native = cm._model;
+  const drawableIds = cm.getDrawableIds();
+  if (!native || !native.drawables || !native.drawables.parentPartIndices) return;
+  const parentPartIndices = native.drawables.parentPartIndices;
+
+  const orphans = [];
+  for (let i = 0; i < drawableIds.length; i++) {
+    if (parentPartIndices[i] === -1) orphans.push(drawableIds[i]);
+  }
+  if (!orphans.length) return;
+
+  const box = document.createElement('div');
+  box.style.cssText = 'margin-bottom:10px;padding:8px;border:1px solid #a55;' +
+    'background:rgba(255,80,80,.1);border-radius:6px;';
+  box.innerHTML =
+    '<b style="color:#f99;">⚠️ 沒有 Part、永遠關不掉的 Drawable（' + orphans.length + ' 個）</b>' +
+    '<div style="margin-top:4px;color:#dab;word-break:break-all;">' + orphans.join('、') + '</div>' +
+    '<div style="margin-top:4px;color:#987;font-size:11px;">' +
+    '這幾個下面不會出現滑桿，因為沒有 Part 可控制；只能改材質 Alpha 處理。' +
+    '此欄位無官方文件、少數模型可能失真，僅供參考。</div>';
+  listEl.appendChild(box);
+}
+
+// Cubism 3/4：cm.getPartCount()/getPartOpacityByIndex()/setPartOpacityByIndex() 是官方 API，
+// 但沒有公開 getPartId(index)，id 清單只存在內部欄位 _partIds（跟 Parameter 那邊 _parameterIds
+// 是同樣的限制）。Part 透明度沒有 min/max 概念，固定是 0~1，也沒有「預設值」API，這裡用「模型
+// 剛載入時的當下數值」當基準，「重置全部」就是回到這個基準，不是回到 1.0（有些 Part 設計上
+// 預設就不是全開，回到 1.0 反而會跟原本畫面不一樣）。
+function buildPartInspectorC34(cm) {
+  const listEl = document.getElementById('partList');
+  listEl.innerHTML = ''; // 「重置全部」會直接重呼叫這個函式，先清空避免疊出重複列
+  const n = cm.getPartCount();
+  const baseline = [];
+  for (let i = 0; i < n; i++) baseline[i] = cm.getPartOpacityByIndex(i);
+
+  appendOrphanDrawableWarning(listEl, cm);
+
+  for (let i = 0; i < n; i++) {
+    const id = String((cm._partIds && cm._partIds[i]) || ('#' + i));
+    appendParamRow(listEl, id, 0, 1, baseline[i], (v) => cm.setPartOpacityByIndex(i, v));
+  }
+  document.getElementById('partResetAll').onclick = () => {
+    for (let i = 0; i < n; i++) cm.setPartOpacityByIndex(i, baseline[i]);
+    buildPartInspectorC34(cm);
+  };
+}
+
+// Cubism 2：核心物件（live2d.min.js 的 Live2DModelWebGL 實例）其實也有 Parts 透明度機制，
+// 只是沒有走 Cubism 3/4 那套 getPartCount 系列 API。反解 lib/live2d.min.js 原始碼確認：
+// cm.setPartsOpacity(index, value) / cm.getPartsOpacity(index) 是公開方法（注意是 Parts
+// 不是 Part，多一個 s），內部的 PartsData 陣列存在私有欄位 cm._$5S._$F2（沒有官方文件），
+// 但陣列裡每個 PartsData 物件有公開方法 getPartsID() 可以拿到可讀的 ID 字串，不用硬讀私有欄位。
+function buildPartInspectorC2(cm) {
+  const listEl = document.getElementById('partList');
+  listEl.innerHTML = '';
+  const partsArr = cm._$5S && cm._$5S._$F2;
+  const n = Array.isArray(partsArr) ? partsArr.length : 0;
+
+  const baseline = [];
+  for (let i = 0; i < n; i++) {
+    try { baseline[i] = cm.getPartsOpacity(i); } catch { baseline[i] = 1; }
+  }
+
+  for (let i = 0; i < n; i++) {
+    let id = '#' + i;
+    try { id = partsArr[i].getPartsID().id; } catch {}
+    appendParamRow(listEl, id, 0, 1, baseline[i], (v) => {
+      try { cm.setPartsOpacity(i, v); } catch {}
+    });
+  }
+  document.getElementById('partResetAll').onclick = () => {
+    for (let i = 0; i < n; i++) { try { cm.setPartsOpacity(i, baseline[i]); } catch {} }
+    buildPartInspectorC2(cm);
+  };
+}
+
+function buildPartInspector(model) {
+  const listEl = document.getElementById('partList');
+  listEl.innerHTML = '';
+
+  const cm = model.internalModel && model.internalModel.coreModel;
+  if (cm && typeof cm.getPartCount === 'function' && typeof cm.getPartOpacityByIndex === 'function') {
+    buildPartInspectorC34(cm);
+    return;
+  }
+
+  if (cm && typeof cm.setPartsOpacity === 'function' && cm._$5S && Array.isArray(cm._$5S._$F2)) {
+    buildPartInspectorC2(cm);
+    return;
+  }
+
+  listEl.innerHTML = '<div style="color:#789">這個模型偵測不到任何已知的 Part/Parts 透明度介面' +
+    '（Cubism 3/4 或 Cubism 2 皆未偵測到），所以這裡沒有東西可以列。</div>';
+}
+
+// ── VISIBLE 參數 → Part 透明度 同步（修補 pixi-live2d-display 的 Cubism 2 缺陷）──
+// Cubism 2 的 .mtn 動作檔用 `VISIBLE:PARTS_xxx` 這種命名的「Parameter」來描述 Part 淡入淡出，
+// 動作播放時這個 Parameter 的數值本身會正確跑（實測 getParamFloat 曲線正確），但
+// pixi-live2d-display 官方只在 model.json 有宣告 parts_visible 群組時才會把它接到
+// setPartsOpacity；而且它那套群組邏輯是「互斥選項淡入淡出」語意（全部歸零時反而會拉回1），
+// 跟我們要的「淡出後維持透明」語意不合，所以不能靠 parts_visible 解決。
+// 這裡改成每一幀直接把每個 VISIBLE:<PartID> Parameter 的即時值蓋回同名 Part 的透明度，
+// 繞過官方那條有問題的路徑，讓 .mtn 裡本來就寫好的淡出曲線可以正常顯示。
+function attachVisibilitySync(model) {
+  const cm = model.internalModel && model.internalModel.coreModel;
+  if (!cm || typeof cm.getParamIndex !== 'function' || !cm._$5S || !Array.isArray(cm._$5S._$F2)) {
+    return null; // 只有 Cubism 2 模型才有這個問題（Cubism 3/4 走官方 setParameterValueById 那套，沒這個坑）
+  }
+  const partsArr = cm._$5S._$F2;
+  const mappings = [];
+  partsArr.forEach((p, partIdx) => {
+    let id;
+    try { id = p.getPartsID().id; } catch { return; }
+    const paramIdx = cm.getParamIndex('VISIBLE:' + id);
+    if (paramIdx >= 0) mappings.push({ paramIdx, partIdx });
+  });
+  if (!mappings.length) return null;
+
+  const sync = () => {
+    // 凍結待機動作是設計給「手動測參數/拉 Part 透明度滑桿」用的，這個同步如果在凍結時還繼續跑，
+    // 會把 Parameter 檢查器/Part 檢查器手動改的值每幀蓋回去，滑桿等於失效，所以凍結時跳過同步。
+    if (freezeIdle) return;
+    mappings.forEach(({ paramIdx, partIdx }) => {
+      cm.setPartsOpacity(partIdx, cm.getParamFloat(paramIdx));
+    });
+  };
+  // 優先度必須嚴格夾在 NORMAL(0，pixi-live2d-display 用來跑 model.update() 更新 Parameter 曲線)
+  // 和 LOW(-25，PIXI.Application 自己的 render 用這個) 之間：PIXI Ticker 對「相同優先度」的節點
+  // 是照註冊順序排在後面，如果直接用 LOW，我們會排在 render 後面而不是前面，等於慢一幀才生效
+  // （肉眼看不出來，但邏輯上是錯的），所以這裡用 LOW+1，確保「更新 Parameter → 同步 Part 透明度
+  // → 渲染」這個順序在同一幀內是嚴格成立的。
+  PIXI.Ticker.shared.add(sync, null, PIXI.UPDATE_PRIORITY.LOW + 1);
+  return sync;
+}
+
+function buildParamInspector(model) {
+  const listEl = document.getElementById('paramList');
+  listEl.innerHTML = '';
+
+  const cm = model.internalModel && model.internalModel.coreModel;
+
+  if (cm && typeof cm.getParameterCount === 'function') {
+    buildParamInspectorC34(cm);
+    return;
+  }
+
+  try {
+    const mc = cm && typeof cm.getModelContext === 'function' ? cm.getModelContext() : null;
+    const hasBasicApi = mc && typeof mc.getParamMax === 'function' && typeof mc.getParamFloat === 'function';
+    const ids = mc && Array.isArray(mc._$pb) ? mc._$pb : null;
+    if (hasBasicApi && ids && ids.length) {
+      buildParamInspectorC2(cm, mc, ids.length, ids);
+      return;
+    }
+  } catch (err) {
+    console.error('[ParamInspector] Cubism 2 偵測失敗', err);
+  }
+
+  listEl.innerHTML = '<div style="color:#789">此模型不支援這個檢查器（偵測不到已知的 Cubism 2 或 Cubism 3/4 ' +
+    'Parameter 介面）。</div>';
+}
+
+function stepChar(delta) {
+  const total = charSel.options.length;
+  if (!total) return;
+  const idx = (charSel.selectedIndex + delta + total) % total;
+  charSel.selectedIndex = idx;
+  loadSelected();
+}
+
+function initKeyNav() {
+  document.addEventListener('keydown', (e) => {
+    if (document.activeElement === filterEl || document.activeElement === manualPathInput) return;
+    if (e.key === 'ArrowRight')      { e.preventDefault(); stepChar(1); }
+    else if (e.key === 'ArrowLeft')  { e.preventDefault(); stepChar(-1); }
+    else if (e.key === '.')          { e.preventDefault(); stepMotion(1); }
+    else if (e.key === ',')          { e.preventDefault(); stepMotion(-1); }
+    else if (e.key === ']')          { e.preventDefault(); stepExpr(1); }
+    else if (e.key === '[')          { e.preventDefault(); stepExpr(-1); }
+  });
+}
+
+async function main() {
+  setStatus('讀取 config/manifest.json + config/names.json...');
+  const [manifestRes, namesRes] = await Promise.all([
+    fetch('config/manifest.json', { cache: 'no-store' }),
+    fetch('config/names.json', { cache: 'no-store' }),
+  ]);
+  const rawManifest = await manifestRes.json();
+  const names = await namesRes.json();
+
+  manifest = rawManifest
+    .map(e => ({ ...e, displayName: names[e.path] || e.character }))
+    .sort((a, b) => a.id - b.id);
+
+  populateChars();
+  initPixi();
+  initKeyNav();
+  setStatus(`已讀取 ${manifest.length} 個角色（來自 live2d_my_like/config/manifest.json）。\n` +
+    `← → 切換角色／模型，, . 切換動作，[ ] 切換表情（篩選/手動路徑輸入框有焦點時不生效）。\n` +
+    `搜尋框輸入純數字 = 直接跳到清單第幾筆並自動載入（跟上方「第 X / 共 Y 筆」同一套編號）。\n` +
+    `不在 manifest.json 裡的資料夾（例如 girl120_test、kuroneko_test 這類工作副本）用上面「手動路徑」輸入框直接載入。`);
+
+  let _filterTid = null;
+  filterEl.addEventListener('input', () => {
+    clearTimeout(_filterTid);
+    _filterTid = setTimeout(populateChars, 200);
+  });
+  charSel.addEventListener('change', loadSelected);
+
+  manualLoadBtn.addEventListener('click', () => {
+    const p = manualPathInput.value.trim();
+    if (!p) return;
+    loadPath(p, '(手動路徑)');
+  });
+  manualPathInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') manualLoadBtn.click();
+  });
+
+  const inspectorPanel = document.getElementById('paramInspector');
+  document.getElementById('paramInspectorToggle').addEventListener('click', () => {
+    inspectorPanel.style.display = inspectorPanel.style.display === 'none' ? 'block' : 'none';
+  });
+
+  const partPanel = document.getElementById('partInspector');
+  document.getElementById('partInspectorToggle').addEventListener('click', () => {
+    partPanel.style.display = partPanel.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.getElementById('freezeIdleToggle').addEventListener('change', (e) => {
+    freezeIdle = e.target.checked;
+    applyIdleFreezeState();
+  });
+
+  loadSelected();
+}
+
+main();
+</script>
+</body>
+</html>

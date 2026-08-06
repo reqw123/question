@@ -3,36 +3,343 @@
     "id": 1,
     "path": "models/076/c_7001.model3.json",
     "character": "076",
-    "cubism": 4
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": 1.58,
+      "headRatio": 0.3,
+      "headXRatio": 0.5,
+      "bubbleGrow": "right"
+    },
+    "chatSounds": [],
+    "partOverrides": {
+      "Part6": 0,
+      "Part8": 0,
+      "Part9": 0
+    },
+    "paramOverrides": {}
   },
   {
     "id": 2,
     "path": "models/077/c_7002.model3.json",
     "character": "077",
-    "cubism": 4
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
   },
   {
     "id": 3,
-    "path": "models/1009109/1009109.model3.json",
-    "character": "1009109",
-    "cubism": 4
+    "path": "models/1003104/1003104.model3.json",
+    "character": "1003104",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {
+      "PartCore": 0,
+      "PartFrontHair": 0,
+      "PartEyebrow": 0,
+      "PartEyeL": 0,
+      "PartEyeR": 0,
+      "PartCheek": 0
+    },
+    "paramOverrides": {}
   },
   {
     "id": 4,
-    "path": "models/1014107/1014107.model3.json",
-    "character": "1014107",
-    "cubism": 4
+    "path": "models/1009109/1009109.model3.json",
+    "character": "1009109",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
   },
   {
     "id": 5,
-    "path": "models/1024100/1024100.model3.json",
-    "character": "1024100",
-    "cubism": 4
+    "path": "models/1014107/1014107.model3.json",
+    "character": "1014107",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
   },
   {
     "id": 6,
+    "path": "models/1024100/1024100.model3.json",
+    "character": "1024100",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 7,
+    "path": "models/1064100/1064100.model3.json",
+    "character": "1064100",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": 1.07999,
+      "headRatio": 0.2,
+      "headXRatio": 0.63,
+      "bubbleGrow": "right"
+    },
+    "chatSounds": [],
+    "partOverrides": {
+      "PartFrontHair": 0
+    },
+    "paramOverrides": {
+      "PARAM_CHEEK_02": 0,
+      "PARAM_CHEEK_03": 0,
+      "PARAM_CHEEK_04": 0,
+      "PARAM_CHEEK_05": 0
+    }
+  },
+  {
+    "id": 8,
+    "path": "models/1074100/1074100.model3.json",
+    "character": "1074100",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 9,
+    "path": "models/88type_5308_normal/model.json",
+    "character": "88type_5308_normal",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 10,
+    "path": "models/aek999_1505_destroy/model.json",
+    "character": "aek999_1505_destroy",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 11,
+    "path": "models/ar15mod_destroy/model.json",
+    "character": "ar15mod_destroy",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 12,
+    "path": "models/browninghp_4602_normal/model.json",
+    "character": "browninghp_4602_normal",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 13,
+    "path": "models/furina/芙宁娜.model3.json",
+    "character": "furina",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 14,
+    "path": "models/girl120/l2d01.u.model3.json",
+    "character": "girl120",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 15,
+    "path": "models/home_cat/home_cat.model3.json",
+    "character": "home_cat",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [
+      "../特定角色語音/cat.mp3"
+    ],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 16,
+    "path": "models/kuroneko/kuroneko.model3.json",
+    "character": "kuroneko",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 17,
     "path": "models/pinghai_4/pinghai_4.model3.json",
     "character": "pinghai_4",
-    "cubism": 4
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 18,
+    "path": "models/芙宁娜（vts）/芙宁娜.model3.json",
+    "character": "芙宁娜（vts）",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 19,
+    "path": "models/076/c_7001_texture00.model3.json",
+    "character": "076",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
   }
 ]

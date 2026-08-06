@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>模型命名管理</title>
+<style>
+  :root { --cyan: #00d4ff; --bg: #14181f; --border: rgba(255,255,255,0.12); --text: #eee; --text2: #9aa4b2; --warn: #ffb454; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.5 -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  #status {
+    padding: 10px 14px; font-size: .82em; color: var(--text2); border-bottom: 1px solid var(--border);
+  }
+  #status.mismatch { color: var(--warn); }
+  #list {
+    flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .row {
+    display: grid; grid-template-columns: 44px 1fr 130px 1fr; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px;
+  }
+  .row:hover { background: rgba(255,255,255,0.04); }
+  .row .id { color: var(--text2); font-variant-numeric: tabular-nums; }
+  .row .path { color: var(--text2); font-size: .85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  select, input[type=text] {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 5px 7px; font-size: .9em; width: 100%;
+  }
+  /* <select> 展開的選項清單是瀏覽器原生彈出視窗，不會自動繼承頁面的深色背景/文字顏色，
+     Chromium（Electron 底層也是）需要額外對 <option> 本身設 background/color 才會套用到
+     展開清單，不然選單會用系統預設的白底黑字，在這個深色主題裡幾乎看不清楚。 */
+  select option {
+    background: var(--bg);
+    color: var(--text);
+  }
+  #actions {
+    display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border);
+  }
+  button {
+    flex: 1; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: .88em; cursor: pointer;
+  }
+  button:hover { border-color: var(--cyan); }
+  #btn-save { background: var(--cyan); color: #06222b; border-color: var(--cyan); font-weight: 700; }
+  #btn-save:disabled { background: rgba(255,255,255,0.06); color: var(--text2); border-color: var(--border); cursor: default; }
+  #saveMsg { font-size: .8em; padding: 0 14px 8px; min-height: 1.4em; color: var(--text2); }
+</style>
+</head>
+<body>
+  <div id="status">讀取中...</div>
+  <div id="list"></div>
+  <div id="saveMsg"></div>
+  <div id="actions">
+    <button id="btn-close">關閉</button>
+    <button id="btn-save" disabled>儲存</button>
+  </div>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const listEl = document.getElementById('list');
+  const saveMsgEl = document.getElementById('saveMsg');
+  const saveBtn = document.getElementById('btn-save');
+  const closeBtn = document.getElementById('btn-close');
+
+  let manifest = [];
+  let originalNames = {};
+  let currentValues = {};   // path -> 目前欄位裡的值（還沒存檔）
+  let historyPool = [];     // names_history.json 內容：只增不減的歷史名字清單
+
+  function updateSaveState() {
+    const changed = manifest.some((e) => (currentValues[e.path] || '') !== (originalNames[e.path] || ''));
+    saveBtn.disabled = !changed;
+  }
+
+  function pickerOptionsHtml() {
+    return '<option value="">— 從名字池挑選 —</option>' +
+      historyPool.map((n) => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+  }
+
+  // 存檔成功後歷史池可能多了新名字，不用整個重新整理列表（會弄丟使用者還沒存的其他欄位），
+  // 只重新填每個 <select> 的選項內容，並保留它目前選到的值。
+  function refreshPickerOptions() {
+    document.querySelectorAll('#list select').forEach((picker) => {
+      const cur = picker.value;
+      picker.innerHTML = pickerOptionsHtml();
+      picker.value = cur;
+    });
+  }
+
+  function render(data) {
+    manifest = data.manifest || [];
+    originalNames = data.names || {};
+    currentValues = { ...originalNames };
+    historyPool = (data.history || []).slice().sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+
+    const nameCount = Object.keys(originalNames).length;
+    const mismatch = nameCount !== manifest.length;
+    statusEl.textContent = `manifest.json ${manifest.length} 筆 / names.json ${nameCount} 筆` +
+      (mismatch ? '　⚠️ 筆數對不上，可能有模型被新增或刪除，建議檢查一輪' : '　✓ 筆數一致');
+    statusEl.className = mismatch ? 'mismatch' : '';
+
+    listEl.innerHTML = '';
+    manifest.forEach((e) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const idEl = document.createElement('div');
+      idEl.className = 'id';
+      idEl.textContent = '#' + e.id;
+
+      const pathEl = document.createElement('div');
+      pathEl.className = 'path';
+      pathEl.title = e.path;
+      pathEl.textContent = e.path;
+
+      const picker = document.createElement('select');
+      picker.innerHTML = pickerOptionsHtml();
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = e.character;
+      input.value = originalNames[e.path] || '';
+      input.addEventListener('input', () => {
+        currentValues[e.path] = input.value;
+        updateSaveState();
+      });
+
+      picker.addEventListener('change', () => {
+        if (picker.value) {
+          input.value = picker.value;
+          currentValues[e.path] = picker.value;
+          updateSaveState();
+        }
+      });
+
+      row.appendChild(idEl);
+      row.appendChild(pathEl);
+      row.appendChild(picker);
+      row.appendChild(input);
+      listEl.appendChild(row);
+    });
+
+    updateSaveState();
+  }
+
+  window.nameManager.onInit(render);
+
+  window.nameManager.onSaved((result) => {
+    if (result.ok) {
+      saveMsgEl.textContent = '已儲存。';
+      saveMsgEl.style.color = '';
+      originalNames = { ...currentValues };
+      if (result.history) {
+        historyPool = result.history.slice().sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+        refreshPickerOptions();
+      }
+      updateSaveState();
+    } else {
+      saveMsgEl.textContent = '儲存失敗：' + result.error;
+      saveMsgEl.style.color = '#ff6b6b';
+    }
+  });
+
+  saveBtn.addEventListener('click', () => {
+    // 空字串代表「用預設資料夾名」，跟 generate-manifest.js 的行為一致，不用寫進 names.json
+    const out = {};
+    manifest.forEach((e) => {
+      const v = (currentValues[e.path] || '').trim();
+      if (v) out[e.path] = v;
+    });
+    window.nameManager.save(out);
+  });
+
+  closeBtn.addEventListener('click', () => window.nameManager.close());
+</script>
+</body>
+</html>

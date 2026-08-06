@@ -1,8 +1,21 @@
 {
   "models/076/c_7001.model3.json": "納茲",
-  "models/077/c_7002.model3.json": "露西",
+  "models/077/c_7002.model3.json": "077",
+  "models/1003104/1003104.model3.json": "1003104",
   "models/1009109/1009109.model3.json": "1009109",
   "models/1014107/1014107.model3.json": "1014107",
   "models/1024100/1024100.model3.json": "1024100",
-  "models/pinghai_4/pinghai_4.model3.json": "pinghai_4"
+  "models/1064100/1064100.model3.json": "1064100",
+  "models/1074100/1074100.model3.json": "1074100",
+  "models/88type_5308_normal/model.json": "88type_5308_normal",
+  "models/aek999_1505_destroy/model.json": "aek999_1505_destroy",
+  "models/ar15mod_destroy/model.json": "ar15mod_destroy",
+  "models/browninghp_4602_normal/model.json": "browninghp_4602_normal",
+  "models/furina/芙宁娜.model3.json": "furina",
+  "models/girl120/l2d01.u.model3.json": "girl120",
+  "models/home_cat/home_cat.model3.json": "home_cat",
+  "models/kuroneko/kuroneko.model3.json": "kuroneko",
+  "models/pinghai_4/pinghai_4.model3.json": "pinghai_4",
+  "models/芙宁娜（vts）/芙宁娜.model3.json": "芙宁娜（vts）",
+  "models/076/c_7001_texture00.model3.json": "納茲（texture_00・待驗證）"
 }

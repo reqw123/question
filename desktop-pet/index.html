@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Live2D 桌面掛件</title>
-<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="../lib/style.css">
 <style>
   html, body {
     margin: 0;
@@ -27,28 +27,88 @@
 </style>
 </head>
 <body>
-<div id="hint">F8 還原預設位置/縮放　F9 切換互動／拖曳角色　F10 結束　（快捷鍵沒反應請用系統匣圖示右鍵選單）</div>
+<div id="hint">F8 還原預設位置/縮放　F9 切換互動／拖曳角色　F10 結束　數字鍵盤 1-9 觸發情境　（快捷鍵沒反應請用系統匣圖示右鍵選單）</div>
 
 <script>
-  // 桌寵唯一的聲音來源是 L2D 閒話家常的隨機音效（chatSounds），跟 multi/SoundSystem.js
-  // 一樣攔截 Audio 建構子做靜音控制，但不引入 SoundSystem.js 本身（那個是給遊戲 SFX/BGM
-  // 用的，桌寵不需要，也不想預先載入 sound/track1~7.mp3 這些用不到的檔案）。
-  var soundEnabled = false;  // 預設靜音
+  // 桌寵有兩種聲音來源，各自獨立靜音（一開始 TTS 加進來時跟閒聊共用一顆開關，
+  // 實際用起來發現閒置閒聊的隨機音效很吵、但即時對話的語音回覆又想聽得到，
+  // 兩者需求相反，才拆成兩顆）：
+  //   - chatSounds：L2D 閒話家常的隨機音效，跟 multi/SoundSystem.js 一樣攔截 Audio
+  //     建構子做靜音控制，但不引入 SoundSystem.js 本身（那個是給遊戲 SFX/BGM 用的，
+  //     桌寵不需要，也不想預先載入 sound/track1~7.mp3 這些用不到的檔案）。
+  //   - TTS：即時對話／語音測試的回覆語音（見 playTtsAudio()）。
+  // 兩者都是透過同一個被攔截的 window.Audio 建構子建立，用 _creatingTtsAudio 這個
+  // 旗標在「建構的當下」標記這一個 Audio 實例是不是 TTS——建構子本身沒辦法從參數
+  // 分辨兩者（chatSounds 是檔案路徑、TTS 是 data URL，硬要用網址格式判斷太脆弱），
+  // 呼叫端（playTtsAudio）建立音訊物件前後把旗標開/關是最單純可靠的做法。
+  var soundEnabled = false;     // 閒置閒聊音效，預設靜音（跟原本行為一致）
+  var ttsSoundEnabled = true;   // 即時對話/語音測試回覆，預設開（主動觸發才會有聲音，預設要聽得到）
   // 記錄所有建立過的音訊元素，讓靜音按鈕能立刻停掉當下正在播的聲音
   // （不只是影響之後新建立的），跟 multi/SoundSystem.js 同樣手法
   var _allAudio = new Set();
+  var _creatingTtsAudio = false;
   (function () {
     const _Orig = window.Audio;
     window.Audio = function (...args) {
       const a = new _Orig(...args);
-      a.muted = !soundEnabled;
+      a._isTts = _creatingTtsAudio;
+      a.muted = a._isTts ? !ttsSoundEnabled : !soundEnabled;
       _allAudio.add(a);
       a.addEventListener('ended', () => _allAudio.delete(a));
       return a;
     };
     window.Audio.prototype = _Orig.prototype;
   })();
+
+  // ── 語音播放（main process 呼叫 OpenAI TTS 後把音檔 bytes 送過來播）─────────
+  // 音檔用 new Audio(dataUrl) 播放，會自動被上面的 Audio 建構子攔截接管
+  // （套用目前的 TTS 靜音狀態、標記成 _isTts、加進 _allAudio 讓對應的靜音鈕能立刻
+  // 停掉），不用另外接靜音邏輯。見 docs/specs/0001-desktop-pet-tts-playback.md 的
+  // Acceptance Criteria #3/#4/#10。
+  var _currentTtsAudio = null;
+  function playTtsAudio(audioBase64, charKey) {
+    // 新語音播放前先停掉還在播的舊語音，避免兩段疊在一起變成聽不清楚的雜音；
+    // 嘴型同步（見下面 window.startLipSync/stopLipSync，定義在 lib/live2d.js 載入
+    // 之後那個 <script>，這裡呼叫時一定已經存在）也跟著停掉，不留在張嘴狀態。
+    if (_currentTtsAudio) {
+      try { _currentTtsAudio.pause(); } catch {}
+      _currentTtsAudio = null;
+    }
+    if (window.stopLipSync) window.stopLipSync();
+    _creatingTtsAudio = true;
+    const a = new Audio('data:audio/mpeg;base64,' + audioBase64);
+    _creatingTtsAudio = false;
+    _currentTtsAudio = a;
+    // 播放真的結束（或失敗）才回報 main process（見 docs/specs/0004）——main process
+    // 的 chat-send 會等這個回報才 resolve，文字/語音下一輪送出前都會等角色把話講完，
+    // 節奏才會一致（也避免使用者手動重開麥克風時剛好錄到角色自己還沒講完的聲音）。
+    const reportFinished = () => {
+      if (_currentTtsAudio === a) _currentTtsAudio = null;
+      if (window.stopLipSync) window.stopLipSync();
+      if (window.petBridge && window.petBridge.ttsPlaybackFinished) window.petBridge.ttsPlaybackFinished();
+    };
+    a.addEventListener('ended', reportFinished);
+    a.addEventListener('error', reportFinished);
+    // 靜音時（a.muted，見上面的 Audio 建構子攔截）不驅動嘴型同步——靜音鈕的心智模型是
+    // 「桌寵安不安靜」，沒聲音時嘴巴也不用裝忙（見 spec 的 Edge Cases）。
+    if (window.startLipSync && !a.muted) window.startLipSync(a, charKey);
+    // play() 回傳的 Promise 在沒有作用中音訊輸出裝置等情況下會 reject，
+    // 接住印出來，不要變成 unhandled rejection 讓終端機噴一堆看不懂的錯誤；
+    // 播放真的啟動失敗的話，'ended'/'error' 都不會觸發，這裡也要回報，
+    // 不然 main process 只能乾等到 30 秒逾時才放行。
+    a.play().catch((err) => { console.error('[desktop-pet] 語音播放失敗：', err); reportFinished(); });
+  }
+  if (window.petBridge && window.petBridge.onPlayTtsAudio) {
+    window.petBridge.onPlayTtsAudio(({ audioBase64, charKey }) => playTtsAudio(audioBase64, charKey));
+  }
 </script>
+
+<!-- lipsync.js／silence-detector.js 是 desktop-pet 自己的模組（不是共用函式庫），
+     各自的測試 seam，見 docs/specs/0003-desktop-pet-lip-sync.md／
+     0004-desktop-pet-voice-input.md；都掛到 window.XxxYyy，見各檔案結尾的
+     UMD 判斷分流。 -->
+<script src="lipsync.js"></script>
+<script src="silence-detector.js"></script>
 
 <!-- 沿用專案既有函式庫（唯讀引用，未修改任何檔案）-->
 <script src="../lib/live2d.min.js"></script>
@@ -56,6 +116,10 @@
 <script src="../lib/pixi.min.js"></script>
 <script src="../lib/all.min.js"></script>
 <script src="../lib/live2d.js"></script>
+<!-- 情境演出（ScenePlayer）用得到 L2D.trigger()（帶手勢的動作），跟 multi/host.html／
+     player.html 用的是同一支檔案，本身沒有任何 DOM／MP_CFG／MP_TOPICS 依賴，桌寵這種
+     沒有 MQTT/計分板的環境一樣能單獨載入。 -->
+<script src="../multi/L2DGesturePlayer.js"></script>
 <script>
   // ── 桌寵可調參數集中在這裡，方便找、方便改（其餘程式碼一律讀這個物件，不要散在各處寫死數字）──
   const PET_CFG = {
@@ -87,10 +151,27 @@
     if (_dC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _dC2Pick;
   })();
 
-  // 桌寵不限制主要角色 slots 數量（引擎層沒有上限；目前 slots 仍只定義 c1/c2 兩筆，
-  // 這行主要是明確表態「未來要加就直接加，不會被引擎擋」）。
-  // 「額外寵物」（見下方 loadExtraPet）走獨立系統，不受這個值影響。
+  // 桌寵不限制主要角色 slots 數量（引擎層沒有上限），但 lib/live2d.js 目前其實已經定義了
+  // char3/char4（enabled:true，預設 manifestId 分別指向 id:1 納茲、id:2 露西——上面那段
+  // 註解原本以為「目前 slots 仍只定義 c1/c2 兩筆」是過時的錯誤假設）。桌寵的角色三/角色四
+  // 從來沒有對應的系統匣選單可以設定或關閉，maxChars=Infinity 會讓它們用這組寫死的預設值
+  // 靜靜跑起來，變成使用者怎麼選都關不掉、也不知道哪來的納茲/露西。桌寵要顯示「兩個以上」
+  // 角色，走的是下面獨立的「額外寵物」系統（使用者主動勾選才載入），char3/char4 這兩個
+  // slots 在桌寵這邊完全用不到，直接關掉，避免跟額外寵物系統疊出使用者沒選過的角色。
+  L2D_CFG.char3.enabled = false;
+  L2D_CFG.char4.enabled = false;
   L2D_CFG.maxChars = Infinity;
+
+  // L2D_CFG.paddingLeft（預設 '40vw'）是網頁模式專用的「文字泡泡安全區」邊界——host.html/
+  // player.html 把遊戲內容推到畫面右邊 40vw 之後，角色一（bubbleGrow:'right'，泡泡向右長）
+  // 的泡泡寬度會被夾在「不能超過遊戲內容左緣」，超出的部分自動換行收進安全區
+  // （見 lib/live2d.js 的 _updateSpeechPosFor()）。桌寵沒有「遊戲內容」這種東西要避開，
+  // 角色可以被拖到滿版透明視窗的任何角落——角色一只要站在畫面右側 40% 以外，這個安全區
+  // 算出來的 maxWidth 就會被夾到只剩 120px 的極窄欄位，文字被迫擠成一長串直排，看起來
+  // 就像「文字跑到很遠的地方去了」。桌寵這邊蓋成一個大到不會卡到任何角色的值，等於沒有
+  // 安全區限制，泡泡永遠可以用到螢幕邊緣為止（角色二 bubbleGrow:'left' 那個分支本來就是
+  // 純螢幕相對算法，沒有這個問題，不用特別處理）。
+  L2D_CFG.paddingLeft = '100vw';
 
   // 跟網頁模式（multi/host.html、multi/player.html）用同一套「閒置動作＋表情」機制
   // （lib/live2d.js 的 startIdleMotion／startIdleChat），取代桌寵原本自己那份 MOTION_SEQUENCE
@@ -104,7 +185,28 @@
   // L2D.init() 真正 resolve 才代表兩個角色都嘗試載入完成，比「腳本檔案載入完成」更準確的就緒判斷，
   // 供系統匣選單（main.js 的 triggerMotion()）判斷要不要執行手動觸發的動作。
   window._l2dReady = false;
-  L2D.init().then(() => {
+
+  // 桌寵閒話家常要說的台詞放在外部 idle-chat.json（跟 scenes.json 同一種「資料檔案 +
+  // fetch 讀取」模式），跟網頁模式（host.html/player.html）共用的 lib/live2d.js 內建
+  // 50 句陪伴台詞（L2D_CHAT_C1/C2，原本是為「使用者在答題」這個情境寫的）完全脫鉤——
+  // 不是共用同一份內容加個開關，是桌寵講自己獨立管理的台詞庫，透過 L2D.setIdleChatLines()
+  // 蓋掉引擎預設值；網頁模式從沒呼叫過這個方法，行為完全不受影響。
+  window._idleChatPairs = [];
+  async function _loadIdleChat() {
+    window._idleChatPairs = await fetch('idle-chat.json', { cache: 'no-store' })
+      .then(r => r.json())
+      .catch(err => { console.error('[pet] idle-chat.json 讀取失敗:', err); return []; });
+    L2D.setIdleChatLines(
+      window._idleChatPairs.map(p => p.c1),
+      window._idleChatPairs.map(p => p.c2)
+    );
+  }
+  // 情境編輯器的「閒話台詞」分頁存檔後，main.js 會呼叫這個讓桌寵立刻套用最新內容，
+  // 不用重開桌寵；下一次 startIdleChat 的 fire() 本來就每次都重新讀最新內容，這裡
+  // 只是提早把新台詞餵進去，不用等閒置循環自然轉到下一輪。
+  window.reloadIdleChat = _loadIdleChat;
+
+  Promise.all([L2D.init(), _loadIdleChat()]).then(() => {
     window._l2dReady = true;
     L2D.startIdleChat(PET_CFG.idleMotionMs);
     L2D.startIdleMotion(PET_CFG.idleMotionMs);
@@ -121,6 +223,424 @@
       if (cv.style.pointerEvents !== 'auto') cv.style.pointerEvents = 'auto';
     }).observe(cv, { attributes: true, attributeFilter: ['style'] });
   });
+
+  // ── 嘴型同步（docs/specs/0003-desktop-pet-lip-sync.md）────────────────────
+  // 音量分析邏輯在 lipsync.js（唯一測試 seam，見 window.LipSync）；這裡是薄膠水層：
+  // AnalyserNode 接線、PIXI.Ticker 驅動、L2D 參數存取，都是需要真實瀏覽器/PIXI/
+  // Cubism 環境才能跑的部分，不寫自動測試。
+  (function () {
+    if (!window.LipSync) {
+      console.warn('[desktop-pet] lipsync.js 沒載入成功，嘴型同步跳過（語音播放不受影響）');
+      return;
+    }
+    const { analyzeMouthOpenness } = window.LipSync;
+
+    // 不同模型的嘴巴參數命名不一致（研究報告發現的落差），依序試這幾個候選 ID。
+    const MOUTH_PARAM_CANDIDATES = ['ParamMouthOpenY', 'PARAM_MOUTH_OPEN_Y'];
+    // charKey -> 參數 ID（string）或 null（偵測過、確定沒有可用參數，之後不再重試/警告）。
+    // 不在這個物件裡的 key 代表還沒偵測過。
+    const mouthParamIdCache = {};
+    const mouthValueCache = { c1: 0, c2: 0 }; // 平滑用的前一幀值
+
+    function getCoreModel(charKey) {
+      const state = L2D['_' + charKey];
+      return (state && state.ready && state.model && state.model.internalModel)
+        ? state.model.internalModel.coreModel
+        : null;
+    }
+
+    // 沿用 lib/live2d.js 的 L2D._getParamIds()（_applyParamOverrides 已經在用的同一個
+    // public 方法），不重新發明一套參數清單讀取邏輯。
+    function detectMouthParamId(charKey) {
+      if (charKey in mouthParamIdCache) return mouthParamIdCache[charKey];
+      const cm = getCoreModel(charKey);
+      if (!cm || typeof L2D._getParamIds !== 'function') return undefined; // 模型還沒 ready，不快取，之後再試（跟「確定沒有可用參數」的 null 要分清楚，見下方呼叫端的判斷）
+      const knownIds = L2D._getParamIds(cm);
+      const found = knownIds ? MOUTH_PARAM_CANDIDATES.find((id) => knownIds.has(id)) : null;
+      mouthParamIdCache[charKey] = found || null;
+      if (!found) {
+        console.warn(`[desktop-pet] ${charKey} 沒有偵測到可用的嘴巴參數（試過 ${MOUTH_PARAM_CANDIDATES.join('/')}），嘴型同步跳過這個角色，語音/文字泡泡不受影響`);
+      }
+      return mouthParamIdCache[charKey];
+    }
+
+    // 跟 lib/live2d.js 的 _applyParamOverrides 同一套 Cubism 2/3/4 相容寫法。
+    function setMouthValue(charKey, paramId, value) {
+      const cm = getCoreModel(charKey);
+      if (!cm) return;
+      try {
+        if (typeof cm.setParameterValueById === 'function') {
+          cm.setParameterValueById(paramId, value);
+        } else if (typeof cm.setParamFloat === 'function') {
+          cm.setParamFloat(paramId, value);
+        }
+      } catch (err) {
+        // 安靜失敗——嘴型同步是語音播放的加分項，不能讓這裡的例外連帶影響語音本身。
+      }
+    }
+
+    // 一次只會有一個角色在講話（見 0001 spec「新語音進來停掉舊的」），不用處理多角色同時驅動。
+    let activeLip = null; // { charKey, analyser, dataArray }
+
+    window.startLipSync = function (audioEl, charKey) {
+      window.stopLipSync();
+      if (!charKey || (charKey !== 'c1' && charKey !== 'c2')) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const source = ctx.createMediaElementSource(audioEl);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        // 一定要接回喇叭，不然語音的音訊會被導進分析圖但出不了聲音——研究報告點名的陷阱。
+        analyser.connect(ctx.destination);
+        activeLip = { charKey, analyser, dataArray: new Uint8Array(analyser.fftSize) };
+      } catch (err) {
+        console.warn('[desktop-pet] 嘴型同步初始化失敗，語音照常播放：', err);
+        activeLip = null;
+      }
+    };
+
+    window.stopLipSync = function () {
+      if (activeLip) {
+        const paramId = mouthParamIdCache[activeLip.charKey];
+        if (paramId) setMouthValue(activeLip.charKey, paramId, 0); // 嘴巴閉合，交還待機動畫
+        mouthValueCache[activeLip.charKey] = 0;
+      }
+      activeLip = null;
+    };
+
+    // 跟 lib/live2d.js 的 _attachVisibilitySync 同一個優先度插槽（NORMAL 曲線更新之後、
+    // LOW 渲染之前），確保這裡寫的嘴巴參數值不會被同一幀的模型自身曲線更新蓋掉
+    // （研究報告 §5.4 點名的陷阱，這個專案自己也踩過同一個坑）。
+    if (window.PIXI && PIXI.Ticker && PIXI.Ticker.shared) {
+      PIXI.Ticker.shared.add(() => {
+        if (!activeLip) return;
+        const { charKey, analyser, dataArray } = activeLip;
+        const paramId = detectMouthParamId(charKey);
+        if (paramId === null) { activeLip = null; return; } // 確定沒有可用參數，不用再嘗試
+        if (paramId === undefined) return; // 模型還沒 ready，這一幀先跳過，下一幀再試
+        analyser.getByteTimeDomainData(dataArray);
+        const value = analyzeMouthOpenness({ timeDomainData: dataArray, previousValue: mouthValueCache[charKey] });
+        mouthValueCache[charKey] = value;
+        setMouthValue(charKey, paramId, value);
+      }, null, PIXI.UPDATE_PRIORITY.LOW + 1);
+    }
+  })();
+
+  // ── 情境演出（ScenePlayer）──────────────────────────────────────────────────
+  // 只作用於角色一／角色二（L2D._c1/_c2），跟 lib/live2d.js 的共用引擎完全不耦合：
+  // 走位直接改 state.model.x/y（跟額外寵物 _wanderLoop()、對角線飛行 _flyOneLoop() 是
+  // 同一套 easing tween 手法，這裡不是隨機亂走，是照「情境」腳本裡寫死的座標走到定點），
+  // 動作靠 L2DGesturePlayer 的 L2D.trigger(name, charKey) 分別觸發兩人不同手勢，
+  // 對話靠既有的 L2D.speak()／speak2()（本來就是寫死綁定 c1/c2 的兩個角色，跟這裡的
+  // 使用範圍完全對上，不需要另外處理其他角色）。
+  //
+  // 一個「情境」是一串步驟依序播放，每個步驟可以同時指定 c1/c2 的 moveTo/gesture/speak，
+  // 全部設定完才進入下一步（用 holdMs 控制這一步要停留多久）。播完整段情境後，兩人會照
+  // 原路（同一套 easing）走回情境開始前所在的位置，不會留在畫面中間。
+  //
+  // 情境資料本身放在外部 scenes.json（跟 manifest.json 同一種「資料檔案 + fetch 讀取」
+  // 模式），不再寫死在這支 index.html 裡——「情境編輯器」（scene-editor.html）存檔時
+  // 只覆寫 scenes.json，這裡呼叫 window.reloadScenes() 重新抓一次就生效，不用改這支
+  // 檔案的原始碼、也不用重開桌寵。moveTo 因此固定是存好的 {x,y} 字面值（編輯器用
+  // window.getCharPositions() 即時記錄桌寵目前真正的座標寫進去），不再是算相對視窗大小
+  // 的函式。
+  window._scenes = {};
+  async function _loadScenes() {
+    window._scenes = await fetch('scenes.json', { cache: 'no-store' })
+      .then(r => r.json())
+      .catch(err => { console.error('[pet] scenes.json 讀取失敗:', err); return {}; });
+  }
+  window.reloadScenes = _loadScenes; // 情境編輯器存檔後，main.js 會叫這個讓桌寵重新讀取最新內容
+  const _scenesReady = _loadScenes();
+
+  // 供「情境編輯器」視窗（透過 main.js 的 executeJavaScript）即時讀取角色一/二「目前」
+  // 的實際座標：使用者用桌寵原本就有的 ⠿ 拖曳鈕把角色拖到想要的位置後，編輯器按「記錄
+  // 目前位置」就是呼叫這個函式，抓到的是真的在畫面上跑的座標，不是另外設計一套獨立的
+  // 座標系統用色塊示意——所見即所得。角色還沒載入完成就回傳 null，編輯器自己處理。
+  window.getCharPositions = function () {
+    const s1 = L2D._c1, s2 = L2D._c2;
+    return {
+      c1: (s1 && s1.ready && s1.model) ? { x: s1.model.x, y: s1.model.y } : null,
+      c2: (s2 && s2.ready && s2.model) ? { x: s2.model.x, y: s2.model.y } : null,
+    };
+  };
+
+  // ── 文字泡泡定位校正（headRatio/headXRatio/bubbleGrow/scale）────────────────
+  // 泡泡貼著角色頭部的位置，是 lib/live2d.js 依 cfg.headRatio/headXRatio 算出來的
+  // （0=模型頂端；比例是套用在「這個模型」自己的原始尺寸上，見 lib/live2d.js 開頭說明），
+  // bubbleGrow 決定泡泡尾巴朝哪邊長（'right'=尾巴朝左、'left'=尾巴朝右，跟角色實際站在
+  // 畫面哪一側是兩件事——host.html 因為版位固定，角色一/二各自寫死一個方向就對了，
+  // 但桌寵角色可以被拖到畫面任何位置，固定方向不一定每次都對，才需要這個校正面板讓
+  // 使用者自己決定）。這幾個值都是「跟著模型走」的（manifest.json 的 layout 欄位），
+  // 換一個模型當角色一/二，舊模型調好的值通常對不上新模型。這裡供「情境編輯器」的
+  // 「泡泡校正」分頁：先讀目前實際套用的模型路徑跟現在生效的值，讓使用者用真正在跑的
+  // 畫面即時調、調好按「測試」看效果，滿意了才存回 manifest.json 該模型的 layout
+  // （不用憑感覺猜、也不會影響到其他模型或其他頁面用同一個模型時的設定）。
+  window.getBubbleConfig = function () {
+    const pick = (key) => {
+      const state = L2D['_' + key];
+      if (!state || !state.ready || !state.cfg) return null;
+      return {
+        modelPath: state.cfg.model || '',
+        headRatio: state.cfg.headRatio,
+        headXRatio: state.cfg.headXRatio,
+        bubbleGrow: state.cfg.bubbleGrow || 'right',
+        scale: state.cfg.scale,
+      };
+    };
+    return { c1: pick('c1'), c2: pick('c2') };
+  };
+
+  // 即時套用（不寫檔）：cfg 是 L2D_CFG.char1/char2 的同一個物件參照，headRatio/headXRatio/
+  // bubbleGrow 改了下一次 speak()/speak2() 就會用新值重算泡泡，不用重開桌寵。scale 不一樣
+  // ——那是模型本身的顯示大小，只改 cfg 不會立刻反映在畫面上，要重新 _fit() 一次才會真的
+  // 套用；_fit() 會照 cfg.offsetX/offsetY 重新算一次預設位置（跟原本 offsetX/offsetY/scale
+  // 用 L2D.printPos() 微調、貼回 manifest.json 那套校正流程一致，校正時不管目前有沒有被
+  // 拖到別的地方），所以測試 scale 時角色位置可能會跳回設定值算出來的預設位置，是正常的。
+  window.setBubbleConfigLive = function (charKey, opts = {}) {
+    const n = charKey.slice(1);
+    const cfg = L2D_CFG['char' + n];
+    const state = L2D['_' + charKey];
+    if (!cfg) return false;
+    if (opts.headRatio  != null) cfg.headRatio  = Number(opts.headRatio);
+    if (opts.headXRatio != null) cfg.headXRatio = Number(opts.headXRatio);
+    if (opts.bubbleGrow === 'left' || opts.bubbleGrow === 'right') cfg.bubbleGrow = opts.bubbleGrow;
+    if (opts.scale != null && opts.scale !== '' && state && state.model) {
+      // 原本直接呼叫 L2D._fit() 套用新 scale——_fit() 是照 cfg.offsetX/offsetY 重新算
+      // 一次「預設位置」，角色會突然跳離目前所在的地方（尤其角色二 offsetX/offsetY
+      // 跟角色一不一樣，跳動幅度更明顯，就是「模型2突然改變位置」的原因）。改成
+      // 「以目前視覺中心縮放」：先記住縮放前的中心點，換算新舊 scale 的倍率關係
+      // （不用重算 colW/nw，直接用「新舊 cfg.scale 的比例＝新舊實際縮放倍率的比例」
+      // 這個線性關係），套新 scale 後再把中心點移回原位——只有大小變化，角色不會跳走。
+      // scale 本身還是有寫進 cfg.scale，存檔／下次真正重新整理頁面時 _fit() 一樣會
+      // 用這個值正確定位，這裡只是「即時預覽」不想連位置一起打亂。
+      const model = state.model;
+      const oldScaleFactor = model.scale.x || 1;
+      const oldCfgScale = cfg.scale || 1;
+      const newCfgScale = Number(opts.scale);
+      cfg.scale = newCfgScale;
+      const oldCenterX = model.x + model.width / 2;
+      const oldCenterY = model.y + model.height / 2;
+      const newScaleFactor = oldScaleFactor * (newCfgScale / oldCfgScale);
+      model.scale.set(newScaleFactor);
+      model.x = oldCenterX - model.width / 2;
+      model.y = oldCenterY - model.height / 2;
+      if (state.key) L2D._updateSpeechPosFor(state.key); // scale 換了，泡泡錨點位置也要跟著重算
+    }
+    return true;
+  };
+
+  // 供編輯器的手勢下拉選單動態列出目前引擎裡實際定義過的所有手勢名稱，不用另外手動
+  // 維護一份清單、跟 L2DGesturePlayer.js 之後新增/改名手勢時保持同步。
+  window.getGestureList = function () {
+    return (typeof L2DGesturePlayer !== 'undefined' && typeof L2DGesturePlayer.list === 'function')
+      ? L2DGesturePlayer.list() : [];
+  };
+
+  // 供情境編輯器「獨立測試單一步驟走位」用：跟 ScenePlayer._tweenTo() 完全同一套邏輯
+  // （同一條 easing 曲線），差別只是不用整段情境播放、不用等其他步驟——直接抓角色
+  // 目前位置當起點，tween 到指定座標，方便單獨驗證某一步的走位時間/距離設定看起來
+  // 對不對，不用每次都重播整段情境才能看到這一步。
+  // 用一個遞增計數器擋掉「連續按好幾次測試」時新舊兩個 tween 同時搶著改 model.x/y
+  // 打架的問題——跟 ScenePlayer 的世代編號是同一個手法，只是這裡是全域共用一個。
+  window._testMoveGen = 0;
+  window.testMoveTo = function (charKey, x, y, durationMs) {
+    const state = L2D['_' + charKey];
+    if (!state || !state.ready || !state.model) return false;
+    const easeIO = t => t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const model = state.model;
+    const from = { x: model.x, y: model.y };
+    const dist = Math.hypot(x - from.x, y - from.y);
+    const start = performance.now();
+    const myGen = ++window._testMoveGen;
+    const dur = durationMs || 2000;
+
+    // 除錯用即時數字面板：走位公式本身算過沒問題（同樣距離，時間拉長，中途進度就是
+    // 不同），眼睛看容易被距離太短/畫面沒同步更新之類的因素騙到，直接把每一幀算出來
+    // 的數字印在畫面上最準——已經過幾毫秒、進度多少、目前座標多少，不用用猜的。
+    let hud = document.getElementById('l2d-testmove-hud');
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.id = 'l2d-testmove-hud';
+      hud.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99999;' +
+        'background:rgba(0,0,0,.85);color:#7fff7f;font:12px/1.6 Consolas,monospace;' +
+        'padding:8px 12px;border-radius:8px;white-space:pre;pointer-events:none;';
+      document.body.appendChild(hud);
+    }
+
+    function tick(now) {
+      if (myGen !== window._testMoveGen) { hud.remove(); return; }
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / dur);
+      const et = easeIO(t);
+      model.x = from.x + (x - from.x) * et;
+      model.y = from.y + (y - from.y) * et;
+      hud.textContent =
+        `[測試走位：${charKey}]\n` +
+        `距離: ${dist.toFixed(1)}px\n` +
+        `設定走位時間: ${dur}ms\n` +
+        `已經過時間: ${elapsed.toFixed(0)}ms\n` +
+        `進度: ${(t * 100).toFixed(1)}%\n` +
+        `起點: (${from.x.toFixed(1)}, ${from.y.toFixed(1)})\n` +
+        `目前座標: (${model.x.toFixed(1)}, ${model.y.toFixed(1)})\n` +
+        `終點: (${x.toFixed(1)}, ${y.toFixed(1)})`;
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        setTimeout(() => { if (myGen === window._testMoveGen) hud.remove(); }, 2000);
+      }
+    }
+    requestAnimationFrame(tick);
+    return true;
+  };
+
+  // 供情境編輯器「直接跳到指定座標」用：不經過 tween、不用等動畫，直接把角色瞬間放到
+  // 指定位置——(1) 拿來快速確認「這一步的座標實際上會把角色放在畫面哪裡」，不用等
+  // 走位動畫跑完；(2) 拿來排查走位動畫看不出效果的問題：瞬間跳過去角色都不會動的話，
+  // 代表問題出在座標→畫面渲染這一段，不是 tween 本身算錯（跟測試走位互補，一個測
+  // 「過程」，一個測「結果」）。會順便蓋掉還在跑的測試走位動畫跟它的數字面板，避免
+  // 兩邊搶著改同一個角色的位置。
+  window.snapToPosition = function (charKey, x, y) {
+    const state = L2D['_' + charKey];
+    if (!state || !state.ready || !state.model) return false;
+    window._testMoveGen = (window._testMoveGen || 0) + 1;
+    const hud = document.getElementById('l2d-testmove-hud');
+    if (hud) hud.remove();
+    state.model.x = x;
+    state.model.y = y;
+    return true;
+  };
+
+  const ScenePlayer = (() => {
+    const easeIO = t => t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    let _playing = false;
+    // 情境事件優先權要大於一切：按下任何情境（包含同一個情境按第二次），一律立刻搶過來
+    // 執行，不排隊、不忽略、也不等舊的播完。做法是一個「世代編號」——每次 trigger() 一
+    // 開頭（await 之前）就先搶號，舊的那次執行緒（不管是還在走位中途，還是卡在
+    // holdMs 停留）之後每個檢查點發現自己的號碼已經被蓋過，就立刻放手，交給新的一次
+    // 全權接管角色的位置/動作，不會兩邊同時搶著改 model.x/y 打架。
+    let _gen = 0;
+
+    // 跟 _flyOneLoop() 同一套手法：從目前位置 tween 到指定座標，途中每一幀更新 model.x/y。
+    // gen 是呼叫這次 tween 當下的世代編號，每一幀都先確認自己還是不是最新的一次，
+    // 一旦被更新的情境觸發蓋過，立刻停在目前位置、不再更新，讓新情境從這裡接手，
+    // 不會出現「舊情境還在把角色拖往舊目標」跟新情境打架的瞬間抖動。
+    function _tweenTo(model, target, durationMs, gen) {
+      return new Promise(resolve => {
+        const from  = { x: model.x, y: model.y };
+        const start = performance.now();
+        function tick(now) {
+          if (gen !== _gen) { resolve(); return; }
+          const t  = Math.min(1, (now - start) / durationMs);
+          const et = easeIO(t);
+          model.x = from.x + (target.x - from.x) * et;
+          model.y = from.y + (target.y - from.y) * et;
+          if (t < 1) requestAnimationFrame(tick);
+          else resolve();
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function _wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 執行單一角色在這個步驟裡的設定（moveTo/gesture/speak 可以同時給，互不衝突：
+    // moveTo 動畫跟 gesture/speak 觸發是平行進行，不用等走位走完才觸發動作/講話）
+    // 注意：這裡的第二個參數叫 side（角色在這一步的設定，例如 step.c1／step.c2），
+    // 不是外層 for...of 迴圈那個完整的 step 物件——之前這裡也叫 step，剛好跟外層同名，
+    // 讀 step.durationMs 讀到的其實是「side.durationMs」，而 side（= step.c1/step.c2）
+    // 從來沒有 durationMs 這個欄位（durationMs 存在外層 step 上，跟 c1/c2 平行），所以
+    // 一律讀到 undefined、退回寫死的 2000 預設值——不管使用者在連接處填多少走位時間，
+    // 整段情境播放時全部都是 2000ms，這正是「單獨測試走位有效、整段情境播放卻感覺
+    // 速度都一樣」的真正原因。改叫 side 避免同名遮蔽，durationMs 從呼叫端明確傳進來。
+    function _runCharStep(charKey, side, durationMs, gen) {
+      if (!side) return Promise.resolve();
+      const state = L2D['_' + charKey];
+      if (!state || !state.ready || !state.model) return Promise.resolve();
+      const tasks = [];
+      if (side.moveTo) {
+        const target = typeof side.moveTo === 'function' ? side.moveTo() : side.moveTo;
+        tasks.push(_tweenTo(state.model, target, durationMs || 2000, gen));
+      }
+      // 已經被更新的情境蓋過就不用再觸發手勢/台詞了，反正畫面主導權已經交出去了
+      if (gen === _gen) {
+        if (side.gesture && typeof L2D.trigger === 'function') {
+          L2D.trigger(side.gesture, charKey);
+        }
+        if (side.speak != null) {
+          if (charKey === 'c1' && typeof L2D.speak  === 'function') L2D.speak(side.speak, { type: 'info' });
+          if (charKey === 'c2' && typeof L2D.speak2 === 'function') L2D.speak2(side.speak, { type: 'info' });
+        }
+      }
+      return Promise.all(tasks);
+    }
+
+    async function trigger(name) {
+      // 同步先搶號（不能放在 await 之後——兩個 trigger() 幾乎同時被按下時，要讓「後
+      // 按的那個」保證拿到比較大的號碼，順序才會跟使用者按下的順序一致）。
+      const myGen = ++_gen;
+      _playing = true;
+
+      await _scenesReady; // 保險：萬一 scenes.json 還沒抓完就被觸發，先等它讀完
+      if (myGen !== _gen) return; // 等資料回來的這段時間又被更新的觸發蓋過了，直接放棄
+
+      const scene = window._scenes[name];
+      if (!scene) { console.warn('[ScenePlayer] 找不到情境:', name); return; }
+      const s1 = L2D._c1, s2 = L2D._c2;
+      if (!s1?.ready || !s2?.ready) { console.warn('[ScenePlayer] 角色一/二還沒載入完成，暫時無法演出'); return; }
+
+      // 演出期間先關掉閒置動作循環，避免 FORCE 優先度的隨機動作打斷情境裡排好的手勢；
+      // 閒話家常循環也要一併關掉——不然它每隔 PET_CFG.idleMotionMs 就會自己跳出來
+      // speak()/speak2()，把泡泡內容換成隨機閒話，蓋掉情境台詞才剛顯示沒多久就被切換，
+      // 看起來就像「文字泡泡消失了」（其實是被閒話搶走顯示，不是真的消失或壞掉）。
+      // 不管有沒有情境正在播都直接關一次，這就是「按下選項清空當前狀態」的其中一部分。
+      L2D.stopIdleMotion();
+      L2D.stopIdleChat();
+      const origin1 = { x: s1.model.x, y: s1.model.y };
+      const origin2 = { x: s2.model.x, y: s2.model.y };
+
+      try {
+        for (const step of scene.steps) {
+          if (myGen !== _gen) return; // 每一步開始前都確認自己還是不是最新的一次
+          // moveTo 這種步驟本身已經靠 _tweenTo 回傳的 Promise 等到走完才算這步結束，
+          // holdMs 是額外「原地停留」的時間（講完話、擺完手勢後留給觀眾反應的空檔），
+          // 兩者不衝突，一個步驟可以同時有 moveTo（等走完）又有 holdMs（走完後再停一下）。
+          await Promise.all([
+            _runCharStep('c1', step.c1, step.durationMs, myGen),
+            _runCharStep('c2', step.c2, step.durationMs, myGen),
+          ]);
+          if (myGen !== _gen) return;
+          if (step.holdMs) await _wait(step.holdMs);
+        }
+      } catch (err) {
+        // 情境播放中途出錯（理論上不該發生，防禦性處理）：印出來方便排查，
+        // 不要讓例外往外冒成「未接住的 Promise rejection」——下面 finally 一樣會把
+        // 角色送回原點、恢復閒置動作，跟正常播完的收尾完全一致。
+        console.error('[ScenePlayer] 情境播放中途出錯:', name, err);
+      } finally {
+        // 只有「這次播放仍然是最新的一次」才需要做收尾：走回原點、恢復閒置動作。
+        // 如果中途已經被更新的觸發蓋過，代表角色現在的位置/動作已經交給新情境全權
+        // 接管，這裡的舊收尾不能再插手——不然會變成新情境剛啟動就被舊的拉回原點，
+        // 恢復閒置動作也會跟新情境剛呼叫的 stopIdleMotion() 打架。
+        if (myGen === _gen) {
+          await Promise.all([
+            _tweenTo(s1.model, origin1, 1800, myGen),
+            _tweenTo(s2.model, origin2, 1800, myGen),
+          ]);
+          L2D.startIdleMotion(PET_CFG.idleMotionMs);
+          L2D.startIdleChat(PET_CFG.idleMotionMs);
+          _playing = false;
+        }
+      }
+    }
+
+    return { trigger, isPlaying: () => _playing, list: () => Object.keys(window._scenes) };
+  })();
+  window.ScenePlayer = ScenePlayer;
 
   // ── 額外寵物（自由遊走）子系統 ──────────────────────────────────────────
   // manifest 裡除了 char1/char2 對應的主角色之外，使用者透過系統匣複選勾選的其他角色。
@@ -145,7 +665,7 @@
 
   async function _getManifest() {
     if (window._extraManifestCache) return window._extraManifestCache;
-    window._extraManifestCache = await fetch('../live2d_my_like/config/manifest.json')
+    window._extraManifestCache = await fetch('../live2d_my_like/config/manifest.json', { cache: 'no-store' })
       .then(r => r.json()).catch(err => { console.error('[pet] manifest.json 讀取失敗:', err); return []; });
     return window._extraManifestCache;
   }
@@ -326,6 +846,17 @@
   async function loadExtraPets() {
     let ids = [];
     try { ids = JSON.parse(localStorage.getItem('l2d_extra_pets_d') || '[]'); } catch {}
+    // id 1/2（納茲/露西）保留給角色一/角色二，系統匣的額外寵物選單本來就不會讓使用者勾選
+    // 這兩個 id（見 main.js buildExtraPetsSubmenu 的排除規則）。但如果 localStorage 裡曾經
+    // 存過（例如舊版程式還沒加這條排除規則時），選單上會完全沒有對應的勾選框可以取消勾選，
+    // 變成殭屍額外寵物。這裡跟選單邏輯保持一致地排除，並把清乾淨的結果寫回去自我修復，
+    // 不用使用者自己動手清 localStorage。
+    const cleaned = ids.filter((id) => id !== 1 && id !== 2);
+    if (cleaned.length !== ids.length) {
+      localStorage.setItem('l2d_extra_pets_d', JSON.stringify(cleaned));
+      console.warn('[pet] 額外寵物清單裡混進了保留給角色一/角色二的 id 1/2，已自動清除。');
+    }
+    ids = cleaned;
     if (!ids.length) return;
     const manifest = await _getManifest();
     const byId = Object.fromEntries(manifest.map(e => [e.id, e]));
@@ -406,27 +937,483 @@
     chars.forEach(c => _flyOneLoop(c, legs, durationMs, onOneDone));
   }
 
-  // 聲音開關按鈕：跟 L2D 左下角 ⠿ 拖曳按鈕同一套視覺風格，bottom:114px 對齊
-  // multi/README.md 記載的既有版位慣例（⠿ 8px / 61px、🔇 114px）
-  (function () {
+  // 聲音開關按鈕：跟 L2D 左下角拖曳按鈕同一套視覺風格。拖曳角色按鈕改成收合式選單後
+  // （見 lib/live2d.js _initDragButtons），左下角固定只佔 bottom:8px 一格，原本
+  // bottom:61px 是留給角色二拖曳鈕的位置已經空出來，這顆聲音按鈕跟著往下補位一格
+  // （原本 114px，-53px）。
+  // 每顆各自只影響自己那類的 Audio 元素（用 _isTts 標記分辨，見上面 Audio 建構子攔截）
+  // ——切換閒置閒聊音效不會連帶把正在播的對話語音也停掉，反之亦然。
+  function makeMuteButton({ bottom, title, isEnabled, setEnabled, matches }) {
     const btn = document.createElement('button');
-    btn.title = '開關聲音';
-    btn.textContent = soundEnabled ? '🔊' : '🔇';
+    btn.title = title;
+    btn.textContent = isEnabled() ? '🔊' : '🔇';
     btn.style.cssText =
-      'position:fixed;left:6px;bottom:114px;z-index:10000;width:45px;height:45px;' +
+      `position:fixed;left:6px;bottom:${bottom}px;z-index:10000;width:45px;height:45px;` +
       'border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
       'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
     btn.addEventListener('click', () => {
-      soundEnabled = !soundEnabled;
-      btn.textContent = soundEnabled ? '🔊' : '🔇';
-      const mute = !soundEnabled;
+      setEnabled(!isEnabled());
+      btn.textContent = isEnabled() ? '🔊' : '🔇';
+      const mute = !isEnabled();
       _allAudio.forEach(a => {
         if (a.ended) { _allAudio.delete(a); return; }
+        if (!matches(a)) return;
         a.muted = mute;
         if (mute) a.pause();
       });
     });
     document.body.appendChild(btn);
+  }
+
+  // 閒置閒聊音效（chatSounds）：維持原本位置 bottom:61px
+  makeMuteButton({
+    bottom: 61,
+    title: '開關閒置閒聊音效',
+    isEnabled: () => soundEnabled,
+    setEnabled: (v) => { soundEnabled = v; },
+    matches: (a) => !a._isTts,
+  });
+  // 即時對話/語音測試回覆：新的一顆，疊在上面 bottom:114px（跟原本「拖曳角色二」
+  // 鈕空出來之前的舊位置同一個格位，見上面註解的 -53px 由來）
+  makeMuteButton({
+    bottom: 114,
+    title: '開關對話語音回覆',
+    isEnabled: () => ttsSoundEnabled,
+    setEnabled: (v) => { ttsSoundEnabled = v; },
+    matches: (a) => !!a._isTts,
+  });
+
+  // ── 即時對話：點角色本體開輸入框（docs/specs/0002-desktop-pet-live-chat.md）───
+  // 共用 canvas 預設 pointer-events:none，拖曳機制（lib/live2d.js 的 startDrag/
+  // stopDrag）會暫時把它開成 auto、z-index 拉到 9999。這裡完全不碰 lib/live2d.js
+  // 或 canvas 本身（desktop-pet 的既有原則：唯讀引用共用檔案），改成疊兩個獨立的
+  // 透明 overlay div，z-index 特意夾在「canvas 靜止時的 5」跟「拖曳中的 9999」之間
+  // ——拖曳進行中 canvas 會蓋過這兩個 div，點擊優先給拖曳；按鈕（⠿/🔇，z-index
+  // 10000+）本來就疊在最上層，點按鈕不會落到這兩個 div 上，兩者天然互斥，不用另外
+  // 寫排除邏輯。點擊命中範圍用角色目前的畫布座標 + 模型尺寸算出的矩形近似——不是
+  // 像素級精準（角色圖片四周的透明留白也算命中），modelwidth/height 拿不到時退回
+  // 一組固定的近似值。
+  (function () {
+    const CHAT_OVERLAY_Z = 50;
+    const FALLBACK_W = 260, FALLBACK_H = 340;
+
+    // 一輪對話還在等 main process 回覆時，忽略點角色開/切輸入框——輸入框是兩個角色
+    // 共用同一份 DOM，中途被切走的話，等回覆送達時會誤寫進「現在看到的」是另一個
+    // 角色的輸入框狀態（狀態訊息、輸入內容對不上），乾脆處理中先鎖住比較單純可靠。
+    let chatRequestPending = false;
+
+    function makeOverlay(charKey) {
+      const div = document.createElement('div');
+      div.style.cssText = `position:fixed;z-index:${CHAT_OVERLAY_Z};display:none;cursor:pointer;`;
+      div.title = '點我跟角色說話';
+      document.body.appendChild(div);
+      div.addEventListener('click', () => {
+        if (chatRequestPending) return;
+        openChatBox(charKey, div);
+      });
+      return div;
+    }
+    const overlays = { c1: makeOverlay('c1'), c2: makeOverlay('c2') };
+
+    // 跟 getCharPositions() 同一種讀法：直接讀 L2D._c1/_c2（裸的 L2D，不是
+    // window.L2D——lib/live2d.js 頂層 const 宣告不會變成 window 屬性，但同一頁面
+    // 多個 <script> 標籤共用同一個 script scope，這裡本來就在 index.html 自己的
+    // <script> 裡，可以直接用）。
+    function syncOverlay(charKey) {
+      const state = L2D['_' + charKey];
+      const div = overlays[charKey];
+      if (!state || !state.ready || !state.model) { div.style.display = 'none'; return; }
+      const m = state.model;
+      const w = (typeof m.width === 'number' && m.width > 0) ? m.width : FALLBACK_W;
+      const h = (typeof m.height === 'number' && m.height > 0) ? m.height : FALLBACK_H;
+      div.style.left = m.x + 'px';
+      div.style.top = m.y + 'px';
+      div.style.width = w + 'px';
+      div.style.height = h + 'px';
+      div.style.display = 'block';
+    }
+
+    // 角色可能被拖曳/縮放，定期重算位置，不用掛進 PIXI 的 render loop
+    setInterval(() => {
+      if (!window._l2dReady) return;
+      syncOverlay('c1');
+      syncOverlay('c2');
+    }, 400);
+
+    // ── 輸入框（兩個角色共用同一個 DOM，開誰的就搬過去、換膚，記住目前是誰）──────
+    // 角色一「熱情」配暖橘、角色二「毒舌」配冷紫（跟 personas.json 的人設語氣呼應），
+    // 純粹是輸入框外觀識別色，跟 lib/live2d.js 泡泡本身的顏色（cfg.bubbleColor）是
+    // 兩件事、互不影響。
+    const CHAT_CHAR_STYLES = {
+      c1: { accent: '255,140,0',  name: '角色一' },
+      c2: { accent: '179,136,255', name: '角色二' },
+    };
+    let chatBoxCharKey = null;
+    const box = document.createElement('div');
+    box.style.cssText =
+      'position:fixed;z-index:10002;display:none;width:340px;padding:14px 14px 10px;' +
+      'border-radius:14px;background:rgba(10,10,14,.92);border:2px solid rgba(255,255,255,.3);' +
+      'box-shadow:0 4px 24px rgba(0,0,0,.4);transition:border-color .15s, box-shadow .15s;';
+    box.innerHTML =
+      '<button class="chat-close" title="關閉" style="position:absolute;top:8px;right:10px;' +
+      'width:24px;height:24px;border:none;border-radius:50%;background:rgba(255,255,255,.14);' +
+      'color:#fff;font-size:14px;line-height:1;cursor:pointer;padding:0;">✕</button>' +
+      '<div class="chat-name" style="font-size:12.5px;font-weight:700;margin-bottom:8px;padding-right:26px;"></div>' +
+      '<div style="display:flex;gap:6px;">' +
+      '<input type="text" placeholder="跟角色說點什麼...（Enter 送出／Esc 取消）" style="flex:1;' +
+      'box-sizing:border-box;padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.22);' +
+      'background:rgba(255,255,255,.08);color:#fff;font-size:14.5px;outline:none;">' +
+      '<button class="chat-mic" title="語音輸入" style="flex:none;width:40px;border-radius:9px;' +
+      'border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;' +
+      'font-size:16px;cursor:pointer;">🎤</button>' +
+      '</div>' +
+      '<div class="chat-status" style="font-size:11.5px;color:#9aa4b2;min-height:1.4em;margin-top:6px;"></div>';
+    document.body.appendChild(box);
+    const chatInput = box.querySelector('input');
+    const chatStatusEl = box.querySelector('.chat-status');
+    const chatNameEl = box.querySelector('.chat-name');
+    const chatCloseBtn = box.querySelector('.chat-close');
+    const chatMicBtn = box.querySelector('.chat-mic');
+
+    function openChatBox(charKey, anchorDiv) {
+      chatBoxCharKey = charKey;
+      const style = CHAT_CHAR_STYLES[charKey] || CHAT_CHAR_STYLES.c1;
+      box.style.borderColor = `rgba(${style.accent},.75)`;
+      box.style.boxShadow = `0 4px 24px rgba(0,0,0,.4), 0 0 20px rgba(${style.accent},.25)`;
+      chatNameEl.textContent = style.name;
+      chatNameEl.style.color = `rgb(${style.accent})`;
+      const rect = anchorDiv.getBoundingClientRect();
+      box.style.left = Math.max(4, rect.left) + 'px';
+      box.style.top = Math.max(4, rect.top - 90) + 'px';
+      box.style.display = 'block';
+      chatStatusEl.textContent = '';
+      chatInput.value = '';
+      setChatBoxBusy(false);
+      chatInput.focus();
+    }
+
+    function closeChatBox() {
+      voiceInputActive = false; // 取消這一輪語音輸入（如果剛好正在進行）
+      if (isRecording) stopRecording(true); // 還在錄音的話順便取消掉，不留孤兒錄音
+      box.style.display = 'none';
+      chatBoxCharKey = null;
+    }
+    chatCloseBtn.addEventListener('click', closeChatBox);
+
+    // 文字送出／語音錄音＋轉錄共用同一個「這個聊天框忙不忙」開關，兩條路都要鎖住
+    // 輸入框，避免同時搶送出、也避免中途切去另一個角色（見上面 chatRequestPending
+    // 在角色 overlay 點擊時的防呆）。麥克風鈕例外：錄音進行中維持可點，讓使用者能
+    // 隨時手動提前停止這一段；轉錄/送出中則跟文字輸入框一起鎖住，不能重複觸發。
+    function setChatBoxBusy(busy) {
+      chatRequestPending = busy;
+      chatInput.disabled = busy;
+      chatMicBtn.disabled = busy && !isRecording;
+    }
+
+    async function sendTextMessage(text) {
+      if (!window.petBridge || !window.petBridge.sendChatMessage) {
+        chatStatusEl.textContent = '❌ 這個功能還沒接上（petBridge 缺少 sendChatMessage）';
+        return;
+      }
+      setChatBoxBusy(true);
+      chatStatusEl.textContent = '💭 思考中...';
+      const result = await window.petBridge.sendChatMessage(chatBoxCharKey, text);
+      setChatBoxBusy(false);
+      // 送出後保持輸入框開著（不自動關閉），方便連續聊天；只有手動按 ✕／Esc／
+      // 點外部才會關閉。成功就清空輸入框準備打下一句，失敗把錯誤留在畫面上、
+      // 保留原本打的字方便修改重送。
+      if (result && result.ok) {
+        chatStatusEl.textContent = '';
+        chatInput.value = '';
+      } else {
+        chatStatusEl.textContent = '❌ ' + ((result && result.error) || '未知錯誤');
+      }
+      chatInput.focus();
+    }
+
+    chatInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Escape') { closeChatBox(); return; }
+      if (e.key !== 'Enter') return;
+      const text = chatInput.value.trim();
+      if (!text || !chatBoxCharKey) return;
+      sendTextMessage(text);
+    });
+
+    // ── 語音輸入（docs/specs/0004-desktop-pet-voice-input.md）────────────────
+    // 點擊切換錄音：點一下開始、偵測到安靜或再點一次手動停止。轉錄完的文字直接重用
+    // sendTextMessage()，不重新組一次對話流程。
+    // 單次錄音，每次都要手動點 🎤 開啟：講完這一句、轉錄送出之後就回到待命狀態，
+    // 要講下一句得再點一次 🎤。（曾經改成「送完自動接著錄下一段」的持續語音模式，
+    // 但即使加了播放後緩衝／連續輪數安全煞車，還是會有聲學回授/幻覺輸入的問題，
+    // 改回每次手動開啟更穩定好控制，見 spec 0004 文末「實作後又修正」。）
+    // voiceInputActive：從點擊 🎤 那一刻到這一輪（錄音→轉錄→送出）整個跑完為止都是
+    // true，用來擋掉「點擊後、MediaRecorder 真的開始錄音前」這段 await 空檔裡使用者
+    // 又按了 Esc／關閉聊天框的情況。isRecording 是更窄的「當下有沒有真的在錄音」，
+    // 錄音中再點一次麥克風鈕＝手動提前停止這一段（轉錄/送出中則按鈕本身是鎖住的，
+    // 見 setChatBoxBusy）。
+
+    let voiceInputActive = false;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let micStream = null;
+    let micAudioCtx = null;
+    let micAnalyser = null;
+    let micDataArray = null;
+    let silenceStartedAt = null;
+    let silenceCheckIntervalId = null;
+    let maxDurationTimeoutId = null;
+    let recordingCancelled = false;
+    // 這一段錄音裡，音量高於安靜門檻的時間累計了多少 ms——不是「有沒有出現過一次」的
+    // 旗標（那樣一次滑鼠喀嚓聲、椅子聲、麥克風本底噪音就會讓整段錄音蒙混過關），而是
+    // 累計時長要達到 window.SilenceDetector.DEFAULT_MIN_SPEECH_DURATION_MS 才算「使用者
+    // 真的有講話」，這種情況下面 onRecordingStopped() 會直接跳過呼叫 Whisper，見那裡的
+    // 說明（Whisper 對純靜音/近乎無語音的音檔不保證回傳空字串，會幻覺出無關文字）。
+    let loudAudioMs = 0;
+    // 跟下面 silenceCheckIntervalId 的 setInterval 週期保持一致，用來把音量檢查的次數
+    // 換算成累計時長；兩處故意共用同一個常數，不要各自硬編一次數字。
+    const SILENCE_CHECK_INTERVAL_MS = 200;
+    // 這一輪錄音實際使用的門檻/累計時長——預設抄 silence-detector.js 的內建值，
+    // startRecording() 一開始會嘗試向 main process 要使用者在設定畫面調過的值蓋過去
+    // （見 settings-store.js 的 getMicSettings()）；拿不到（petBridge 沒接上／IPC 失敗）
+    // 就繼續用這個預設值，不會整個功能掛掉。
+    let currentMicRmsThreshold = window.SilenceDetector.DEFAULT_RMS_THRESHOLD;
+    let currentMicMinSpeechDurationMs = window.SilenceDetector.DEFAULT_MIN_SPEECH_DURATION_MS;
+
+    function stopMicTracks() {
+      if (micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
+      if (micAudioCtx) { try { micAudioCtx.close(); } catch {} micAudioCtx = null; }
+      micAnalyser = null;
+    }
+
+    function clearRecordingTimers() {
+      if (silenceCheckIntervalId) { clearInterval(silenceCheckIntervalId); silenceCheckIntervalId = null; }
+      if (maxDurationTimeoutId) { clearTimeout(maxDurationTimeoutId); maxDurationTimeoutId = null; }
+    }
+
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+
+    // 打字機效果：把單次錄音轉錄出來的文字，視覺化「打」進輸入框，讓使用者看到
+    // 這次到底錄到了什麼，打完才送出。不是使用者確認/編輯用的（Q3 仍然是直接送出），
+    // 純粹是送出前多一個看得到內容的過場。
+    function typewriterReveal(el, text, msPerChar = 25) {
+      return new Promise((resolve) => {
+        el.value = '';
+        let i = 0;
+        const step = () => {
+          i++;
+          el.value = text.slice(0, i);
+          if (i >= text.length) { resolve(); return; }
+          setTimeout(step, msPerChar);
+        };
+        step();
+      });
+    }
+
+    async function startRecording() {
+      if (isRecording || chatRequestPending || !chatBoxCharKey) return;
+      if (!window.SilenceDetector || !window.LipSync) {
+        chatStatusEl.textContent = '❌ 語音輸入需要的模組沒載入成功';
+        resetMicButtonToIdle();
+        return;
+      }
+      if (!window.petBridge || !window.petBridge.hasApiKey || !window.petBridge.transcribeVoice) {
+        chatStatusEl.textContent = '❌ 這個功能還沒接上（petBridge 缺少語音輸入相關方法）';
+        resetMicButtonToIdle();
+        return;
+      }
+      // 未設定 API key 時直接擋下，不嘗試錄音（不用白白跳麥克風權限請求）。
+      const keyStatus = await window.petBridge.hasApiKey();
+      if (!keyStatus || !keyStatus.hasKey) {
+        chatStatusEl.textContent = '❌ 尚未設定 OpenAI API key，請先從系統匣「設定...」輸入';
+        resetMicButtonToIdle();
+        return;
+      }
+      // 上面這個 await 期間，使用者可能已經按 Esc／關閉聊天框取消掉了，確認一下
+      // 沒有被取消才繼續，不然會在使用者明明已經取消之後才突然開始錄音。
+      if (!voiceInputActive) return;
+
+      // 每次開始錄音都重新問一次目前的設定值（而不是開機時問一次快取起來），這樣使用者
+      // 在設定畫面調完門檻，不用重開桌寵，下一次點 🎤 就會生效。拿不到就沿用預設值。
+      currentMicRmsThreshold = window.SilenceDetector.DEFAULT_RMS_THRESHOLD;
+      currentMicMinSpeechDurationMs = window.SilenceDetector.DEFAULT_MIN_SPEECH_DURATION_MS;
+      if (window.petBridge && window.petBridge.getMicSettings) {
+        try {
+          const micSettings = await window.petBridge.getMicSettings();
+          if (micSettings && typeof micSettings.rmsThreshold === 'number') {
+            currentMicRmsThreshold = micSettings.rmsThreshold;
+          }
+          if (micSettings && typeof micSettings.minSpeechDurationMs === 'number') {
+            currentMicMinSpeechDurationMs = micSettings.minSpeechDurationMs;
+          }
+        } catch {
+          // 拿設定失敗就繼續用預設值，不要因為這個把整個語音輸入擋下來。
+        }
+      }
+      // 又是一次 await，一樣要確認沒有在等待期間被取消。
+      if (!voiceInputActive) return;
+
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        chatStatusEl.textContent = '❌ 麥克風存取被拒，請檢查 Windows 隱私權設定';
+        resetMicButtonToIdle();
+        return;
+      }
+      if (!voiceInputActive) { stream.getTracks().forEach((t) => t.stop()); return; }
+
+      micStream = stream;
+      recordingCancelled = false;
+      loudAudioMs = 0;
+      audioChunks = [];
+      isRecording = true;
+      setChatBoxBusy(true);
+      chatMicBtn.textContent = '🔴';
+      chatMicBtn.title = '停止錄音';
+      chatStatusEl.textContent = '🎙️ 錄音中...（講完稍等會自動送出；再點一次 🔴 手動停止）';
+
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.addEventListener('dataavailable', (e) => {
+        if (e.data && e.data.size > 0) audioChunks.push(e.data);
+      });
+      mediaRecorder.addEventListener('stop', onRecordingStopped);
+      mediaRecorder.start();
+
+      micAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = micAudioCtx.createMediaStreamSource(stream);
+      micAnalyser = micAudioCtx.createAnalyser();
+      micAnalyser.fftSize = 256;
+      source.connect(micAnalyser);
+      micDataArray = new Uint8Array(micAnalyser.fftSize);
+      silenceStartedAt = null;
+
+      silenceCheckIntervalId = setInterval(() => {
+        if (!micAnalyser) return;
+        micAnalyser.getByteTimeDomainData(micDataArray);
+        const rms = window.LipSync.computeRms(micDataArray);
+        if (rms >= currentMicRmsThreshold) loudAudioMs += SILENCE_CHECK_INTERVAL_MS;
+        const result = window.SilenceDetector.checkSilence({
+          rms, silenceStartedAt, now: Date.now(), rmsThreshold: currentMicRmsThreshold,
+        });
+        silenceStartedAt = result.silenceStartedAt;
+        if (result.shouldStop) stopRecording(false);
+      }, SILENCE_CHECK_INTERVAL_MS);
+
+      maxDurationTimeoutId = setTimeout(() => stopRecording(false), 60000); // 60 秒安全上限
+    }
+
+    // cancelled=true（Esc／關閉聊天框）：捨棄這段錄音，不轉錄不送出。
+    // cancelled=false（自動偵測安靜／手動點 🔴／60 秒上限）：正常走轉錄＋送出流程。
+    function stopRecording(cancelled) {
+      if (!isRecording) return;
+      recordingCancelled = cancelled;
+      clearRecordingTimers();
+      isRecording = false;
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    }
+
+    // 錄音停止後回到「待命」外觀，同時把這一輪語音輸入的開關關掉——下一句要再點一次
+    // 🎤 才會開始（不會自動接著錄下一段）。
+    function resetMicButtonToIdle() {
+      voiceInputActive = false;
+      chatMicBtn.textContent = '🎤';
+      chatMicBtn.title = '語音輸入';
+    }
+
+    async function onRecordingStopped() {
+      stopMicTracks();
+
+      if (recordingCancelled) {
+        // Esc／關閉聊天框觸發的。
+        resetMicButtonToIdle();
+        setChatBoxBusy(false);
+        chatStatusEl.textContent = '';
+        chatInput.focus();
+        return;
+      }
+
+      if (loudAudioMs < currentMicMinSpeechDurationMs) {
+        // 累計超過安靜門檻的音量時長不夠久，代表使用者根本沒開口（單一次瞬間噪音，例如
+        // 滑鼠喀嚓聲、椅子聲、麥克風本底噪音的波動，不會累計出足夠時長）——不呼叫
+        // Whisper，直接當作沒講話處理。Whisper 對純靜音/近乎無語音的音檔不保證回傳空
+        // 字串，實測會幻覺出「Thanks for watching」之類的字幕片語並照樣送出，最可靠的
+        // 防法是「根本不要把偵測到的近乎靜音音檔送進去」，不是靠檢查轉錄結果的文字內容。
+        setChatBoxBusy(false);
+        resetMicButtonToIdle();
+        chatStatusEl.textContent = '';
+        return;
+      }
+
+      chatStatusEl.textContent = '💭 轉錄中...';
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBase64 = arrayBufferToBase64(arrayBuffer);
+
+      const sttResult = await window.petBridge.transcribeVoice(audioBase64, 'audio/webm');
+      if (!sttResult || !sttResult.ok) {
+        // 轉錄本身失敗（額度/網路/key 問題），讓使用者看到錯誤、自己決定要不要
+        // 處理完再重新點 🎤。
+        resetMicButtonToIdle();
+        setChatBoxBusy(false);
+        chatStatusEl.textContent = '❌ ' + ((sttResult && sttResult.error) || '語音轉錄失敗');
+        chatInput.focus();
+        return;
+      }
+
+      const text = (sttResult.text || '').trim();
+      if (text) {
+        // 轉錄完先用打字機效果把文字顯示在輸入框（讓使用者看到這一段實際被辨識成
+        // 什麼），打完直接送出（Q3 仍然是直接送出，不用手動按 Enter 確認）。
+        // 用 readOnly 不用 disabled：disabled 的輸入框文字會灰階變淡，打字機效果看不清楚；
+        // readOnly 維持正常文字顏色，同時使用者也不能在打字機播放中手動改內容。
+        chatInput.readOnly = true;
+        await typewriterReveal(chatInput, text);
+        chatInput.readOnly = false;
+        await sendTextMessage(text); // sendTextMessage 內部會等角色語音真的播完才 resolve
+      } else {
+        // 有講話但轉錄結果剛好是空字串（聽不清楚）：不送出空白訊息，不當作錯誤，
+        // 安靜回到待命，順便清掉還停在畫面上的「轉錄中...」文字。
+        setChatBoxBusy(false);
+        chatStatusEl.textContent = '';
+      }
+
+      // 這一輪到此結束，回到待命——要講下一句得再點一次 🎤，不會自動接著錄下一段。
+      resetMicButtonToIdle();
+    }
+
+    chatMicBtn.addEventListener('click', () => {
+      if (isRecording) {
+        // 錄音中再點一次＝手動提前停止，跟自動偵測安靜走同一條轉錄＋送出流程。
+        stopRecording(false);
+        return;
+      }
+      if (voiceInputActive || chatRequestPending) return; // 正在轉錄/送出中，按鈕本來就鎖住，防禦性擋一次
+      voiceInputActive = true;
+      startRecording();
+    });
+
+    // 錄音中的 Esc 要能取消，但這時候 chatInput 是 disabled 的（disabled 的表單元素
+    // 不會收到鍵盤事件），所以另外用 document 層級的監聽處理，跟上面 chatInput 自己的
+    // Escape（關閉整個聊天框）分開，兩者刻意不共用同一個監聽。
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (isRecording) { stopRecording(true); return; }
+      if (voiceInputActive) resetMicButtonToIdle(); // 取消「點擊後、還沒真的開始錄音」這段空檔
+    });
+
+    // 點輸入框、點角色 overlay 以外的地方都關閉——避免輸入框一直卡在畫面上擋住其他操作
+    document.addEventListener('click', (e) => {
+      if (box.style.display === 'none') return;
+      if (box.contains(e.target)) return;
+      if (e.target === overlays.c1 || e.target === overlays.c2) return;
+      closeChatBox();
+    });
   })();
 </script>
 </body>

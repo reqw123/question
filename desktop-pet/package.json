@@ -2,12 +2,14 @@
   "name": "desktop-pet",
   "version": "0.1.0",
   "private": true,
-  "description": "Live2D 桌面透明背景掛件（獨立模組，讀取專案 lib/ 與 live2d_model/ 既有資源，不修改任何既有檔案）",
+  "description": "Live2D 桌面透明背景掛件（獨立模組，讀取專案 lib/ 與 live2d_my_like/ 既有資源，不修改任何既有檔案）",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "electron": "^43.0.0"
+    "electron": "^43.0.0",
+    "vitest": "^4.1.10"
   }
 }

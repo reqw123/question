@@ -6,7 +6,7 @@
 // 不觸碰遊戲流程、題庫、分數、MQTT State
 const AvatarModule = (() => {
   const DEFAULT = 'default_avatar.png';
-  const TOPIC   = 'quiz/player/profile';
+  const TOPIC   = MP_TOPICS.PROFILE;
   const SIZE    = 256;
 
   let _myAvatar  = null;   // 自己裁好的 Base64 PNG

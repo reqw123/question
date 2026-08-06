@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>情境編輯器</title>
+<style>
+  :root { --cyan: #00d4ff; --bg: #14181f; --border: rgba(255,255,255,0.12); --text: #eee; --text2: #9aa4b2; --warn: #ffb454; --bad: #ff6b6b; --ok: #6bffa0; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.5 -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+    overflow: hidden; /* 整頁不捲動，捲動交給下面各分頁自己的清單區域 */
+  }
+  h2 { font-size: .95em; margin: 0 0 8px; color: var(--text2); font-weight: 600; }
+  section {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  /* 步驟變多時，步驟清單要能自己在固定高度內捲動，上面的情境資訊、下面的建構表單／
+     存檔按鈕要永遠固定可見，不會被一起往下推到看不到——原本 #stepList 的 flex:1 完全
+     沒作用，因為它的父層 #tab-scenes（分頁容器）根本不是 flex 容器，flex:1 只有在
+     flex 容器的直接子元素身上才有意義；同一個問題 #tab-chat 的 #chatList 也有，
+     一起修。min-height:0 是 flexbox 常見陷阱——沒有它，子項目在 column 方向不會真的
+     被壓縮到比內容還小，flex:1 會失效、外層還是會被撐開。 */
+  #tab-scenes, #tab-chat {
+    display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;
+  }
+  #tab-scenes > *, #tab-chat > * { flex-shrink: 0; }
+  #stepList, #chatList { flex: 1; min-height: 0; overflow-y: auto; }
+  /* 泡泡校正分頁沒有會一直變長的清單，不用特別切一塊固定捲動區，內容萬一超出視窗高度
+     就讓整個分頁自己捲動即可。 */
+  #tab-bubble { flex: 1; min-height: 0; overflow-y: auto; }
+  #status { font-size: .82em; color: var(--text2); }
+  #status.bad { color: var(--warn); }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .row label { width: 76px; flex-shrink: 0; color: var(--text2); font-size: .88em; }
+  select, input[type=text], input[type=number] {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 5px 7px; font-size: .9em; flex: 1;
+  }
+  select option { background: var(--bg); color: var(--text); }
+  input[type=number] { flex: none; width: 80px; }
+  button {
+    padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: .85em; cursor: pointer;
+  }
+  button:hover { border-color: var(--cyan); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--cyan); color: #06222b; border-color: var(--cyan); font-weight: 700; }
+  button.danger { border-color: var(--bad); color: var(--bad); }
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+  .col h3 { font-size: .85em; margin: 0 0 6px; color: var(--cyan); }
+  .capture { font-size: .82em; color: var(--text2); margin-left: 4px; }
+  .capture.ok { color: var(--ok); }
+  .capture.bad { color: var(--bad); }
+  /* 每張步驟卡片可以獨立展開/收合成完整表單直接編輯——不用再透過下面共用的建構表單
+     一次只能編輯一步，好幾步可以同時展開，方便互相比對/微調（例如兩步座標該不該
+     設成一樣）。收合時只顯示摘要文字，跟原本一樣精簡；展開時顯示跟建構表單同一套
+     欄位（X/Y、記錄/清除位置、手勢＋測試、台詞＋測試），改了立刻寫回 draftSteps，
+     不用另外按「更新」。 */
+  .stepCard {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 8px 9px; border: 1px solid var(--border); border-radius: 8px; margin: 0 14px 6px;
+    font-size: .85em;
+  }
+  .stepCard.expanded { border-color: var(--cyan); }
+  .stepCardHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .stepCardHead .desc { flex: 1; color: var(--text); min-width: 0; }
+  .stepCardHead .desc .side { color: var(--text2); }
+  .stepCardHead .btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .stepCardHead .btns button { padding: 3px 7px; font-size: .8em; }
+  .stepCardForm {
+    display: flex; flex-direction: column; gap: 6px;
+    padding-top: 6px; border-top: 1px dashed var(--border);
+  }
+  /* 步驟編號標籤：放在每張卡片左上角，用色塊跟後面的內容明顯區分，一眼掃過去就知道
+     目前排到第幾步，不用逐字讀「#3」這種純文字。 */
+  .stepBadgeRow { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .stepBadge {
+    display: inline-block; background: var(--cyan); color: #06222b;
+    font-weight: 700; font-size: .78em; padding: 2px 9px; border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .stepBadge.expanded { background: var(--ok); }
+  .stepCard .meta { color: var(--text2); font-size: .92em; }
+  #saveMsg, #chatSaveMsg, #bubbleSaveMsg { font-size: .82em; min-height: 1.4em; }
+  #saveMsg.bad, #chatSaveMsg.bad, #bubbleSaveMsg.bad { color: var(--bad); font-weight: 700; }
+  #saveMsg.ok, #chatSaveMsg.ok, #bubbleSaveMsg.ok { color: var(--ok); }
+  /* 三個分頁底部的存檔按鈕列原本都用 id="actions"，同一份文件裡出現三次重複 id 是不合法的
+     HTML（document.getElementById 只會抓到第一個，之前沒出過事只是剛好沒有程式碼真的去
+     查詢這個 id），改成 class 共用樣式，需要用 JS 特別指到某一個的話另外給獨立 id。 */
+  .actions { display: flex; gap: 8px; padding: 10px 14px; }
+  .actions button { flex: 1; }
+  /* 步驟清單全螢幕總覽：按下切換鈕時，情境資訊／新增步驟表單／存檔按鈕列都暫時隱藏，
+     讓 #stepList（本來就是 flex:1 的那個）自動吃下整個分頁的高度，一次看到最多步驟；
+     #stepListHeadRow 留著不藏，切換鈕才有地方按回去。 */
+  #tab-scenes.fullList > *:not(#stepListHeadRow):not(#stepList) { display: none !important; }
+  /* 全螢幕總覽騰出來的空間本來就是要讓步驟看得更清楚，字體跟著放大一點——底下 .connector／
+     .stepCard 裡那些 .82em/.85em 都是相對單位，這裡把 #stepList 的基準字級調大，
+     全部子元素會照比例一起放大，不用逐一改每一處的字級宣告。 */
+  #tab-scenes.fullList #stepList { font-size: 1.2em; }
+  #stepListHeadRow { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 0; }
+  #stepListHeadRow h2 { padding: 0; margin: 0; }
+  #tabBar { display: flex; gap: 6px; padding: 10px 14px 0; }
+  #tabBar button { flex: 1; padding: 8px 10px; }
+  #tabBar button.active { border-color: var(--cyan); color: var(--cyan); }
+  .chatRow {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px; margin: 0 14px 6px;
+    font-size: .85em;
+  }
+  .chatRow .desc { flex: 1; }
+  .chatRow .desc div { margin-bottom: 2px; }
+  .chatRow .desc .c1 { color: var(--cyan); }
+  .chatRow .desc .c2 { color: #ff8c00; }
+  .chatRow .btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .chatRow .btns button { padding: 3px 7px; font-size: .8em; }
+  /* 走位時間的「連接處」：畫在兩個步驟卡片中間的一條虛線＋輸入框，直接對應
+     ScenePlayer 播放時「從上一步走到這一步」實際花的時間，位置擺在視覺上最直覺
+     的地方（兩個區塊的交界），不用再去下面的建構表單裡另外找欄位改。 */
+  .connector {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    margin: 2px 20px 8px; padding: 4px 0 4px 12px;
+    border-left: 2px dashed var(--border);
+    font-size: .82em; color: var(--text2);
+  }
+  .connector input[type=number] { width: 76px; flex: none; }
+  .connector button { padding: 2px 8px; font-size: .78em; }
+  .connector .label { color: var(--cyan); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div id="tabBar">
+  <button id="tab-btn-scenes" class="active">情境演出</button>
+  <button id="tab-btn-chat">閒話台詞</button>
+  <button id="tab-btn-bubble">泡泡校正</button>
+</div>
+
+<div id="tab-scenes">
+<section id="sceneInfoSection">
+  <div class="row">
+    <label>情境</label>
+    <select id="sceneSelect"></select>
+    <button id="btn-new">＋ 新情境</button>
+    <button id="btn-delete" class="danger">刪除</button>
+  </div>
+  <div class="row">
+    <label>代號</label>
+    <input type="text" id="sceneKey" placeholder="英數/底線，例如 walk_together">
+  </div>
+  <div class="row">
+    <label>顯示名稱</label>
+    <input type="text" id="sceneLabel" placeholder="會顯示在系統匣選單上的名稱">
+  </div>
+  <div id="status">讀取中...</div>
+</section>
+
+<div id="stepListHeadRow">
+  <h2>步驟清單</h2>
+  <button id="btn-toggleFullList">⛶ 全螢幕總覽</button>
+</div>
+<div id="stepList"></div>
+
+<section id="stepBuilderSection">
+  <h2>新增步驟</h2>
+  <div class="capture" style="margin:-4px 0 6px">既有步驟不在這裡改——直接展開上面步驟清單裡想調整的那一步卡片，可以同時展開好幾步互相比對。這裡只用來加全新的一步。</div>
+  <div class="cols">
+    <div class="col">
+      <h3>角色一</h3>
+      <div class="row">
+        <button id="c1-capture">📍 記錄目前位置</button>
+        <button id="c1-clearPos">✕ 清除位置</button>
+      </div>
+      <div class="row">
+        <label>X / Y</label>
+        <input type="number" id="c1-posX" placeholder="X" step="1">
+        <input type="number" id="c1-posY" placeholder="Y" step="1">
+      </div>
+      <div class="capture" id="c1-captureMsg">位置留空＝這步不移動角色一。拖拉記錄後有誤差的話，可以直接在上面兩格輸入精確數字微調。</div>
+      <div class="row">
+        <label>手勢</label>
+        <select id="c1-gesture"><option value="">（不設定）</option></select>
+        <button id="c1-testGesture">測試</button>
+      </div>
+      <div class="row">
+        <label>台詞</label>
+        <input type="text" id="c1-speak" placeholder="留空＝不說話">
+        <button id="c1-testSpeak">測試</button>
+      </div>
+    </div>
+    <div class="col">
+      <h3>角色二</h3>
+      <div class="row">
+        <button id="c2-capture">📍 記錄目前位置</button>
+        <button id="c2-clearPos">✕ 清除位置</button>
+      </div>
+      <div class="row">
+        <label>X / Y</label>
+        <input type="number" id="c2-posX" placeholder="X" step="1">
+        <input type="number" id="c2-posY" placeholder="Y" step="1">
+      </div>
+      <div class="capture" id="c2-captureMsg">位置留空＝這步不移動角色二。拖拉記錄後有誤差的話，可以直接在上面兩格輸入精確數字微調。</div>
+      <div class="row">
+        <label>手勢</label>
+        <select id="c2-gesture"><option value="">（不設定）</option></select>
+        <button id="c2-testGesture">測試</button>
+      </div>
+      <div class="row">
+        <label>台詞</label>
+        <input type="text" id="c2-speak" placeholder="留空＝不說話">
+        <button id="c2-testSpeak">測試</button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <label>停留(秒)</label>
+    <input type="number" id="holdMs" value="0" min="0" step="0.1">
+    <span class="capture" style="flex:1">走位時間不在這裡填——加進步驟清單後，直接在清單裡「這一步」上方的連接處輸入，
+      擺在兩個步驟中間比較直覺，也才看得到跟前一步的實際距離。</span>
+    <button id="btn-addStep" class="primary" style="flex:1">＋ 新增這一步</button>
+  </div>
+</section>
+
+<div id="saveMsg" style="padding:0 14px"></div>
+<div class="actions">
+  <button id="btn-save" class="primary">儲存情境</button>
+  <button id="btn-saveplay">儲存並試播</button>
+  <button id="btn-close">關閉</button>
+</div>
+</div><!-- /#tab-scenes -->
+
+<div id="tab-chat" style="display:none">
+  <section>
+    <div id="chatStatus" class="capture">桌寵閒置時會從下面清單隨機挑一組講，跟「情境演出」完全獨立，
+      跟網頁模式（host.html/player.html）內建的台詞也完全脫鉤——這裡是桌寵自己專用的台詞庫。</div>
+  </section>
+  <h2 style="padding:10px 14px 0">台詞清單</h2>
+  <div id="chatList"></div>
+  <section>
+    <h2>新增一組</h2>
+    <div class="row">
+      <label>角色一</label>
+      <input type="text" id="chat-c1" placeholder="角色一要說的話（可留空＝只有角色二說）">
+      <button id="chat-c1-test">測試</button>
+    </div>
+    <div class="row">
+      <label>角色二</label>
+      <input type="text" id="chat-c2" placeholder="角色二要說的話（可留空＝只有角色一說）">
+      <button id="chat-c2-test">測試</button>
+    </div>
+    <div class="row">
+      <button id="btn-addChat" class="primary" style="flex:1">＋ 新增這一組</button>
+    </div>
+  </section>
+  <div id="chatSaveMsg" style="padding:0 14px"></div>
+  <div class="actions">
+    <button id="btn-saveChat" class="primary">儲存閒話台詞</button>
+    <button id="btn-closeChat">關閉</button>
+  </div>
+</div><!-- /#tab-chat -->
+
+<div id="tab-bubble" style="display:none">
+  <section>
+    <div class="capture">文字泡泡貼著角色頭部的位置是照 headRatio（頭部距模型頂端比例，0=頂，調大往下移）／
+      headXRatio（距模型左緣比例，0.5=中心，調大往右移）算出來的，這兩個值是「跟著模型走」的——
+      換一個模型當角色一/二，舊比例通常會對不上新模型，泡泡就會偏掉。尾巴方向（bubbleGrow）
+      決定泡泡往哪邊長、箭頭尖角朝哪邊，桌寵角色可以被拖到畫面任何位置，固定方向不一定每次
+      都對，按下面的按鈕切換。scale 是角色本體顯示大小，按「套用測試」時會連同泡泡設定一起
+      重新套用（角色可能會跳回設定值算出來的預設位置，是正常的，跟原本用 L2D.printPos() 校正
+      offsetX/offsetY/scale 是同一套流程）。這裡先讀桌寵目前實際套用的模型跟數值，調到滿意
+      再「儲存」寫回 manifest.json。</div>
+  </section>
+  <div class="cols" style="padding:10px 14px">
+    <div class="col">
+      <h3>角色一</h3>
+      <div class="row"><label>目前模型</label><span id="c1-bubble-model" class="capture">讀取中...</span></div>
+      <div class="row">
+        <label>headRatio</label>
+        <input type="number" id="c1-headRatio" step="0.01" min="0" max="1">
+      </div>
+      <div class="row">
+        <label>headXRatio</label>
+        <input type="number" id="c1-headXRatio" step="0.01" min="0" max="1">
+      </div>
+      <div class="row">
+        <label>scale</label>
+        <input type="number" id="c1-scale" step="0.05" min="0.05">
+      </div>
+      <div class="row">
+        <label>尾巴方向</label>
+        <button id="c1-bubbleGrow" style="flex:1"></button>
+      </div>
+      <div class="row">
+        <button id="c1-bubble-test" style="flex:1">套用測試（會說一句話）</button>
+      </div>
+      <div class="row">
+        <button id="c1-bubble-save" class="primary" style="flex:1">儲存到 manifest.json</button>
+      </div>
+    </div>
+    <div class="col">
+      <h3>角色二</h3>
+      <div class="row"><label>目前模型</label><span id="c2-bubble-model" class="capture">讀取中...</span></div>
+      <div class="row">
+        <label>headRatio</label>
+        <input type="number" id="c2-headRatio" step="0.01" min="0" max="1">
+      </div>
+      <div class="row">
+        <label>headXRatio</label>
+        <input type="number" id="c2-headXRatio" step="0.01" min="0" max="1">
+      </div>
+      <div class="row">
+        <label>scale</label>
+        <input type="number" id="c2-scale" step="0.05" min="0.05">
+      </div>
+      <div class="row">
+        <label>尾巴方向</label>
+        <button id="c2-bubbleGrow" style="flex:1"></button>
+      </div>
+      <div class="row">
+        <button id="c2-bubble-test" style="flex:1">套用測試（會說一句話）</button>
+      </div>
+      <div class="row">
+        <button id="c2-bubble-save" class="primary" style="flex:1">儲存到 manifest.json</button>
+      </div>
+    </div>
+  </div>
+  <div id="bubbleSaveMsg" style="padding:0 14px"></div>
+  <div class="actions">
+    <button id="btn-refreshBubble">重新讀取目前狀態</button>
+    <button id="btn-closeBubble">關閉</button>
+  </div>
+</div><!-- /#tab-bubble -->
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  let allScenes = {};          // key -> { label, steps }
+  let currentKey = null;       // 目前正在編輯的情境代號（null = 尚未選定/新情境還沒存過）
+  let draftSteps = [];         // 目前編輯中的步驟（還沒存檔）
+  let gestureList = [];
+  // 哪些步驟目前展開成完整表單——存步驟「物件本身」的參照，不是索引。存索引的話，
+  // 排序/刪除其他步驟時索引會位移，展開狀態就會跟著跑掉、甚至誤展開到別的步驟；
+  // 存物件參照就不會有這個問題，物件在陣列裡移動，展開狀態還是跟著同一個物件走。
+  let expandedSteps = new Set();
+
+  function setStatus(text, bad) {
+    $('status').textContent = text;
+    $('status').className = bad ? 'bad' : '';
+  }
+
+  function setSaveMsg(text, kind) {
+    $('saveMsg').textContent = text;
+    $('saveMsg').className = kind || '';
+  }
+
+  function stepSideDesc(side) {
+    if (!side) return null;
+    const parts = [];
+    if (side.moveTo) parts.push(`移動到(${Math.round(side.moveTo.x)}, ${Math.round(side.moveTo.y)})`);
+    if (side.gesture) parts.push(`手勢:${side.gesture}`);
+    if (side.speak != null) parts.push(`「${side.speak}」`);
+    return parts.join('　');
+  }
+
+  function renderSceneSelect() {
+    const sel = $('sceneSelect');
+    sel.innerHTML = Object.keys(allScenes).map((k) =>
+      `<option value="${k}">${(allScenes[k].label || k).replace(/</g, '&lt;')}（${k}）</option>`
+    ).join('');
+    sel.value = currentKey || '';
+  }
+
+  // ── 走位時間：畫在步驟清單裡「這一步」卡片正上方的連接處，對應 ScenePlayer 播放時
+  // 「從上一步走到這一步」實際花的時間——把「決定走多久」的地方直接擺在視覺上兩個
+  // 步驟區塊的交界，比塞在下面的建構表單裡直覺，也才看得到跟前一步的實際距離。
+  // 速度基準是憑經驗抓的參考值（角色身高抓 300~500px 左右時看起來自然的移動節奏），
+  // 覺得不合適按了套用之後可以再手動微調輸入框的數字，不影響底層還是走 durationMs
+  // 這個機制。
+  const SPEED_PRESETS = { slow: 0.10, normal: 0.20, brisk: 0.40 }; // px/ms
+
+  // 找「這個角色在第 beforeIndex 步之前，最後一次有設定 moveTo 的座標」，當作距離
+  // 計算的起點——是情境播放到那一步時角色實際會站的地方，不是欄位裡剛好留著的舊值。
+  function findPrevMoveTo(charKey, beforeIndex) {
+    for (let i = beforeIndex - 1; i >= 0; i--) {
+      const side = draftSteps[i][charKey];
+      if (side && side.moveTo) return side.moveTo;
+    }
+    return null;
+  }
+
+  // 第 i 步兩個角色裡，走比較遠的那個距離（跟原本一步共用一個 durationMs 是同一個
+  // 資料模型：走比較遠的人優先，不然距離短的人會被逼著配合走很快）。anyFound 標記
+  // 「有沒有找到至少一邊的前一步位置」——distance=0 有兩種完全不同的原因，要分開判斷：
+  // 一種是真的找不到基準（例如這是整段情境第一次移動這個角色），另一種是找到了、但
+  // 這一步的目標座標跟上一步一模一樣，距離本來就是 0，不是抓不到；混在一起會誤導
+  // 使用者以為「調這個時間沒有用」，其實是那一步根本沒有實際位移，不管填多少都不會動。
+  function stepDistanceInfo(i) {
+    const step = draftSteps[i];
+    let maxDist = 0;
+    let anyFound = false;
+    ['c1', 'c2'].forEach((key) => {
+      const side = step[key];
+      if (!side || !side.moveTo) return;
+      const prev = findPrevMoveTo(key, i);
+      if (prev) {
+        anyFound = true;
+        maxDist = Math.max(maxDist, Math.hypot(side.moveTo.x - prev.x, side.moveTo.y - prev.y));
+      }
+    });
+    return { maxDist, anyFound };
+  }
+
+  function buildConnector(i) {
+    const step = draftSteps[i];
+    const wrap = document.createElement('div');
+    wrap.className = 'connector';
+    const hasMove = (step.c1 && step.c1.moveTo) || (step.c2 && step.c2.moveTo);
+    if (!hasMove) {
+      wrap.innerHTML = '<span>（這一步沒有移動角色，不需要走位時間）</span>';
+      return wrap;
+    }
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = '🚶 走位時間';
+    // 欄位顯示的單位是秒（比較直覺），底層 draftSteps[i].durationMs 還是存毫秒
+    // （ScenePlayer 的 _tweenTo() 直接拿它跟 performance.now() 比對，不能改單位），
+    // 只在這裡讀寫的時候做 ×1000 / ÷1000 的轉換，不影響 scenes.json 的資料格式。
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0.1';
+    input.step = '0.1';
+    input.value = (step.durationMs || 2000) / 1000;
+    const secLabel = document.createElement('span');
+    secLabel.textContent = '秒';
+    const speedWarn = document.createElement('span');
+    speedWarn.style.color = 'var(--warn)';
+
+    const { maxDist, anyFound } = stepDistanceInfo(i);
+
+    // 目前輸入的時間換算回速度，跟基準值比對，太離譜就提醒一下——例如 0.1 秒走
+    // 1600px，換算下來是 16px/ms，遠超「小跑」(0.4px/ms) 40 倍，畫面上根本看不出
+    // 是在走路，會像瞬間移動，調這個時間看起來自然「沒有用」，其實是速度爆表了。
+    function refreshSpeedWarn() {
+      if (maxDist <= 0) { speedWarn.textContent = ''; return; }
+      const ms = (Number(input.value) || 0.1) * 1000;
+      const speed = maxDist / ms;
+      if (speed > SPEED_PRESETS.brisk * 3) {
+        speedWarn.textContent = `　⚠ 換算約 ${speed.toFixed(2)}px/ms，遠超小跑，畫面上會像瞬間移動`;
+      } else {
+        speedWarn.textContent = '';
+      }
+    }
+    input.addEventListener('input', () => {
+      draftSteps[i].durationMs = Math.round((Number(input.value) || 2) * 1000);
+      refreshSpeedWarn();
+    });
+    wrap.append(label, input, secLabel, speedWarn);
+
+    if (!anyFound) {
+      const hint = document.createElement('span');
+      hint.textContent = '（找不到前一步位置，是整段情境第一次移動這個角色，無法估算距離建議，自己抓數字就好）';
+      wrap.appendChild(hint);
+    } else if (maxDist < 1) {
+      const hint = document.createElement('span');
+      hint.textContent = '（距離約0px：跟上一步的座標相同，這一步實際上不會移動，走位時間填多少畫面看起來都一樣）';
+      wrap.appendChild(hint);
+    } else {
+      const hint = document.createElement('span');
+      hint.textContent = `距離約${Math.round(maxDist)}px　建議：`;
+      wrap.appendChild(hint);
+      [['slow', '慢'], ['normal', '正常'], ['brisk', '快']].forEach(([k, text]) => {
+        const btn = document.createElement('button');
+        btn.textContent = text;
+        btn.addEventListener('click', () => {
+          const v = Math.round(maxDist / SPEED_PRESETS[k]); // 毫秒
+          input.value = v / 1000; // 顯示秒
+          draftSteps[i].durationMs = v;
+          refreshSpeedWarn();
+        });
+        wrap.appendChild(btn);
+      });
+      refreshSpeedWarn();
+    }
+    return wrap;
+  }
+
+  // 展開步驟卡片用的「就地編輯表單」：欄位改變直接寫回 draftSteps[i]，不用另外按
+  // 「更新」——跟下面共用建構表單同一套互動邏輯（記錄/清除位置、手勢/台詞測試），
+  // 差別是這裡動態產生的每個欄位靠 closure 抓對應的 DOM 元素，不靠固定 id，因為可能
+  // 同時有好幾步都展開著，不能共用同一組 id。
+  // posX/posY 用 'input' 事件即時同步資料（不觸發整份重畫，打字時才不會因為 DOM
+  // 被整個砍掉重建而失焦、游標跳掉）；'change'（放開/失焦時才觸發）才整份重畫，
+  // 讓連接處的距離提示、卡片摘要文字等跟著更新——這是特意的取捨，兩者都要顧到。
+  function buildInlineForm(step, i) {
+    const form = document.createElement('div');
+    form.className = 'stepCardForm';
+
+    const cols = document.createElement('div');
+    cols.className = 'cols';
+
+    ['c1', 'c2'].forEach((charKey) => {
+      const label = charKey === 'c1' ? '角色一' : '角色二';
+      const col = document.createElement('div');
+      col.className = 'col';
+
+      const h3 = document.createElement('h3');
+      h3.textContent = label;
+
+      const captureRow = document.createElement('div');
+      captureRow.className = 'row';
+      const captureBtn = document.createElement('button');
+      captureBtn.textContent = '📍 記錄目前位置';
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = '✕ 清除位置';
+      captureRow.append(captureBtn, clearBtn);
+
+      const posRow = document.createElement('div');
+      posRow.className = 'row';
+      const posLabel = document.createElement('label');
+      posLabel.textContent = 'X / Y';
+      const posX = document.createElement('input');
+      posX.type = 'number'; posX.step = '1'; posX.placeholder = 'X';
+      const posY = document.createElement('input');
+      posY.type = 'number'; posY.step = '1'; posY.placeholder = 'Y';
+      posRow.append(posLabel, posX, posY);
+
+      // 獨立測試「這一步」的走位：不用存檔、不用整段情境播放，直接抓角色目前位置
+      // 當起點，用這一步目前設定的走位時間 tween 到這個 X/Y，馬上看得到速度對不對，
+      // 跟連接處的走位時間輸入框是同一個資料（step.durationMs）。
+      const testMoveRow = document.createElement('div');
+      testMoveRow.className = 'row';
+      const testMoveBtn = document.createElement('button');
+      testMoveBtn.style.flex = '1';
+      testMoveBtn.textContent = '🚶 獨立測試這一步的走位';
+      testMoveRow.appendChild(testMoveBtn);
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'capture';
+
+      const gestureRow = document.createElement('div');
+      gestureRow.className = 'row';
+      const gestureLabel = document.createElement('label');
+      gestureLabel.textContent = '手勢';
+      const gestureSel = document.createElement('select');
+      gestureSel.innerHTML = '<option value="">（不設定）</option>' +
+        gestureList.map((g) => `<option value="${g}">${g}</option>`).join('');
+      const gestureTest = document.createElement('button');
+      gestureTest.textContent = '測試';
+      gestureRow.append(gestureLabel, gestureSel, gestureTest);
+
+      const speakRow = document.createElement('div');
+      speakRow.className = 'row';
+      const speakLabel = document.createElement('label');
+      speakLabel.textContent = '台詞';
+      const speakInput = document.createElement('input');
+      speakInput.type = 'text'; speakInput.placeholder = '留空＝不說話';
+      const speakTest = document.createElement('button');
+      speakTest.textContent = '測試';
+      speakRow.append(speakLabel, speakInput, speakTest);
+
+      col.append(h3, captureRow, posRow, testMoveRow, msgEl, gestureRow, speakRow);
+      cols.appendChild(col);
+
+      const side = step[charKey] || {};
+      if (side.moveTo) { posX.value = side.moveTo.x; posY.value = side.moveTo.y; }
+      gestureSel.value = side.gesture || '';
+      speakInput.value = side.speak || '';
+      msgEl.textContent = side.moveTo
+        ? `目前座標 (${Math.round(side.moveTo.x)}, ${Math.round(side.moveTo.y)})，可以直接改數字，或按「記錄目前位置」改抓桌寵現在的座標。`
+        : '位置留空＝不移動這個角色。拖拉記錄後有誤差可以直接輸入精確數字微調。';
+
+      function sync() {
+        const next = {};
+        if (posX.value !== '' && posY.value !== '') next.moveTo = { x: Number(posX.value), y: Number(posY.value) };
+        if (gestureSel.value) next.gesture = gestureSel.value;
+        const speakVal = speakInput.value.trim();
+        if (speakVal) next.speak = speakVal;
+        if (Object.keys(next).length) step[charKey] = next; else delete step[charKey];
+      }
+
+      captureBtn.addEventListener('click', async () => {
+        msgEl.textContent = '記錄中...'; msgEl.className = 'capture';
+        const live = await window.sceneEditor.getLivePositions();
+        if (!live.ok || !live[charKey]) {
+          msgEl.textContent = '抓不到（' + (live.reason || '角色尚未載入') + '）';
+          msgEl.className = 'capture bad';
+          return;
+        }
+        posX.value = Math.round(live[charKey].x);
+        posY.value = Math.round(live[charKey].y);
+        msgEl.textContent = `已記錄 (${Math.round(live[charKey].x)}, ${Math.round(live[charKey].y)})，可以直接改上面數字微調。`;
+        msgEl.className = 'capture ok';
+        sync();
+        renderStepList();
+      });
+      clearBtn.addEventListener('click', () => {
+        posX.value = ''; posY.value = '';
+        msgEl.textContent = '位置已清除，不會移動' + label + '。';
+        msgEl.className = 'capture';
+        sync();
+        renderStepList();
+      });
+      testMoveBtn.addEventListener('click', () => {
+        if (posX.value === '' || posY.value === '') {
+          msgEl.textContent = '這一步沒有設定' + label + '的位置，沒有走位可以測試。';
+          msgEl.className = 'capture bad';
+          return;
+        }
+        window.sceneEditor.testMove(charKey, Number(posX.value), Number(posY.value), step.durationMs || 2000);
+      });
+      // 原本這些欄位的 'change'（放開/失焦才觸發）會直接同步呼叫 renderStepList()
+      // 整份砍掉重畫——但使用者常見的操作順序是「打完字/選完手勢，直接點旁邊的測試
+      // 按鈕」：滑鼠點下測試按鈕那一刻，欄位會先失焦觸發 change，change 同步整份重畫
+      // 把測試按鈕那個 DOM 節點也換掉了，換掉發生在放開滑鼠、真正送出 click 事件之前，
+      // click 因此永遠送不到（送到的是已經被移除的舊節點），看起來就是「測試按鈕
+      // 失效」。改成只呼叫 sync() 同步資料（不管有沒有整份重畫，draftSteps 都是即時
+      // 正確的，存檔不受影響），不在這裡強制重畫——連接處的距離提示/卡片摘要文字
+      // 沒那麼即時沒關係，之後按記錄/清除位置、收合展開、排序等操作本來就會重畫一次，
+      // 換來的是所有測試按鈕不會再被自己旁邊欄位的重畫打斷。
+      posX.addEventListener('input', sync);
+      posY.addEventListener('input', sync);
+      posX.addEventListener('change', sync);
+      posY.addEventListener('change', sync);
+      gestureSel.addEventListener('change', sync);
+      speakInput.addEventListener('input', sync);
+      speakInput.addEventListener('change', sync);
+      gestureTest.addEventListener('click', () => { if (gestureSel.value) window.sceneEditor.testGesture(charKey, gestureSel.value); });
+      speakTest.addEventListener('click', () => { const t = speakInput.value.trim(); if (t) window.sceneEditor.testSpeak(charKey, t); });
+    });
+
+    form.appendChild(cols);
+
+    const holdRow = document.createElement('div');
+    holdRow.className = 'row';
+    const holdLabel = document.createElement('label');
+    holdLabel.textContent = '停留(秒)';
+    const holdInput = document.createElement('input');
+    holdInput.type = 'number'; holdInput.min = '0'; holdInput.step = '0.1';
+    holdInput.value = (step.holdMs || 0) / 1000;
+    const collapseBtn = document.createElement('button');
+    collapseBtn.textContent = '收合';
+    collapseBtn.style.flex = '1';
+    holdRow.append(holdLabel, holdInput, collapseBtn);
+    form.appendChild(holdRow);
+
+    holdInput.addEventListener('input', () => {
+      const ms = Math.round((Number(holdInput.value) || 0) * 1000);
+      if (ms > 0) step.holdMs = ms; else delete step.holdMs;
+    });
+    // 跟 posX/posY/speakInput 同樣理由：不在 change 裡強制重畫，避免打斷旁邊「收合」
+    // 按鈕以外的其他操作；停留秒數的資料已經在 'input' 那行即時同步進 step.holdMs 了。
+    collapseBtn.addEventListener('click', () => {
+      expandedSteps.delete(step);
+      renderStepList();
+    });
+
+    return form;
+  }
+
+  function renderStepList() {
+    const el = $('stepList');
+    if (!draftSteps.length) {
+      el.innerHTML = '<div style="padding:8px 14px;color:var(--text2);font-size:.85em">（還沒有步驟，用下面的「新增步驟」開始建立）</div>';
+      return;
+    }
+    el.innerHTML = '';
+    draftSteps.forEach((step, i) => {
+      el.appendChild(buildConnector(i));
+
+      const expanded = expandedSteps.has(step);
+      const card = document.createElement('div');
+      card.className = 'stepCard' + (expanded ? ' expanded' : '');
+
+      const head = document.createElement('div');
+      head.className = 'stepCardHead';
+
+      const c1desc = stepSideDesc(step.c1);
+      const c2desc = stepSideDesc(step.c2);
+      const meta = [];
+      if (step.holdMs) meta.push(`停留${(step.holdMs / 1000).toFixed(1)}秒`);
+
+      const desc = document.createElement('div');
+      desc.className = 'desc';
+      desc.innerHTML = `
+        <div class="stepBadgeRow">
+          <span class="stepBadge${expanded ? ' expanded' : ''}">第 ${i + 1} 步</span>
+          ${meta.length ? `<span class="meta">${meta.join('　')}</span>` : ''}
+        </div>
+        ${!expanded && c1desc ? `<div class="side">角色一：${c1desc}</div>` : ''}
+        ${!expanded && c2desc ? `<div class="side">角色二：${c2desc}</div>` : ''}
+        ${!expanded && !c1desc && !c2desc ? '<div class="side">（這一步沒有移動/手勢/台詞）</div>' : ''}
+      `;
+
+      const btns = document.createElement('div');
+      btns.className = 'btns';
+      const toggleBtn = document.createElement('button');
+      toggleBtn.textContent = expanded ? '收合' : '展開編輯';
+      toggleBtn.addEventListener('click', () => {
+        if (expanded) expandedSteps.delete(step); else expandedSteps.add(step);
+        renderStepList();
+      });
+      const upBtn = document.createElement('button');
+      upBtn.textContent = '↑';
+      upBtn.disabled = i === 0;
+      upBtn.addEventListener('click', () => {
+        [draftSteps[i - 1], draftSteps[i]] = [draftSteps[i], draftSteps[i - 1]];
+        renderStepList();
+      });
+      const downBtn = document.createElement('button');
+      downBtn.textContent = '↓';
+      downBtn.disabled = i === draftSteps.length - 1;
+      downBtn.addEventListener('click', () => {
+        [draftSteps[i + 1], draftSteps[i]] = [draftSteps[i], draftSteps[i + 1]];
+        renderStepList();
+      });
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '刪除';
+      delBtn.addEventListener('click', () => {
+        expandedSteps.delete(step);
+        draftSteps.splice(i, 1);
+        renderStepList();
+      });
+
+      // 不經過走位動畫，直接把兩個角色瞬間放到這一步設定的座標——可以快速確認這一步
+      // 的座標實際上會落在畫面哪裡，也可以用來排查「走位動畫看不出效果」：瞬間跳過去
+      // 角色都不會動的話，代表問題出在座標寫進畫面這一段，不是走位時間/動畫算錯。
+      // 哪個角色這一步沒有設定位置就跳過，兩個都沒設定時整顆按鈕直接關掉。
+      const snapBtn = document.createElement('button');
+      snapBtn.textContent = '⚡ 跳到這步位置';
+      const hasMoveForSnap = (step.c1 && step.c1.moveTo) || (step.c2 && step.c2.moveTo);
+      snapBtn.disabled = !hasMoveForSnap;
+      snapBtn.addEventListener('click', () => {
+        if (step.c1 && step.c1.moveTo) window.sceneEditor.snapPosition('c1', step.c1.moveTo.x, step.c1.moveTo.y);
+        if (step.c2 && step.c2.moveTo) window.sceneEditor.snapPosition('c2', step.c2.moveTo.x, step.c2.moveTo.y);
+      });
+
+      // 把這一步整份複製（深複製，不共用 moveTo 等巢狀物件的參照，改其中一份不會互相
+      // 影響）加到清單最後一步，方便「這幾步大同小異」的情境快速起手，複製完再展開
+      // 微調座標/內容就好，不用從空白重新設定一次。
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = '📋 複製到最後';
+      copyBtn.addEventListener('click', () => {
+        const clone = JSON.parse(JSON.stringify(step));
+        draftSteps.push(clone);
+        setSaveMsg(`已把第 ${i + 1} 步複製到最後（新的第 ${draftSteps.length} 步）。`);
+        renderStepList();
+      });
+
+      btns.append(toggleBtn, snapBtn, copyBtn, upBtn, downBtn, delBtn);
+
+      head.append(desc, btns);
+      card.appendChild(head);
+      if (expanded) card.appendChild(buildInlineForm(step, i));
+      el.appendChild(card);
+    });
+  }
+
+  // 把「新增步驟」表單清回空白狀態（位置/手勢/台詞全清空，停留時間留著不清——同一個
+  // 情境常常連續好幾步都差不多長，不用每次重填）。這個表單只用來加全新的一步，既有
+  // 步驟的編輯都在步驟清單裡展開卡片直接改，不會再把資料載回這裡。
+  function resetBuilder() {
+    ['c1', 'c2'].forEach((key) => {
+      $(key + '-posX').value = '';
+      $(key + '-posY').value = '';
+      $(key + '-gesture').value = '';
+      $(key + '-speak').value = '';
+      $(key + '-captureMsg').textContent = '位置留空＝這步不移動角色' + (key === 'c1' ? '一' : '二') +
+        '。拖拉記錄後有誤差的話，可以直接在上面兩格輸入精確數字微調。';
+      $(key + '-captureMsg').className = 'capture';
+    });
+  }
+
+  function loadSceneIntoDraft(key) {
+    currentKey = key;
+    const scene = allScenes[key] || { label: '', steps: [] };
+    $('sceneKey').value = key;
+    $('sceneKey').disabled = true; // 既有情境不能改代號，避免跟系統匣選單/其他引用對不上
+    $('sceneLabel').value = scene.label || '';
+    // 下拉選單本身也要跟著同步選到這一筆——之前刪除情境後改選下一個時漏了這行：
+    // 刪除的處理順序是先 renderSceneSelect()（這時 currentKey 還是剛被刪掉的舊代號，
+    // 選單想選那個舊值選不到）才呼叫這裡把 currentKey 換成新的，但這裡從來沒有回頭
+    // 把選單的顯示值也對齊，選單跟 currentKey 兩邊狀態就對不上——使用者接下來想改選
+    // 別的情境，選單顯示的跟實際載入的是兩回事，看起來就像「選不了別的情境」。
+    $('sceneSelect').value = key;
+    draftSteps = JSON.parse(JSON.stringify(scene.steps || []));
+    expandedSteps = new Set(); // 換情境了，舊情境展開過的步驟物件參照沒有意義，清掉
+    resetBuilder();
+    renderStepList();
+    setSaveMsg('');
+  }
+
+  function startNewScene() {
+    currentKey = null;
+    $('sceneKey').value = '';
+    $('sceneKey').disabled = false;
+    $('sceneLabel').value = '';
+    draftSteps = [];
+    expandedSteps = new Set();
+    resetBuilder();
+    renderStepList();
+    $('sceneSelect').value = '';
+    setSaveMsg('');
+  }
+
+  function fillGestureDropdown(sel) {
+    sel.innerHTML = '<option value="">（不設定）</option>' +
+      gestureList.map((g) => `<option value="${g}">${g}</option>`).join('');
+  }
+
+  async function refreshGestures() {
+    gestureList = await window.sceneEditor.getGestureList();
+    fillGestureDropdown($('c1-gesture'));
+    fillGestureDropdown($('c2-gesture'));
+  }
+
+  async function init() {
+    const res = await window.sceneEditor.getScenes();
+    allScenes = res.ok ? res.scenes : {};
+    renderSceneSelect();
+    const firstKey = Object.keys(allScenes)[0];
+    if (firstKey) loadSceneIntoDraft(firstKey); else startNewScene();
+
+    await refreshGestures();
+
+    const live = await window.sceneEditor.getLivePositions();
+    if (live.ok) setStatus('桌寵連線中，可以按「記錄目前位置」抓角色一/二的即時座標。');
+    else setStatus('桌寵目前讀不到即時座標（' + live.reason + '）。先在背景把桌寵開起來、角色一二都載入完成，再回來按「記錄目前位置」。', true);
+
+    await loadIdleChat();
+  }
+
+  $('sceneSelect').addEventListener('change', (e) => {
+    if (e.target.value) loadSceneIntoDraft(e.target.value);
+  });
+  $('btn-new').addEventListener('click', startNewScene);
+
+  $('btn-delete').addEventListener('click', async () => {
+    if (!currentKey || !allScenes[currentKey]) { setSaveMsg('目前不是既有情境，沒有東西可以刪除。', 'bad'); return; }
+    if (!confirm(`確定要刪除情境「${allScenes[currentKey].label || currentKey}」嗎？`)) return;
+    const next = { ...allScenes };
+    delete next[currentKey];
+    const result = await window.sceneEditor.save(next);
+    if (result.ok) {
+      allScenes = next;
+      renderSceneSelect();
+      const firstKey = Object.keys(allScenes)[0];
+      if (firstKey) loadSceneIntoDraft(firstKey); else startNewScene();
+      setSaveMsg('已刪除。', 'ok');
+    } else {
+      setSaveMsg('刪除失敗：' + result.error, 'bad');
+    }
+  });
+
+  // 按「記錄目前位置」把桌寵即時座標填進 posX/posY 兩個數字欄位——填完還可以直接在
+  // 欄位裡手動改數字微調，拖拉本身有誤差時不用重新拖、重新記錄，改個位數字就好。
+  function captureHandler(charKey) {
+    return async () => {
+      const msgEl = $(charKey + '-captureMsg');
+      msgEl.textContent = '記錄中...';
+      msgEl.className = 'capture';
+      const live = await window.sceneEditor.getLivePositions();
+      if (!live.ok || !live[charKey]) {
+        msgEl.textContent = '抓不到（' + (live.reason || '角色尚未載入') + '）';
+        msgEl.className = 'capture bad';
+        return;
+      }
+      $(charKey + '-posX').value = Math.round(live[charKey].x);
+      $(charKey + '-posY').value = Math.round(live[charKey].y);
+      msgEl.textContent = `已記錄 (${Math.round(live[charKey].x)}, ${Math.round(live[charKey].y)})，可以直接改上面數字微調。`;
+      msgEl.className = 'capture ok';
+    };
+  }
+  $('c1-capture').addEventListener('click', captureHandler('c1'));
+  $('c2-capture').addEventListener('click', captureHandler('c2'));
+
+  function clearPosHandler(charKey) {
+    return () => {
+      $(charKey + '-posX').value = '';
+      $(charKey + '-posY').value = '';
+      const msgEl = $(charKey + '-captureMsg');
+      msgEl.textContent = '位置已清除，這步不會移動角色' + (charKey === 'c1' ? '一' : '二') + '。';
+      msgEl.className = 'capture';
+    };
+  }
+  $('c1-clearPos').addEventListener('click', clearPosHandler('c1'));
+  $('c2-clearPos').addEventListener('click', clearPosHandler('c2'));
+
+  $('c1-testGesture').addEventListener('click', () => {
+    const name = $('c1-gesture').value;
+    if (name) window.sceneEditor.testGesture('c1', name);
+  });
+  $('c2-testGesture').addEventListener('click', () => {
+    const name = $('c2-gesture').value;
+    if (name) window.sceneEditor.testGesture('c2', name);
+  });
+  $('c1-testSpeak').addEventListener('click', () => {
+    const text = $('c1-speak').value.trim();
+    if (text) window.sceneEditor.testSpeak('c1', text);
+  });
+  $('c2-testSpeak').addEventListener('click', () => {
+    const text = $('c2-speak').value.trim();
+    if (text) window.sceneEditor.testSpeak('c2', text);
+  });
+
+  // 位置用 posX/posY 兩個數字欄位當唯一資料來源：兩格都有填（不是空字串）才算這步有
+  // moveTo，任一格留空就當作「這步不移動這個角色」——不管是從沒按過「記錄」，還是按過
+  // 「清除位置」，效果一樣。
+  function readSideFromBuilder(charKey) {
+    const side = {};
+    const xRaw = $(charKey + '-posX').value;
+    const yRaw = $(charKey + '-posY').value;
+    if (xRaw !== '' && yRaw !== '') side.moveTo = { x: Number(xRaw), y: Number(yRaw) };
+    const gesture = $(charKey + '-gesture').value;
+    if (gesture) side.gesture = gesture;
+    const speak = $(charKey + '-speak').value.trim();
+    if (speak) side.speak = speak;
+    return side;
+  }
+
+  $('btn-addStep').addEventListener('click', () => {
+    const c1 = readSideFromBuilder('c1');
+    const c2 = readSideFromBuilder('c2');
+
+    if (!Object.keys(c1).length && !Object.keys(c2).length) {
+      setSaveMsg('至少要幫角色一或角色二設定一項（位置/手勢/台詞）才能新增步驟。', 'bad');
+      return;
+    }
+
+    const step = {};
+    if (Object.keys(c1).length) step.c1 = c1;
+    if (Object.keys(c2).length) step.c2 = c2;
+    if (c1.moveTo || c2.moveTo) {
+      // 走位時間不在這裡填，改到清單裡「這一步」上方的連接處調——這裡先用「正常走」
+      // 速度依距離估一個起點，加進清單後可以直接在連接處微調，不用一開始就想好精確數字。
+      let maxDist = 0;
+      [['c1', c1], ['c2', c2]].forEach(([key, side]) => {
+        if (!side.moveTo) return;
+        const prev = findPrevMoveTo(key, draftSteps.length);
+        if (prev) maxDist = Math.max(maxDist, Math.hypot(side.moveTo.x - prev.x, side.moveTo.y - prev.y));
+      });
+      step.durationMs = maxDist > 0 ? Math.round(maxDist / SPEED_PRESETS.normal) : 2000;
+    }
+    const holdMs = Math.round((Number($('holdMs').value) || 0) * 1000); // 欄位輸入秒，存檔存毫秒
+    if (holdMs > 0) step.holdMs = holdMs;
+
+    draftSteps.push(step);
+    setSaveMsg('');
+    resetBuilder();
+    renderStepList();
+  });
+
+  function buildScenesForSave() {
+    const key = $('sceneKey').value.trim();
+    const label = $('sceneLabel').value.trim();
+    // 允許英數字/底線/連字號——代號只會用 JSON.stringify()／物件的 bracket 寫法存取
+    // （window._scenes[name]、JSON.stringify(key) 組字串），不是拿去當裸的 JS 變數名稱，
+    // 連字號完全安全，之前限制成只能底線是多慮了，反而會讓「walk-test」這種很自然的
+    // 命名習慣被擋下來、存檔整個失敗又不容易注意到（下面錯誤訊息雖然有顯示，但很容易
+    // 被忽略，結果變成「存檔並試播」看起來完全沒反應，誤以為是走位時間沒生效）。
+    if (!/^[A-Za-z0-9_-]+$/.test(key)) {
+      setSaveMsg('代號只能用英文字母/數字/底線/連字號，例如 walk_together 或 walk-test。', 'bad');
+      return null;
+    }
+    if (key !== currentKey && allScenes[key]) {
+      setSaveMsg('這個代號已經被用過了，換一個。', 'bad');
+      return null;
+    }
+    if (!draftSteps.length) {
+      setSaveMsg('至少要有一個步驟才能儲存。', 'bad');
+      return null;
+    }
+    const next = { ...allScenes };
+    if (currentKey && currentKey !== key) delete next[currentKey]; // 理論上代號欄位既有情境是鎖住的，這裡防禦性處理
+    next[key] = { label: label || key, steps: draftSteps };
+    return { key, next };
+  }
+
+  async function doSave() {
+    const built = buildScenesForSave();
+    if (!built) return null;
+    const result = await window.sceneEditor.save(built.next);
+    if (result.ok) {
+      allScenes = built.next;
+      currentKey = built.key;
+      renderSceneSelect();
+      $('sceneKey').disabled = true;
+      setSaveMsg('已儲存，桌寵已同步最新內容。', 'ok');
+      return built.key;
+    } else {
+      setSaveMsg('儲存失敗：' + result.error, 'bad');
+      return null;
+    }
+  }
+
+  $('btn-save').addEventListener('click', doSave);
+  $('btn-saveplay').addEventListener('click', async () => {
+    const key = await doSave();
+    if (key) window.sceneEditor.playScene(key);
+  });
+  $('btn-close').addEventListener('click', () => window.close());
+
+  // ── 步驟清單全螢幕總覽：步驟一多，情境資訊／新增步驟表單／存檔按鈕列擠在同一個小
+  // 視窗裡，能分給步驟清單的高度就很有限，捲來捲去也還是只看得到一小段。按這顆鈕
+  // 暫時把其他區塊都藏起來，讓清單吃下整個分頁的高度，儘量一次看到最多步驟；
+  // 步驟清單自己的排版（連接處＋卡片、展開編輯）完全不變，只是可視空間變大。 */
+  let fullListMode = false;
+  function setFullListMode(on) {
+    fullListMode = on;
+    $('tab-scenes').classList.toggle('fullList', on);
+    $('btn-toggleFullList').textContent = on ? '← 收合，回到編輯畫面' : '⛶ 全螢幕總覽';
+  }
+  $('btn-toggleFullList').addEventListener('click', () => setFullListMode(!fullListMode));
+
+  // ── 分頁切換（情境演出／閒話台詞／泡泡校正）────────────────────────────────
+  const TABS = ['scenes', 'chat', 'bubble'];
+  function showTab(name) {
+    TABS.forEach((t) => {
+      $('tab-btn-' + t).classList.toggle('active', t === name);
+      $('tab-' + t).style.display = (t === name) ? '' : 'none';
+    });
+    if (name !== 'scenes') setFullListMode(false); // 離開情境分頁時收掉，回來才不會一開就整個藏著
+    if (name === 'bubble') loadBubbleConfig();
+  }
+  TABS.forEach((t) => $('tab-btn-' + t).addEventListener('click', () => showTab(t)));
+
+  // ── 閒話台詞（idle chat）：桌寵閒置時隨機講的短句，跟「情境」是兩份獨立資料
+  // （desktop-pet/idle-chat.json），跟網頁模式內建的 50 句陪伴台詞完全脫鉤——
+  // 見 lib/live2d.js 的 setIdleChatLines() 與 desktop-pet/index.html 的 _loadIdleChat()。
+  let idleChatPairs = [];
+
+  function setChatSaveMsg(text, kind) {
+    $('chatSaveMsg').textContent = text;
+    $('chatSaveMsg').className = kind || '';
+  }
+
+  function renderChatList() {
+    const el = $('chatList');
+    if (!idleChatPairs.length) {
+      el.innerHTML = '<div style="padding:8px 14px;color:var(--text2);font-size:.85em">（還沒有台詞，用下面的表單新增）</div>';
+      return;
+    }
+    el.innerHTML = '';
+    idleChatPairs.forEach((pair, i) => {
+      const row = document.createElement('div');
+      row.className = 'chatRow';
+      row.innerHTML = `
+        <div class="desc">
+          ${pair.c1 ? `<div class="c1">角色一：${pair.c1.replace(/</g, '&lt;')}</div>` : ''}
+          ${pair.c2 ? `<div class="c2">角色二：${pair.c2.replace(/</g, '&lt;')}</div>` : ''}
+        </div>
+        <div class="btns">
+          <button data-act="up" ${i === 0 ? 'disabled' : ''}>↑</button>
+          <button data-act="down" ${i === idleChatPairs.length - 1 ? 'disabled' : ''}>↓</button>
+          <button data-act="del">刪除</button>
+        </div>`;
+      row.querySelector('[data-act=up]').addEventListener('click', () => {
+        [idleChatPairs[i - 1], idleChatPairs[i]] = [idleChatPairs[i], idleChatPairs[i - 1]];
+        renderChatList();
+      });
+      row.querySelector('[data-act=down]').addEventListener('click', () => {
+        [idleChatPairs[i + 1], idleChatPairs[i]] = [idleChatPairs[i], idleChatPairs[i + 1]];
+        renderChatList();
+      });
+      row.querySelector('[data-act=del]').addEventListener('click', () => {
+        idleChatPairs.splice(i, 1);
+        renderChatList();
+      });
+      el.appendChild(row);
+    });
+  }
+
+  async function loadIdleChat() {
+    const res = await window.sceneEditor.getIdleChat();
+    idleChatPairs = res.ok ? res.pairs : [];
+    renderChatList();
+  }
+
+  $('chat-c1-test').addEventListener('click', () => {
+    const text = $('chat-c1').value.trim();
+    if (text) window.sceneEditor.testSpeak('c1', text);
+  });
+  $('chat-c2-test').addEventListener('click', () => {
+    const text = $('chat-c2').value.trim();
+    if (text) window.sceneEditor.testSpeak('c2', text);
+  });
+
+  $('btn-addChat').addEventListener('click', () => {
+    const c1 = $('chat-c1').value.trim();
+    const c2 = $('chat-c2').value.trim();
+    if (!c1 && !c2) { setChatSaveMsg('至少要幫角色一或角色二填一句話。', 'bad'); return; }
+    idleChatPairs.push({ c1, c2 });
+    renderChatList();
+    $('chat-c1').value = '';
+    $('chat-c2').value = '';
+    setChatSaveMsg('');
+  });
+
+  $('btn-saveChat').addEventListener('click', async () => {
+    const result = await window.sceneEditor.saveIdleChat(idleChatPairs);
+    if (result.ok) setChatSaveMsg('已儲存，桌寵已同步最新內容。', 'ok');
+    else setChatSaveMsg('儲存失敗：' + result.error, 'bad');
+  });
+  $('btn-closeChat').addEventListener('click', () => window.close());
+
+  // ── 泡泡校正（headRatio/headXRatio/bubbleGrow/scale）：跟情境/閒話台詞不同，這份
+  // 資料寫回的是 manifest.json 該模型的 layout（「跟著模型走」，不是桌寵自己的資料檔），
+  // 見 desktop-pet/index.html 的 getBubbleConfig()/setBubbleConfigLive() 說明。
+  function setBubbleSaveMsg(text, kind) {
+    $('bubbleSaveMsg').textContent = text;
+    $('bubbleSaveMsg').className = kind || '';
+  }
+
+  let bubbleModelPath = { c1: '', c2: '' };
+  // bubbleGrow 是二選一（'left'/'right'），用一顆按鈕當切換開關，不用下拉選單——
+  // 按鈕文字直接顯示「切換後會變成怎樣」，比看代號名稱直覺。
+  let bubbleGrowState = { c1: 'right', c2: 'left' };
+
+  function bubbleGrowLabel(grow) {
+    // grow='right' → 泡泡向右長、尾巴朝左（指回角色）；grow='left' → 泡泡向左長、尾巴朝右
+    return grow === 'left' ? '◀ 泡泡向左長（尾巴朝右）' : '泡泡向右長（尾巴朝左）▶';
+  }
+
+  function renderBubbleGrowButton(key) {
+    $(key + '-bubbleGrow').textContent = bubbleGrowLabel(bubbleGrowState[key]);
+  }
+
+  ['c1', 'c2'].forEach((key) => {
+    renderBubbleGrowButton(key); // 頁面剛載入、getBubbleConfig() 還沒回來前先顯示預設值，不留白
+    $(key + '-bubbleGrow').addEventListener('click', () => {
+      bubbleGrowState[key] = bubbleGrowState[key] === 'left' ? 'right' : 'left';
+      renderBubbleGrowButton(key);
+    });
+  });
+
+  function readBubbleOpts(key) {
+    return {
+      headRatio:  Number($(key + '-headRatio').value),
+      headXRatio: Number($(key + '-headXRatio').value),
+      bubbleGrow: bubbleGrowState[key],
+      scale:      $(key + '-scale').value,
+    };
+  }
+
+  async function loadBubbleConfig() {
+    setBubbleSaveMsg('');
+    const res = await window.sceneEditor.getBubbleConfig();
+    if (!res.ok) {
+      $('c1-bubble-model').textContent = $('c2-bubble-model').textContent = '讀不到（' + res.reason + '）';
+      $('c1-bubble-model').className = $('c2-bubble-model').className = 'capture bad';
+      return;
+    }
+    ['c1', 'c2'].forEach((key) => {
+      const info = res[key];
+      const modelEl = $(key + '-bubble-model');
+      if (!info) {
+        modelEl.textContent = '角色尚未載入完成';
+        modelEl.className = 'capture bad';
+        return;
+      }
+      bubbleModelPath[key] = info.modelPath;
+      modelEl.textContent = info.modelPath.replace(/^.*live2d_my_like\//, '');
+      modelEl.className = 'capture ok';
+      $(key + '-headRatio').value  = info.headRatio;
+      $(key + '-headXRatio').value = info.headXRatio;
+      $(key + '-scale').value      = info.scale;
+      bubbleGrowState[key] = info.bubbleGrow === 'left' ? 'left' : 'right';
+      renderBubbleGrowButton(key);
+    });
+  }
+
+  ['c1', 'c2'].forEach((key) => {
+    $(key + '-bubble-test').addEventListener('click', () => {
+      window.sceneEditor.testBubbleLive(key, readBubbleOpts(key));
+      // 套用完立刻講一句話，方便馬上看到泡泡貼在哪裡、尾巴指向對不對，不用切回情境分頁另外測
+      window.sceneEditor.testSpeak(key, '這樣夠貼近頭部了嗎？');
+    });
+    $(key + '-bubble-save').addEventListener('click', async () => {
+      if (!bubbleModelPath[key]) { setBubbleSaveMsg('還沒讀到角色' + (key === 'c1' ? '一' : '二') + '目前套用的模型。', 'bad'); return; }
+      const result = await window.sceneEditor.saveBubbleConfig(bubbleModelPath[key], readBubbleOpts(key));
+      if (result.ok) setBubbleSaveMsg('已儲存到 manifest.json，這個模型以後不管給誰用都會套用這組設定。', 'ok');
+      else setBubbleSaveMsg('儲存失敗：' + result.error, 'bad');
+    });
+  });
+
+  $('btn-refreshBubble').addEventListener('click', loadBubbleConfig);
+  $('btn-closeBubble').addEventListener('click', () => window.close());
+
+  init();
+</script>
+</body>
+</html>

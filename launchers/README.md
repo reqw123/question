@@ -20,12 +20,31 @@
 
 `啟動-網頁遊戲.bat` 執行時會先檢查專案根目錄有沒有 `caddy.exe`：
 
-- **有 `caddy.exe`** → 照原本方式啟動 Caddy（`caddy.exe run`），走 `Caddyfile` 設定的公網模式，支援之後接 ngrok 讓區網外的玩家連進來（見 `multi/README.md` 的「公網對外開放」章節）。
+- **有 `caddy.exe`** → 照原本方式啟動 Caddy（`caddy.exe run`），走 `Caddyfile` 設定的公網模式，支援之後接 ngrok 讓區網外的玩家連進來（見 `multi/多人搶答系統技術文件.md` 的「公網對外開放」章節）。
 - **沒有 `caddy.exe`** → 自動改用 [`serve-lan.js`](serve-lan.js)——一支零套件相依、只需要 Node.js 就能跑的靜態檔案伺服器，一樣把整個專案目錄用 `http://localhost:8080/` 服務起來，`multi/host.html` 照樣能開、QR code 照樣能掃、區網內搶答完全正常。差別只有一個：**不支援 `/mqtt` 反向代理**，所以沒辦法透過 ngrok 開放給區網外的玩家（純區網用途完全用不到這條——`multi/multiplay.js` 的 `mpMqttUrl()` 在 `http:` 協定下本來就是直連 `ws://IP:9001`，不經過任何反代，只有 `https:` 協定才會走 `/mqtt` 反代）。
 
 兩種模式最後都會開瀏覽器連到同一個網址 `http://localhost:8080/multi/host.html`，使用上完全一樣，差別只在背後開的是哪個伺服器、要不要真的去下載 `caddy.exe`。如果連 Node.js 都沒裝（兩種伺服器都起不來），`.bat` 會印出清楚的錯誤訊息並停在原地，不會像之前那樣直接開出一個空白/連不上的瀏覽器分頁。
 
-## 換到新電腦：完整設定流程
+## 換到新電腦：一鍵安裝（推薦）
+
+專案根目錄的 `一鍵安裝.bat` 把下面整套手動流程自動化了：**雙擊這一個檔案**就會依序完成 `desktop-pet`／`host-app` 的 `npm install`、產生 Live2D 角色清單設定（`manifest.json`／`names.json`）、建立桌面上的三個捷徑——不用照文件手動一步一步打指令，也不用像舊版腳本那樣自己去改寫死的路徑（自動抓專案實際所在位置）。
+
+> [!IMPORTANT]
+> **執行前只需要先裝好一樣東西：[Node.js](https://nodejs.org/)（選左邊的 LTS 版本）。**
+> 除此之外不用另外安裝或設定任何東西——PowerShell 是 Windows 內建的（Windows 7 以上都有），執行原則的限制 `一鍵安裝.bat` 自己會繞過，不用使用者處理。萬一忘記先裝 Node.js，腳本會自己偵測到、停下來並附上下載連結，不會讓後面步驟悄悄失敗。
+
+跑完之後畫面會列出「這支腳本沒辦法自動處理、要用到對應功能才需要自己準備」的項目（下載 `caddy.exe`、VS Code Live Server、Live2D 模型檔案）——這些不是執行這支安裝腳本本身的前提，只是某些進階功能要用到才需要，對照下面第二步的表格看需要哪些即可。
+
+真正的邏輯在 `launchers/setup.ps1`（純 PowerShell，可以直接讀懂在做什麼）；`一鍵安裝.bat` 只是一個純 ASCII 內容的入口，用 `-ExecutionPolicy Bypass` 呼叫它——原因跟下面「為什麼 .bat 內容全用英文」是同一個坑，只是這裡反過來是 `.bat` 負責繞過雙擊 `.ps1` 預設不會執行的限制，中文訊息交給 PowerShell 印，不會亂碼。
+
+> [!NOTE]
+> 這個腳本可以重複執行，不會因為東西已經裝過就出錯（`npm install` 本身是幂等的，捷徑重建也只是覆蓋同名 `.lnk`）——之後想補裝 Live2D 模型、或懷疑某個步驟沒跑成功，直接再雙擊一次 `一鍵安裝.bat` 就好。
+
+---
+
+## 換到新電腦：手動設定流程（備用／想了解細節時參考）
+
+上面的一鍵安裝腳本本質上就是把下面這幾步自動化，如果想手動個別執行其中一步（例如只想重建捷徑、不想重跑 `npm install`），或想知道每一步實際在做什麼，可以參考這裡。
 
 捷徑本身只是「雙擊執行某個 `.bat`」的指標，`.bat` 真正依賴的東西（Node.js、npm 套件、`caddy.exe`⋯）在新電腦上不會自動存在。換電腦後要照下面順序來，跳過前面幾步直接建捷徑，點了也會失敗或空白。
 
@@ -37,8 +56,8 @@
 
 | 捷徑 | 需要先準備 |
 |---|---|
-| 多人搶答 - 網頁遊戲.lnk | 裝好 [Node.js](https://nodejs.org/) 就能跑（純區網用途）。**只有想額外支援 ngrok 對外公開**才需要另外下載 `caddy.exe`（[caddyserver.com](https://caddyserver.com/download) 下載 Windows 版，放到專案根目錄跟 `Caddyfile` 同一層——這個檔案不在 git 版本控制裡，`Caddyfile` 本身有進版本控制不用另外處理），沒有的話 `.bat` 會自動改用內建的區網版伺服器，見上方「網頁遊戲：Caddy 有無自動切換」。另外要有 MQTT broker（Mosquitto）在跑，細節見 `multi/README.md` |
-| 多人搶答 - 桌寵.lnk | 裝好 [Node.js](https://nodejs.org/)，然後 `cd desktop-pet && npm install`（詳見 `desktop-pet/README.md` 的「為什麼 node_modules 沒有進版本控制」） |
+| 多人搶答 - 網頁遊戲.lnk | 裝好 [Node.js](https://nodejs.org/) 就能跑（純區網用途）。**只有想額外支援 ngrok 對外公開**才需要另外下載 `caddy.exe`（[caddyserver.com](https://caddyserver.com/download) 下載 Windows 版，放到專案根目錄跟 `Caddyfile` 同一層——這個檔案不在 git 版本控制裡，`Caddyfile` 本身有進版本控制不用另外處理），沒有的話 `.bat` 會自動改用內建的區網版伺服器，見上方「網頁遊戲：Caddy 有無自動切換」。另外要有 MQTT broker（Mosquitto）在跑，細節見 `multi/多人搶答系統技術文件.md` |
+| 多人搶答 - 桌寵.lnk | 裝好 [Node.js](https://nodejs.org/)，然後 `cd desktop-pet && npm install`（詳見 `desktop-pet/桌面寵物說明.md` 的「為什麼 node_modules 沒有進版本控制」） |
 | 多人搶答 - 主持人App.lnk | 同樣要 Node.js + `cd host-app && npm install`；另外要裝 VS Code 的 **Live Server** 擴充套件，執行前對 `multi/host.html` 按「Go Live」（`.bat` 本身會檢查 5500 port 有沒有開，沒開會跳警告但還是會繼續開視窗，畫面可能因此空白） |
 
 三個捷徑互相獨立，只用得到哪個就只設定哪個對應的前置需求，不用三個都裝齊。

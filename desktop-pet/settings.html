@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>設定</title>
+<style>
+  :root {
+    --cyan: #00d4ff; --bg: #14181f; --border: rgba(255,255,255,0.12); --text: #eee; --text2: #9aa4b2;
+    --warn: #ffb454; --violet: #b39dff; /* 還原預設值這種「中等力道」操作用的第三種按鈕色，
+    跟儲存(cyan)／清除(warn 橘) 都不同，一眼能分出三種按鈕分別是什麼力道的操作 */
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.5 -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  #body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+  section { display: flex; flex-direction: column; }
+  section + section { border-top: 1px solid var(--border); padding-top: 14px; }
+  /* 每個 section 開頭那個 label 是這個區塊的主標題（「OpenAI API Key」「對話記憶」
+     「語音輸入靈敏度」），字級/顏色都比裡面的欄位小標題（.field label）更突出一階。 */
+  .section-title { display: block; font-size: 1.05em; color: var(--text); font-weight: 700; margin-bottom: 2px; }
+  label { font-size: .85em; color: var(--text2); font-weight: 700; }
+  #currentStatus { font-size: .85em; color: var(--text2); margin: 4px 0 8px; }
+  input[type=password], input[type=text], input[type=number] {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 8px 10px; font-size: .92em; width: 100%; margin-bottom: 8px;
+  }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; margin-bottom: 4px; }
+  /* .hint 是每個功能的敘述文字，字級跟著 .field label 一起放大一點，長段中文說明才不會
+     小到要瞇眼看。 */
+  .hint { font-size: .88em; line-height: 1.5; color: var(--text2); margin: -4px 0 8px; }
+  .btn-row { display: flex; gap: 8px; }
+  .msg { font-size: .8em; min-height: 1.4em; margin-top: 6px; color: var(--text2); }
+  .msg.error { color: var(--warn); }
+  button {
+    flex: 1; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: .88em; cursor: pointer;
+  }
+  button:hover { border-color: var(--cyan); }
+  /* 三種按鈕外觀，對應三種操作力道，顏色跟語意固定搭配、不分區塊都用同一套規則：
+     .btn-primary（青色實心）＝儲存這種正向、隨時可以再改的操作；
+     .btn-secondary（紫色外框）＝還原預設值——會覆蓋掉目前設定，但不是不可逆的破壞性操作；
+     .btn-danger（橘色外框）＝清除 API key／清空記憶——不可逆，main process 那邊還會再跳
+     一次原生確認對話框。 */
+  .btn-primary { background: var(--cyan); color: #06222b; border-color: var(--cyan); font-weight: 700; }
+  .btn-secondary { color: var(--violet); border-color: rgba(179,157,255,.45); }
+  .btn-secondary:hover { border-color: var(--violet); }
+  .btn-danger { color: var(--warn); border-color: rgba(255,180,84,.4); }
+  .btn-danger:hover { border-color: var(--warn); }
+  #actions { display: flex; padding: 10px 14px; border-top: 1px solid var(--border); }
+  #actions button { flex: none; padding: 8px 18px; margin-left: auto; }
+</style>
+</head>
+<body>
+  <div id="body">
+    <section id="apiKeySection">
+      <label class="section-title" for="apiKey">OpenAI API Key</label>
+      <div id="currentStatus">讀取中...</div>
+      <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off">
+      <div class="btn-row">
+        <button id="btn-clear" class="btn-danger">清除</button>
+        <button id="btn-save" class="btn-primary">儲存</button>
+      </div>
+      <div id="saveMsg" class="msg"></div>
+    </section>
+    <section id="memorySection">
+      <label class="section-title">對話記憶（角色一/二各自獨立）</label>
+      <div class="btn-row" style="margin-top:8px;">
+        <button id="btn-clear-c1" class="btn-danger">清空角色一記憶</button>
+        <button id="btn-clear-c2" class="btn-danger">清空角色二記憶</button>
+      </div>
+      <div id="memoryMsg" class="msg"></div>
+    </section>
+    <section id="micSection">
+      <label class="section-title">語音輸入靈敏度</label>
+      <div class="hint">用來判斷「有沒有真的講話」，避免完全沒說話時被 Whisper 幻覺出文字照樣送出。改完下次點 🎤 開始錄音就會生效，不用重開桌寵。</div>
+      <div class="field">
+        <label for="micRmsThreshold">聲音最低門檻（RMS，預設 0.04）</label>
+        <input id="micRmsThreshold" type="number" min="0.005" max="1" step="0.005">
+        <div class="hint">音量要達到這個值才算「有聲音」。環境雜音一直被誤判成有講話就調高一點；小聲說話常被當成沒講話就調低一點。</div>
+      </div>
+      <div class="field">
+        <label for="micMinSpeechDurationMs">聲音累計時長（毫秒，預設 400）</label>
+        <input id="micMinSpeechDurationMs" type="number" min="0" max="60000" step="50">
+        <div class="hint">達到門檻的音量合計要累積多久才算「真的有講話」，用來濾掉單一次瞬間噪音（滑鼠聲、椅子聲）。</div>
+      </div>
+      <div class="btn-row">
+        <button id="btn-reset-mic" class="btn-secondary">還原預設值</button>
+        <button id="btn-save-mic" class="btn-primary">儲存</button>
+      </div>
+      <div id="micMsg" class="msg"></div>
+    </section>
+  </div>
+  <div id="actions">
+    <button id="btn-close">關閉</button>
+  </div>
+
+<script>
+  const statusEl = document.getElementById('currentStatus');
+  const inputEl = document.getElementById('apiKey');
+  const saveMsgEl = document.getElementById('saveMsg');
+  const saveBtn = document.getElementById('btn-save');
+  const clearBtn = document.getElementById('btn-clear');
+  const closeBtn = document.getElementById('btn-close');
+  const micRmsInputEl = document.getElementById('micRmsThreshold');
+  const micDurationInputEl = document.getElementById('micMinSpeechDurationMs');
+  const micMsgEl = document.getElementById('micMsg');
+
+  // 只顯示「有沒有設定過」，不把已存的 key 本身送回這個視窗顯示——
+  // 避免沒必要地把密鑰暴露在畫面/DOM 裡（見 docs/specs/0001-desktop-pet-tts-playback.md）。
+  window.settings.onInit(({ hasKey, micSettings }) => {
+    statusEl.textContent = hasKey ? '目前已設定過 API key（輸入新的並儲存即可覆蓋）' : '目前尚未設定 API key';
+    if (micSettings) {
+      micRmsInputEl.value = micSettings.rmsThreshold;
+      micDurationInputEl.value = micSettings.minSpeechDurationMs;
+    }
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    saveMsgEl.className = 'msg';
+    saveMsgEl.textContent = '儲存中...';
+    const result = await window.settings.save(inputEl.value);
+    if (result.ok) {
+      saveMsgEl.className = 'msg';
+      saveMsgEl.textContent = '✅ 已儲存';
+      statusEl.textContent = '目前已設定過 API key（輸入新的並儲存即可覆蓋）';
+      inputEl.value = '';
+    } else {
+      saveMsgEl.className = 'msg error';
+      saveMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+
+  // 二次確認交給 main process 用原生 dialog.showMessageBox 處理（跟系統匣「清除本機
+  // 快取並重開」同一套手法），這裡只管顯示結果——cancelled 時不用顯示任何訊息。
+  clearBtn.addEventListener('click', async () => {
+    const result = await window.settings.clear();
+    if (result.cancelled) return;
+    if (result.ok) {
+      saveMsgEl.className = 'msg';
+      saveMsgEl.textContent = '✅ 已清除';
+      statusEl.textContent = '目前尚未設定 API key';
+      inputEl.value = '';
+    } else {
+      saveMsgEl.className = 'msg error';
+      saveMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+
+  closeBtn.addEventListener('click', () => window.settings.close());
+
+  // 記憶清空跟 API key 清除是同一套模式（main process 跳原生確認對話框），
+  // 但角色一/二各自獨立觸發，不會互相影響（見 chat-memory-store.js 的 Q12）。
+  const memoryMsgEl = document.getElementById('memoryMsg');
+  function wireClearMemory(btnId, charKey, label) {
+    document.getElementById(btnId).addEventListener('click', async () => {
+      const result = await window.settings.clearMemory(charKey);
+      if (result.cancelled) return;
+      memoryMsgEl.className = result.ok ? 'msg' : 'msg error';
+      memoryMsgEl.textContent = result.ok ? `✅ 已清空${label}的記憶` : '❌ ' + result.error;
+    });
+  }
+  wireClearMemory('btn-clear-c1', 'c1', '角色一');
+  wireClearMemory('btn-clear-c2', 'c2', '角色二');
+
+  // 語音輸入靈敏度：跟 API key 區塊同一套「存檔/清除訊息顯示在下方 .msg」模式，
+  // 但這裡沒有二次確認對話框——調門檻不是不可逆的破壞性操作，跟清 API key／記憶不同。
+  document.getElementById('btn-save-mic').addEventListener('click', async () => {
+    micMsgEl.className = 'msg';
+    micMsgEl.textContent = '儲存中...';
+    const result = await window.settings.saveMicSettings({
+      rmsThreshold: Number(micRmsInputEl.value),
+      minSpeechDurationMs: Number(micDurationInputEl.value),
+    });
+    if (result.ok) {
+      micMsgEl.className = 'msg';
+      micMsgEl.textContent = '✅ 已儲存，下次點 🎤 開始錄音就會生效';
+    } else {
+      micMsgEl.className = 'msg error';
+      micMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+
+  document.getElementById('btn-reset-mic').addEventListener('click', async () => {
+    const result = await window.settings.resetMicSettings();
+    if (result.ok) {
+      micRmsInputEl.value = result.rmsThreshold;
+      micDurationInputEl.value = result.minSpeechDurationMs;
+      micMsgEl.className = 'msg';
+      micMsgEl.textContent = '✅ 已還原預設值';
+    } else {
+      micMsgEl.className = 'msg error';
+      micMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+</script>
+</body>
+</html>

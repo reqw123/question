@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(node --check \"C:\\\\question\\\\multi\\\\L2DGesturePlayer.js\")",
+      "Bash(node --check \"C:\\\\question\\\\lib\\\\live2d.js\")",
+      "Bash(python -c ' *)",
+      "Bash(node --check _tmp_check.js)",
+      "Bash(rm -f _tmp_check.js)",
+      "Bash(node --check \"C:\\\\question\\\\desktop-pet\\\\name-manager-preload.js\")",
+      "Bash(node --check \"C:\\\\question\\\\live2d_my_like\\\\config\\\\generate-manifest.js\")"
     ]
   }
 }

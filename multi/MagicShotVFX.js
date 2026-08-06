@@ -5,8 +5,6 @@
  *
  * 公開 API:
  *   MagicShotVFX.fireExplosion(letter)  ← 惠惠爆裂魔法，唯一實際被呼叫的攻擊特效
- *   MagicShotVFX.updateStreak(playerId, correct) → 新連續正解數
- *   MagicShotVFX.getStreak(playerId)
  *   MagicShotVFX.init()  ← 掛載到 L2D.app.stage（也會自動延遲嘗試）
  *
  * 掛載方式：本模組啟動時自動每 500 ms 嘗試 init()，直到成功為止。
@@ -30,7 +28,6 @@ const MagicShotVFX = (() => {
   let _lastTs    = 0;
   let _enabled   = true;   // 特效總開關（false = 靜默忽略所有 fire 呼叫）
   const _effects = [];     // 目前活躍的特效物件陣列
-  const _streaks = {};     // { playerId: 連續正解數 }
 
   // ── easing ────────────────────────────────────────────────────────────────
   const easeOut = t => 1 - (1-t)*(1-t);
@@ -573,8 +570,6 @@ const MagicShotVFX = (() => {
     _effects.push(new MagicCircle(opt.cx, opt.cy, { color: COL.RED, dur: 2600 }));
     // 詠唱字幕逐行出現
     _effects.push(new ChantText());
-    // 惠惠垂直擺手：下放外擺→停住→回位
-    // PointingGesture 移除 — 手勢由 L2DGesturePlayer 統一管理
     _startTick();
 
     // ── Phase 2：巨大火球形成（1800 ms）─────────────────────────────────
@@ -610,14 +605,6 @@ const MagicShotVFX = (() => {
     }, 3100);
   }
 
-  // ── 連擊追蹤 ──────────────────────────────────────────────────────────────
-  function updateStreak(id, correct) {
-    if (!correct) { _streaks[id] = 0; return 0; }
-    _streaks[id] = (_streaks[id] || 0) + 1;
-    return _streaks[id];
-  }
-  function getStreak(id) { return _streaks[id] || 0; }
-
   // ── 初始化 ────────────────────────────────────────────────────────────────
   /**
    * 掛載 VFX 容器到 L2D.app.stage。
@@ -639,12 +626,8 @@ const MagicShotVFX = (() => {
 
   // ── 公開介面 ──────────────────────────────────────────────────────────────
   return {
-    get container() { return _container; },
     fireExplosion,
     init,
-    updateStreak,
-    getStreak,
-    ScreenShake,
     // 特效總開關 — setEnabled(false) 靜默跳過所有攻擊特效，不影響已在播放的效果
     setEnabled(v) { _enabled = !!v; },
     isEnabled()   { return _enabled; },

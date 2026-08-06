@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>多人搶答 — 玩家</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../lib/style.css">
   <style>
     /* ── 確保畫面層級在 Live2D canvas(5) 及 speech bubble(100) 之上 */
     .screen { z-index: 110; }
@@ -12,7 +12,7 @@
     html, body { overflow:hidden; height:100%; touch-action:manipulation; }
 
     /* ── 加入畫面 ─────────────────────────────────────────── */
-    .join-card { max-width:380px; width:92%; text-align:center; }
+    .join-card { max-width:380px; width:92%; text-align:center; max-height:calc(100vh - 40px); overflow-y:auto; }
     .join-title { font-size:2em; font-weight:900; margin-bottom:6px;
       background:linear-gradient(130deg,var(--cyan),var(--purple));
       -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
@@ -25,10 +25,46 @@
     }
     .join-input:focus { border-color:var(--cyan); }
     #join-status { font-size:.8em; color:var(--text2); min-height:1.4em; margin-top:6px; }
-    /* #p-char1-select / #p-char2-select 的 <option> 清單：瀏覽器原生下拉彈出視窗
+    /* #p-char1-select ~ #p-char4-select 的 <option> 清單：瀏覽器原生下拉彈出視窗
        不會繼承頁面的深色主題，預設是系統白底黑字，這裡強制跟主題同色 */
-    #p-char1-select option, #p-char2-select option {
+    #p-char1-select option, #p-char2-select option,
+    #p-char3-select option, #p-char4-select option,
+    #p-char-count-select option {
       background: var(--bg2); color: var(--text);
+    }
+    /* 「想換手機就選多點」提示：故意做成醒目徽章，玩家常忽略角色數選單，
+       這個提示只在進房前的角色選擇區出現一次，要讓人一眼注意到 */
+    .char-count-hint {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:.74em; font-weight:800; color:#fff; white-space:nowrap;
+      padding:5px 11px; border-radius:999px;
+      background:linear-gradient(135deg, #ff6a00, #ff3355);
+      box-shadow:0 0 14px rgba(255,51,85,.55), 0 2px 6px rgba(0,0,0,.3);
+      animation:hintPulse 1.7s ease-in-out infinite;
+    }
+    @keyframes hintPulse {
+      0%, 100% { transform:scale(1); box-shadow:0 0 14px rgba(255,51,85,.55), 0 2px 6px rgba(0,0,0,.3); }
+      50%      { transform:scale(1.06); box-shadow:0 0 22px rgba(255,51,85,.85), 0 2px 6px rgba(0,0,0,.3); }
+    }
+    /* 大廳「目前題庫」提示：讀 STATE.bankLabel（沿用既有 MP_TOPICS.STATE 同步），
+       晚加入玩家靠 STATE 的 retained message 也能立即看到主持人目前選的題庫 */
+    .bank-banner {
+      display:none; margin-bottom:14px; padding:9px 14px; border-radius:10px;
+      background:linear-gradient(135deg, rgba(0,212,255,.16), rgba(121,40,202,.16));
+      border:1px solid var(--border); box-shadow:0 0 14px rgba(0,212,255,.25);
+      font-size:.85em; font-weight:700; color:var(--cyan); text-align:center;
+      letter-spacing:.5px;
+    }
+    .bank-banner.visible { display:block; }
+    #p-bank-name { color:#fff; }
+    /* 題庫切換時短暫閃動放大，把注意力拉到這個橫幅上——原本只是默默換字，
+       玩家沒盯著這裡看很容易錯過主持人已經換題庫 */
+    .bank-banner.flash { animation: bankSwitchFlash 2.4s ease; }
+    @keyframes bankSwitchFlash {
+      0%   { transform:scale(1); }
+      20%  { transform:scale(1.06); box-shadow:0 0 28px rgba(0,255,136,.85); background:linear-gradient(135deg, rgba(0,255,136,.5), rgba(0,255,136,.18)); }
+      70%  { transform:scale(1.06); box-shadow:0 0 28px rgba(0,255,136,.85); background:linear-gradient(135deg, rgba(0,255,136,.5), rgba(0,255,136,.18)); }
+      100% { transform:scale(1); }
     }
 
     /* ── 遊戲畫面 ─────────────────────────────────────────── */
@@ -344,7 +380,10 @@
     }
     /* 收合切換按鈕：左邊緣薄標籤，貼齊畫面左側 */
     #fab-toggle {
-      position:fixed; left:0; bottom:100px; z-index:210;
+      /* z-index 要高於拖曳角色時 Live2D canvas 用的 9999（見 lib/live2d.js 的 startDrag()）——
+         這顆是收合工具列唯一的救援按鈕，任何時候（包括正在拖曳角色）都必須點得到，
+         否則骰子按鈕被收合隱藏後會完全卡死，沒有其他方式能再展開 */
+      position:fixed; left:0; bottom:100px; z-index:10002;
       width:22px; height:60px; padding:0;
       display:flex; align-items:center; justify-content:center;
       background:linear-gradient(160deg, rgba(0,212,255,.12), rgba(0,80,180,.18));
@@ -381,6 +420,7 @@
   <div class="card join-card">
     <div class="join-title">🎮 多人搶答</div>
     <div class="join-sub">MULTIPLAYER QUIZ</div>
+    <div id="p-bank-banner" class="bank-banner">📚 目前題庫：<span id="p-bank-name"></span></div>
     <input id="player-name" class="join-input" type="text"
            maxlength="12" placeholder="輸入你的名稱..."
            autocomplete="off" spellcheck="false">
@@ -409,10 +449,21 @@
     <!-- Live2D 角色選擇（選填，live2d_my_like 收藏庫，進房前選，只影響自己這台裝置，只會請求所選的模型資源）-->
     <div id="mylike-join-wrap" style="display:none;margin-bottom:14px;text-align:left">
       <div style="font-size:.75em;color:var(--text2);letter-spacing:1px;margin-bottom:8px">我的 Live2D 角色（選填）</div>
-      <div style="display:flex;gap:8px">
+      <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <!-- <option> 清單由 initMyLikeJoinUI() 依 MP_CFG.maxPlayerChars 動態產生，
+             不寫死到 4——調低 maxPlayerChars 就能讓玩家選單直接不出現 3/4 -->
+        <select id="p-char-count-select" style="padding:8px;border-radius:8px;
+                border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
+        <span class="char-count-hint">🔥 想換手機？先選多一點！</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select id="p-char1-select" style="flex:1;min-width:0;padding:8px;border-radius:8px;
                 border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
         <select id="p-char2-select" style="flex:1;min-width:0;padding:8px;border-radius:8px;
+                border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
+        <select id="p-char3-select" class="p-char-extra-select" data-min-count="3" style="flex:1;min-width:0;padding:8px;border-radius:8px;
+                border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
+        <select id="p-char4-select" class="p-char-extra-select" data-min-count="4" style="flex:1;min-width:0;padding:8px;border-radius:8px;
                 border:1px solid var(--border);background:rgba(255,255,255,.03);color:inherit"></select>
       </div>
       <div style="font-size:.68em;color:var(--text2);margin-top:4px">選擇後需要重新整理頁面才會套用</div>
@@ -597,7 +648,7 @@ function mqttInit() {
     PS.ok = true;
     mqttSts('broker', '伺服器已連線');
     PS.client.subscribe([MP_TOPICS.STATE, MP_TOPICS.RESULT], { qos: 1 });
-    PS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.L2D, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING], { qos: 0 });
+    PS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.L2D, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING, MP_TOPICS.LOBBY_MSG], { qos: 0 });
     el('btn-join').disabled = !el('player-name').value.trim();
     el('join-status').textContent = '已連線，輸入名稱後加入';
   });
@@ -624,6 +675,13 @@ function mqttInit() {
         DanmakuSystem.receive({ player: data.name, text: data.message });
     }
     if (topic === MP_TOPICS.DANMAKU && typeof DanmakuSystem !== 'undefined') DanmakuSystem.receive(data);
+    // 開賽前閒聊：只在大廳階段收（見 multiplay.js 的 LOBBY_MSG 註解），遊戲開始後
+    // 收到的一律忽略，跟 host.html 同一套保險邏輯。
+    // data.from === PS.myId：自己發送的訊息，broker echo 回來的（自己訂閱了同一個 topic），
+    // 已經在發送時本機顯示過，這裡要濾掉，否則會重複顯示同一則彈幕。
+    if (topic === MP_TOPICS.LOBBY_MSG && typeof DanmakuSystem !== 'undefined') {
+      if (data.from !== PS.myId && PS.phase === 'lobby') DanmakuSystem.receive({ player: data.tempName, text: data.message });
+    }
     if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
       if (data.playerId !== PS.myId) {
         if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
@@ -673,6 +731,8 @@ function joinGame() {
   el('my-score').textContent = '0';
   el('my-rank').textContent  = '—';
   PS.joined = true;
+  // 遊戲開始（加入房間）：角色層級恢復正常，不再蓋在遊戲畫面之上（見 setTopLayer() 註解）
+  if (typeof L2D !== 'undefined' && L2D.setTopLayer) L2D.setTopLayer(false);
   HB.start();
   if (typeof AvatarModule !== 'undefined') {
     AvatarModule.cacheOwn(PS.myId);
@@ -697,6 +757,11 @@ function joinGame() {
 // ── STATE 處理 ────────────────────────────────────────────────────────────
 function onState(state) {
   const phase = state.phase;
+  // 賽前閒聊面板只在大廳階段可用（含「已加入但還在等主持人開始」這段，不是只有
+  // 未加入的 screen-join），這裡是唯一會處理 phase 的地方，集中更新一次比較好維護，
+  // 不用在下面 switch(phase) 每個 case 分支各自補一行。
+  PS.phase = phase;
+  if (typeof updateLobbyChatVisibility === 'function') updateLobbyChatVisibility();
 
   // 用 host 時間戳同步時鐘偏差（消除裝置時鐘不一致）
   if (state.hostNow) PS.clockOffset = state.hostNow - Date.now();
@@ -740,6 +805,26 @@ function onState(state) {
   }
   PS.gameMode = state.gameMode || 'all';
 
+  // 大廳「目前題庫」提示（沿用既有 STATE 欄位，晚加入玩家靠 retained message 立即看到）
+  const bankBanner = el('p-bank-banner');
+  if (bankBanner) {
+    if (state.bankLabel) {
+      // 只有「真的换了」才閃動提示——第一次顯示（剛加入、_lastBankLabel 還是 undefined）
+      // 不用閃，避免每個玩家一進來就閃一次沒意義的動畫
+      const changed = PS._lastBankLabel !== undefined && PS._lastBankLabel !== state.bankLabel;
+      el('p-bank-name').textContent = state.bankLabel;
+      bankBanner.classList.add('visible');
+      if (changed) {
+        bankBanner.classList.remove('flash');
+        void bankBanner.offsetWidth;   // 強制 reflow，讓動畫能重新觸發（同一個 class 名稱連續加不會重播）
+        bankBanner.classList.add('flash');
+      }
+      PS._lastBankLabel = state.bankLabel;
+    } else {
+      bankBanner.classList.remove('visible');
+    }
+  }
+
   // ── 斷線自動重連 ──────────────────────────────────────────────────────────
   // 頁面重整後 PS.joined=false，但若 STATE 顯示我的 ID 仍在局內 → 靜默重新加入
   // 僅憑 ID 比對（不依賴名稱），杜絕外人冒充
@@ -781,8 +866,17 @@ function onState(state) {
       stopPrepare();
       stopTimer();
       PS.joined     = false;
+      PS.score      = 0;
       PS.answered   = false;
       PS.localPhase = '';
+      // 積分/排行榜相關狀態要一起清，不然回到加入畫面後這些舊資料還留著——
+      // 跟下面 'lobby' case（結束畫面回大廳）用同一套重置邏輯，host_left 等於
+      // 「這一局直接解散」，比正常結束回大廳更需要徹底歸零
+      PS.colorMap = {};
+      PS.players  = [];
+      hide('p-q-counter');
+      el('p-progress-bar').style.width = '0%';
+      if (typeof AvatarModule !== 'undefined') AvatarModule.resetPublished();
       scr('screen-join');
       el('join-status').style.color = '';
       el('join-status').textContent = '主持人已離開，請稍後重新加入...';
@@ -1188,7 +1282,9 @@ function renderEndScreen(state) {
   });
 
   const myRank = ranked.findIndex(p => p.id === PS.myId) + 1;
-  el('end-emoji').textContent = myRank === 1 ? '🏆' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '📚';
+  // 跟排行榜（host.html、player.html 自己的計分板）共用同一份 MP_MEDALS，
+  // 三端排名圖示才會完全一致；第4名以後沒有獎牌可用，維持 📚
+  el('end-emoji').textContent = MP_MEDALS[myRank - 1] || '📚';
   el('end-title').textContent = myRank === 1 ? '你獲勝了！' : `你是第 ${myRank} 名`;
   if (typeof L2D !== 'undefined' && L2D.speak) {
     const endLine = myRank === 1
@@ -1275,7 +1371,7 @@ function doAnswer(letter) {
     MagicShotVFX.fireExplosion(letter);
   }
   if (typeof L2DGesturePlayer !== 'undefined') {
-    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing', L2D_CFG.answerGestureChar);
+    L2D.trigger(ANSWER_GESTURES[letter] ?? 'pointing', L2D_CFG.answerGestureChar);
   }
 }
 
@@ -1328,27 +1424,30 @@ function initLive2D() {
     if (i >= srcs.length) {
       // 玩家端使用獨立命名空間（l2d_pos_p_），不受主持端拖曳位置影響
       L2D_CFG.storageNS = 'p';
-      L2D_CFG.maxChars = 2;   // 網頁模式寫死上限，不開放使用者調整（雙人專屬功能不支援更多角色）
+      // 角色數選單本機獨立選（每個玩家各自選自己要看到幾個角色，不用 MQTT 同步——
+      // 遊戲本身的計分/搶答/回合邏輯完全跟 Live2D 角色數無關），預設 2，
+      // 不管選單有沒有顯示（元素找不到時 fallback 2），行為都跟改動前一致
+      L2D_CFG.maxChars = parseInt(el('p-char-count-select')?.value, 10) || 2;
       if (L2D_CFG.playerPos) {
-        Object.assign(L2D_CFG.char1, L2D_CFG.playerPos.char1);
-        Object.assign(L2D_CFG.char2, L2D_CFG.playerPos.char2);
+        ['char1', 'char2', 'char3', 'char4'].forEach(key => Object.assign(L2D_CFG[key], L2D_CFG.playerPos[key]));
         // 程式碼設定優先：清除舊存檔，讓 playerPos 在每次重整後確實生效
-        try { localStorage.removeItem('l2d_pos_p_c1'); localStorage.removeItem('l2d_pos_p_c2'); } catch {}
+        try {
+          ['c1', 'c2', 'c3', 'c4'].forEach(k => localStorage.removeItem('l2d_pos_p_' + k));
+        } catch {}
       }
       // 套用玩家在 join 畫面選好的 live2d_my_like 角色（只影響自己這台裝置；
-      // 這裡改完 L2D_CFG.char1/char2.model 之後才會呼叫 L2D.init()，
+      // 這裡改完 L2D_CFG.char1~char4.model 之後才會呼叫 L2D.init()，
       // 所以整個流程只會去請求「這裡指定的那個模型」的資源，不會多請求收藏庫裡其他角色）
-      let _pC1Pick = localStorage.getItem('l2d_mylike_p_char1');
-      let _pC2Pick = localStorage.getItem('l2d_mylike_p_char2');
-      // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
-      if (_pC1Pick && !_pC1Pick.startsWith('models/')) _pC1Pick = 'models/' + _pC1Pick;
-      if (_pC2Pick && !_pC2Pick.startsWith('models/')) _pC2Pick = 'models/' + _pC2Pick;
-      if (_pC1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _pC1Pick;
-      if (_pC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _pC2Pick;
+      ['char1', 'char2', 'char3', 'char4'].forEach(key => {
+        let pick = localStorage.getItem('l2d_mylike_p_' + key);
+        if (!pick) return;
+        // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
+        if (!pick.startsWith('models/')) pick = 'models/' + pick;
+        L2D_CFG[key].model = '../live2d_my_like/' + pick;
+      });
       // 手機才套用行動端設定，桌機沿用 L2D_CFG 預設值
       if (window.matchMedia('(pointer: coarse)').matches) {
-        Object.assign(L2D_CFG.char1, L2D_CFG.mobile.char1);
-        Object.assign(L2D_CFG.char2, L2D_CFG.mobile.char2);
+        ['char1', 'char2', 'char3', 'char4'].forEach(key => Object.assign(L2D_CFG[key], L2D_CFG.mobile[key]));
       }
       // 根據 L2D_CFG.vfxMode 動態注入 VFX 腳本（只做一次，利用 srcs 鏈）
       const _vm = L2D_CFG.vfxMode;
@@ -1364,12 +1463,18 @@ function initLive2D() {
       }
       L2D.init();
       if (typeof MagicShotVFX !== 'undefined') MagicShotVFX.init();
+      // 手機端、加入遊戲前：讓角色 canvas + 對話泡泡蓋在 join 畫面之上（見 lib/live2d.js
+      // setTopLayer()），加入遊戲後 joinGame() 會呼叫 setTopLayer(false) 恢復原本層級
+      if (window.matchMedia('(pointer: coarse)').matches) L2D.setTopLayer(true);
 
       // 音效開關按鈕（預設靜音）
       const sndBtn = document.createElement('button');
       sndBtn.title = '開啟 / 關閉音效';
       sndBtn.textContent = '🔇';
-      sndBtn.style.cssText = 'position:fixed;bottom:114px;left:6px;z-index:200;' +
+      // 拖曳角色按鈕改成收合式選單後（見 lib/live2d.js _initDragButtons），左下角固定只佔
+      // bottom:8px 一格，原本 bottom:61px 是留給角色二拖曳鈕的位置已經空出來，所以這裡跟著
+      // 下面的 VFX/BGM 一起往下補位一格（-53px）。
+      sndBtn.style.cssText = `position:fixed;bottom:${MP_CFG.SND_BTN_BOTTOM}px;left:6px;z-index:200;` +
         'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
         'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
       sndBtn.addEventListener('click', () => {
@@ -1386,8 +1491,9 @@ function initLive2D() {
         const vfxBtn = document.createElement('button');
         vfxBtn.title = '開啟 / 關閉攻擊特效';
         vfxBtn.textContent = '⚡';   // ⚡ = 特效開啟；✖ = 關閉
-        // bottom:270px：BGM 頂端約 263px，上方 7px 間距
-        vfxBtn.style.cssText = 'position:fixed;bottom:270px;left:6px;z-index:200;' +
+        // bottom:217px：BGM 頂端約 210px，上方 7px 間距（原本是 270px，跟著上面 sndBtn
+        // 一起往下補位 53px）
+        vfxBtn.style.cssText = `position:fixed;bottom:${MP_CFG.VFX_BTN_BOTTOM}px;left:6px;z-index:200;` +
           'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
           'background:rgba(255,200,0,.22);color:#ffd700;font-size:21px;cursor:pointer;padding:0;';
         vfxBtn.addEventListener('click', (e) => {
@@ -1401,7 +1507,7 @@ function initLive2D() {
         document.body.appendChild(vfxBtn);
       }
 
-      createBGMControl(167);
+      createBGMControl(MP_CFG.BGM_CTRL_BOTTOM); // 往下補位 53px，理由同上方 sndBtn 的註解
 
       // 操作提示卡片（加入前說明各按鈕功能，幾秒後淡出消失）
       const hint = document.createElement('div');
@@ -1410,7 +1516,7 @@ function initLive2D() {
         '<div class="row"><span class="ico">‹</span><span class="lbl">收合工具列</span></div>' +
         '<div class="row"><span class="ico">⚡</span><span class="lbl">開啟 / 關閉攻擊特效</span></div>' +
         '<div class="row"><span class="ico">🔇</span><span class="lbl">音效開關</span></div>' +
-        '<div class="row"><span class="ico">⠿</span><span class="lbl">拖曳角色一 / 二</span></div>' +
+        '<div class="row"><span class="ico">⠿</span><span class="lbl">拖曳角色</span></div>' +
         '<div class="sub">拖曳模式開啟後：</div>' +
         '<div class="sub">縮放：滾輪 / 雙指捏合</div>' +
         '<div class="sub">旋轉：Shift+滾輪 / 三指滑動</div>';
@@ -1422,15 +1528,28 @@ function initLive2D() {
 
       // 拖曳按鈕已由 live2d.js _initDragButtons() 統一建立
 
-      // 延一幀讓 _initDragButtons() 的元素也進入 DOM，再統一貼 fab-item class
-      setTimeout(() => {
+      // 統一貼 fab-item class：_initDragButtons() 的 🎲 主按鈕要等 L2D.init() 內部
+      // await fetch(manifest.json) resolve 之後才會建立（見 lib/live2d.js init()），
+      // 這個 fetch 通常比一個 tick 慢，原本只掃一次的 setTimeout(0) 常常抓不到、
+      // 導致 🎲 主按鈕永久漏標、收合工具列時不會跟音效/BGM/特效一起隱藏——
+      // 改成短間隔重複掃描幾秒，確保晚出現的元素也補得到標記（classList.add 是
+      // idempotent，重複掃不會有副作用）。
+      const _tagFabItems = () => {
         document.querySelectorAll('body > *').forEach(el => {
           if (!el.style || el.id === 'fab-toggle') return;
           if (el.style.position === 'fixed' && el.style.left === '6px') {
             el.classList.add('fab-item');
           }
         });
+      };
+      _tagFabItems();
+      let _tagTries = 0;
+      const _tagInterval = setInterval(() => {
+        _tagFabItems();
+        if (++_tagTries >= 20) clearInterval(_tagInterval);   // 最多掃 4 秒（20 * 200ms）
+      }, 200);
 
+      {
         // 收合 / 展開按鈕
         const toggle = document.createElement('button');
         toggle.id    = 'fab-toggle';
@@ -1442,12 +1561,19 @@ function initLive2D() {
         });
         document.body.appendChild(toggle);
 
-        // 4 秒後自動收合，讓玩家先看清楚再消失
-        setTimeout(() => {
+        // 4 秒後自動收合，讓玩家先看清楚再消失——但如果使用者這時正在拖曳/操控角色位置
+        // （canvas 的 pointer-events 會是 'auto'，見 lib/live2d.js 的 startDrag()），先不收合，
+        // 避免骰子按鈕在操作過程中突然被隱藏；每秒重新檢查一次，直到操作結束才真正收合。
+        const _tryAutoCollapse = () => {
+          if (L2D.app?.view?.style.pointerEvents === 'auto') {
+            setTimeout(_tryAutoCollapse, 1000);
+            return;
+          }
           document.body.classList.add('fab-collapsed');
           toggle.textContent = '›';
-        }, 4000);
-      }, 0);
+        };
+        setTimeout(_tryAutoCollapse, 4000);
+      }
 
       return;
     }
@@ -1469,8 +1595,8 @@ async function initMyLikeJoinUI() {
   let manifest = [], names = {};
   try {
     const [mRes, nRes] = await Promise.all([
-      fetch('../live2d_my_like/config/manifest.json'),
-      fetch('../live2d_my_like/config/names.json'),
+      fetch('../live2d_my_like/config/manifest.json', { cache: 'no-store' }),
+      fetch('../live2d_my_like/config/names.json', { cache: 'no-store' }),
     ]);
     manifest = mRes.ok ? await mRes.json() : [];
     names    = nRes.ok ? await nRes.json() : {};
@@ -1478,25 +1604,49 @@ async function initMyLikeJoinUI() {
   if (!manifest.length) return;
 
   const wrap = el('mylike-join-wrap');
-  const c1   = el('p-char1-select');
-  const c2   = el('p-char2-select');
-  if (!wrap || !c1 || !c2) return;
+  const sels = ['char1', 'char2', 'char3', 'char4'].map(key => ({ key, sel: el('p-' + key + '-select') }));
+  if (!wrap || sels.some(({ sel }) => !sel)) return;
 
   const opts = '<option value="">（預設，不覆蓋）</option>' +
     manifest.map(e => `<option value="${e.path}">#${e.id} ${names[e.path] || e.character}</option>`).join('');
-  c1.innerHTML = opts;
-  c2.innerHTML = opts;
-  c1.value = localStorage.getItem('l2d_mylike_p_char1') || '';
-  c2.value = localStorage.getItem('l2d_mylike_p_char2') || '';
-  wrap.style.display = '';
-
   const onPick = (key, val) => {
     if (val) localStorage.setItem('l2d_mylike_p_' + key, val);
     else     localStorage.removeItem('l2d_mylike_p_' + key);
     if (confirm('角色設定要重新整理頁面才會生效，現在重新整理嗎？')) location.reload();
   };
-  c1.addEventListener('change', () => onPick('char1', c1.value));
-  c2.addEventListener('change', () => onPick('char2', c2.value));
+  sels.forEach(({ key, sel }) => {
+    sel.innerHTML = opts;
+    sel.value = localStorage.getItem('l2d_mylike_p_' + key) || '';
+    sel.addEventListener('change', () => onPick(key, sel.value));
+  });
+  wrap.style.display = '';
+
+  // 角色數選單：選項上限依 MP_CFG.maxPlayerChars 決定（考慮玩家裝置效能，
+  // 主持人調低這個值就能讓玩家選單直接不出現 3/4，不用改這個檔案）。
+  // 每個玩家各自本機記住上次選擇（預設 2），依選擇顯示/隱藏角色三、角色四。
+  const countSel = el('p-char-count-select');
+  if (countSel) {
+    const maxN = Math.max(2, Math.min(4, MP_CFG.maxPlayerChars ?? 4));
+    let optsHtml = '';
+    for (let n = 2; n <= maxN; n++) optsHtml += `<option value="${n}">${n} 個角色</option>`;
+    countSel.innerHTML = optsHtml;
+
+    const applyVisibility = (count) => {
+      const n = parseInt(count, 10) || 2;
+      document.querySelectorAll('.p-char-extra-select').forEach(s => {
+        s.style.display = n >= parseInt(s.dataset.minCount, 10) ? '' : 'none';
+      });
+    };
+    // 存檔的選擇可能是主持人調低 maxPlayerChars 之前存的，要夾回目前上限內
+    const saved = parseInt(localStorage.getItem('l2d_mylike_p_char_count'), 10) || 2;
+    countSel.value = Math.min(saved, maxN);
+    applyVisibility(countSel.value);
+    countSel.addEventListener('change', () => {
+      localStorage.setItem('l2d_mylike_p_char_count', countSel.value);
+      applyVisibility(countSel.value);
+      if (confirm('角色數要重新整理頁面才會生效，現在重新整理嗎？')) location.reload();
+    });
+  }
 }
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
@@ -1609,7 +1759,10 @@ if (typeof DanmakuSystem !== 'undefined') {
   function _openPanel() {
     panel.style.display = 'flex';
     chatBtn.style.display = 'none';
-    setTimeout(() => inp.focus(), 50);
+    // 手機瀏覽器對 fixed 定位輸入框 focus 時，預設會把整頁往上捲讓輸入框「看起來」在鍵盤
+    // 上方，但這個面板本來就是 fixed 釘在畫面底部，不需要捲動——preventScroll 擋掉這個
+    // 不必要的自動捲動；scrollTo(0,0) 是保底，因應部分手機瀏覽器對 preventScroll 支援不完整。
+    setTimeout(() => { inp.focus({ preventScroll: true }); window.scrollTo(0, 0); }, 50);
   }
   function _closePanel() {
     panel.style.display = 'none';
@@ -1669,7 +1822,7 @@ if (typeof DanmakuSystem !== 'undefined') {
 
 // ── Emoji 快速反應面板 ─────────────────────────────────────────────────────
 (() => {
-  const EMOJIS = ['😀','😂','😭','😡','👍','👏','🎉','❤️','🔥','❓'];
+  const EMOJIS = MP_EMOJIS;
 
   const emojiBtn = document.createElement('button');
   emojiBtn.id    = '_p-emoji-btn';
@@ -1751,6 +1904,117 @@ if (typeof DanmakuSystem !== 'undefined') {
     setTimeout(() => { if (PS.joined) btn.style.display = 'flex'; }, 80);
   });
   el('btn-back')?.addEventListener('click', () => { btn.style.display = 'none'; });
+})();
+
+// ── 賽前閒聊（開賽前，不論是否已加入房間都能用）─────────────────────────────
+// 跟上面幾個按鈕不同：那些都是加入房間後才出現（靠 btn-join 的 click 事件顯示），
+// 這個要在 screen-join（還沒加入）就能用，所以顯示與否改由 phase 驅動，
+// 不掛在 btn-join/btn-back 上。updateLobbyChatVisibility 掛到 window 上，
+// 讓 onState() 可以直接呼叫。
+(() => {
+  // 進房前不知道使用者身分，統一顯示這個固定名稱（不用每人隨機一個訪客編號）
+  const lobbyAnon = '送分的';
+
+  // 外層容器：固定在「伺服器已連線」徽章（#mqtt-status，bottom:6px）上方、加入遊戲卡片
+  // 下方的空隙，z-index 拉到最高，確保不會被任何其他浮動元素（語音廣播按鈕等）蓋住。
+  const wrap = document.createElement('div');
+  wrap.id = '_p-lobby-chat-wrap';
+  wrap.style.cssText =
+    'position:fixed;bottom:40px;right:8px;z-index:99999;display:none;' +
+    'flex-direction:column;align-items:center;gap:6px;';
+
+  const caption = document.createElement('div');
+  caption.textContent = '賽前屁話點這裡';
+  caption.style.cssText =
+    'font-size:12px;font-weight:700;color:#00ff88;white-space:nowrap;' +
+    'text-shadow:0 1px 4px rgba(0,0,0,.8);pointer-events:none;';
+
+  const btn = document.createElement('button');
+  btn.id    = '_p-lobby-chat-btn';
+  btn.title = '賽前跟主持人聊聊';
+  btn.textContent = '🗨️';
+  // 圖示放大 1.5 倍：36px→54px、字級 18px→27px
+  btn.style.cssText =
+    'width:54px;height:54px;border-radius:50%;cursor:pointer;font-size:27px;' +
+    'background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.4);' +
+    'color:#00ff88;padding:0;display:flex;align-items:center;justify-content:center;' +
+    'box-shadow:0 2px 10px rgba(0,0,0,.4);';
+
+  wrap.append(caption, btn);
+  document.body.appendChild(wrap);
+
+  const panel = document.createElement('div');
+  panel.id = '_p-lobby-chat-panel';
+  panel.style.cssText =
+    'position:fixed;bottom:0;left:0;right:0;z-index:10001;' +
+    'background:rgba(8,18,38,.97);border-top:1px solid rgba(0,255,136,.3);' +
+    'padding:10px 14px 16px;display:none;align-items:center;gap:8px;' +
+    'box-shadow:0 -4px 20px rgba(0,0,0,.5);';
+
+  const inp = document.createElement('input');
+  inp.type        = 'text';
+  inp.maxLength   = 40;
+  inp.placeholder = '跟主持人聊聊規則、等人之類的...';
+  inp.style.cssText =
+    'flex:1;padding:10px 14px;background:rgba(255,255,255,.07);' +
+    'border:1px solid rgba(0,255,136,.4);border-radius:10px;' +
+    'color:#fff;font-size:1em;outline:none;min-width:0;' +
+    '-webkit-appearance:none;';
+
+  const sendBtn = document.createElement('button');
+  sendBtn.textContent = '➤';
+  sendBtn.title = '送出';
+  sendBtn.style.cssText =
+    'width:44px;height:44px;padding:0;border-radius:10px;cursor:pointer;font-size:1.15em;' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.5);' +
+    'color:#00ff88;flex-shrink:0;';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText =
+    'width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;' +
+    'background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);' +
+    'color:var(--text2);flex-shrink:0;';
+
+  // preventScroll + scrollTo(0,0)：面板本來就是 fixed 釘在畫面底部，不需要手機瀏覽器
+  // focus 時預設觸發的「整頁往上捲讓輸入框看起來在鍵盤上方」那個自動捲動（見下方 chatBtn
+  // 那個聊天面板同樣的處理）
+  function _openPanel()  { panel.style.display = 'flex'; wrap.style.display = 'none'; setTimeout(() => { inp.focus({ preventScroll: true }); window.scrollTo(0, 0); }, 50); }
+  function _closePanel() { panel.style.display = 'none'; if (window.updateLobbyChatVisibility) window.updateLobbyChatVisibility(); inp.value = ''; }
+
+  function _send() {
+    const msg = inp.value.trim();
+    if (!msg) return;
+    const tempName = (PS.joined ? PS.myName : el('player-name')?.value.trim()) || lobbyAnon;
+    pub(MP_TOPICS.LOBBY_MSG, { from: PS.myId, tempName, message: msg }, 0);
+    // 本機立即顯示（MQTT broker 不 echo 回給自己）
+    if (typeof DanmakuSystem !== 'undefined') DanmakuSystem.receive({ player: tempName, text: msg });
+    _closePanel();
+  }
+
+  btn.addEventListener('click', _openPanel);
+  closeBtn.addEventListener('click', _closePanel);
+  sendBtn.addEventListener('click', _send);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); _send(); }
+    if (e.key === 'Escape') { _closePanel(); }
+  });
+
+  panel.append(inp, sendBtn, closeBtn);
+  document.body.appendChild(panel);
+
+  // phase 未知（尚未收到 STATE）視同 lobby：遊戲開始前預設顯示
+  window.updateLobbyChatVisibility = function () {
+    const visible = !PS.phase || PS.phase === 'lobby';
+    if (!visible) {
+      panel.style.display = 'none';
+      wrap.style.display  = 'none';
+    } else if (panel.style.display !== 'flex') {
+      wrap.style.display = 'flex';
+    }
+  };
+  window.updateLobbyChatVisibility();
 })();
 
 initLive2D();

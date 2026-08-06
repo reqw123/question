@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>多人搶答 — 主持人</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../lib/style.css">
   <style>
     /* ── 確保畫面層級在 Live2D canvas(5) 及 speech bubble(100) 之上，角色透過透明背景在側邊顯示 */
     .screen { z-index: 110; }
@@ -43,11 +43,24 @@
       color:var(--text2); margin-bottom:14px; flex-wrap:wrap;
     }
     .lobby-settings label { display:flex; align-items:center; gap:6px; }
+    /* ── Live2D 角色一~角色四：獨立一欄一列，避免跟 .lobby-settings 的 flex-wrap 擠成兩兩並排 ── */
+    .mylike-char-list {
+      display:flex; flex-direction:column; gap:8px; font-size:.82em;
+      color:var(--text2); margin-bottom:14px;
+    }
+    .mylike-char-list label { display:flex; align-items:center; gap:10px; }
+    .mylike-char-list .char-label-text { flex:0 0 44px; }
+    .mylike-char-list select { flex:1; min-width:0; }
     .q-count-input {
       width:60px; padding:5px 8px; background:rgba(255,255,255,0.06);
       border:1px solid var(--border); border-radius:6px; color:var(--cyan);
       font-size:1em; text-align:center; outline:none;
     }
+    /* 收起狀態的 <select> 本身有套用上面深色底，但展開後的下拉選單清單瀏覽器預設是白底，
+       CSS 管不到（原生 <select> 彈出清單樣式很受限），只有 background/color 這兩個屬性可以
+       透過 <option> 生效（Chromium 系瀏覽器支援），跟 .bank-select option 用同一套深色配色，
+       不然選單一展開會是刺眼的白底配淺色字，跟整體深色主題完全不搭。 */
+    .q-count-input option { background:#0d1a2b; color:var(--text); }
     #btn-start-hint { font-size:.75em; color:var(--text2); text-align:center; margin-top:4px; min-height:1.2em; }
     .cfg-panel { border:1px solid var(--border); border-radius:10px; margin-top:14px; overflow:hidden; }
     .cfg-toggle { padding:10px 14px; cursor:pointer; font-size:.82em; color:var(--text2); letter-spacing:1px; list-style:none; }
@@ -436,6 +449,18 @@
     <div id="lobby-slots"></div>
     <div id="hb-lobby-status" style="font-size:.76em;color:var(--text2);margin:4px 0 8px;min-height:1.2em"></div>
 
+    <!-- 開賽前閒聊：跟玩家在開始遊戲前討論用（規則、等人之類），只在大廳畫面看得到，
+         按下開始遊戲後這個區塊會隨 screen-lobby 一起被切走，不用另外處理隱藏。
+         訊息渲染借用 DanmakuSystem（見 multi/DanmakuSystem.js），資料管道走獨立的
+         MP_TOPICS.LOBBY_MSG，不混進正式的 CHAT 頻道（見 multi/multiplay.js 的註解）。 -->
+    <h3 class="section-label">賽前討論（開始遊戲後就看不到了）</h3>
+    <div class="h-name-row" style="margin-bottom:14px;align-items:center">
+      <input id="lobby-msg-input" class="h-name-input" type="text"
+             maxlength="40" placeholder="跟玩家聊聊規則、等人之類的..." autocomplete="off" spellcheck="false">
+      <button id="btn-lobby-msg-send" class="btn-secondary" title="送出"
+              style="flex:0 0 44px;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;font-size:1.2em">➤</button>
+    </div>
+
     <div class="lobby-settings">
       <label>每局題數
         <input id="q-count-input" class="q-count-input" type="number" min="3" max="50" value="10">
@@ -449,15 +474,30 @@
     </div>
 
     <!-- Live2D 角色選擇（live2d_my_like 收藏庫，只影響本機瀏覽器，不會同步給玩家） -->
-    <!-- 功能整組停用中（MYLIKE_FEATURE_ENABLED = false，見下方 script），這裡用 id="mylike-section" 讓 init() 隱藏，標籤/選單元素保留 -->
+    <!-- MYLIKE_FEATURE_ENABLED 見下方 script，目前是啟用中的功能，id="mylike-section" 只是給 init() 需要時可以整組隱藏用 -->
     <div id="mylike-section">
       <h3 class="section-label">Live2D 角色（僅本機顯示，不影響玩家端）</h3>
       <div class="lobby-settings">
-        <label>角色一
-          <select id="char1-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em"></select>
+        <label>角色數
+          <select id="char-count-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
         </label>
-        <label>角色二
-          <select id="char2-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em"></select>
+      </div>
+      <div class="mylike-char-list">
+        <label><span class="char-label-text">角色一</span>
+          <select id="char1-select" class="q-count-input" style="flex:1;min-width:0;padding:5px 7px;font-size:.95em"></select>
+        </label>
+        <label><span class="char-label-text">角色二</span>
+          <select id="char2-select" class="q-count-input" style="flex:1;min-width:0;padding:5px 7px;font-size:.95em"></select>
+        </label>
+        <label class="char-extra-select" data-min-count="3"><span class="char-label-text">角色三</span>
+          <select id="char3-select" class="q-count-input" style="flex:1;min-width:0;padding:5px 7px;font-size:.95em"></select>
+        </label>
+        <label class="char-extra-select" data-min-count="4"><span class="char-label-text">角色四</span>
+          <select id="char4-select" class="q-count-input" style="flex:1;min-width:0;padding:5px 7px;font-size:.95em"></select>
         </label>
       </div>
     </div>
@@ -838,7 +878,7 @@ function mqttInit() {
       HS.ok = true;
       mqttSts('esp32', '伺服器已連線');
       HS.client.subscribe([MP_TOPICS.JOIN, MP_TOPICS.ANSWER], { qos: 1 });
-      HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING], { qos: 0 });
+      HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING, MP_TOPICS.LOBBY_MSG], { qos: 0 });
       pubState();
       console.log('[主持人偵測] pubState() 已發布（retained），myId =', HS.myId, 'phase =', HS.phase);
       updateStartBtn();
@@ -867,6 +907,15 @@ function mqttInit() {
         return;
       }
       if (topic === MP_TOPICS.DANMAKU && typeof DanmakuSystem !== 'undefined') { DanmakuSystem.receive(data); return; }
+      // 開賽前閒聊：只在大廳階段收（見 multiplay.js 的 LOBBY_MSG 註解），遊戲開始後
+      // 收到的一律忽略——正常情況下送出端的輸入框已經隨 screen-lobby 一起消失，
+      // 這裡只是多一層保險，防止極端 race condition（訊息在切畫面前一刻送出）。
+      // data.from === HS.myId：自己發送的訊息，broker echo 回來的（主持人也訂閱了同一個
+      // topic），已經在發送時本機顯示過，這裡要濾掉，否則每次發送都會多出一則重複彈幕。
+      if (topic === MP_TOPICS.LOBBY_MSG && typeof DanmakuSystem !== 'undefined') {
+        if (data.from !== HS.myId && HS.phase === 'lobby') DanmakuSystem.receive({ player: data.tempName, text: data.message });
+        return;
+      }
       if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
         if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
         else             PlayerBubbleChat.hideTyping(data.playerId);
@@ -950,6 +999,7 @@ function pubState(extra = {}) {
     question:     HS.phase === 'prepare' ? '' : q.question || '',
     options:      HS.phase === 'prepare' ? {} : q.options  || {},
     domain:       HS.phase === 'prepare' ? '' : q.domain   || '',
+    bankLabel:    el('bank-label')?.textContent || '',
     hostNow:      Date.now(),
     startedAt:    HS.startedAt,
     prepareAt:    HS.prepareAt,
@@ -1026,7 +1076,7 @@ function onAnswer({ id, name, letter }) {
     MagicShotVFX.fireExplosion(letter);
   }
   if (typeof L2DGesturePlayer !== 'undefined' && id === HS.myId) {
-    L2DGesturePlayer.play(ANSWER_GESTURES[letter] ?? 'pointing', L2D_CFG.answerGestureChar);
+    L2D.trigger(ANSWER_GESTURES[letter] ?? 'pointing', L2D_CFG.answerGestureChar);
   }
 
   // 主持人作答時立即框選該選項
@@ -1132,6 +1182,21 @@ const HB_HOST = (() => {
         }
       }
     });
+    // 大廳離線超過一段時間的幽靈玩家直接清掉，釋放名額給新玩家——
+    // HS.players 原本只在加入時檢查上限（10 人），從來沒有真的移除過玩家，
+    // 開很多局下來早就離開的舊裝置會一路占著名額，導致新玩家永遠加不進來。
+    // 只在大廳做（絕不在遊戲進行中刪人，避免正在比賽的玩家暫時斷線就整個資料不見）；
+    // GHOST_MS 給比「判定離線」門檻更長的緩衝，避免暫時斷線就被直接清掉。
+    if (HS.phase === 'lobby') {
+      const GHOST_MS = OFFLINE_MS * 3;
+      Object.keys(HS.players).forEach(id => {
+        const p = HS.players[id];
+        if (id !== HS.myId && p.online === false && (now - p.lastSeen) > GHOST_MS) {
+          delete HS.players[id];
+          changed = true;
+        }
+      });
+    }
     if (changed) { pubState(); renderScoreboard(); renderLobbySlots(); _checkAllOffline(); }
   }
 
@@ -1211,10 +1276,11 @@ async function init() {
   // 動態載入題庫清單，恢復使用者選擇，並載入題庫
   await loadBankIndex();
 
-  // live2d_my_like 角色收藏庫：讀清單、填下拉選單
+  // live2d_my_like 角色收藏庫：讀清單、填下拉選單。這兩個 fetch 只是填設定面板的
+  // 下拉選單，跟 mqttInit() 完全無關，故意不 await——避免拖慢 MQTT 連線起點
+  // （見 loadMyLikeManifest() 上方註解，這裡就是那個「異常緩慢」問題的根因）
   if (MYLIKE_FEATURE_ENABLED) {
-    await loadMyLikeManifest();
-    populateMyLikeSelects();
+    loadMyLikeManifest().then(populateMyLikeSelects);
   } else {
     const _mylikeSection = el('mylike-section');
     if (_mylikeSection) _mylikeSection.style.display = 'none';
@@ -1225,18 +1291,27 @@ async function init() {
 
   if (typeof L2D !== 'undefined') {
     L2D_CFG.storageNS = 'h';
-    L2D_CFG.maxChars = 2;   // 網頁模式寫死上限，不開放使用者調整（雙人專屬功能不支援更多角色）
-    // 程式碼設定優先：清除舊存檔，讓 char1/char2 的 offsetX/Y 每次重整後確實生效
-    try { localStorage.removeItem('l2d_pos_h_c1'); localStorage.removeItem('l2d_pos_h_c2'); } catch {}
+    // 「角色數」下拉選單本機獨立選（跟 #mylike-section 其他選單同一套「只影響本機、
+    // 不同步給玩家」慣例），預設 2。直接讀 localStorage（跟 populateMyLikeSelects() 拿去
+    // restore 選單畫面用的是同一把 key），不要讀 el('char-count-select')?.value——
+    // 那個選單是靠 loadMyLikeManifest().then(populateMyLikeSelects) 這個「故意不 await」
+    // 的 Promise 才會 restore 成上次選的值，這裡執行的當下 restore 通常還沒跑完，選單還停
+    // 在 HTML 預設的第一個 <option>，讀出來永遠是 2，導致選單畫面顯示 4、實際只載入 2 個
+    // 角色槽位的時序 bug。MYLIKE_FEATURE_ENABLED=false 時忽略存檔一律預設 2，行為跟改動前一致。
+    L2D_CFG.maxChars = (MYLIKE_FEATURE_ENABLED && parseInt(localStorage.getItem('l2d_mylike_char_count'), 10)) || 2;
+    // 程式碼設定優先：清除舊存檔，讓 char1~char4 的 offsetX/Y 每次重整後確實生效
+    try {
+      ['c1', 'c2', 'c3', 'c4'].forEach(k => localStorage.removeItem('l2d_pos_h_' + k));
+    } catch {}
     // 套用 live2d_my_like 下拉選單存的角色選擇（本機專屬，不影響 lib/live2d.js 原本的預設值）
     if (MYLIKE_FEATURE_ENABLED) {
-      let _c1Pick = localStorage.getItem('l2d_mylike_char1');
-      let _c2Pick = localStorage.getItem('l2d_mylike_char2');
-      // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
-      if (_c1Pick && !_c1Pick.startsWith('models/')) _c1Pick = 'models/' + _c1Pick;
-      if (_c2Pick && !_c2Pick.startsWith('models/')) _c2Pick = 'models/' + _c2Pick;
-      if (_c1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _c1Pick;
-      if (_c2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _c2Pick;
+      ['char1', 'char2', 'char3', 'char4'].forEach(key => {
+        let pick = localStorage.getItem('l2d_mylike_' + key);
+        if (!pick) return;
+        // 相容改資料夾結構前存的舊值（沒有 models/ 前綴）
+        if (!pick.startsWith('models/')) pick = 'models/' + pick;
+        L2D_CFG[key].model = '../live2d_my_like/' + pick;
+      });
     }
     L2D.init();
     if (typeof MagicShotVFX !== 'undefined') MagicShotVFX.init();
@@ -1256,7 +1331,10 @@ async function init() {
     const sndBtn = document.createElement('button');
     sndBtn.title = '開啟 / 關閉音效';
     sndBtn.textContent = '🔇';
-    sndBtn.style.cssText = 'position:fixed;bottom:114px;left:6px;z-index:200;' +
+    // 拖曳角色按鈕改成收合式選單後（見 lib/live2d.js _initDragButtons），左下角固定只佔
+    // bottom:8px 一格，原本 bottom:61px 是留給角色二拖曳鈕的位置已經空出來，所以這裡跟著
+    // 下面的 VFX/BGM 一起往下補位一格（-53px）。
+    sndBtn.style.cssText = `position:fixed;bottom:${MP_CFG.SND_BTN_BOTTOM}px;left:6px;z-index:200;` +
       'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
       'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
     sndBtn.addEventListener('click', () => {
@@ -1264,6 +1342,8 @@ async function init() {
       sndBtn.textContent       = on ? '🔊' : '🔇';
       sndBtn.style.background  = on ? 'rgba(0,212,255,.25)' : 'rgba(0,0,0,.5)';
       sndBtn.style.color       = on ? 'var(--cyan)' : '#888';
+      // player.html 這顆按鈕也會連動靜音玩家傳進來的語音廣播，host 這邊原本漏接，補上
+      if (typeof VoiceBroadcastModule !== 'undefined') VoiceBroadcastModule.setMuted(!on);
     });
     document.body.appendChild(sndBtn);
 
@@ -1272,8 +1352,9 @@ async function init() {
       const vfxBtn = document.createElement('button');
       vfxBtn.title = '開啟 / 關閉攻擊特效';
       vfxBtn.textContent = '⚡';   // ⚡ = 特效開啟；✖ = 關閉
-      // bottom:270px：BGM 控制項高約 96px（bottom:167-263px），再上方留 7px 間距
-      vfxBtn.style.cssText = 'position:fixed;bottom:270px;left:6px;z-index:200;' +
+      // bottom:217px：BGM 控制項高約 96px（bottom:114-210px），再上方留 7px 間距
+      // （原本是 270px，跟著上面 sndBtn 一起往下補位 53px）
+      vfxBtn.style.cssText = `position:fixed;bottom:${MP_CFG.VFX_BTN_BOTTOM}px;left:6px;z-index:200;` +
         'width:45px;height:45px;border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
         'background:rgba(255,200,0,.22);color:#ffd700;font-size:21px;cursor:pointer;padding:0;';
       vfxBtn.addEventListener('click', (e) => {
@@ -1287,7 +1368,7 @@ async function init() {
       document.body.appendChild(vfxBtn);
     }
 
-    createBGMControl(167);
+    createBGMControl(MP_CFG.BGM_CTRL_BOTTOM); // 往下補位 53px，理由同上方 sndBtn 的註解
   }
 
   // ── 彈幕 / 聊天控制 ──────────────────────────────────────────────────────
@@ -1306,6 +1387,28 @@ async function init() {
     });
     dmkBtn.title = '彈幕已開啟（點擊關閉）';
   }
+
+  // 賽前閒聊發送（走獨立的 MP_TOPICS.LOBBY_MSG，不是彈幕/聊天那條 CHAT 管道，
+  // 見 multi/multiplay.js 的 LOBBY_MSG 註解）；輸入框本身就在 screen-lobby 卡片裡，
+  // 遊戲開始後整個 screen-lobby 會被切走，不用額外處理隱藏。
+  (() => {
+    const inp = el('lobby-msg-input');
+    const btn = el('btn-lobby-msg-send');
+    if (!inp || !btn) return;
+
+    function send() {
+      const msg = inp.value.trim();
+      if (!msg) return;
+      const tempName = (HS.myName || '主持人');
+      pub(MP_TOPICS.LOBBY_MSG, { from: HS.myId, tempName, message: msg }, false, 0);
+      // 本機先顯示一次；broker 會把這則訊息 echo 回自己（因為主持人也訂閱了 LOBBY_MSG），
+      // 靠上面 mqttInit() 訊息處理裡的 data.from 過濾擋掉，才不會重複顯示
+      if (typeof DanmakuSystem !== 'undefined') DanmakuSystem.receive({ player: tempName, text: msg });
+      inp.value = '';
+    }
+    btn.addEventListener('click', send);
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+  })();
 
   // 主持人發送彈幕訊息
   (() => {
@@ -1737,7 +1840,8 @@ function endGame() {
   });
 
   const winner = ranked[0];
-  el('finish-emoji').textContent = winner ? '🏆' : '📚';
+  // 跟下面排行榜、player.html 的結算圖示共用同一份 MP_MEDALS，三端排名圖示才會完全一致
+  el('finish-emoji').textContent = winner ? MP_MEDALS[0] : '📚';
   el('finish-title').textContent = winner ? `${winner.name} 獲勝！` : '遊戲結束！';
   const endLine = winner ? `${winner.name}，${_pick(_L.win)}` : _pick(_L.end);
   _speak(endLine, 'celebrate', 6000);
@@ -1876,7 +1980,12 @@ function renderTimeAnalysis(reactionTimes, players) {
 // ── 題庫載入 ──────────────────────────────────────────────────────────────
 async function loadBank(path) {
   if (!path || path === '__custom__' || path === '__editor__') return;
-  const name = path.split('/').pop();
+  // 優先用 #bank-select 目前選中 <option> 的文字（就是下拉選單裡那個帶 emoji 的好看名稱，
+  // 例如「🔒 資訊安全」），這裡呼叫時 select 的選中項一定跟 path 對得上（兩個呼叫點都是先
+  // 設好 sel.value 才呼叫這個函式）。找不到對應 option 時才退回檔名（例如非下拉選單觸發的
+  // 呼叫）。原本這裡固定用檔名（例如 security.json），玩家端看到的 bankLabel 也會是檔名，
+  // 不是好看的名稱——這個函式是唯一設定 bank-label 的地方，修這裡兩邊就一起修好了。
+  const name = el('bank-select')?.selectedOptions[0]?.textContent || path.split('/').pop();
   el('bank-label').textContent  = name;
   el('pool-count').textContent  = '…';
   try {
@@ -1887,6 +1996,7 @@ async function loadBank(path) {
   el('pool-count').textContent = HS.allQ.length;
   MP_CFG.QUESTION_BANK = path;
   updateStartBtn();
+  pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
 }
 
 // ── AI 題庫載入（Import Adapter — 透過 localStorage 低耦合整合）──────────
@@ -1918,12 +2028,14 @@ function loadAIBank() {
     if (aiOpt) aiOpt.textContent = `🤖 ${name}`;
   } catch { HS.allQ = []; }
   updateStartBtn();
+  pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
 }
 
 // ── 動態題庫清單（從 questions/index.json 讀取，並恢復使用者選擇）────────
 // ── Live2D 角色收藏庫（live2d_my_like/）：下拉選單只存在 localStorage，只影響本機 ──
-// 停用原因：加入這個功能後連線變得異常緩慢（init() 會 await 這裡的 fetch 才繼續跑 mqttInit()，
-// 等於把 MQTT 連線起點往後拖）。先整組關閉、不佔用資源，程式碼保留，之後要排查/重新啟用時改回 true。
+// 原本 init() 會 await 這裡的 fetch 才繼續跑 mqttInit()，等於把 MQTT 連線起點往後拖，
+// 導致連線變得異常緩慢——已改成 loadMyLikeManifest().then(...) 不擋 mqttInit()（見 init()），
+// 現在可以安全保持 true。
 const MYLIKE_FEATURE_ENABLED = true;
 let _myLikeManifest = [];
 let _myLikeNames    = {};
@@ -1931,8 +2043,8 @@ let _myLikeNames    = {};
 async function loadMyLikeManifest() {
   try {
     const [mRes, nRes] = await Promise.all([
-      fetch('../live2d_my_like/config/manifest.json'),
-      fetch('../live2d_my_like/config/names.json'),
+      fetch('../live2d_my_like/config/manifest.json', { cache: 'no-store' }),
+      fetch('../live2d_my_like/config/names.json', { cache: 'no-store' }),
     ]);
     _myLikeManifest = mRes.ok ? await mRes.json() : [];
     _myLikeNames    = nRes.ok ? await nRes.json() : {};
@@ -1947,14 +2059,33 @@ function populateMyLikeSelects() {
     _myLikeManifest
       .map(e => `<option value="${e.path}">#${e.id} ${_myLikeNames[e.path] || e.character}</option>`)
       .join('');
-  const c1 = el('char1-select'), c2 = el('char2-select');
-  if (!c1 || !c2) return;
-  c1.innerHTML = opts;
-  c2.innerHTML = opts;
-  c1.value = localStorage.getItem('l2d_mylike_char1') || '';
-  c2.value = localStorage.getItem('l2d_mylike_char2') || '';
-  c1.addEventListener('change', () => onMyLikeChange('char1', c1.value));
-  c2.addEventListener('change', () => onMyLikeChange('char2', c2.value));
+  ['char1', 'char2', 'char3', 'char4'].forEach(key => {
+    const sel = el(key + '-select');
+    if (!sel) return;
+    sel.innerHTML = opts;
+    sel.value = localStorage.getItem('l2d_mylike_' + key) || '';
+    sel.addEventListener('change', () => onMyLikeChange(key, sel.value));
+  });
+
+  // 角色數選單：本機獨立記住上次選擇（預設 2，不影響現有預設行為），
+  // 依目前選擇的人數顯示/隱藏角色三、角色四那兩列選單
+  const countSel = el('char-count-select');
+  if (countSel) {
+    countSel.value = localStorage.getItem('l2d_mylike_char_count') || '2';
+    _applyCharCountVisibility(countSel.value);
+    countSel.addEventListener('change', () => {
+      localStorage.setItem('l2d_mylike_char_count', countSel.value);
+      _applyCharCountVisibility(countSel.value);
+      if (confirm('角色數要重新整理頁面才會生效，現在重新整理嗎？')) location.reload();
+    });
+  }
+}
+
+function _applyCharCountVisibility(count) {
+  const n = parseInt(count, 10) || 2;
+  document.querySelectorAll('.char-extra-select').forEach(label => {
+    label.style.display = n >= parseInt(label.dataset.minCount, 10) ? '' : 'none';
+  });
 }
 
 function onMyLikeChange(key, val) {
@@ -2271,6 +2402,7 @@ el('btn-ed-done').addEventListener('click', () => {
   el('pool-count').textContent = HS.allQ.length;
   el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
   updateStartBtn();
+  pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
   const btn = el('btn-ed-done');
   btn.textContent = '✓ 已套用！';
   setTimeout(() => { btn.textContent = '✓ 套用'; }, 1500);
@@ -2378,12 +2510,14 @@ el('bank-select').addEventListener('change', async () => {
     el('pool-count').textContent = '0';
     HS.allQ = [];
     updateStartBtn();
+    pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
   } else if (val === '__editor__') {
     el('bank-editor-wrap').style.display = 'block';
     HS.allQ = [...edQuestions];
     el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
     el('pool-count').textContent = HS.allQ.length;
     updateStartBtn();
+    pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
     try {
       const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
       s.bankPath = '__editor__';
@@ -2412,6 +2546,7 @@ el('bank-upload').addEventListener('change', async (e) => {
       el('bank-label').textContent = file.name;
       el('pool-count').textContent = data.length;
       updateStartBtn();
+      pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
     } else {
       alert('題庫格式錯誤：需為 JSON 陣列，且至少含一題');
     }
@@ -2487,16 +2622,41 @@ el('qr-modal-close').addEventListener('click', closeQrModal);
 el('qr-modal').addEventListener('click', e => { if (e.target === el('qr-modal')) closeQrModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQrModal(); });
 
+// navigator.clipboard 需要「安全情境」（HTTPS 或 localhost）才存在，這個遊戲區網內
+// 大多是用 http://192.168.x.x:port 開的，不符合安全情境時 navigator.clipboard 整個是
+// undefined——原本 navigator.clipboard?.writeText(url).then(...) 這種寫法，optional
+// chaining 會讓整條表達式直接短路成 undefined，writeText 根本沒被呼叫，既不會噴錯也不會
+// 複製成功，按鈕看起來就像「壞掉」。改用舊式 textarea + execCommand('copy') 當保底，
+// 不管有沒有安全情境都能用。
+function _fallbackCopy(text, onSuccess) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) onSuccess();
+  } catch {}
+}
+
 el('btn-copy-url').addEventListener('click', () => {
   const box = el('player-url');
   const url = box.dataset.url || box.textContent;  // 複製完整 URL（含 ip/port params）
   if (!url || url === '—') return;
-  navigator.clipboard?.writeText(url).then(() => {
+  const showCopied = () => {
     const b = el('btn-copy-url');
     b.textContent = '✓ 已複製！';
     b.classList.add('copied');
     setTimeout(() => { b.textContent = '複製網址'; b.classList.remove('copied'); }, 2000);
-  }).catch(() => {});
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url).then(showCopied).catch(() => _fallbackCopy(url, showCopied));
+  } else {
+    _fallbackCopy(url, showCopied);
+  }
 });
 
 // ── 設定面板 ──────────────────────────────────────────────────────────────
@@ -2528,11 +2688,37 @@ async function applySettings() {
   const oldClient = HS.client;
   HS.client = null;
   HS.ok     = false;
-  if (oldClient) { try { oldClient.end(true); } catch {} }
 
   el('cfg-msg').textContent = `連接 ws://${ip}:${port}...`;
   if (_settingsPoll) { clearInterval(_settingsPoll); _settingsPoll = null; }
-  mqttInit();
+
+  if (oldClient) {
+    // 主動發布 host_left（retained，等 broker ack 後才斷線），而不是靠 end(true) 觸發 will。
+    // 如果改完 IP 還是連到同一個 broker（例如只是修正打錯的 IP），will 是非同步觸發的，
+    // 緊接著 mqttInit() 開的 scout 連線很可能比 will 還快讀到 retained STATE，讀到的會是
+    // 斷線前的舊狀態（還顯示遊戲進行中），把自己誤判成「已有主持人」而擋住重新接手——
+    // 這裡改成主動 publish 並等 ack，確保 retained STATE 已經變成 host_left，
+    // scout 之後才會真的去檢查，就不會再有這個賽跑問題。
+    let _started = false;
+    const _startScout = () => {
+      if (_started) return;
+      _started = true;
+      try { oldClient.end(true); } catch {}
+      mqttInit();
+    };
+    try {
+      oldClient.publish(
+        MP_TOPICS.STATE,
+        JSON.stringify({ phase: 'host_left' }),
+        { qos: 1, retain: true },
+        _startScout
+      );
+    } catch { _startScout(); }
+    // 保底：舊連線本來就已經斷了（例如舊 IP 根本連不上）時 ack 永遠不會來，避免卡死
+    setTimeout(_startScout, 800);
+  } else {
+    mqttInit();
+  }
   let tries = 0;
   _settingsPoll = setInterval(() => {
     tries++;
@@ -2581,7 +2767,7 @@ const _speak = (text, type, duration) => {
 
 // ── 主持人 Emoji 快速反應面板 ──────────────────────────────────────────────
 (() => {
-  const EMOJIS = ['😀','😂','😭','😡','👍','👏','🎉','❤️','🔥','❓'];
+  const EMOJIS = MP_EMOJIS;
   const emojiBtn = el('btn-h-emoji');
   if (!emojiBtn) return;
 

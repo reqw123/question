@@ -1,0 +1,79 @@
+'use strict';
+
+// desktop-pet「語音輸入」的測試 seam之一：純函式模組，不 import 任何 Electron API。
+// 對外契約：給錄音的 bytes/key → 呼叫 OpenAI Whisper API → 回傳轉錄文字，
+// 或在失敗時拋出分類過的 SttError（見 docs/specs/0004-desktop-pet-voice-input.md）。
+// 介面形狀刻意跟 tts.js/chat.js 一致。
+
+class SttError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = 'SttError';
+    this.code = code;
+  }
+}
+
+// Whisper 對近乎無語音的音檔常常還是會「幻覺」出一段像模像樣的文字（例如「Thanks for
+// watching」），但這種情況下模型自己回報的 no_speech_prob（每個 segment 認為這段其實
+// 沒有語音的機率）通常也偏高。用這個信號當第二道防線，是刻意不去檢查/比對轉錄出來的
+// 文字內容（猜幻覺片語有哪些既猜不完、也可能誤殺使用者真的講到類似字句），而是看模型
+// 對「這裡有沒有語音」這件事本身的信心程度——跟 index.html 那道錄音期間 RMS 累計時長
+// 的防線是兩個獨立來源（一個看錄音當下的音量，一個看轉錄模型的事後判斷），任一道失守
+// 另一道還能擋。門檻 0.6 沒有精確科學依據，是社群常見的經驗值。
+const NO_SPEECH_PROB_THRESHOLD = 0.6;
+
+async function transcribeAudio({ audioBuffer, mimeType = 'audio/webm', apiKey, fetchImpl = fetch }) {
+  if (!audioBuffer || audioBuffer.length === 0) {
+    throw new SttError('audio buffer is empty', 'INVALID_INPUT');
+  }
+  if (!apiKey) {
+    throw new SttError('missing API key', 'INVALID_INPUT');
+  }
+
+  const form = new FormData();
+  form.append('model', 'whisper-1');
+  form.append('file', new Blob([audioBuffer], { type: mimeType }), 'audio.webm');
+  // verbose_json 讓回應多帶 segments[].no_speech_prob，見上面 NO_SPEECH_PROB_THRESHOLD
+  // 的說明。
+  form.append('response_format', 'verbose_json');
+
+  let response;
+  try {
+    response = await fetchImpl('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    });
+  } catch (err) {
+    throw new SttError(`network error: ${err.message}`, 'NETWORK_ERROR');
+  }
+
+  if (!response.ok) {
+    let bodyText = '';
+    try { bodyText = await response.text(); } catch {}
+    const detail = bodyText ? `: ${bodyText}` : '';
+
+    if (response.status === 401 || response.status === 403) {
+      throw new SttError(`OpenAI auth error (${response.status})${detail}`, 'AUTH_ERROR');
+    }
+    if (response.status === 429) {
+      throw new SttError(`OpenAI rate limit or quota exceeded${detail}`, 'RATE_LIMIT');
+    }
+    throw new SttError(`OpenAI API error (${response.status})${detail}`, 'API_ERROR');
+  }
+
+  const data = await response.json();
+  const segments = Array.isArray(data.segments) ? data.segments : [];
+  if (segments.length > 0) {
+    const avgNoSpeechProb =
+      segments.reduce((sum, seg) => sum + (seg.no_speech_prob || 0), 0) / segments.length;
+    if (avgNoSpeechProb >= NO_SPEECH_PROB_THRESHOLD) {
+      // 模型自己都覺得這段音檔很可能沒有語音——即使吐出了文字，也當作沒講話，不要把
+      // 可能是幻覺的文字回傳給呼叫端。
+      return { text: '' };
+    }
+  }
+  return { text: (data.text || '').trim() };
+}
+
+module.exports = { transcribeAudio, SttError };

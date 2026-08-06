@@ -14,9 +14,9 @@
  */
 const VoiceBroadcastModule = (() => {
 
-  const SIG_PREFIX = 'quiz/voice/signal/';
-  const CTRL_TOPIC = 'quiz/voice/ctrl';
-  const ICE_CFG    = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  const SIG_PREFIX = MP_TOPICS.VOICE_SIGNAL_PREFIX;
+  const CTRL_TOPIC = MP_TOPICS.VOICE_CTRL;
+  const ICE_CFG    = { iceServers: MP_CFG.VOICE_ICE_SERVERS };
   const MIC_GAIN   = 2.0;   // 麥克風放大倍數（1.0 = 原始音量）
 
   let _role       = null;

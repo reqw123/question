@@ -1,9 +1,17 @@
+# launchers/啟動-網頁遊戲.bat 偵測到這台機器有 caddy.exe 時就用這份設定啟動（沒有就退回
+# launchers/serve-lan.js 的陽春版靜態伺服器，見該檔案開頭註解）。caddy.exe 本身故意不進版本
+# 控制（見 .gitignore），使用者要自己下載放到專案根目錄，跟這份 Caddyfile 放一起。
 :8080 {
+    # 把整個專案根目錄當靜態檔案伺服器：multi/host.html、multi/player.html、
+    # live2d_my_like/ 等資源都是相對路徑，直接從專案根目錄起家才能正確解析
     root * .
     # 這是本機開發用的伺服器設定，檔案隨時可能被改動，一律禁止快取，
     # 避免瀏覽器用啟發式規則快取住舊版 .js/.html，改完程式碼重整卻看不到最新結果。
     header Cache-Control "no-store"
     file_server
+    # /mqtt 反向代理到本機 MQTT broker 的 WebSocket 埠（9001，見 multi/multiplay.js 的
+    # MP_CFG.wsPort）——經 ngrok 等公網通道連進來的玩家走 https/wss，沒辦法直連
+    # ws://區網IP:9001，靠這條代理讓 wss://.../mqtt 走同一個 8080 對外埠出去。
     reverse_proxy /mqtt localhost:9001 {
         transport http {
             versions 1.1

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>清除本機快取</title>
+<style>
+  :root { --cyan: #00d4ff; --bg: #14181f; --border: rgba(255,255,255,0.12); --text: #eee; --text2: #9aa4b2; --warn: #ffb454; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.6 -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  #body { flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+  h1 { font-size: 1.05em; margin: 0; color: var(--text); }
+  .lead { font-size: .92em; color: var(--text2); }
+  ul { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+  li { font-size: .92em; line-height: 1.5; }
+  .note { font-size: .85em; color: var(--text2); line-height: 1.5; }
+  .path-label { font-size: .8em; color: var(--text2); margin-top: 4px; }
+  .path-box {
+    font-size: .8em; color: var(--text2); background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+    word-break: break-all; user-select: text;
+  }
+  #actions { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--border); }
+  button {
+    flex: 1; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: .9em; cursor: pointer;
+  }
+  button:hover { border-color: var(--cyan); }
+  /* 跟 settings.html 同一套按鈕語意配色：橘色外框＝不可逆的清除操作。 */
+  #btn-confirm { color: var(--warn); border-color: rgba(255,180,84,.4); font-weight: 700; }
+  #btn-confirm:hover { border-color: var(--warn); }
+</style>
+</head>
+<body>
+  <div id="body">
+    <h1>確定要清除本機快取並重新啟動嗎？</h1>
+    <div class="lead">清除之後，以下內容會回到預設狀態：</div>
+    <ul>
+      <li>每一隻桌寵目前擺放的位置跟大小，要重新拖曳/縮放</li>
+      <li>額外寵物目前有沒有顯示、要不要到處走動的開關，會回到預設狀態</li>
+      <li>角色一、角色二上次各自選過的造型，會回到預設的那一個</li>
+    </ul>
+    <div class="note">跟角色聊過的對話記錄、OpenAI API key、語音輸入的門檻設定都不會受影響——這些存在別的地方，不會被這個操作清掉。</div>
+    <div class="path-label">被清除的資料夾路徑：</div>
+    <div class="path-box" id="pathBox">讀取中...</div>
+  </div>
+  <div id="actions">
+    <button id="btn-cancel">取消</button>
+    <button id="btn-confirm">清除並重開</button>
+  </div>
+<script>
+  const pathBoxEl = document.getElementById('pathBox');
+  window.clearCacheConfirm.onInit(({ userDataPath }) => {
+    pathBoxEl.textContent = userDataPath || '（讀取失敗）';
+  });
+  document.getElementById('btn-cancel').addEventListener('click', () => window.clearCacheConfirm.cancel());
+  document.getElementById('btn-confirm').addEventListener('click', () => window.clearCacheConfirm.confirm());
+</script>
+</body>
+</html>

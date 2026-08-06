@@ -16,20 +16,19 @@
 //   showEmoji(playerId, emoji)
 //   showTyping(playerId)
 //   hideTyping(playerId)
-//   remove(playerId)
-//   update(playerId)
 //   refresh()
-//   setTheme('default'|'comic'|'rounded'|'minimal')
-//   show(playerId, message)   ← backward-compat alias
 //   topic          → 'quiz/chat'
 //   topicTyping    → 'quiz/chat/typing'
+//
+// Bubble Theme 目前只有 default 一種在用（comic/rounded/minimal 三組配色留著備用，
+// 還沒接上任何切換 UI；之前有個 setTheme() 可以切換，因為從來沒人呼叫過已經移除）
 //
 // 完全移除此檔案不影響 MQTT / 題庫 / Live2D / MagicShotVFX / 分數系統。
 const PlayerBubbleChat = (() => {
 
   // ── Topics ─────────────────────────────────────────────────────────────────
-  const TOPIC        = 'quiz/chat';
-  const TOPIC_TYPING = 'quiz/chat/typing';
+  const TOPIC        = MP_TOPICS.CHAT;
+  const TOPIC_TYPING = MP_TOPICS.TYPING;
 
   // ── Constants ──────────────────────────────────────────────────────────────
   const CHAT_MS   = 5000;   // 聊天泡泡顯示毫秒
@@ -478,16 +477,6 @@ const PlayerBubbleChat = (() => {
     st.typingEl = null;
   }
 
-  /** 立即移除指定玩家的所有泡泡並清空其佇列 */
-  function remove(playerId) {
-    const st = _state[playerId];
-    if (!st) return;
-    clearTimeout(st.tidDismiss);
-    st.el?.remove();
-    st.typingEl?.remove();
-    delete _state[playerId];
-  }
-
   /** 重新定位單一玩家的所有泡泡（計分板重繪後呼叫）*/
   function update(playerId) {
     const st = _state[playerId];
@@ -499,13 +488,9 @@ const PlayerBubbleChat = (() => {
   /** 重新定位所有玩家的泡泡 */
   function refresh() { Object.keys(_state).forEach(update); }
 
-  /** 切換泡泡視覺風格：'default' | 'comic' | 'rounded' | 'minimal' */
-  function setTheme(name) { if (_themes[name]) _theme = name; }
-
   return {
     showMessage, showEmoji, showTyping, hideTyping,
-    remove, update, refresh, setTheme,
-    show:         showMessage,   // backward-compat
+    refresh,
     topic:        TOPIC,
     topicTyping:  TOPIC_TYPING,
   };

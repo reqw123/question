@@ -8,11 +8,11 @@
  * 每個動作（gesture）是一組參數 keyframe，相鄰 frame 之間線性插值。
  *
  * 公開 API:
- * L2DGesturePlayer.play(name?, charKey?)
+ * L2DGesturePlayer.trigger(name?, charKey?)
  *   name    省略 → 從所有已定義動作裡隨機挑一個
- *   charKey 省略 → 所有角色（c1+c2）都播放；帶 'c1' 或 'c2' → 只播放指定角色
+ *   charKey 省略 → L2D._activeSlotKeys 目前啟用的角色都播放；帶 'c1'~'c4' → 只播放指定角色
  * L2DGesturePlayer.playAll(charKey?, gapMs?)  ← 依序播放所有已定義動作（各播完整段時長 + gapMs 緩衝才接下一個，gapMs 預設 300）
- * L2DGesturePlayer.stop(charKey?)      ← 停止（省略 = 兩角色都停）
+ * L2DGesturePlayer.stop(charKey?)      ← 停止（省略 = 目前所有掛過 hook 的角色都停）
  * L2DGesturePlayer.define(name, def)   ← 執行期間新增/覆蓋動作定義
  * L2DGesturePlayer.list()              ← 回傳所有已定義的動作名稱
  *
@@ -25,7 +25,7 @@
  * ...
  * ],
  * }
- * 播放時要套用到哪個角色由呼叫端透過 play(name, charKey) 決定，動作定義本身不再帶 char 欄位。
+ * 播放時要套用到哪個角色由呼叫端透過 trigger(name, charKey) 決定，動作定義本身不再帶 char 欄位。
  */
 const L2DGesturePlayer = (() => {
 
@@ -47,6 +47,24 @@ const L2DGesturePlayer = (() => {
       open = !open;
     }
     frames.push({ t: durationMs, params: { [paramId]: closeVal } });
+    return frames;
+  }
+
+  // 產生「多個參數同步左右擺盪、最後強制收回中心點（0）」的 keyframe 陣列。
+  // amplitudeMap：{ 參數ID: 振幅 }，每個參數同一時間點都往同一個方向擺（正/負交錯），
+  // t=0 從中心點開始，每 stepMs 換一次方向，最後一幀無論如何都會被拉回 0——避免動作結束時
+  // 卡在擺到一半的姿勢（跟 _toggleFrames 固定停在 closeVal 是同一個考量，只是這裡的「安全值」
+  // 永遠是 0，不需要呼叫端指定）。
+  function _swayFrames(amplitudeMap, durationMs, stepMs) {
+    const ids = Object.keys(amplitudeMap);
+    const zero = Object.fromEntries(ids.map(id => [id, 0]));
+    const frames = [{ t: 0, params: { ...zero } }];
+    let sign = 1;
+    for (let t = stepMs; t < durationMs; t += stepMs) {
+      frames.push({ t, params: Object.fromEntries(ids.map(id => [id, amplitudeMap[id] * sign])) });
+      sign *= -1;
+    }
+    frames.push({ t: durationMs, params: { ...zero } });
     return frames;
   }
 
@@ -248,6 +266,33 @@ const L2DGesturePlayer = (() => {
       ],
     },
 
+    // kuroneko 專用：短距離左右快速位移，持續 5 秒。這隻模型沒有 PARAM_POSITION_X 這種
+    // 真正的螢幕座標參數（反解 kuroneko.moc3 確認過，28 個參數都是標準 CamelCase 命名，
+    // 例如 ParamAngleX/ParamBodyAngleX，沒有位置類參數）——GESTURES 這套系統本來就只操控
+    // coreModel 的 Parameter，不會去動 PIXI 的 model.x/y（那是 index.html 對角線飛行
+    // flyLoop() 那套完全不同的機制，直接改 model.x/y，不透過這裡）。所以「位移」用
+    // ParamBodyAngleX（身體左右傾，實測範圍 -10~10）+ ParamAngleX（頭部左右轉，實測範圍
+    // -30~30）+ ParamAngleZ（頭部歪斜，實測範圍 -30~30）三個參數同步擺盪，做出「左右快速
+    // 挪動重心＋轉頭張望」的視覺效果，振幅刻意留在實測範圍中段（沒有頂到極限），符合
+    // 「短距離」的要求。三個數值都是先用 viewer.html 對這個模型實際呼叫
+    // getParameterMinimumValue/MaximumValue 量出來的，不是憑印象套標準 Cubism 模板猜的。
+    // blend: 0.6 比 tremble（0.75）低、比 victory（0.6 同）持平，讓每次換方向接近瞬間到位，
+    // 對應「快速」的要求；_swayFrames 收尾一定會拉回 0，動作結束不會卡在擺到一半的姿勢。
+    //
+    // ParamTailL（尾巴，0=放下、1=舉到最高）另外疊加、跟頭部同一個節奏：直接沿用
+    // _toggleFrames('ParamTailL', 5000, 350, 1, 0) 產生的時間戳跟 _swayFrames 完全一致
+    // （兩邊 durationMs/stepMs 參數相同，逐一比對過 t 序列一模一樣），所以可以直接按索引
+    // zip 合併——頭部轉向哪一邊，尾巴就跟著舉起，轉回中心尾巴放下，收尾兩邊都會回到 0
+    // （頭置中、尾巴放下），不會各自收在不同時間點、看起來錯拍。
+    'mini_cat': {
+      blend: 0.6,
+      frames: (() => {
+        const sway = _swayFrames({ ParamBodyAngleX: 8, ParamAngleX: 18, ParamAngleZ: 6 }, 5000, 350);
+        const tail = _toggleFrames('ParamTailL', 5000, 350, 1, 0);
+        return sway.map((f, i) => ({ t: f.t, params: { ...f.params, ...tail[i].params } }));
+      })(),
+    },
+
     // 納茲專用：嘴巴快速開合模擬碎嘴子／碎碎念。
     // ⚠️ ParamMouthOpenY 在納茲身上是自訂的 -30(閉)~30(開/露牙) 範圍，不是標準 Cubism 的 0~1，
     // 露西（077）同名參數是標準 0~1，兩邊量尺不同，這組數值只適用納茲，不能直接套到露西身上。
@@ -258,7 +303,7 @@ const L2DGesturePlayer = (() => {
   };
 
   // ── 執行期狀態 ─────────────────────────────────────────────────────────────
-  const _hooks = { c1: null, c2: null };
+  const _hooks = { c1: null, c2: null, c3: null, c4: null };
 
   function _cm(charKey) {
     try { return L2D?.['_' + charKey]?.model?.internalModel?.coreModel ?? null; }
@@ -393,20 +438,20 @@ const L2DGesturePlayer = (() => {
   return {
     /**
      * @param {string} [name]    省略 → 從所有已定義動作隨機挑一個
-     * @param {'c1'|'c2'} [charKey] 省略 → 所有角色都播放；指定則只播放該角色
+     * @param {'c1'|'c2'|'c3'|'c4'} [charKey] 省略 → 目前所有啟用角色都播放；指定則只播放該角色
      */
-    play(name, charKey) {
+    trigger(name, charKey) {
       const names = Object.keys(GESTURES);
       if (!name) name = names[Math.floor(Math.random() * names.length)];
       const g = GESTURES[name];
       if (!g) { console.warn('[GesturePlayer] 未知動作:', name, '| 可用:', names.join(', ')); return; }
-      const chars = charKey ? [charKey] : ['c1', 'c2'];
+      const chars = charKey ? [charKey] : ((typeof L2D !== 'undefined' && L2D._activeSlotKeys) || ['c1', 'c2']);
       chars.forEach(c => _hookChar(c, g));
     },
 
     /**
      * 依序播放所有已定義動作，一個播完（滿它自己的時長）才接下一個。
-     * @param {'c1'|'c2'} [charKey]   省略 → 每個動作都在兩個角色身上播放
+     * @param {'c1'|'c2'|'c3'|'c4'} [charKey]   省略 → 每個動作都在目前所有啟用角色身上播放
      * @param {number} [gapMs=300]    每段動作之間的緩衝間隔
      */
     playAll(charKey, gapMs = 300) {
@@ -415,7 +460,7 @@ const L2DGesturePlayer = (() => {
       const next = () => {
         if (i >= names.length) return;
         const name = names[i++];
-        this.play(name, charKey);
+        this.trigger(name, charKey);
         setTimeout(next, _gestureDuration(GESTURES[name]) + gapMs);
       };
       next();
@@ -423,12 +468,20 @@ const L2DGesturePlayer = (() => {
 
     stop(charKey) {
       if (charKey) { _unhookChar(charKey); return; }
-      _unhookChar('c1');
-      _unhookChar('c2');
+      Object.keys(_hooks).forEach(k => _unhookChar(k));
     },
 
     define(name, gesture) { GESTURES[name] = gesture; },
     list()                { return Object.keys(GESTURES); },
   };
 })();
+
+// 讓外部可以直接打比較短的 L2D.trigger(...)，等同 L2DGesturePlayer.trigger(...)——
+// 跟 L2D.play()（播放官方 motion 檔）並排在同一個短物件底下，同一個「動詞」對比一目了然。
+// 這裡只是掛一個 alias，實作還是在 L2DGesturePlayer 裡；反過來在 lib/live2d.js 裡硬寫
+// L2DGesturePlayer 會製造不必要的依賴（desktop-pet 之類沒載入這支檔案的頁面就會出錯），
+// 所以由這裡（比較「非必要」的那一邊）主動掛上去，且只在 L2D 已經存在時才掛。
+if (typeof L2D !== 'undefined') {
+  L2D.trigger = (name, charKey) => L2DGesturePlayer.trigger(name, charKey);
+}
 

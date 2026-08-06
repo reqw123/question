@@ -12,6 +12,10 @@ const MP_CFG = {
   RESULT_MS:    2500,   // 結果顯示時間（ms）
   EXPL_MS:      4000,   // 解說顯示時間（ms）
   enableLive2D: true,  // 玩家裝置是否啟用 Live2D（true=載入，false=跳過）
+  // 玩家端 join 畫面「角色數」選單最多開放到幾個（2~4）。考慮到玩家裝置（尤其手機）
+  // 的運算資源，同時渲染越多角色越吃效能，調低這個數字就能讓玩家選單不出現 3/4，
+  // 不用去改 player.html 本身；host.html 的角色數選單不受這個值限制（主持端通常用自己電腦）。
+  maxPlayerChars: 4,
   MAX_SCORE:    10,     // 立即搶答正確得分（10題滿分100）
   MIN_SCORE:    1,      // 最後一秒正確得分
   MAX_PENALTY:  5,      // 立即搶答答錯扣分
@@ -26,6 +30,17 @@ const MP_CFG = {
   OFFLINE_MS:        10000, // 主持人判定玩家離線的門檻：超過這麼久沒收到心跳才算離線，須明顯大於 HEARTBEAT_MS 留緩衝，避免正常網路抖動被誤判離線
   TOAST_MS:          1600,  // 得分飄字（showToast）顯示多久後自動消失
   MQTT_RECONNECT_MS: 3000,  // MQTT 斷線後的自動重連間隔
+
+  // 左下角按鈕直向堆疊（音效/特效開關 + BGM 控制條），host.html 與 player.html
+  // 用的是同一套版面（角色拖曳鈕固定佔 bottom:8px 那一格，這幾顆接著往上疊），
+  // 兩邊原本各自寫死同一組數字，改版面要同時改兩處，統一搬到這裡：
+  SND_BTN_BOTTOM: 61,   // 音效開關按鈕
+  VFX_BTN_BOTTOM: 217,  // 特效開關按鈕
+  BGM_CTRL_BOTTOM: 114, // BGM 控制條
+
+  // VoiceBroadcastModule 的 WebRTC ICE 設定（STUN server），原本寫死在該模組裡，
+  // 跟其他連線設定（brokerIP/wsPort）一樣搬到這裡集中管理：
+  VOICE_ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -50,10 +65,22 @@ const MP_TOPICS = {
   CHAT:      'quiz/chat',            // player/host → all（聊天泡泡，qos 0）
   DANMAKU:   'quiz/danmaku',         // player/host → all（彈幕，qos 0）
   TYPING:    'quiz/chat/typing',     // player → all（打字指示器，qos 0）
+  // 開賽前閒聊：payload { tempName, message }，tempName 是前端隨機產生的匿名代號，
+  // 不是 JOIN 流程給的 playerId——這個頻道刻意跟 CHAT 分開，因為 CHAT 的訊息格式
+  // 綁著「已加入玩家」的 playerId（給 PlayerBubbleChat 對應頭像泡泡用），還沒加入
+  // 房間的訪客沒有這個身分。渲染上一樣借用 DanmakuSystem，只是資料來源分開，
+  // 兩邊職責才不會混在一起。只在 phase==='lobby' 時雙方才會收發，見 host.html/player.html。
+  LOBBY_MSG: 'quiz/lobby/msg',       // player/host → all（開賽前閒聊，qos 0）
+  // VoiceBroadcastModule 專用：SIGNAL 是「前綴 + 自己的 playerId」動態組出來的訂閱
+  // topic（不是單一固定字串，跟上面其他 topic 用法不同，使用端要自己接 + myId），
+  // CTRL 是固定的控制頻道（開始/結束廣播通知）。
+  VOICE_SIGNAL_PREFIX: 'quiz/voice/signal/',
+  VOICE_CTRL:          'quiz/voice/ctrl',
 };
 
 const MP_MEDALS        = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
 const MP_PLAYER_COLORS = ['#00d4ff', '#ff6b6b', '#00ff88', '#ffd60a', '#ff9f1c', '#a855f7', '#f97316', '#06b6d4', '#84cc16', '#f472b6'];
+const MP_EMOJIS        = ['😀', '😂', '😭', '😡', '👍', '👏', '🎉', '❤️', '🔥', '❓'];  // 快速表情反應清單，host.html/player.html 共用
 
 /**
  * 依玩家 ID 決定固定顏色（雜湊 → 偏好索引，collision 時往後找空位）

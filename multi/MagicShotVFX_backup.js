@@ -5,8 +5,6 @@
  *
  * 公開 API:
  *   MagicShotVFX.fireExplosion(letter)  ← 唯一實際被呼叫的攻擊特效（內部會呼叫 fire()）
- *   MagicShotVFX.updateStreak(playerId, correct) → 新連續正解數
- *   MagicShotVFX.getStreak(playerId)
  *   MagicShotVFX.init()  ← 掛載到 L2D.app.stage（也會自動延遲嘗試）
  *
  * 掛載方式：本模組啟動時自動每 500 ms 嘗試 init()，直到成功為止。
@@ -31,7 +29,7 @@ const MagicShotVFX = (() => {
   let _lastTs    = 0;
   let _enabled   = true;   // 特效總開關（false = 靜默忽略所有 fire 呼叫）
   const _effects = [];     // 目前活躍的特效物件陣列
-  const _streaks = {};     // { playerId: 連續正解數 }
+
 
   // ── easing ────────────────────────────────────────────────────────────────
   const easeIO  = t => t < .5 ? 2*t*t : -1 + (4 - 2*t)*t;
@@ -260,23 +258,36 @@ const MagicShotVFX = (() => {
     return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, x: r.left, y: r.top, w: r.width, h: r.height };
   }
 
+  /** 推算單一角色 state 的上半身位置（PIXI 座標 ≡ CSS 邏輯像素，autoDensity:true 已對齊） */
+  function _originOf(sk) {
+    const m  = sk.model;
+    const θ  = m.rotation || 0;
+    const cx = m.x + (sk._mw / 2) * Math.cos(θ) - (sk._mh / 2) * Math.sin(θ);
+    const cy = m.y + (sk._mw / 2) * Math.sin(θ) + (sk._mh / 2) * Math.cos(θ);
+    return { x: cx, y: cy - sk._mh * 0.22 };
+  }
+
   /**
-   * 推算角色的上半身位置（PIXI 座標 ≡ CSS 邏輯像素，autoDensity:true 已對齊）
-   * 優先取 _c2（1024100，有 Skill 動作），其次 _c1，最後用螢幕右側備用點
+   * 依 L2D_CFG.vfxFireFrom 設定回傳這次要用哪些角色的位置發射，每個回傳一個 {x,y} 起點
+   * （跟 L2D_CFG.answerGestureChar 同一套慣例：null/未設定 = 全部，'c1'~'c4' = 指定角色）。
+   * null → 目前每個 ready 的啟用角色各一個；指定角色還沒 ready 時退回第一個 ready 的角色。
+   * 找不到任何 ready 角色時，一律退回螢幕右側備用點。
    */
-  function _charOrigin() {
-    if (typeof L2D !== 'undefined') {
-      for (const sk of [L2D._c2, L2D._c1]) {
-        if (sk && sk.ready && sk.model && sk._mw !== undefined) {
-          const m  = sk.model;
-          const θ  = m.rotation || 0;
-          const cx = m.x + (sk._mw / 2) * Math.cos(θ) - (sk._mh / 2) * Math.sin(θ);
-          const cy = m.y + (sk._mw / 2) * Math.sin(θ) + (sk._mh / 2) * Math.cos(θ);
-          return { x: cx, y: cy - sk._mh * 0.22 };
-        }
-      }
-    }
-    return { x: window.innerWidth * 0.82, y: window.innerHeight * 0.45 };
+  function _charOrigins() {
+    const fallback = { x: window.innerWidth * 0.82, y: window.innerHeight * 0.45 };
+    if (typeof L2D === 'undefined') return [fallback];
+
+    const keys = L2D._activeSlotKeys || ['c1', 'c2'];
+    const readySlots = keys.map(k => L2D['_' + k])
+      .filter(sk => sk && sk.ready && sk.model && sk._mw !== undefined);
+    if (!readySlots.length) return [fallback];
+
+    const fireFrom = (typeof L2D_CFG !== 'undefined') ? L2D_CFG.vfxFireFrom : null;
+    if (!fireFrom) return readySlots.map(_originOf);
+
+    const picked = keys.includes(fireFrom) ? L2D['_' + fireFrom] : null;
+    if (picked && picked.ready && picked.model && picked._mw !== undefined) return [_originOf(picked)];
+    return [_originOf(readySlots[0])];   // 指定角色沒 ready，退回第一個 ready 的
   }
 
   /** 依連擊數決定魔法球／爆炸特效顏色 */
@@ -372,18 +383,22 @@ const MagicShotVFX = (() => {
     if (!_container || !_enabled) return;
     const opt = _optRect(letter);
     if (!opt) return;
-    const orig = _charOrigin();
-    const fx = orig.x, fy = orig.y, tx = opt.cx, ty = opt.cy;
+    const origins = _charOrigins();   // L2D_CFG.vfxFireFrom 沒設定時可能不只一個起點
+    const tx = opt.cx, ty = opt.cy;
 
-    // L2D 詠唱動作（手勢由 L2DGesturePlayer 統一管理，不在此 hook coreModel）
+    // L2D 詠唱動作（手勢由 L2DGesturePlayer 統一管理，不在此 hook coreModel）——
+    // L2D.play() 本身就是套用到所有啟用角色，跟 vfxFireFrom 選誰發射魔法球是兩件事，
+    // 不管 vfxFireFrom 設什麼，有 skill2 動作的角色都會一起做出施法姿勢
     try { if (typeof L2D !== 'undefined') L2D.play('skill2'); } catch {}
 
-    // 原本的 combo 魔法球特效（四段）
+    // 原本的 combo 魔法球特效（四段），每個起點各自跑一整套
     const stages = [1, 3, 5, 10];
-    stages.forEach((streak, i) => {
-      setTimeout(() => {
-        fire({ fromX: fx, fromY: fy, toX: tx, toY: ty, letter, streak });
-      }, i * 280);
+    origins.forEach(({ x: fx, y: fy }) => {
+      stages.forEach((streak, i) => {
+        setTimeout(() => {
+          fire({ fromX: fx, fromY: fy, toX: tx, toY: ty, letter, streak });
+        }, i * 280);
+      });
     });
 
     _startTick();
@@ -393,14 +408,6 @@ const MagicShotVFX = (() => {
       try { if (typeof L2D !== 'undefined') L2D.play('cry'); } catch {}
     }, 3100);
   }
-
-  // ── 連擊追蹤 ──────────────────────────────────────────────────────────────
-  function updateStreak(id, correct) {
-    if (!correct) { _streaks[id] = 0; return 0; }
-    _streaks[id] = (_streaks[id] || 0) + 1;
-    return _streaks[id];
-  }
-  function getStreak(id) { return _streaks[id] || 0; }
 
   // ── 初始化 ────────────────────────────────────────────────────────────────
   /**
@@ -423,12 +430,8 @@ const MagicShotVFX = (() => {
 
   // ── 公開介面 ──────────────────────────────────────────────────────────────
   return {
-    get container() { return _container; },
     fireExplosion,
     init,
-    updateStreak,
-    getStreak,
-    ScreenShake,
     // 特效總開關 — setEnabled(false) 靜默跳過所有攻擊特效，不影響已在播放的效果
     setEnabled(v) { _enabled = !!v; },
     isEnabled()   { return _enabled; },

@@ -1,0 +1,258 @@
+{
+  "yuanpei": {
+    "label": "元培的希望",
+    "steps": [
+      {
+        "c1": {
+          "moveTo": {
+            "x": -286,
+            "y": -145
+          },
+          "speak": "有不祥的預感"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1674,
+            "y": 778
+          },
+          "speak": "鎖定目標"
+        },
+        "durationMs": 1000
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": -128,
+            "y": -153
+          },
+          "gesture": "surprise"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 222,
+            "y": -74
+          },
+          "gesture": "random_9"
+        },
+        "durationMs": 3000,
+        "holdMs": 1000
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": -128,
+            "y": -153
+          },
+          "speak": "包的"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 222,
+            "y": -74
+          },
+          "gesture": "victory",
+          "speak": "比賽"
+        },
+        "durationMs": 2000,
+        "holdMs": 100
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": -128,
+            "y": -153
+          },
+          "gesture": "random_1",
+          "speak": "小事一樁"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1699,
+            "y": 734
+          },
+          "speak": "準備開會"
+        },
+        "durationMs": 500,
+        "holdMs": 1000
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": -114,
+            "y": 81
+          },
+          "gesture": "random_1",
+          "speak": "先打一波瓦"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1687,
+            "y": 890
+          }
+        },
+        "durationMs": 1172,
+        "holdMs": 3000
+      }
+    ]
+  },
+  "cat_home": {
+    "label": "吉米配合一下",
+    "steps": [
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1541,
+            "y": 604
+          },
+          "speak": "我叫混淆變數"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "gesture": "random_1",
+          "speak": "我讓你拍了嗎"
+        },
+        "durationMs": 300
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1456,
+            "y": 604
+          }
+        },
+        "durationMs": 300,
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          }
+        }
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1641,
+            "y": 604
+          },
+          "speak": "我叫混淆變數"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "speak": "我讓你拍了嗎"
+        },
+        "durationMs": 300
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1541,
+            "y": 604
+          },
+          "speak": "你該不會沒處理資料汙染吧?"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "gesture": "random_1",
+          "speak": "你該不會沒做正規化吧?"
+        },
+        "durationMs": 300
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1456,
+            "y": 604
+          },
+          "speak": "你該不會沒處理資料汙染吧?"
+        },
+        "durationMs": 300,
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "speak": "你該不會沒做正規化吧?"
+        }
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1641,
+            "y": 604
+          },
+          "speak": "你該不會沒做骨架約束吧?"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "speak": "你該不會沒魯棒吧?"
+        },
+        "durationMs": 300
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1541,
+            "y": 604
+          },
+          "speak": "你該不會沒做骨架約束吧?"
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "gesture": "random_1",
+          "speak": "你該不會沒魯棒吧?"
+        },
+        "durationMs": 300
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1456,
+            "y": 604
+          },
+          "speak": "慢慢標記沒關係"
+        },
+        "durationMs": 300,
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "speak": "jitter也不要管"
+        }
+      },
+      {
+        "c1": {
+          "moveTo": {
+            "x": 1545,
+            "y": 579
+          },
+          "gesture": "mini_cat",
+          "speak": "都不用干擾因子..."
+        },
+        "c2": {
+          "moveTo": {
+            "x": 1281,
+            "y": -109
+          },
+          "speak": "你的模型有點爛...."
+        },
+        "durationMs": 300
+      }
+    ]
+  }
+}

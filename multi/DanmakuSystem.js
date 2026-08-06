@@ -2,11 +2,11 @@
 
 // ── DanmakuSystem ─────────────────────────────────────────────────────────────
 // 彈幕系統：文字從右向左橫向捲動，4 個車道防止重疊
-// API: send(msg, playerName?, color?)  receive(mqttData)
-//      enable() / disable() / isEnabled() / setEnabled(bool)
+// API: receive(mqttData)
+//      isEnabled() / setEnabled(bool)
 //      setSafeArea({ top, bottom, left, right })  topic
 const DanmakuSystem = (() => {
-  const TOPIC     = 'quiz/danmaku';
+  const TOPIC     = MP_TOPICS.DANMAKU;
   const SPEED     = 120;     // px/s
   const LANES     = 4;
   const MAX_ITEMS = 30;
@@ -19,10 +19,8 @@ const DanmakuSystem = (() => {
   // 每個車道下次可發射的時間戳
   const _laneAt = new Array(LANES).fill(0);
 
-  const _palette = [
-    '#00d4ff','#ff6b6b','#00ff88','#ffd60a',
-    '#ff9f1c','#a855f7','#06b6d4','#84cc16',
-  ];
+  // 跟 multiplay.js 的 MP_PLAYER_COLORS 共用同一份玩家識別色，避免兩份調色盤不同步
+  const _palette = MP_PLAYER_COLORS;
 
   // 安全區域（避開 UI 元件）
   const _safe = { top: 60, bottom: 80, left: 0, right: 0 };
@@ -140,11 +138,6 @@ const DanmakuSystem = (() => {
   }
 
   return {
-    // 本頁主動發送彈幕（不經 MQTT，本機直接顯示）
-    send(message, playerName, color) {
-      _fire(message, playerName, color);
-    },
-
     // 收到 MQTT 彈幕訊息時呼叫
     // payload: { player, text, color? }
     receive({ player, text, color } = {}) {
@@ -154,8 +147,6 @@ const DanmakuSystem = (() => {
     // 設定安全區域（呼叫一次即可，不需重複設定）
     setSafeArea(s) { Object.assign(_safe, s); },
 
-    enable()    { _enabled = true; },
-    disable()   { _enabled = false; },
     isEnabled() { return _enabled; },
     setEnabled(v) { _enabled = !!v; },
 
