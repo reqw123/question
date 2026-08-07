@@ -105,6 +105,15 @@
       </div>
       <div id="memoryMsg" class="msg"></div>
     </section>
+    <section id="cliFreeModeSection">
+      <label class="section-title">CLI 模式免確認</label>
+      <div class="hint">CLI 模式（跟角色說「進入 CLI 模式」觸發）預設每個寫檔／執行指令等有風險操作都會先問你同意才做。開啟這個選項後會跳過逐步確認，Claude 會直接自動執行，只在文字泡泡告訴你它做了什麼——等於拿掉「觸發短語被誤判也不會被誤執行」的最後一道防線，請謹慎開啟，用完記得關閉。</div>
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button id="btn-cli-free-off" class="btn-toggle">🔒 關閉（預設，安全）</button>
+        <button id="btn-cli-free-on" class="btn-toggle">⚡ 開啟（風險，需二次確認）</button>
+      </div>
+      <div id="cliFreeModeMsg" class="msg"></div>
+    </section>
     <section id="micSection">
       <label class="section-title">語音輸入靈敏度</label>
       <div class="hint">用來判斷「有沒有真的講話」，避免完全沒說話時被 Whisper 幻覺出文字照樣送出。改完下次點 🎤 開始錄音就會生效，不用重開桌寵。</div>
@@ -148,10 +157,13 @@
   const ollamaTestMsgEl = document.getElementById('ollamaTestMsg');
   const providerMsgEl = document.getElementById('providerMsg');
   let currentProvider = 'openai';
+  const cliFreeOffBtn = document.getElementById('btn-cli-free-off');
+  const cliFreeOnBtn = document.getElementById('btn-cli-free-on');
+  const cliFreeModeMsgEl = document.getElementById('cliFreeModeMsg');
 
   // 只顯示「有沒有設定過」，不把已存的 key 本身送回這個視窗顯示——
   // 避免沒必要地把密鑰暴露在畫面/DOM 裡（見 docs/specs/0001-desktop-pet-tts-playback.md）。
-  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings }) => {
+  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings, cliFreePermissionMode }) => {
     statusEl.textContent = hasKey ? '目前已設定過 API key（輸入新的並儲存即可覆蓋）' : '目前尚未設定 API key';
     if (micSettings) {
       micRmsInputEl.value = micSettings.rmsThreshold;
@@ -161,6 +173,40 @@
       setProviderUI(chatProviderSettings.provider);
       ollamaBaseUrlEl.value = chatProviderSettings.ollamaBaseUrl;
       ollamaModelEl.value = chatProviderSettings.ollamaModel;
+    }
+    setCliFreeModeUI(!!cliFreePermissionMode);
+  });
+
+  // 跟 provider 鈕同一套「選中=主色」慣例，但這裡選中「開啟」代表的是風險狀態，
+  // 不是單純的功能切換——按鈕文字本身已經用 🔒／⚡ 跟顏色語意做區分。
+  function setCliFreeModeUI(enabled) {
+    cliFreeOffBtn.classList.toggle('active', !enabled);
+    cliFreeOnBtn.classList.toggle('active', enabled);
+  }
+  cliFreeOffBtn.addEventListener('click', async () => {
+    const result = await window.settings.setCliFreeMode(false);
+    if (result.ok) {
+      setCliFreeModeUI(false);
+      cliFreeModeMsgEl.className = 'msg';
+      cliFreeModeMsgEl.textContent = '✅ 已關閉，CLI 模式恢復逐步確認';
+    } else {
+      cliFreeModeMsgEl.className = 'msg error';
+      cliFreeModeMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+  // 開啟這邊不用等按鈕，二次確認的原生警告對話框由 main process 的
+  // settings-set-cli-free-mode 處理（見 main.js），這裡只處理結果：使用者在對話框按取消
+  // 會回傳 cancelled，維持原本的 UI 狀態不動。
+  cliFreeOnBtn.addEventListener('click', async () => {
+    const result = await window.settings.setCliFreeMode(true);
+    if (result.cancelled) return;
+    if (result.ok) {
+      setCliFreeModeUI(true);
+      cliFreeModeMsgEl.className = 'msg';
+      cliFreeModeMsgEl.textContent = '⚡ 已開啟，CLI 模式的風險操作不會再等你確認';
+    } else {
+      cliFreeModeMsgEl.className = 'msg error';
+      cliFreeModeMsgEl.textContent = '❌ ' + result.error;
     }
   });
 

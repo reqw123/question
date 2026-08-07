@@ -20,4 +20,7 @@ contextBridge.exposeInMainWorld('settings', {
   // 裡；testOllama 是「測試連線」按鈕用，main process 直接呼叫 Ollama 不會撞到 CORS。
   saveChatProvider: (payload) => ipcRenderer.invoke('settings-save-chat-provider', payload),
   testOllama: (baseUrl) => ipcRenderer.invoke('settings-test-ollama', { baseUrl }),
+  // CLI 模式免確認模式——開啟時 main process 會先跳原生警告對話框二次確認，
+  // 使用者取消的話回傳 { ok:false, cancelled:true }（跟 clear/clearMemory 同一套慣例）。
+  setCliFreeMode: (enabled) => ipcRenderer.invoke('settings-set-cli-free-mode', enabled),
 });

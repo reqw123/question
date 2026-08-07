@@ -154,8 +154,34 @@ function saveChatProviderSettings({ provider, ollamaBaseUrl, ollamaModel }) {
   }
 }
 
+// CLI 模式免確認模式（見 docs/adr/0010-desktop-pet-cli-free-permission-mode.md）。預設關閉
+// （沒存過就是 false，跟舊使用者/新使用者行為一致，一定要在設定畫面主動開啟才會生效）。
+// 開啟前的二次確認交給 main process 的 dialog.showMessageBox（跟清除 API key 同一套手法，
+// 見 main.js 的 settings-set-cli-free-mode），這裡只負責存值，不判斷要不要跳確認。
+function getCliFreePermissionMode() {
+  const { cliFreePermissionMode } = readSettings();
+  return cliFreePermissionMode === true;
+}
+
+function setCliFreePermissionMode(enabled) {
+  try {
+    const current = readSettings();
+    if (enabled) {
+      current.cliFreePermissionMode = true;
+    } else {
+      delete current.cliFreePermissionMode; // 關閉＝回到「沒設定過」的預設安全狀態
+    }
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    fs.writeFileSync(settingsPath(), JSON.stringify(current, null, 2));
+    return { ok: true, enabled: !!enabled };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 module.exports = {
   getApiKey, saveApiKey, clearApiKey,
   getMicSettings, saveMicSettings, resetMicSettings,
   getChatProviderSettings, saveChatProviderSettings,
+  getCliFreePermissionMode, setCliFreePermissionMode,
 };

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ClaudeCliSession, interpretYesNo, describeToolUse, SAFE_TOOLS } from './claude-cli.js';
+import { ClaudeCliSession, interpretYesNo, describeToolUse, spokenToolUseSummary, SAFE_TOOLS } from './claude-cli.js';
 
 // 模擬 SDK 的 query()：真正的 SDK 內部在生成訊息的過程中會呼叫呼叫端傳進去的
 // canUseTool，並且要等它 resolve 才繼續——這裡用 async generator 手動重現這個協定，
@@ -48,6 +48,10 @@ describe('ClaudeCliSession', () => {
     const confirmOutcome = await session.start('幫我跑測試');
     expect(confirmOutcome.type).toBe('confirm');
     expect(confirmOutcome.text).toContain('Claude wants to run: npm test');
+    // spokenText 是給 TTS 念的通用版本，Bash 一律不念原始指令內容（見 docs/specs/0009）——
+    // 就算 text 顯示的是 SDK 給的 title，spokenText 還是只講「執行一個系統指令」。
+    expect(confirmOutcome.spokenText).toContain('執行一個系統指令');
+    expect(confirmOutcome.spokenText).not.toContain('npm test');
     expect(session.hasPendingConfirmation).toBe(true);
     expect(session.busy).toBe(true); // 還在等確認，任務沒結束
 
@@ -128,6 +132,87 @@ describe('ClaudeCliSession', () => {
     expect(session.busy).toBe(false);
   });
 
+  it('auto-executes risky tools without pausing when freePermissionMode is on, and narrates each one', async () => {
+    const queryImpl = makeQueryImpl([
+      { toolUse: { name: 'Write', input: { file_path: 'a.js' } } },
+      { toolUse: { name: 'Bash', input: { command: 'node a.js' } } },
+      { result: '寫好了也跑過了' },
+    ]);
+    const narrations = [];
+    const session = new ClaudeCliSession({
+      cwd: 'C:\\question',
+      queryImpl,
+      freePermissionMode: true,
+      onNarration: (text, spokenText) => { narrations.push({ text, spokenText }); },
+    });
+
+    const outcome = await session.start('寫個腳本並執行');
+
+    // 不曾停在 confirm——直接一路跑到 result，中途沒有暫停等使用者回覆。
+    expect(outcome).toEqual({ type: 'result', text: '寫好了也跑過了' });
+    expect(session.hasPendingConfirmation).toBe(false);
+    expect(narrations).toEqual([
+      {
+        text: '⚡ 免確認模式，已自動執行：修改檔案：a.js',
+        spokenText: '免確認模式，已自動執行：修改檔案：a.js', // Write 不是 Bash，spokenText 跟顯示內容一致
+      },
+      {
+        text: '⚡ 免確認模式，已自動執行：執行指令：node a.js',
+        spokenText: '免確認模式，已自動執行：執行一個系統指令', // Bash：spokenText 不含原始指令內容
+      },
+    ]);
+  });
+
+  it('does not call onNarration for safe tools even when freePermissionMode is on', async () => {
+    const queryImpl = makeQueryImpl([
+      { toolUse: { name: 'Read', input: { file_path: 'a.txt' } } },
+      { result: '讀完了' },
+    ]);
+    const onNarration = vi.fn();
+    const session = new ClaudeCliSession({
+      cwd: 'C:\\question', queryImpl, freePermissionMode: true, onNarration,
+    });
+
+    await session.start('讀一下 a.txt');
+
+    expect(onNarration).not.toHaveBeenCalled();
+  });
+
+  it('waits for onNarration to settle before letting the tool proceed', async () => {
+    const queryImpl = makeQueryImpl([
+      { toolUse: { name: 'Bash', input: { command: 'echo hi' } } },
+      { result: 'done' },
+    ]);
+    const order = [];
+    const session = new ClaudeCliSession({
+      cwd: 'C:\\question',
+      queryImpl,
+      freePermissionMode: true,
+      onNarration: async (text) => {
+        order.push('narration-start');
+        await Promise.resolve();
+        order.push('narration-end');
+      },
+    });
+
+    await session.start('跑個指令');
+
+    // narration-end 一定在 canUseTool 回傳（也就是工具真的被放行）之前發生。
+    expect(order).toEqual(['narration-start', 'narration-end']);
+  });
+
+  it('defaults freePermissionMode to off and pauses as usual when the option is omitted', async () => {
+    const queryImpl = makeQueryImpl([
+      { toolUse: { name: 'Bash', input: { command: 'echo hi' } } },
+      { result: 'done' },
+    ]);
+    const session = new ClaudeCliSession({ cwd: 'C:\\question', queryImpl });
+
+    const outcome = await session.start('跑個指令');
+
+    expect(outcome.type).toBe('confirm');
+  });
+
   it('reuses the captured session_id (resume) on the next task in the same session', async () => {
     const queryImpl = makeQueryImpl([{ result: '第一輪完成', sessionId: 'sess-abc' }]);
     const session = new ClaudeCliSession({ cwd: 'C:\\question', queryImpl });
@@ -162,6 +247,23 @@ describe('describeToolUse', () => {
 
   it('falls back to a generic JSON summary for unknown tools', () => {
     expect(describeToolUse('WebFetch', { url: 'https://example.com' }, {})).toContain('WebFetch');
+  });
+});
+
+describe('spokenToolUseSummary', () => {
+  it('replaces Bash descriptions with a generic phrase, never echoing the raw command', () => {
+    const description = describeToolUse('Bash', { command: 'rm -rf --no-preserve-root /' }, {});
+    expect(spokenToolUseSummary('Bash', description)).toBe('執行一個系統指令');
+  });
+
+  it('still replaces Bash even when the description came from an SDK title', () => {
+    const description = describeToolUse('Bash', { command: 'npm test' }, { title: 'Claude wants to run: npm test' });
+    expect(spokenToolUseSummary('Bash', description)).toBe('執行一個系統指令');
+  });
+
+  it('leaves non-Bash descriptions unchanged (already human-readable)', () => {
+    const description = describeToolUse('Write', { file_path: 'foo.js' }, {});
+    expect(spokenToolUseSummary('Write', description)).toBe(description);
   });
 });
 

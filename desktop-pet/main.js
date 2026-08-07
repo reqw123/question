@@ -354,12 +354,13 @@ function openSettings() {
       hasKey: !!settingsStore.getApiKey(),
       micSettings: settingsStore.getMicSettings(),
       chatProviderSettings: settingsStore.getChatProviderSettings(),
+      cliFreePermissionMode: settingsStore.getCliFreePermissionMode(),
     });
     return;
   }
   settingsWin = new BrowserWindow({
     width: 420,
-    height: 780,
+    height: 860, // 加了 CLI 模式免確認區塊後原本 780 會擠出捲軸，加高一點讓大部分內容不用捲
     title: '設定',
     resizable: false,
     minimizable: false,
@@ -378,6 +379,7 @@ function openSettings() {
       hasKey: !!settingsStore.getApiKey(),
       micSettings: settingsStore.getMicSettings(),
       chatProviderSettings: settingsStore.getChatProviderSettings(),
+      cliFreePermissionMode: settingsStore.getCliFreePermissionMode(),
     });
     raiseAboveDesktopPets(settingsWin);
   });
@@ -422,6 +424,25 @@ ipcMain.handle('settings-clear-memory', async (_event, charKey) => {
 
 ipcMain.on('settings-close', () => {
   if (settingsWin) settingsWin.close();
+});
+
+// CLI 模式免確認模式（見 docs/adr/0010-desktop-pet-cli-free-permission-mode.md）——開啟時
+// 拿掉 ADR-0008 原本「風險操作一律先問過使用者」這道防線，所以跟清除 API key／清空記憶
+// 同一套二次確認手法（dialog.showMessageBox），警告內容要講清楚拿掉的是哪道防線、不是
+// 隨口帶過。關閉不需要確認——退回安全預設值不是需要攔阻的操作。
+ipcMain.handle('settings-set-cli-free-mode', async (_event, enabled) => {
+  if (!enabled) return settingsStore.setCliFreePermissionMode(false);
+  const { response } = await dialog.showMessageBox(settingsWin, {
+    type: 'warning',
+    buttons: ['取消', '我了解風險，啟用'],
+    defaultId: 0,
+    cancelId: 0,
+    title: '啟用 CLI 模式免確認模式',
+    message: '確定要開啟「免確認模式」嗎？',
+    detail: 'CLI 模式（跟角色說「進入 CLI 模式」觸發）目前每個寫檔、執行指令等有風險操作都會先問你同意才做。開啟這個選項後會跳過逐步確認，Claude 會直接自動執行，只在文字泡泡告訴你它做了什麼，不會再暫停等你回覆。\n\n這等於拿掉原本用來防止「觸發短語被誤判、風險操作在你沒真的同意的情況下被執行」的最後一道防線。建議只在會全程盯著螢幕、且信任目前交代的任務時才開啟，用完記得回這裡關閉。',
+  });
+  if (response !== 1) return { ok: false, cancelled: true };
+  return settingsStore.setCliFreePermissionMode(true);
 });
 
 // 語音輸入的靜音/幻覺防呆兩個門檻（見 docs/specs/0004-desktop-pet-voice-input.md）。
@@ -907,7 +928,12 @@ function waitForTtsPlaybackFinished(timeoutMs = 30000) {
 // stop-before/start-after，是因為角色一/二可能同時各自在進行一輪對話，先結束的那一輪
 // 不能直接重啟閒置聊天，否則會蓋掉另一個角色還在進行中的回覆。
 let _activeSpeakCount = 0;
-async function speakAndShow(charKey, text) {
+// spokenText：選填，TTS 要念的內容跟文字泡泡顯示的 text 不同時才傳（例如 CLI 模式的系統
+// 指令——文字泡泡保留完整指令方便使用者同意前確實看過，但不希望 TTS 逐字念出指令裡的
+// 符號、旗標，見 docs/specs/0009 與 claude-cli.js 的 spokenToolUseSummary）。省略時兩者
+// 相同，行為跟原本完全一樣。
+async function speakAndShow(charKey, text, { spokenText } = {}) {
+  const textToSpeak = spokenText || text;
   _activeSpeakCount++;
   if (_activeSpeakCount === 1) {
     triggerMotion(`typeof L2D !== 'undefined' && L2D.stopIdleChat && L2D.stopIdleChat()`);
@@ -916,7 +942,7 @@ async function speakAndShow(charKey, text) {
     const apiKey = settingsStore.getApiKey();
     let audioBuffer;
     try {
-      audioBuffer = await synthesizeSpeech({ text, apiKey });
+      audioBuffer = await synthesizeSpeech({ text: textToSpeak, apiKey });
     } catch (err) {
       console.error(`[desktop-pet] 語音合成失敗（${err.code || 'UNKNOWN_ERROR'}）：${err.message}`);
     }
@@ -1020,7 +1046,11 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
     const normalizedMsg = normalizeTriggerPhrase(message);
     if (!cliModeActive.has(charKey) && CLI_MODE_ENTER_PHRASES.has(normalizedMsg)) {
       cliModeActive.add(charKey);
-      const reply = `已進入 CLI 模式，工作目錄是 ${CLAUDE_CLI_CWD}。接下來跟我說的話都會送去 Claude Code 執行本機任務，遇到讀檔案以外的操作（寫檔、跑指令...）我會先問過你才做。想離開的話說「退出 CLI 模式」。`;
+      // 免確認模式開啟時把這件事講在最前面——使用者一進入 CLI 模式就該知道這次不會被
+      // 逐步問過，而不是等到第一個風險操作自動執行完才發現（見 docs/adr/0010）。
+      const reply = settingsStore.getCliFreePermissionMode()
+        ? `已進入 CLI 模式，工作目錄是 ${CLAUDE_CLI_CWD}。⚡ 免確認模式目前是開啟的，遇到寫檔、跑指令等操作我會直接自動執行，只在這裡告訴你做了什麼，不會先問你。想離開的話說「退出 CLI 模式」，要關閉免確認模式請到設定畫面。`
+        : `已進入 CLI 模式，工作目錄是 ${CLAUDE_CLI_CWD}。接下來跟我說的話都會送去 Claude Code 執行本機任務，遇到讀檔案以外的操作（寫檔、跑指令...）我會先問過你才做。想離開的話說「退出 CLI 模式」。`;
       logConversationTurn(charKey, 'CLI 模式', message, reply);
       await speakAndShow(charKey, reply);
       return { ok: true };
@@ -1047,13 +1077,28 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
         outcome = await session.resolveConfirmation(allow);
       } else {
         if (!session) {
-          session = new ClaudeCliSession({ cwd: CLAUDE_CLI_CWD });
+          // freePermissionMode 讀的是「進入這個 session 當下」的設定值，中途在設定畫面切換
+          // 不會影響已經在跑的 session——要重新進入 CLI 模式才會套用新值（見 claude-cli.js
+          // 建構子的註解、docs/adr/0010）。onNarration 是免確認模式下的即時實況：跟一般
+          // outcome 走的 speakAndShow 是同一個函式，但獨立呼叫、不經過 start()/
+          // resolveConfirmation() 的回傳值，因為一個任務裡可能連續自動執行好幾個風險操作。
+          session = new ClaudeCliSession({
+            cwd: CLAUDE_CLI_CWD,
+            freePermissionMode: settingsStore.getCliFreePermissionMode(),
+            onNarration: (text, spokenText) => {
+              logConversationTurn(charKey, 'CLI 模式（免確認自動執行）', '(無，自動執行中)', text);
+              return speakAndShow(charKey, text, { spokenText });
+            },
+          });
           claudeCliSessions.set(charKey, session);
         }
         outcome = await session.start(message);
       }
       logConversationTurn(charKey, 'CLI 模式', message, outcome.text);
-      await speakAndShow(charKey, outcome.text);
+      // outcome.spokenText 只有 confirm 類型（等待同意/拒絕的風險操作）才會有值——result／
+      // error 是 Claude 自己生成的自然語言或我們自己組的錯誤訊息，本來就適合直接念出來，
+      // 不需要另外準備 spokenText（見 claude-cli.js canUseTool 只有 confirm 分支才傳）。
+      await speakAndShow(charKey, outcome.text, { spokenText: outcome.spokenText });
       return { ok: true };
     }
 

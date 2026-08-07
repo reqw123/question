@@ -41,8 +41,23 @@ function describeToolUse(toolName, input, opts) {
   }
 }
 
+// TTS 要念的版本——Bash 指令的 describeToolUse() 結果常常整串是原始 shell 語法（旗標、
+// 管線、路徑符號），逐字念出來很難聽懂，改念一句通用提示；完整指令內容還是照常放在文字
+// 泡泡裡（呼叫端傳 text 用 describeToolUse()，spokenText 才用這個函式），使用者同意/拒絕
+// 前一樣能在畫面上看到自己在同意什麼，只是不用被 TTS 逐字唸過一次。其餘工具類型
+// （Write/Edit 的短句、SDK 給的 opts.title）本來就是人看得懂的話，念出來沒問題，維持
+// 跟顯示文字一致。
+function spokenToolUseSummary(toolName, description) {
+  return toolName === 'Bash' ? '執行一個系統指令' : description;
+}
+
 class ClaudeCliSession {
-  constructor({ cwd, queryImpl } = {}) {
+  // freePermissionMode：見 docs/adr/0010-desktop-pet-cli-free-permission-mode.md。開啟後
+  // canUseTool 不再暫停等使用者回覆同意/拒絕，風險操作直接放行，但仍透過 onNarration
+  // 即時告知使用者做了什麼（不是完全靜默），保留事後可稽核的實況描述。這個旗標在
+  // session 建立時決定一次，中途改設定不會影響同一個進行中的 session（要重新進入 CLI
+  // 模式才會套用新值），跟其餘設定「讀取當下值」的慣例一致，但避免任務跑到一半行為突變。
+  constructor({ cwd, queryImpl, freePermissionMode, onNarration } = {}) {
     this.cwd = cwd;
     this.queryImpl = queryImpl || ((...args) => loadSdkQuery()(...args));
     this.pendingResolve = null; // 有待確認的操作時，存 (allow: boolean) => void
@@ -50,6 +65,8 @@ class ClaudeCliSession {
     this.busy = false; // 目前這個 session 有沒有任務正在跑（含暫停等確認）
     this.sessionId = null; // 上一輪任務結束時的 session id，讓下一輪任務延續同一個對話
     this._settle = null;
+    this.freePermissionMode = !!freePermissionMode;
+    this.onNarration = typeof onNarration === 'function' ? onNarration : () => {};
   }
 
   get hasPendingConfirmation() {
@@ -103,12 +120,25 @@ class ClaudeCliSession {
         return { behavior: 'allow', updatedInput: input };
       }
       const description = describeToolUse(toolName, input, opts);
+      const spokenDescription = spokenToolUseSummary(toolName, description);
+      if (this.freePermissionMode) {
+        // 不暫停、不等 pendingResolve——直接放行，但先把「做了什麼」送給呼叫端顯示，
+        // await 是為了讓文字泡泡在動作真的執行前先更新，時序上讀起來比較合理，不是為了
+        // 等使用者回覆（onNarration 不會、也不該回傳同意/拒絕）。text/spokenText 分開傳給
+        // 呼叫端，讓文字泡泡跟 TTS 可以顯示不同內容（見 spokenToolUseSummary）。
+        await this.onNarration(
+          `⚡ 免確認模式，已自動執行：${description}`,
+          `免確認模式，已自動執行：${spokenDescription}`,
+        );
+        return { behavior: 'allow', updatedInput: input };
+      }
       const allow = await new Promise((resolve) => {
         this.pendingResolve = resolve;
         this.pendingDescription = description;
         this._settle({
           type: 'confirm',
           text: `🔧 Claude 想要：${description}\n同意請回覆「同意」，不同意請回覆「拒絕」。`,
+          spokenText: `Claude 想要：${spokenDescription}。同意請回覆同意，不同意請回覆拒絕。`,
         });
       });
       return allow
@@ -166,4 +196,4 @@ function interpretYesNo(message) {
   return null;
 }
 
-module.exports = { ClaudeCliSession, interpretYesNo, describeToolUse, SAFE_TOOLS };
+module.exports = { ClaudeCliSession, interpretYesNo, describeToolUse, spokenToolUseSummary, SAFE_TOOLS };

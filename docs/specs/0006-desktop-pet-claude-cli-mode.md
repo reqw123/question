@@ -42,6 +42,7 @@
 - `queryImpl` 可注入（預設才 `require('@anthropic-ai/claude-agent-sdk')` 的 `query`，且是延遲載入，模組載入時不用真的裝這個套件）——跟 `chat.js`/`tts.js`/`stt.js`/`ollama.js` 的 `fetchImpl` 是同一種測試 seam 手法，測試時整個用假的 async generator 取代，不用真的連上 Claude。
 - `interpretYesNo(message)`：寬鬆比對常見的同意/拒絕講法（中英文），否定詞（不同意/不可以...）一定排在肯定詞前面比對，避免「不可以」因為含有「可以」被誤判成同意；看不懂回傳 `null`，呼叫端要求使用者換句話說（User Story 5），絕不在含糊時偷偷當同意。
 - `describeToolUse(toolName, input, opts)`：把 `canUseTool` 收到的工具呼叫轉成人看得懂的一句話，優先用 SDK 自己組好的 `opts.title`（例如「Claude wants to read foo.txt」），沒有的話對 `Bash`/`Write`/`Edit` 給出重點摘要，其餘工具退回精簡過的 JSON。
+- `spokenToolUseSummary(toolName, description)`：`describeToolUse()` 的 TTS 專用版本。`Bash` 的 `description` 常常整串是原始 shell 語法（旗標、管線、路徑符號），逐字念出來使用者聽不懂也不想聽，一律換成通用一句「執行一個系統指令」；文字泡泡（`text`）仍然顯示 `describeToolUse()` 的完整內容，只有 TTS 念的內容（`spokenText`）改用這個函式的結果，確保使用者同意/拒絕前一樣能在畫面上看到完整指令。`main.js` 的 `speakAndShow(charKey, text, { spokenText })` 支援兩者分開；省略 `spokenText` 時行為跟原本一樣。
 
 ### `main.js` 整合（薄膠水層）
 
