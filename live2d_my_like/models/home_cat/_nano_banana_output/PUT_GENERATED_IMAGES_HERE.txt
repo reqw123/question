@@ -1,0 +1,8 @@
+把 nano banana 生成的 4 張圖放進這個資料夾，檔名必須是：
+
+quadrant_TL_head_back.png
+quadrant_TR_face_tail.png
+quadrant_BL_muzzle_legs.png
+quadrant_BR_legs_ears_paws.png
+
+放好後回到 home_cat 上一層執行 apply_alpha_mask.py（或請我幫你跑）。

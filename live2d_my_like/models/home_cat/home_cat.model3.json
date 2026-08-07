@@ -1,0 +1,33 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "home_cat.moc3",
+		"Textures": [
+			"texture_01.png"
+		],
+		"Motions": {
+			"": [
+				{ "File": "motions/home_cat_wave.motion3.json" },
+				{ "File": "motions/skill_02.motion3.json" },
+				{ "File": "motions/home_cat_sit_pretty.motion3.json" }
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		}
+	]
+}

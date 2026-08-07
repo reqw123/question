@@ -4,8 +4,60 @@ node_modules/
 # 大型素材資料庫（私人收集的遊戲資源截取，體積過大不適合進版本控制）
 Live2d-model-master/
 live2d-master/
-live2d_my_like/models/
 cat_data/
+# ==================================================
+# Live2D models：預設全部排除
+# ==================================================
+/live2d_my_like/models/*
+
+# ==================================================
+# 例外允許：1064100
+# ==================================================
+
+!/live2d_my_like/models/1064100/
+!/live2d_my_like/models/1064100/**
+
+# 例外允許：076
+!/live2d_my_like/models/076/
+!/live2d_my_like/models/076/**
+
+# 例外允許：home_cat
+!/live2d_my_like/models/home_cat/
+!/live2d_my_like/models/home_cat/**
+
+# 例外允許：1074100
+!/live2d_my_like/models/1074100/
+!/live2d_my_like/models/1074100/**
+
+# 例外允許：1014107
+!/live2d_my_like/models/1014107/
+!/live2d_my_like/models/1014107/**
+
+# 例外允許：1003104
+!/live2d_my_like/models/1003104/
+!/live2d_my_like/models/1003104/**
+
+# 例外允許：芙宁娜 (vts)
+!/live2d_my_like/models/芙宁娜 (vts)/
+!/live2d_my_like/models/芙宁娜 (vts)/**
+
+
+# 例外允許：kuroneko
+!/live2d_my_like/models/kuroneko/
+!/live2d_my_like/models/kuroneko/**
+
+# 例外允許：077
+!/live2d_my_like/models/077/
+!/live2d_my_like/models/077/**
+
+# 例外允許：1024100
+!/live2d_my_like/models/1024100/
+!/live2d_my_like/models/1024100/**
+
+# 例外允許：1009109
+!/live2d_my_like/models/1009109/
+!/live2d_my_like/models/1009109/**
+
 
 # 第三方執行檔（使用者可自行下載，不進版本控制）
 caddy.exe
