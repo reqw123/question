@@ -66,6 +66,8 @@
   // 停掉），不用另外接靜音邏輯。見 docs/specs/0001-desktop-pet-tts-playback.md 的
   // Acceptance Criteria #3/#4/#10。
   var _currentTtsAudio = null;
+  var _currentTtsCharKey = null;
+  var _currentTtsReportFinished = null;
   function playTtsAudio(audioBase64, charKey) {
     // 新語音播放前先停掉還在播的舊語音，避免兩段疊在一起變成聽不清楚的雜音；
     // 嘴型同步（見下面 window.startLipSync/stopLipSync，定義在 lib/live2d.js 載入
@@ -79,14 +81,18 @@
     const a = new Audio('data:audio/mpeg;base64,' + audioBase64);
     _creatingTtsAudio = false;
     _currentTtsAudio = a;
-    // 播放真的結束（或失敗）才回報 main process（見 docs/specs/0004）——main process
-    // 的 chat-send 會等這個回報才 resolve，文字/語音下一輪送出前都會等角色把話講完，
-    // 節奏才會一致（也避免使用者手動重開麥克風時剛好錄到角色自己還沒講完的聲音）。
+    _currentTtsCharKey = charKey;
+    // 播放真的結束（或失敗，或被使用者用 interruptTtsPlayback() 中途打斷——三者走
+    // 同一條收尾路徑，main process 不用知道是哪一種）才回報 main process（見
+    // docs/specs/0004）——main process 的 chat-send 會等這個回報才 resolve，
+    // 文字/語音下一輪送出前都會等角色把話講完，節奏才會一致（也避免使用者手動
+    // 重開麥克風時剛好錄到角色自己還沒講完的聲音）。
     const reportFinished = () => {
-      if (_currentTtsAudio === a) _currentTtsAudio = null;
+      if (_currentTtsAudio === a) { _currentTtsAudio = null; _currentTtsCharKey = null; _currentTtsReportFinished = null; }
       if (window.stopLipSync) window.stopLipSync();
       if (window.petBridge && window.petBridge.ttsPlaybackFinished) window.petBridge.ttsPlaybackFinished();
     };
+    _currentTtsReportFinished = reportFinished;
     a.addEventListener('ended', reportFinished);
     a.addEventListener('error', reportFinished);
     // 靜音時（a.muted，見上面的 Audio 建構子攔截）不驅動嘴型同步——靜音鈕的心智模型是
@@ -101,6 +107,27 @@
   if (window.petBridge && window.petBridge.onPlayTtsAudio) {
     window.petBridge.onPlayTtsAudio(({ audioBase64, charKey }) => playTtsAudio(audioBase64, charKey));
   }
+
+  // ── 中途打斷語音播放 ─────────────────────────────────────────────────────
+  // 使用者不想聽完整段回覆時用（點角色本體／Esc，見下面即時對話那段的接線）。
+  // 跟自然播完只差在提早觸發 reportFinished，main process 那邊完全不用分辨是
+  // 自然結束還是被打斷——都是同一條 tts-playback-finished 回報路徑，
+  // speakAndShow() 一樣會在收到回報後等 1 秒才收掉文字泡泡（見 main.js）。
+  window.isTtsPlaying = function (charKey) {
+    if (!_currentTtsAudio) return false;
+    return !charKey || _currentTtsCharKey === charKey;
+  };
+  window.interruptTtsPlayback = function (charKey) {
+    if (!_currentTtsAudio) return false;
+    if (charKey && _currentTtsCharKey && charKey !== _currentTtsCharKey) return false;
+    try { _currentTtsAudio.pause(); } catch {}
+    const finish = _currentTtsReportFinished;
+    _currentTtsAudio = null;
+    _currentTtsCharKey = null;
+    _currentTtsReportFinished = null;
+    if (finish) finish();
+    return true;
+  };
 </script>
 
 <!-- lipsync.js／silence-detector.js 是 desktop-pet 自己的模組（不是共用函式庫），
@@ -1008,6 +1035,13 @@
       div.title = '點我跟角色說話';
       document.body.appendChild(div);
       div.addEventListener('click', () => {
+        // 角色正在講話時，點擊優先當成「打斷」而不是開聊天框——使用者這時候點角色
+        // 十之八九是想叫它閉嘴，不是想馬上開新的一輪對話（想聊天的話，打斷之後
+        // 再點一次就會照原本的行為開輸入框）。
+        if (window.isTtsPlaying && window.isTtsPlaying(charKey)) {
+          window.interruptTtsPlayback(charKey);
+          return;
+        }
         if (chatRequestPending) return;
         openChatBox(charKey, div);
       });
@@ -1031,6 +1065,7 @@
       div.style.width = w + 'px';
       div.style.height = h + 'px';
       div.style.display = 'block';
+      div.title = (window.isTtsPlaying && window.isTtsPlaying(charKey)) ? '點我打斷說話' : '點我跟角色說話';
     }
 
     // 角色可能被拖曳/縮放，定期重算位置，不用掛進 PIXI 的 render loop
@@ -1050,8 +1085,12 @@
     };
     let chatBoxCharKey = null;
     const box = document.createElement('div');
+    // z-index 90：故意低於 lib/live2d.js 文字泡泡的 z-index（_Z_BUBBLE=100）。輸入框
+    // 送出後刻意保持開著方便連續聊天（見下面 sendTextMessage 的說明），但角色講話期間
+    // 泡泡才是使用者真正要看的內容——如果輸入框疊在泡泡上面，泡泡會被完全擋住看不到。
+    // 泡泡本身 pointer-events:none，疊在輸入框上面不影響輸入框照常可以點擊/打字。
     box.style.cssText =
-      'position:fixed;z-index:10002;display:none;width:340px;padding:14px 14px 10px;' +
+      'position:fixed;z-index:90;display:none;width:340px;padding:14px 14px 10px;' +
       'border-radius:14px;background:rgba(10,10,14,.92);border:2px solid rgba(255,255,255,.3);' +
       'box-shadow:0 4px 24px rgba(0,0,0,.4);transition:border-color .15s, box-shadow .15s;';
     box.innerHTML =
@@ -1404,7 +1443,10 @@
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       if (isRecording) { stopRecording(true); return; }
-      if (voiceInputActive) resetMicButtonToIdle(); // 取消「點擊後、還沒真的開始錄音」這段空檔
+      if (voiceInputActive) { resetMicButtonToIdle(); return; } // 取消「點擊後、還沒真的開始錄音」這段空檔
+      // 上面兩個都不是的話，才輪到「中途打斷語音播放」——鍵盤操作的使用者不用特地
+      // 點角色本體，Esc 就能讓角色閉嘴（跟點角色本體是同一個 interruptTtsPlayback()）。
+      if (window.isTtsPlaying && window.isTtsPlaying()) window.interruptTtsPlayback();
     });
 
     // 點輸入框、點角色 overlay 以外的地方都關閉——避免輸入框一直卡在畫面上擋住其他操作

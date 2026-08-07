@@ -111,7 +111,51 @@ function resetMicSettings() {
   }
 }
 
+// 即時對話要用哪個 LLM provider（見 docs/specs/0005-desktop-pet-ollama-provider.md、
+// docs/adr/0001-openai-for-live-chat.md 的更新說明）。預設 openai——沒存過設定的舊使用者
+// 行為完全不變，Ollama 是使用者自己在設定畫面切過去才會生效的選項。
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
+const DEFAULT_OLLAMA_MODEL = 'qwen2.5:7b';
+
+function getChatProviderSettings() {
+  const { chatProvider, ollamaBaseUrl, ollamaModel } = readSettings();
+  return {
+    provider: chatProvider === 'ollama' ? 'ollama' : 'openai',
+    ollamaBaseUrl: typeof ollamaBaseUrl === 'string' && ollamaBaseUrl.trim() ? ollamaBaseUrl : DEFAULT_OLLAMA_BASE_URL,
+    ollamaModel: typeof ollamaModel === 'string' && ollamaModel.trim() ? ollamaModel : DEFAULT_OLLAMA_MODEL,
+  };
+}
+
+// 回傳 { ok, error? }。選 ollama 時 baseUrl/model 不能是空白——這兩個沒填，聊天送出去
+// 一定失敗，寧可在設定畫面就擋下來，不要等使用者實際聊天才發現存了個打不通的設定。
+// 選 openai 時不檢查這兩個欄位（維持沿用/不影響既有的 openaiApiKey 設定）。
+function saveChatProviderSettings({ provider, ollamaBaseUrl, ollamaModel }) {
+  if (provider !== 'openai' && provider !== 'ollama') {
+    return { ok: false, error: '不明的 provider' };
+  }
+  const trimmedUrl = typeof ollamaBaseUrl === 'string' ? ollamaBaseUrl.trim() : '';
+  const trimmedModel = typeof ollamaModel === 'string' ? ollamaModel.trim() : '';
+  if (provider === 'ollama') {
+    if (!trimmedUrl) return { ok: false, error: 'Ollama Base URL 不能是空白' };
+    if (!trimmedModel) return { ok: false, error: 'Ollama 模型名稱不能是空白' };
+  }
+  try {
+    const current = readSettings();
+    current.chatProvider = provider;
+    // 就算目前選 openai，也照樣把 Ollama 欄位存起來（如果使用者有填），下次切回 Ollama
+    // 不用重打一次；只有留空才不寫入，交給 getChatProviderSettings() 的預設值 fallback。
+    if (trimmedUrl) current.ollamaBaseUrl = trimmedUrl;
+    if (trimmedModel) current.ollamaModel = trimmedModel;
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    fs.writeFileSync(settingsPath(), JSON.stringify(current, null, 2));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 module.exports = {
   getApiKey, saveApiKey, clearApiKey,
   getMicSettings, saveMicSettings, resetMicSettings,
+  getChatProviderSettings, saveChatProviderSettings,
 };

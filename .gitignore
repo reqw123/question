@@ -20,3 +20,6 @@ Thumbs.db
 # Python 編譯快取（可重新產生，不進版本控制）
 __pycache__/
 *.pyc
+
+# 由架構圖工具輸出的可再生預覽檔
+archify-output/

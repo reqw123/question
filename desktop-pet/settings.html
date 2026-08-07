@@ -50,6 +50,9 @@
   .btn-secondary:hover { border-color: var(--violet); }
   .btn-danger { color: var(--warn); border-color: rgba(255,180,84,.4); }
   .btn-danger:hover { border-color: var(--warn); }
+  /* provider 切換鈕（OpenAI／Ollama）：沒選中是普通樣式，選中變成跟 .btn-primary 一樣的
+     青色實心——用「選中=主色」表達「這是目前生效的選項」，跟其他按鈕的力道語意分開。 */
+  .btn-toggle.active { background: var(--cyan); color: #06222b; border-color: var(--cyan); font-weight: 700; }
   #actions { display: flex; padding: 10px 14px; border-top: 1px solid var(--border); }
   #actions button { flex: none; padding: 8px 18px; margin-left: auto; }
 </style>
@@ -65,6 +68,34 @@
         <button id="btn-save" class="btn-primary">儲存</button>
       </div>
       <div id="saveMsg" class="msg"></div>
+    </section>
+    <section id="chatProviderSection">
+      <label class="section-title">即時對話 AI 提供者</label>
+      <div class="hint">角色一/二共用同一個設定。Ollama 本機模型不用 OpenAI key、可離線／免費使用，但中文對話品質與速度通常不如雲端（見 docs/adr/0001）。</div>
+      <div class="btn-row" style="margin-bottom:10px;">
+        <button id="btn-provider-openai" class="btn-toggle">☁️ OpenAI</button>
+        <button id="btn-provider-ollama" class="btn-toggle">🖥️ Ollama 本機</button>
+      </div>
+      <div id="ollamaFields" style="display:none;">
+        <div class="field">
+          <label for="ollamaBaseUrl">Ollama Base URL</label>
+          <input id="ollamaBaseUrl" type="text" placeholder="http://localhost:11434" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="ollamaModel">模型名稱</label>
+          <input id="ollamaModel" type="text" placeholder="qwen2.5:7b" list="ollamaModelList" autocomplete="off">
+          <datalist id="ollamaModelList"></datalist>
+          <div class="hint">先按「測試連線」讀出這台 Ollama 已下載的模型清單；也可以直接手動輸入模型名稱（例如 qwen2.5:3b）。</div>
+        </div>
+        <div class="btn-row">
+          <button id="btn-test-ollama" class="btn-secondary">🔌 測試連線</button>
+        </div>
+        <div id="ollamaTestMsg" class="msg"></div>
+      </div>
+      <div class="btn-row">
+        <button id="btn-save-provider" class="btn-primary">儲存</button>
+      </div>
+      <div id="providerMsg" class="msg"></div>
     </section>
     <section id="memorySection">
       <label class="section-title">對話記憶（角色一/二各自獨立）</label>
@@ -108,16 +139,41 @@
   const micRmsInputEl = document.getElementById('micRmsThreshold');
   const micDurationInputEl = document.getElementById('micMinSpeechDurationMs');
   const micMsgEl = document.getElementById('micMsg');
+  const providerOpenaiBtn = document.getElementById('btn-provider-openai');
+  const providerOllamaBtn = document.getElementById('btn-provider-ollama');
+  const ollamaFieldsEl = document.getElementById('ollamaFields');
+  const ollamaBaseUrlEl = document.getElementById('ollamaBaseUrl');
+  const ollamaModelEl = document.getElementById('ollamaModel');
+  const ollamaModelListEl = document.getElementById('ollamaModelList');
+  const ollamaTestMsgEl = document.getElementById('ollamaTestMsg');
+  const providerMsgEl = document.getElementById('providerMsg');
+  let currentProvider = 'openai';
 
   // 只顯示「有沒有設定過」，不把已存的 key 本身送回這個視窗顯示——
   // 避免沒必要地把密鑰暴露在畫面/DOM 裡（見 docs/specs/0001-desktop-pet-tts-playback.md）。
-  window.settings.onInit(({ hasKey, micSettings }) => {
+  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings }) => {
     statusEl.textContent = hasKey ? '目前已設定過 API key（輸入新的並儲存即可覆蓋）' : '目前尚未設定 API key';
     if (micSettings) {
       micRmsInputEl.value = micSettings.rmsThreshold;
       micDurationInputEl.value = micSettings.minSpeechDurationMs;
     }
+    if (chatProviderSettings) {
+      setProviderUI(chatProviderSettings.provider);
+      ollamaBaseUrlEl.value = chatProviderSettings.ollamaBaseUrl;
+      ollamaModelEl.value = chatProviderSettings.ollamaModel;
+    }
   });
+
+  // 兩個 provider 鈕互斥切換，選 Ollama 才展開下面的 Base URL/模型欄位——OpenAI 沿用
+  // 上面 apiKeySection 已經存過的 key，這裡不用重複輸入。
+  function setProviderUI(provider) {
+    currentProvider = provider;
+    providerOpenaiBtn.classList.toggle('active', provider === 'openai');
+    providerOllamaBtn.classList.toggle('active', provider === 'ollama');
+    ollamaFieldsEl.style.display = provider === 'ollama' ? '' : 'none';
+  }
+  providerOpenaiBtn.addEventListener('click', () => setProviderUI('openai'));
+  providerOllamaBtn.addEventListener('click', () => setProviderUI('ollama'));
 
   saveBtn.addEventListener('click', async () => {
     saveMsgEl.className = 'msg';
@@ -194,6 +250,53 @@
     } else {
       micMsgEl.className = 'msg error';
       micMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+
+  // 即時對話 provider：跟語音輸入靈敏度同一套「存檔訊息顯示在下方 .msg」模式，
+  // 一樣沒有二次確認——切換 provider／改 Ollama 位址不是不可逆操作。
+  document.getElementById('btn-save-provider').addEventListener('click', async () => {
+    providerMsgEl.className = 'msg';
+    providerMsgEl.textContent = '儲存中...';
+    const result = await window.settings.saveChatProvider({
+      provider: currentProvider,
+      ollamaBaseUrl: ollamaBaseUrlEl.value,
+      ollamaModel: ollamaModelEl.value,
+    });
+    if (result.ok) {
+      providerMsgEl.className = 'msg';
+      providerMsgEl.textContent = '✅ 已儲存，下次傳訊息就會生效';
+    } else {
+      providerMsgEl.className = 'msg error';
+      providerMsgEl.textContent = '❌ ' + result.error;
+    }
+  });
+
+  // 測試連線：main process 直接呼叫 Ollama /api/tags（見 settings-store.js／main.js），
+  // 成功的話把已下載的模型清單塞進 <datalist>，使用者不用自己記模型名稱怎麼拼。
+  // 用 createElement 組 <option> 而不是拼字串塞 innerHTML，避免模型名稱萬一帶特殊字元
+  // 被當成 HTML 解析。
+  document.getElementById('btn-test-ollama').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-test-ollama');
+    btn.disabled = true;
+    ollamaTestMsgEl.className = 'msg';
+    ollamaTestMsgEl.textContent = '連線中...';
+    const result = await window.settings.testOllama(ollamaBaseUrlEl.value);
+    btn.disabled = false;
+    if (result.ok) {
+      ollamaModelListEl.textContent = '';
+      result.models.forEach((m) => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        ollamaModelListEl.appendChild(opt);
+      });
+      ollamaTestMsgEl.className = 'msg';
+      ollamaTestMsgEl.textContent = result.models.length
+        ? `✅ 連線成功，找到 ${result.models.length} 個模型：${result.models.join('、')}`
+        : '✅ 連線成功，但這台 Ollama 還沒下載任何模型，請先在本機執行 ollama pull <model>';
+    } else {
+      ollamaTestMsgEl.className = 'msg error';
+      ollamaTestMsgEl.textContent = '❌ ' + result.error;
     }
   });
 </script>

@@ -5,6 +5,8 @@ const fs = require('fs');
 const settingsStore = require('./settings-store.js');
 const { synthesizeSpeech } = require('./tts.js');
 const { sendChatMessage } = require('./chat.js');
+const { sendOllamaChatMessage, listOllamaModels } = require('./ollama.js');
+const { ClaudeCliSession, interpretYesNo } = require('./claude-cli.js');
 const { fetchPageText } = require('./page-digest.js');
 const chatMemoryStore = require('./chat-memory-store.js');
 const { transcribeAudio } = require('./stt.js');
@@ -348,12 +350,16 @@ let settingsWin = null;
 function openSettings() {
   if (settingsWin) {
     raiseAboveDesktopPets(settingsWin);
-    settingsWin.webContents.send('init', { hasKey: !!settingsStore.getApiKey(), micSettings: settingsStore.getMicSettings() });
+    settingsWin.webContents.send('init', {
+      hasKey: !!settingsStore.getApiKey(),
+      micSettings: settingsStore.getMicSettings(),
+      chatProviderSettings: settingsStore.getChatProviderSettings(),
+    });
     return;
   }
   settingsWin = new BrowserWindow({
     width: 420,
-    height: 560,
+    height: 780,
     title: '設定',
     resizable: false,
     minimizable: false,
@@ -368,7 +374,11 @@ function openSettings() {
   raiseAboveDesktopPets(settingsWin);
   settingsWin.loadFile(path.join(__dirname, 'settings.html'));
   settingsWin.webContents.on('did-finish-load', () => {
-    settingsWin.webContents.send('init', { hasKey: !!settingsStore.getApiKey(), micSettings: settingsStore.getMicSettings() });
+    settingsWin.webContents.send('init', {
+      hasKey: !!settingsStore.getApiKey(),
+      micSettings: settingsStore.getMicSettings(),
+      chatProviderSettings: settingsStore.getChatProviderSettings(),
+    });
     raiseAboveDesktopPets(settingsWin);
   });
   settingsWin.on('closed', () => { settingsWin = null; });
@@ -423,6 +433,21 @@ ipcMain.handle('get-mic-settings', () => settingsStore.getMicSettings());
 ipcMain.handle('settings-save-mic-settings', (_event, payload) => settingsStore.saveMicSettings(payload));
 
 ipcMain.handle('settings-reset-mic-settings', () => settingsStore.resetMicSettings());
+
+// 即時對話 provider（OpenAI／Ollama 本機）——見 docs/specs/0005-desktop-pet-ollama-provider.md。
+ipcMain.handle('settings-save-chat-provider', (_event, payload) => settingsStore.saveChatProviderSettings(payload));
+
+// 設定畫面「測試連線」：main process 直接呼叫 Ollama（Node fetch 不受瀏覽器同源政策
+// 限制，不會撞到 ai-quiz-generator 那邊要另外設定 OLLAMA_ORIGINS 的 CORS 問題），
+// 成功的話順便把這台 Ollama 已經下載好的模型清單帶回去，讓設定畫面可以做成下拉選單。
+ipcMain.handle('settings-test-ollama', async (_event, { baseUrl }) => {
+  try {
+    const { models } = await listOllamaModels({ baseUrl });
+    return { ok: true, models };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
 
 // ── 情境編輯器視窗 ───────────────────────────────────────────────────────
 // 使用者要求「背景開著桌寵，即時記錄桌寵目前的參數」：不是另外做一套獨立座標系統的
@@ -838,14 +863,20 @@ async function isL2dReady() {
 // 呼叫前呼叫端要自己確認 L2D 就緒／key 存在；這裡只管「已經有文字了，讓角色說出來」。
 // 語音合成失敗時仍然顯示文字泡泡（優雅降級：至少看得到角色想說什麼，不會整個安靜失敗），
 // 只有真的連文字都送不出去（L2D 未就緒）才會完全沒反應，那個情況呼叫端會先擋下。
-// lib/live2d.js 的 speakFor() 本來就吃一個 duration（ms）選項，不帶的話 type:'info'
-// 預設是 L2D_CFG.speechDurationBefore＝3000ms——那是幫問答遊戲「答題前提示」調的，
-// 一兩句話就好，即時對話的回覆通常長得多，3 秒常常字都還沒看完就消失了。這裡不改
-// lib/live2d.js 本身（唯讀引用），純粹在呼叫端算一個跟文字長度成比例的 duration 蓋過去。
+//
+// 泡泡消失時機：有語音的情況下，不再用「跟文字長度成比例」的估計值去猜多久該消失
+// （回覆長度跟 TTS 唸出來的實際時長常常對不上，估太短字都還沒唸完泡泡就先消失、
+// 估太長則是話講完了泡泡還留一大段時間）。改成真的等 renderer 回報播放結束
+// （waitForTtsPlaybackFinished）之後再等 1 秒才用 L2D.dismissFor() 主動收掉泡泡——
+// 呼叫 speakFor() 時給一個遠大於任何合理播放長度的 duration，只是為了不讓
+// lib/live2d.js 內建的自動消失計時器搶在我們自己收掉之前先觸發。
+// 語音合成失敗（沒有播放可以對齊）時才退回原本「跟文字長度成比例」的估計值。
 function bubbleDurationFor(text) {
   const MIN_MS = 4000, MAX_MS = 20000, MS_PER_CHAR = 180;
   return Math.max(MIN_MS, Math.min(MAX_MS, text.length * MS_PER_CHAR));
 }
+const BUBBLE_DISMISS_DELAY_AFTER_SPEECH_MS = 1000;
+const BUBBLE_NO_AUTO_DISMISS_MS = 10 * 60 * 1000; // 10 分鐘，實務上不可能真的等到這裡
 
 // renderer 端的 playTtsAudio() 播放真的結束（或失敗）時會呼叫 petBridge.ttsPlaybackFinished()
 // 回報這裡，speakAndShow() 才會真的 resolve——語音模式（docs/specs/0004-desktop-pet-voice-input.md）
@@ -867,23 +898,49 @@ function waitForTtsPlaybackFinished(timeoutMs = 30000) {
   });
 }
 
+// L2D.startIdleChat()（index.html 載入完就常駐開著，每 PET_CFG.idleMotionMs＝15 秒
+// 跳出來講一句閒話）跟真正的對話回覆共用同一個文字泡泡 DOM（speakFor() 內部一律
+// box.replaceChildren(bubble) 整個換掉），完全不管當下是不是正在顯示一輪真正的回覆——
+// 閒聊計時器一到就會直接蓋掉還在顯示/播放中的回覆泡泡，使用者看起來像是「泡泡突然消失
+// /被打斷」。用一個進行中計數器包住每一輪 speakAndShow：開始時（第一輪）暫停閒置聊天，
+// 所有進行中的輪次都結束時（計數歸零）才重新啟動——用計數器而不是單純的
+// stop-before/start-after，是因為角色一/二可能同時各自在進行一輪對話，先結束的那一輪
+// 不能直接重啟閒置聊天，否則會蓋掉另一個角色還在進行中的回覆。
+let _activeSpeakCount = 0;
 async function speakAndShow(charKey, text) {
-  const apiKey = settingsStore.getApiKey();
-  let audioBuffer;
-  try {
-    audioBuffer = await synthesizeSpeech({ text, apiKey });
-  } catch (err) {
-    console.error(`[desktop-pet] 語音合成失敗（${err.code || 'UNKNOWN_ERROR'}）：${err.message}`);
+  _activeSpeakCount++;
+  if (_activeSpeakCount === 1) {
+    triggerMotion(`typeof L2D !== 'undefined' && L2D.stopIdleChat && L2D.stopIdleChat()`);
   }
-  const fn = charKey === 'c2' ? 'speak2' : 'speak';
-  const duration = bubbleDurationFor(text);
-  triggerMotion(`typeof L2D !== 'undefined' && L2D.${fn} && L2D.${fn}(${JSON.stringify(text)}, { type: 'info', duration: ${duration} })`);
-  if (audioBuffer) {
-    // charKey 一併送過去，讓 renderer 端知道該把嘴型同步套用到哪個角色的模型
-    // （見 docs/specs/0003-desktop-pet-lip-sync.md）。
-    const playbackFinished = waitForTtsPlaybackFinished();
-    win.webContents.send('play-tts-audio', { audioBase64: audioBuffer.toString('base64'), charKey });
-    await playbackFinished;
+  try {
+    const apiKey = settingsStore.getApiKey();
+    let audioBuffer;
+    try {
+      audioBuffer = await synthesizeSpeech({ text, apiKey });
+    } catch (err) {
+      console.error(`[desktop-pet] 語音合成失敗（${err.code || 'UNKNOWN_ERROR'}）：${err.message}`);
+    }
+    const fn = charKey === 'c2' ? 'speak2' : 'speak';
+    const duration = audioBuffer ? BUBBLE_NO_AUTO_DISMISS_MS : bubbleDurationFor(text);
+    triggerMotion(`typeof L2D !== 'undefined' && L2D.${fn} && L2D.${fn}(${JSON.stringify(text)}, { type: 'info', duration: ${duration} })`);
+    if (audioBuffer) {
+      // charKey 一併送過去，讓 renderer 端知道該把嘴型同步套用到哪個角色的模型
+      // （見 docs/specs/0003-desktop-pet-lip-sync.md）。播放結束（自然播完或使用者
+      // 中途打斷，兩者走同一條 tts-playback-finished 回報路徑，這裡不用分辨是哪一種）
+      // 之後才等 1 秒、主動呼叫 L2D.dismissFor() 收掉泡泡——上面給 speakFor() 的
+      // duration 刻意設得很大，就是要確保這裡的 dismissFor() 一定搶在內建計時器之前
+      // 觸發，不會兩邊搶著收泡泡。
+      const playbackFinished = waitForTtsPlaybackFinished();
+      win.webContents.send('play-tts-audio', { audioBase64: audioBuffer.toString('base64'), charKey });
+      await playbackFinished;
+      await new Promise((resolve) => setTimeout(resolve, BUBBLE_DISMISS_DELAY_AFTER_SPEECH_MS));
+      triggerMotion(`typeof L2D !== 'undefined' && L2D.dismissFor && L2D.dismissFor(${JSON.stringify(charKey)})`);
+    }
+  } finally {
+    _activeSpeakCount--;
+    if (_activeSpeakCount === 0) {
+      triggerMotion(`typeof L2D !== 'undefined' && L2D.startIdleChat && typeof PET_CFG !== 'undefined' && L2D.startIdleChat(PET_CFG.idleMotionMs)`);
+    }
   }
 }
 
@@ -904,6 +961,32 @@ async function speakText(charKey, text) {
 const DEFAULT_PERSONA = '你是桌面上的 Live2D 角色助理，回覆盡量簡短口語（一到三句話）。';
 const CHAT_URL_REGEX = /https?:\/\/[^\s]+/i;
 const chatInFlight = new Set(); // 同一個角色的訊息要排隊，避免並發請求把記憶寫入順序弄亂
+
+// ── CLI 模式（docs/specs/0006-desktop-pet-claude-cli-mode.md）──────────────
+// 觸發短語沿用既有的點擊錄音/打字流程，不新增背景常駐麥克風（見 ADR-0008：
+// 0004 spec 已經因為聲學回授問題拿掉過一次持續語音模式，這裡不重蹈覆轍）。
+// 比對前先正規化（去空白、轉小寫），"進入CLI模式"／"進入 cli 模式" 都算數。
+function normalizeTriggerPhrase(s) {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, '');
+}
+const CLI_MODE_ENTER_PHRASES = new Set(['進入CLI模式', 'enter cli mode'].map(normalizeTriggerPhrase));
+const CLI_MODE_EXIT_PHRASES = new Set(['退出CLI模式', '離開CLI模式', 'exit cli mode'].map(normalizeTriggerPhrase));
+// CLI 模式預設在整個 repo 根目錄（跟這台機器上跑 Claude Code 的目錄一致），不是
+// desktop-pet 自己那個子資料夾——見 spec 的使用者決定。目前沒有開放設定畫面調整
+// （Out of Scope，見 spec）。
+const CLAUDE_CLI_CWD = path.join(__dirname, '..');
+const cliModeActive = new Set(); // 目前處於 CLI 模式的 charKey
+const claudeCliSessions = new Map(); // charKey -> ClaudeCliSession，退出 CLI 模式就整個丟掉
+
+// 把每一輪即時對話（使用者說了什麼、角色回了什麼）印到終端機（跟現有「未預期錯誤都印到
+// 終端機」同一個習慣，見桌面寵物說明.md）——CLI 模式的進入/離開/確認/任務結果，跟一般
+// 聊天（OpenAI/Ollama）都算「即時對話」，全部經過這裡統一印出，方便在終端機視窗直接
+// 看對話紀錄，不用另外開設定或記憶檔案查。純粹印出，不寫檔、不影響任何既有的
+// chatMemoryStore 記憶邏輯。
+function logConversationTurn(charKey, label, userMessage, replyText) {
+  const charLabel = CHAR_LABEL[charKey] || charKey;
+  console.log(`[desktop-pet] ${charLabel}對話（${label}）\n  你：${userMessage}\n  ${charLabel}：${replyText}`);
+}
 
 function readPersonas() {
   try {
@@ -930,8 +1013,56 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
     if (!(await isL2dReady())) {
       return { ok: false, error: 'L2D 尚未就緒（角色可能還在載入中），請稍後再試' };
     }
+
+    // CLI 模式的觸發短語/離開短語，跟一般聊天完全分開處理——不呼叫 OpenAI/Ollama，
+    // 不用檢查 API key，訊息也不進 chatMemoryStore（技術性質的操作記錄跟角色聊天記憶
+    // 混在一起沒有意義，見 spec 的 Edge Cases）。
+    const normalizedMsg = normalizeTriggerPhrase(message);
+    if (!cliModeActive.has(charKey) && CLI_MODE_ENTER_PHRASES.has(normalizedMsg)) {
+      cliModeActive.add(charKey);
+      const reply = `已進入 CLI 模式，工作目錄是 ${CLAUDE_CLI_CWD}。接下來跟我說的話都會送去 Claude Code 執行本機任務，遇到讀檔案以外的操作（寫檔、跑指令...）我會先問過你才做。想離開的話說「退出 CLI 模式」。`;
+      logConversationTurn(charKey, 'CLI 模式', message, reply);
+      await speakAndShow(charKey, reply);
+      return { ok: true };
+    }
+    if (cliModeActive.has(charKey) && CLI_MODE_EXIT_PHRASES.has(normalizedMsg)) {
+      cliModeActive.delete(charKey);
+      claudeCliSessions.delete(charKey); // 半途的任務／待確認操作直接丟棄，不留著跨模式的殘留狀態
+      const reply = '已退出 CLI 模式，回到一般聊天。';
+      logConversationTurn(charKey, 'CLI 模式', message, reply);
+      await speakAndShow(charKey, reply);
+      return { ok: true };
+    }
+    if (cliModeActive.has(charKey)) {
+      let session = claudeCliSessions.get(charKey);
+      let outcome;
+      if (session && session.hasPendingConfirmation) {
+        const allow = interpretYesNo(message);
+        if (allow === null) {
+          const reply = '我聽不懂這是同意還是拒絕，請明確回覆「同意」或「拒絕」。';
+          logConversationTurn(charKey, 'CLI 模式', message, reply);
+          await speakAndShow(charKey, reply);
+          return { ok: true };
+        }
+        outcome = await session.resolveConfirmation(allow);
+      } else {
+        if (!session) {
+          session = new ClaudeCliSession({ cwd: CLAUDE_CLI_CWD });
+          claudeCliSessions.set(charKey, session);
+        }
+        outcome = await session.start(message);
+      }
+      logConversationTurn(charKey, 'CLI 模式', message, outcome.text);
+      await speakAndShow(charKey, outcome.text);
+      return { ok: true };
+    }
+
+    // 兩個 provider 分開檢查各自的必要設定，不要在還沒確定要用哪個之前就先擋 OpenAI
+    // key——選了 Ollama 的使用者根本不需要 OpenAI key（見
+    // docs/specs/0005-desktop-pet-ollama-provider.md）。
+    const providerSettings = settingsStore.getChatProviderSettings();
     const apiKey = settingsStore.getApiKey();
-    if (!apiKey) {
+    if (providerSettings.provider === 'openai' && !apiKey) {
       return { ok: false, error: '尚未設定 OpenAI API key，請先從系統匣「設定...」輸入' };
     }
 
@@ -960,14 +1091,23 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
 
     let reply;
     try {
-      const result = await sendChatMessage({ message: message + context, systemPrompt, history, apiKey });
-      reply = result.reply;
+      if (providerSettings.provider === 'ollama') {
+        const result = await sendOllamaChatMessage({
+          message: message + context, systemPrompt, history,
+          model: providerSettings.ollamaModel, baseUrl: providerSettings.ollamaBaseUrl,
+        });
+        reply = result.reply;
+      } else {
+        const result = await sendChatMessage({ message: message + context, systemPrompt, history, apiKey });
+        reply = result.reply;
+      }
     } catch (err) {
       return { ok: false, error: `聊天失敗（${err.code || 'UNKNOWN_ERROR'}）：${err.message}` };
     }
 
     // 記憶只存原始使用者訊息（不含抓來的網頁內容），避免記憶檔案被網頁全文塞爆。
     chatMemoryStore.appendTurn(charKey, message, reply);
+    logConversationTurn(charKey, providerSettings.provider === 'ollama' ? 'Ollama' : 'OpenAI', message, reply);
     await speakAndShow(charKey, reply);
     return { ok: true };
   } finally {
@@ -1133,6 +1273,15 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+  // 建構子的 alwaysOnTop:true 只給預設置頂等級，跟 raiseAboveDesktopPets() 那幾個小視窗
+  // 一開始踩過的坑一樣：Windows 不保證預設等級的置頂視窗，一定會疊在使用者點擊到的
+  // 其他一般視窗（瀏覽器、IDE...）上面——使用者切去做別的事、點別的視窗時，桌寵
+  // （含文字泡泡）容易被蓋住、視覺上像是「消失了」。用 raiseAboveDesktopPets() 同一個
+  // 'screen-saver' 最高置頂等級，確保不管使用者點哪個視窗，桌寵都留在最上層可見。
+  // 只在建立時設一次，不像小視窗那樣每次開啟都重打 moveTop()+focus()——桌寵主視窗
+  // 全程都開著，不需要重複搶置頂，focus() 更是完全不能加，不然會變成每次都搶走
+  // 使用者剛點的其他視窗的焦點，反而干擾他去做別的事。
+  win.setAlwaysOnTop(true, 'screen-saver');
 
   // 專案持續在開發，index.html／lib 底下的檔案隨時可能被改動，強制這個視窗永遠拿最新版，
   // 不要被 Chromium 自己的磁碟快取卡住（跟瀏覽器分頁踩過的 Cache-Control 問題是同一類風險）：
