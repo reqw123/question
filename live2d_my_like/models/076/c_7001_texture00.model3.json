@@ -13,6 +13,12 @@
         },
         {
           "File": "motions/skill_02.motion3.json"
+        },
+        {
+          "File": "motions/skill_03.motion3.json"
+        },
+        {
+          "File": "motions/skill_04.motion3.json"
         }
       ]
     }
