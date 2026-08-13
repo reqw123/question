@@ -16,9 +16,12 @@ function settingsPath() {
 function readSettings() {
   try {
     return JSON.parse(fs.readFileSync(settingsPath(), 'utf8'));
-  } catch {
+  } catch (err) {
     // 檔案不存在或內容壞掉，一律視同「還沒設定過」，不要讓桌寵啟動流程因為這個壞掉
-    // （見 docs/specs/0001-desktop-pet-tts-playback.md 的 Edge Cases）。
+    // （見 docs/specs/0001-desktop-pet-tts-playback.md 的 Edge Cases）。檔案不存在是
+    // 首次啟動的正常狀態，不用警告；內容壞掉（JSON parse 失敗等）才值得留意，
+    // 不然使用者設定過的 key/偏好被悄悄清空，完全不會知道發生過這件事。
+    if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 settings.json 失敗，設定已退回預設值：', err.message);
     return {};
   }
 }

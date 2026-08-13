@@ -10,6 +10,7 @@ const { ClaudeCliSession, interpretYesNo } = require('./claude-cli.js');
 const { fetchPageText } = require('./page-digest.js');
 const chatMemoryStore = require('./chat-memory-store.js');
 const { transcribeAudio } = require('./stt.js');
+const { startControlServer } = require('./control-server.js');
 
 // 未預期的錯誤一律印到終端機，不讓主行程默默中止（方便排查）
 process.on('uncaughtException', (err) => {
@@ -270,9 +271,12 @@ function readModelConfig() {
   let manifest = [];
   let names = {};
   let history = [];
-  try { manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')); } catch {}
-  try { names = JSON.parse(fs.readFileSync(path.join(dir, 'names.json'), 'utf8')); } catch {}
-  try { history = JSON.parse(fs.readFileSync(path.join(dir, 'names_history.json'), 'utf8')); } catch {}
+  try { manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')); }
+  catch (err) { if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 manifest.json 失敗，退回空清單：', err.message); }
+  try { names = JSON.parse(fs.readFileSync(path.join(dir, 'names.json'), 'utf8')); }
+  catch (err) { if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 names.json 失敗，退回空清單：', err.message); }
+  try { history = JSON.parse(fs.readFileSync(path.join(dir, 'names_history.json'), 'utf8')); }
+  catch (err) { if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 names_history.json 失敗，退回空清單：', err.message); }
   return { manifest, names, history };
 }
 
@@ -282,7 +286,8 @@ function appendNameHistory(names) {
   const dir = path.join(__dirname, '..', 'live2d_my_like', 'config');
   const historyPath = path.join(dir, 'names_history.json');
   let history = [];
-  try { history = JSON.parse(fs.readFileSync(historyPath, 'utf8')); } catch {}
+  try { history = JSON.parse(fs.readFileSync(historyPath, 'utf8')); }
+  catch (err) { if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 names_history.json 失敗，退回空清單：', err.message); }
   const set = new Set(history);
   let changed = false;
   Object.values(names).forEach((n) => {
@@ -622,7 +627,8 @@ const IDLE_CHAT_PATH = path.join(__dirname, 'idle-chat.json');
 function readIdleChat() {
   try {
     return JSON.parse(fs.readFileSync(IDLE_CHAT_PATH, 'utf8'));
-  } catch {
+  } catch (err) {
+    if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 idle-chat.json 失敗，退回空清單：', err.message);
     return [];
   }
 }
@@ -702,7 +708,28 @@ ipcMain.handle('scene-editor-save-idle-chat', async (_event, pairs) => {
   }
 });
 
+// 網頁控制面板觸發互動模式時的安全網：桌寵視窗蓋滿整個主螢幕，一旦不再點擊穿透，
+// 會攔截整個螢幕的滑鼠事件——包含使用者想拿來點「切回穿透模式」的瀏覽器按鈕那次
+// 點擊，等於按鈕點了等於沒點，卡在互動模式出不來。F9／系統匣選單不會有這個問題
+// （前者是全域快捷鍵、後者是另一個 OS 層級，都不會被這個視窗蓋住），所以只有
+// 網頁觸發的這條路徑需要「N 秒沒人再切一次就自動跳回」這個保險，見
+// toggleInteractiveFromWeb()。
+const INTERACTIVE_AUTO_REVERT_MS = 60000;
+let interactiveAutoRevertTimer = null;
+let interactiveAutoRevertDeadline = null;
+
+function clearInteractiveAutoRevertTimer() {
+  if (interactiveAutoRevertTimer) {
+    clearTimeout(interactiveAutoRevertTimer);
+    interactiveAutoRevertTimer = null;
+    interactiveAutoRevertDeadline = null;
+  }
+}
+
 function setClickThrough(value) {
+  // 不管這次切換是從哪裡觸發（F9／系統匣／網頁），都視為「使用者剛確認了最新狀態」，
+  // 先取消掉舊的自動跳回計時器，避免它之後突然把使用者剛用 F9 設定好的狀態蓋掉。
+  clearInteractiveAutoRevertTimer();
   clickThrough = value;
   win.setIgnoreMouseEvents(clickThrough, { forward: true });
   const label = clickThrough ? '穿透模式（滑鼠會穿透到桌面）' : '互動模式（可拖曳角色）';
@@ -710,6 +737,20 @@ function setClickThrough(value) {
   if (tray) {
     tray.setToolTip(`Live2D 桌面掛件 — ${label}`);
     tray.setContextMenu(buildTrayMenu());
+  }
+}
+
+// 只給網頁控制面板的 /toggle-interactive 端點用：切成互動模式時額外掛上自動跳回計時器。
+function toggleInteractiveFromWeb() {
+  setClickThrough(!clickThrough);
+  if (!clickThrough) {
+    interactiveAutoRevertDeadline = Date.now() + INTERACTIVE_AUTO_REVERT_MS;
+    interactiveAutoRevertTimer = setTimeout(() => {
+      interactiveAutoRevertTimer = null;
+      interactiveAutoRevertDeadline = null;
+      console.log('[desktop-pet] 網頁觸發的互動模式已逾時，自動切回穿透模式');
+      setClickThrough(true);
+    }, INTERACTIVE_AUTO_REVERT_MS);
   }
 }
 
@@ -1021,8 +1062,9 @@ function readPersonas() {
       c1: (typeof data.c1 === 'string' && data.c1.trim()) ? data.c1 : DEFAULT_PERSONA,
       c2: (typeof data.c2 === 'string' && data.c2.trim()) ? data.c2 : DEFAULT_PERSONA,
     };
-  } catch {
+  } catch (err) {
     // personas.json 不存在或損毀，兩個角色都退回通用預設人設，不要讓對話功能因此打不開。
+    if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 personas.json 失敗，退回預設人設：', err.message);
     return { c1: DEFAULT_PERSONA, c2: DEFAULT_PERSONA };
   }
 }
@@ -1176,7 +1218,7 @@ ipcMain.handle('voice-transcribe', async (_event, { audioBase64, mimeType }) => 
   let audioBuffer;
   try {
     audioBuffer = Buffer.from(audioBase64, 'base64');
-  } catch (err) {
+  } catch {
     return { ok: false, error: '收到的錄音資料格式不對' };
   }
   try {
@@ -1216,7 +1258,8 @@ function buildMotionSubmenu() {
 function readScenes() {
   try {
     return JSON.parse(fs.readFileSync(path.join(__dirname, 'scenes.json'), 'utf8'));
-  } catch {
+  } catch (err) {
+    if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 scenes.json 失敗，退回空清單：', err.message);
     return {};
   }
 }
@@ -1371,34 +1414,61 @@ function createWindow() {
   const okReset = globalShortcut.register('F8', resetPosition);
   if (!okReset) console.warn('[desktop-pet] F8 全域快捷鍵註冊失敗，請改用系統匣圖示右鍵選單還原');
 
-  // 數字鍵盤 1~9：依序觸發 scenes.json 裡的情境，順序跟系統匣「情境演出」子選單
+  // Ctrl+Alt+數字鍵盤 1~9：依序觸發 scenes.json 裡的情境，順序跟系統匣「情境演出」子選單
   // （buildSceneSubmenu()）完全一致——都是 Object.keys(readScenes())，同一份資料來源，
   // 不會兩邊對不上。每次按下才即時呼叫 readScenes()，不是註冊當下就把情境名稱寫死，
   // 所以「情境編輯器」新增/刪除/調整過情境之後，數字鍵對應的內容會自動跟著換，
   // 不用重開桌寵、也不用重新註冊快捷鍵。
-  // 用實體數字鍵盤（num1~num9，Electron accelerator 語法）而不是主鍵盤數字列，
-  // 符合需求指定的「數字鍵盤」，也避免跟其他視窗（例如角色命名輸入框）打字時的
-  // 一般數字鍵衝突。
+  // 原本只綁裸的 num1~num9，結果 globalShortcut 是整個作業系統層級攔截，桌寵一直開著
+  // 就等於數字鍵盤整個被吃掉，會議記錄、試算表等日常輸入數字都會失效。改成一定要
+  // 搭配 Ctrl+Alt 這個平常打字幾乎不會同時按到的組合，兩邊需求才能並存：情境觸發
+  // 還是不用切到互動模式、隨時按得到；一般作業敲數字鍵盤完全不受影響。
   for (let n = 1; n <= 9; n++) {
-    const okScene = globalShortcut.register(`num${n}`, () => {
+    const okScene = globalShortcut.register(`Control+Alt+num${n}`, () => {
       const keys = Object.keys(readScenes());
       const key = keys[n - 1];
       if (!key) {
-        console.log(`[desktop-pet] 數字鍵盤 ${n} 沒有對應的情境（目前只有 ${keys.length} 個）`);
+        console.log(`[desktop-pet] Ctrl+Alt+數字鍵盤 ${n} 沒有對應的情境（目前只有 ${keys.length} 個）`);
         return;
       }
       triggerMotion(`window.ScenePlayer.trigger(${JSON.stringify(key)})`);
     });
-    if (!okScene) console.warn(`[desktop-pet] 數字鍵盤 ${n}（num${n}）全域快捷鍵註冊失敗，可能跟其他程式衝突，請改用系統匣圖示右鍵選單觸發情境`);
+    if (!okScene) console.warn(`[desktop-pet] Ctrl+Alt+數字鍵盤 ${n}（Control+Alt+num${n}）全域快捷鍵註冊失敗，可能跟其他程式衝突，請改用系統匣圖示右鍵選單觸發情境`);
   }
+}
+
+// ── 本機控制伺服器：給 desktop-pet-web 網頁按鈕用（見 control-server.js 開頭說明）──
+// 只包一層轉接，實際動作都重用桌寵既有的函式（setClickThrough／triggerMotion／
+// resetPosition），跟系統匣選單、快捷鍵是同一套邏輯、同一份狀態，不會兩邊對不上。
+function randomMotion() {
+  if (!MOTION_ACTIONS.length) return;
+  const { call } = MOTION_ACTIONS[Math.floor(Math.random() * MOTION_ACTIONS.length)];
+  triggerMotion(call);
+}
+
+function getControlStatus() {
+  return {
+    visible: !!(win && !win.isDestroyed() && win.isVisible()),
+    clickThrough,
+    isFlying,
+    interactiveAutoRevertAt: interactiveAutoRevertDeadline,
+  };
 }
 
 app.whenReady().then(() => {
   loadMyLikeManifest();
   createWindow();
   createTray();
-  console.log('[desktop-pet] 啟動完成 — F8 還原預設位置/縮放，F9 切換互動/穿透模式，F10 結束，數字鍵盤 1-9 依序觸發情境');
+  console.log('[desktop-pet] 啟動完成 — F8 還原預設位置/縮放，F9 切換互動/穿透模式，F10 結束，Ctrl+Alt+數字鍵盤 1-9 依序觸發情境');
   setClickThrough(clickThrough);
+  startControlServer({
+    getStatus: getControlStatus,
+    show: () => { if (win && !win.isDestroyed()) win.show(); },
+    hide: () => { if (win && !win.isDestroyed()) win.hide(); },
+    toggleInteractive: toggleInteractiveFromWeb,
+    randomMotion,
+    resetPosition,
+  });
 });
 app.on('window-all-closed', () => app.quit());
 app.on('will-quit', () => globalShortcut.unregisterAll());

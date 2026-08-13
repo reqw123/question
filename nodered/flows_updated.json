@@ -608,7 +608,7 @@
             "id": "ff1f1c66f72c9743",
             "type": "mqtt-broker",
             "name": "家裡電腦",
-            "broker": "192.168.0.199",
+            "broker": "192.168.0.171",
             "port": 1883,
             "clientid": "",
             "autoConnect": true,

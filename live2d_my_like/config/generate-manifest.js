@@ -118,7 +118,10 @@ fs.writeFileSync(manifestPath, JSON.stringify(entries, null, 2));
 // 新模型會用 character（資料夾名）當預設值，方便你知道要編輯哪一筆。
 const namesPath = path.join(__dirname, 'names.json');
 let names = {};
-try { names = JSON.parse(fs.readFileSync(namesPath, 'utf8')); } catch {}
+try { names = JSON.parse(fs.readFileSync(namesPath, 'utf8')); }
+catch (err) {
+  if (err.code !== 'ENOENT') console.warn('[generate-manifest] 讀取 names.json 失敗，將視為空清單重建（既有名字可能被蓋掉）：', err.message);
+}
 let namesChanged = false;
 entries.forEach(e => {
   if (!(e.path in names)) { names[e.path] = e.character; namesChanged = true; }
@@ -134,7 +137,10 @@ if (namesChanged || !fs.existsSync(namesPath)) {
 // 不會因為你後來把某個模型改名、或模型被刪除，舊名字就從池子裡消失。
 const historyPath = path.join(__dirname, 'names_history.json');
 let history = [];
-try { history = JSON.parse(fs.readFileSync(historyPath, 'utf8')); } catch {}
+try { history = JSON.parse(fs.readFileSync(historyPath, 'utf8')); }
+catch (err) {
+  if (err.code !== 'ENOENT') console.warn('[generate-manifest] 讀取 names_history.json 失敗，將視為空清單重建：', err.message);
+}
 const historySet = new Set(history);
 let historyChanged = false;
 Object.values(names).forEach(n => {

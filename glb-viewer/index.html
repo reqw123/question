@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>glTF 可行性測試</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #1b1b22; }
+      #app { position: relative; width: 100%; height: 100%; }
+      #hud {
+        position: absolute; top: 12px; left: 12px; z-index: 10;
+        font: 13px/1.6 -apple-system, "Microsoft JhengHei", sans-serif;
+        color: #eee; background: rgba(0,0,0,0.55); padding: 10px 14px;
+        border-radius: 8px; max-width: 320px;
+      }
+      #hud .status { font-weight: 600; }
+      #hud select { margin-top: 4px; width: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="hud">
+        <div class="status" data-testid="status">載入中…</div>
+        <label>動畫：<select id="anim-select" data-testid="anim-select"></select></label>
+        <div style="margin-top: 6px; opacity: 0.75;">W/A/S/D 移動，滑鼠拖曳旋轉視角、滾輪縮放</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

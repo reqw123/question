@@ -87,7 +87,6 @@ const DanmakuSystem = (() => {
     if (_container.children.length >= MAX_ITEMS) _container.firstChild?.remove();
 
     const truncated = t.length > MAX_CHARS ? t.slice(0, MAX_CHARS) + '…' : t;
-    const label     = player ? `${player}: ${truncated}` : truncated;
 
     // 選最早空閒的車道
     let lane = 0;

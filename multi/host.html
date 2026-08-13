@@ -108,6 +108,28 @@
       0%,100% { opacity:1; }
       50%     { opacity:.55; }
     }
+    /* ── AI 題庫生成器：內嵌 iframe 彈窗（跟 host.html 同源，共用 localStorage） ── */
+    #ai-gen-modal {
+      position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.82);
+      display:flex; align-items:center; justify-content:center;
+    }
+    #ai-gen-modal.hidden { display:none; }
+    #ai-gen-modal .ai-gen-box {
+      width:min(900px, 94vw); height:min(88vh, 900px);
+      background:#0d1a2b; border:1px solid rgba(0,212,255,.35); border-radius:16px;
+      overflow:hidden; display:flex; flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
+    }
+    #ai-gen-modal .ai-gen-modal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.1); flex:none;
+    }
+    #ai-gen-modal .ai-gen-modal-close {
+      cursor:pointer; background:transparent; border:1px solid rgba(255,255,255,.25);
+      color:var(--text); border-radius:8px; padding:4px 12px; font-size:.85em; font-family:inherit;
+    }
+    #ai-gen-modal .ai-gen-modal-close:hover { border-color:var(--cyan); color:var(--cyan); }
+    #ai-gen-frame { flex:1; width:100%; border:0; background:#fff; }
     .bank-upload-wrap {
       display:none; margin-top:8px; padding:10px 12px;
       border:1px dashed var(--border); border-radius:8px;
@@ -418,6 +440,26 @@
 </head>
 <body>
 
+<!-- AI 題庫生成器：內嵌 iframe（跟 host.html 同源，共用 localStorage['quiz_ai_bank']，
+     見下面 openAIGenModal()／storage 事件監聽的說明），取代原本 target="_blank" 開新分頁
+     再手動下載/上傳 JSON 的做法。iframe 的 src 故意留空，第一次點擊才由 openAIGenModal()
+     補上，避免大廳一載入就多載一份 1300+ 行的生成器頁面。
+     刻意放在 <body> 最外層、不塞進任一個 .screen 容器裡——.screen 只有加上 .active
+     才會 display:flex（見 lib/style.css 的畫面切換機制），不是目前作用中的畫面就是
+     display:none，塞在裡面的話開啟按鈕明明在大廳（#screen-lobby）按得到，彈窗本體卻
+     被放在 #screen-game 底下、大廳階段整個 display:none，點了完全沒反應
+     （已經實測踩到這個坑：computed style 顯示 display:flex，但 getBoundingClientRect()
+     量出來是 0x0，畫面上什麼都看不到）。放在 body 最外層，不受任何 .screen 顯示狀態影響。 -->
+<div id="ai-gen-modal" class="hidden">
+  <div class="ai-gen-box">
+    <div class="ai-gen-modal-header">
+      <strong style="font-size:.95em">🤖 AI 題庫生成器</strong>
+      <button type="button" class="ai-gen-modal-close" onclick="closeAIGenModal()">✕ 關閉</button>
+    </div>
+    <iframe id="ai-gen-frame" title="AI 題庫生成器"></iframe>
+  </div>
+</div>
+
 <!-- ===== 大廳畫面 ===== -->
 <div id="screen-lobby" class="screen active">
   <div class="card lobby-card">
@@ -518,12 +560,12 @@
       <span class="ai-gen-hint">
         <span class="ai-gen-hint-text">題目你來做</span>
         <span class="ai-gen-hint-arrow">↓</span>
-        <a href="../ai-quiz-generator/index.html" target="_blank"
+        <button type="button" onclick="openAIGenModal()"
            style="font-size:.72em;font-weight:400;color:var(--cyan);text-decoration:none;
                   padding:2px 10px;border:1px solid rgba(0,212,255,.35);border-radius:12px;
-                  background:rgba(0,212,255,.07);white-space:nowrap">
+                  background:rgba(0,212,255,.07);white-space:nowrap;cursor:pointer;font-family:inherit">
           🤖 AI 題庫生成器
-        </a>
+        </button>
       </span>
     </h3>
     <select id="bank-select" class="bank-select">
@@ -2030,6 +2072,38 @@ function loadAIBank() {
   updateStartBtn();
   pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
 }
+
+// ── AI 題庫生成器：內嵌彈窗 ──────────────────────────────────────────────
+// ai-quiz-generator/index.html 跟 host.html 是同一個靜態伺服器底下的同源頁面
+// （只是路徑不同），本來就共用同一份 localStorage——原本用 target="_blank" 開新分頁，
+// 使用者生成完題目後要自己切回這個分頁才會看到，改成 iframe 內嵌之後兩邊都在同一個
+// document 樹裡，體驗上更直接是次要的，真正的重點是下面這個 storage 事件：iframe
+// 對 localStorage 寫入時，「其他」同源視窗（這裡指父視窗 host.html 自己）會收到
+// storage 事件通知——這是瀏覽器原生機制，不用另外寫 postMessage 橋接。
+let _aiGenFrameLoaded = false;
+function openAIGenModal() {
+  const frame = el('ai-gen-frame');
+  // src 留到第一次點擊才補上，避免大廳一載入就多下載一份生成器頁面（含它自己的
+  // API Key 設定/預覽 UI），沒人點開這顆按鈕的話完全不會載入。
+  if (frame && !_aiGenFrameLoaded) {
+    frame.src = '../ai-quiz-generator/index.html';
+    _aiGenFrameLoaded = true;
+  }
+  show('ai-gen-modal');
+}
+function closeAIGenModal() {
+  hide('ai-gen-modal');
+  // 使用者可能在裡面生成好題目後才按關閉，這裡保底刷新一次大廳題庫狀態；正常情況下
+  // 下面的 storage 事件監聽早就即時處理過了，這裡是防禦性的第二層（例如 storage
+  // 事件在某些瀏覽器/情境下沒有如預期觸發時，關閉當下還是能保證資料是最新的）。
+  _refreshAILabel();
+  if (el('bank-select').value === '__ai__') loadAIBank();
+}
+window.addEventListener('storage', e => {
+  if (e.key !== 'quiz_ai_bank') return;
+  _refreshAILabel();
+  if (el('bank-select').value === '__ai__') loadAIBank();
+});
 
 // ── 動態題庫清單（從 questions/index.json 讀取，並恢復使用者選擇）────────
 // ── Live2D 角色收藏庫（live2d_my_like/）：下拉選單只存在 localStorage，只影響本機 ──

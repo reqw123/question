@@ -308,7 +308,7 @@
   <span class="logo">🤖</span>
   <h1>AI 題庫生成器</h1>
   <span class="spacer"></span>
-  <a class="btn-back" href="../multi/host.html">← 返回遊戲主控台</a>
+  <a class="btn-back" id="btn-back-to-host" href="../multi/host.html">← 返回遊戲主控台</a>
 </div>
 
 <!-- ===== Page Content ===== -->
@@ -481,7 +481,7 @@
       <button id="btn-import"   class="btn-export import">🎮 直接匯入遊戲系統</button>
       <div class="import-hint" id="import-hint" style="display:none">
         ✓ 題庫已儲存！請在
-        <a href="../multi/host.html">主持人頁面</a>
+        <a href="../multi/host.html" id="hint-back-to-host">主持人頁面</a>
         的「題庫選擇」中選擇「🤖 <span id="hint-bank-name">AI 生成題庫</span>」即可使用。
       </div>
     </div>
@@ -1309,6 +1309,29 @@ el('fi-clear').addEventListener('click', clearFile);
 el('btn-generate').addEventListener('click', generate);
 el('btn-download').addEventListener('click', downloadJSON);
 el('btn-import').addEventListener('click', importToGame);
+
+/* ─────────────────────────────────────────────────────────────────────
+   內嵌模式（被 multi/host.html 用 iframe 內嵌時）：「返回遊戲主控台」這兩個連結
+   原本寫死 href="../multi/host.html"，單獨開頁籤時是正常導覽；但被內嵌進 host.html
+   的彈窗之後，這兩個連結若被點擊，行為會變成「讓 iframe 自己導覽到 host.html」，
+   畫面上會看到 host.html 巢狀顯示在 host.html 的彈窗裡面，不是關掉彈窗回到真正的
+   host.html。這裡偵測「自己是不是被放在別的視窗的 iframe 裡」（window.top !== window），
+   如果是，且外層剛好有 closeAIGenModal()（代表外層真的是內嵌這個彈窗的 host.html，
+   不是隨便一個把它塞進 iframe 的頁面），改成呼叫外層的關閉函式；不是內嵌情境（獨立
+   分頁開啟）就維持原本 href 導覽，不影響單獨使用這個工具的既有用法。
+───────────────────────────────────────────────────────────────────── */
+(function initEmbeddedMode() {
+  const isEmbedded = window.top !== window && typeof window.parent?.closeAIGenModal === 'function';
+  if (!isEmbedded) return;
+  for (const id of ['btn-back-to-host', 'hint-back-to-host']) {
+    const link = document.getElementById(id);
+    if (!link) continue;
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.parent.closeAIGenModal();
+    });
+  }
+})();
 
 /* ─────────────────────────────────────────────────────────────────────
    Init

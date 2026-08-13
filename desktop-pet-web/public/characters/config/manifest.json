@@ -1,0 +1,29 @@
+[
+  {
+    "path": "077/c_7002.model3.json",
+    "kind": "live2d",
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": ""
+    }
+  },
+  {
+    "path": "1024100/1024100.model3.json",
+    "kind": "live2d",
+    "layout": {
+      "offsetX": "",
+      "offsetY": "160",
+      "scale": ""
+    }
+  },
+  {
+    "path": "asuna/asuna.json",
+    "kind": "spine",
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": ""
+    }
+  }
+]

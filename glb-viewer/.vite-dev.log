@@ -1,0 +1,10 @@
+
+> glb-viewer@0.0.1 dev
+> vite --port 5192
+
+
+  [32m[1mVITE[22m v8.2.1[39m  [2mready in [0m[1m168[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5192[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m上午11:08:09[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.

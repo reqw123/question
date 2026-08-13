@@ -18,9 +18,10 @@ function readAll() {
       c1: Array.isArray(data.c1) ? data.c1 : [],
       c2: Array.isArray(data.c2) ? data.c2 : [],
     };
-  } catch {
+  } catch (err) {
     // 檔案不存在或損毀，視同兩個角色的記憶都是空的，不要讓桌寵啟動/聊天功能因此壞掉
     // （跟 0001 spec 對 settings.json 壞掉的處理方式一致）。
+    if (err.code !== 'ENOENT') console.warn('[desktop-pet] 讀取 chat-memory.json 失敗，退回空記憶：', err.message);
     return { c1: [], c2: [] };
   }
 }

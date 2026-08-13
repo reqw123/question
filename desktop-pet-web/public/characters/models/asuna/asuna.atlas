@@ -1,0 +1,162 @@
+skin-87fdfb93eaa0a56a.png
+size:2048,2048
+format:RGBA8888
+filter:Linear,Linear
+repeat:none
+pma:false
+默认/头
+bounds: 39,81,379,278
+spineviewer-meta: 2,0,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 10,-392643607,-449862482,46244
+默认/头_开心
+bounds: 437,81,379,278
+spineviewer-meta: 2,1,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 17,-392643607,-449862482,-446712668
+spineviewer-name-1: -1075478340,131
+默认/头_痛苦
+bounds: 835,81,379,278
+spineviewer-meta: 2,2,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 17,-392643607,-449862482,-413158236
+spineviewer-name-1: -1947690089,166
+默认/头_眩晕
+bounds: 1233,81,379,278
+spineviewer-meta: 2,3,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 17,-392643607,-449862482,-413158236
+spineviewer-name-1: -1712936548,149
+默认/头_闭眼
+bounds: 1631,81,379,278
+spineviewer-meta: 2,4,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 17,-392643607,-449862482,-379603804
+spineviewer-name-1: -1662538345,188
+默认/右手_张开朝侧前
+bounds: 68,396,239,345
+spineviewer-meta: 2,5,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 29,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1125818485,-2135104096,-459432730,-1981438018
+spineviewer-name-2: 141
+默认/右手_张开朝内
+bounds: 326,396,239,345
+spineviewer-meta: 2,6,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 26,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1125818485,-2135104096,-442655514,34182
+默认/右手_张开朝外
+bounds: 584,396,239,345
+spineviewer-meta: 2,7,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 26,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1125818485,-2135104096,-442655514,38564
+默认/躯干2
+bounds: 841,603,366,371
+spineviewer-meta: 2,8,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 14,-392643607,-399530834,-1176129606
+spineviewer-name-1: 12978
+默认/右手_张开朝前
+bounds: 1225,396,270,239
+spineviewer-meta: 2,9,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 26,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1125818485,-2135104096,-442655514,36233
+默认/左手_指着
+bounds: 1514,396,239,345
+spineviewer-meta: 2,10,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-449862482,-1981372745
+spineviewer-name-1: -1931059317,-2137135225
+默认/右手_指着
+bounds: 68,778,239,345
+spineviewer-meta: 2,11,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1931059317,-2137135225
+默认/右手_握拳
+bounds: 326,778,239,345
+spineviewer-meta: 2,12,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1880727669,-1282677087
+默认/右手_放松
+bounds: 584,778,239,345
+spineviewer-meta: 2,13,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-449862482,-1981369457
+spineviewer-name-1: -1796841589,-1096948034
+默认/左手_握拳
+bounds: 1225,778,239,345
+spineviewer-meta: 2,14,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-449862482,-1981372745
+spineviewer-name-1: -1880727669,-1282677087
+默认/左手_放松
+bounds: 1483,778,239,345
+spineviewer-meta: 2,15,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-449862482,-1981372745
+spineviewer-name-1: -1796841589,-1096948034
+默认/右腿
+bounds: 471,1160,239,345
+spineviewer-meta: 2,16,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 13,-392643607,-449862482,-2048347249
+spineviewer-name-1: 191
+默认/左腿
+bounds: 729,1160,239,345
+spineviewer-meta: 2,17,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 13,-392643607,-449862482,-2048350537
+spineviewer-name-1: 191
+默认/左手武器
+bounds: 987,1160,590,299
+spineviewer-meta: 2,18,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 19,-392643607,-449862482,-1981372745
+spineviewer-name-1: -1498552693,11049445
+默认/背后头发3
+bounds: 398,1542,479,408
+spineviewer-meta: 2,19,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-399530834,-1864004477
+spineviewer-name-1: -1264261746,865177573
+默认/爆炸特效1
+bounds: 899,1542,105,105
+spineviewer-meta: 2,20,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-416308050,-2098755960
+spineviewer-name-1: -1182144584,831034854
+默认/爆炸特效2
+bounds: 1028,1542,105,105
+spineviewer-meta: 2,21,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-416308050,-2098755960
+spineviewer-name-1: -1182144584,847812070
+默认/爆炸特效3
+bounds: 1157,1542,105,105
+spineviewer-meta: 2,22,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-416308050,-2098755960
+spineviewer-name-1: -1182144584,864589286
+默认/爆炸特效4
+bounds: 1286,1542,105,105
+spineviewer-meta: 2,23,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-416308050,-2098755960
+spineviewer-name-1: -1182144584,881366502
+默认/爆炸特效5
+bounds: 1415,1542,105,105
+spineviewer-meta: 2,24,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-416308050,-2098755960
+spineviewer-name-1: -1182144584,898143718
+默认/爆炸特效6
+bounds: 1544,1542,105,105
+spineviewer-meta: 2,25,144,1200
+spineviewer-color: 239,68,68
+spineviewer-name: 20,-392643607,-416308050,-2098755960
+spineviewer-name-1: -1182144584,914920934

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>桌寵陪伴 | Live2D 桌面透明掛件</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Live2D 執行環境：跟專案 C:\question\lib\ 的原版是同一份檔案（唯讀複製過來，不是
+         另外裝 npm 版本），確保跟 live2d_my_like/models/ 的資源相容性一致。載入順序固定：
+         Cubism Core → PIXI → pixi-live2d-display（掛在 window.PIXI.live2d），
+         見 src/pages/desktop-pet/components/Live2DCard.tsx 開頭說明。 -->
+    <script src="/lib/live2d.js"></script>
+    <script src="/lib/live2d.min.js"></script>
+    <script src="/lib/live2dcubismcore.min.js"></script>
+    <script src="/lib/pixi.min.js"></script>
+    <script src="/lib/all.min.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

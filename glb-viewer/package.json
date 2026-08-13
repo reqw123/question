@@ -1,0 +1,20 @@
+{
+  "name": "glb-viewer",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "獨立測試用：驗證 .glb（glTF）3D 模型能不能用 Three.js 正常載入/播放動畫，跟 desktop-pet-web 的 PIXI 2D 渲染管線完全分開，不共用任何程式碼或依賴。見 README.md。",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.185.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
+  }
+}

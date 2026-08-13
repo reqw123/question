@@ -87,7 +87,7 @@ FUR_GRAIN_STRENGTH = 0.07
 
 
 def build_fur_mask(hsv: np.ndarray, alpha: np.ndarray) -> np.ndarray:
-    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+    _, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
     return (alpha > 0) & (v <= FUR_VALUE_MAX) & (s <= FUR_SAT_MAX)
 
 

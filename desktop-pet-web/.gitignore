@@ -1,0 +1,16 @@
+# 相依套件（可用 npm install 重新產生，不進版本控制）
+node_modules/
+
+# 建置產物
+dist/
+dist-ssr/
+*.local
+
+# 編輯器
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Logs
+logs
+*.log

@@ -45,7 +45,7 @@
 """
 
 import tkinter as tk                # Tkinter：Python 內建的 GUI 函式庫，用來畫視窗、按鈕、標籤
-from tkinter import ttk, messagebox # ttk 提供較美觀的元件；messagebox 用來跳出提示視窗
+from tkinter import messagebox      # messagebox 用來跳出提示視窗
 import pyautogui                    # pyautogui：跨平台的滑鼠/鍵盤自動化函式庫
 import threading                    # threading：用來讓「播放座標」在背景執行緒執行，避免卡住 GUI
 import time                         # time：用來做「停留幾秒」的延遲
