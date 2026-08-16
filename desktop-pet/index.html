@@ -67,9 +67,19 @@
     window.Audio = function (...args) {
       const a = new _Orig(...args);
       a._isTts = _creatingTtsAudio;
-      a.muted = a._isTts ? !ttsSoundEnabled : !soundEnabled;
+      const applyMute = () => { a.muted = a._isTts ? !ttsSoundEnabled : !soundEnabled; };
+      applyMute();
       _allAudio.add(a);
       a.addEventListener('ended', () => _allAudio.delete(a));
+      // 重播（例如 particle-effect.js 的 sequenceVoice/sequenceBgm 只 new Audio()
+      // 一次、之後靠 currentTime=0 + play() 反覆重播同一個物件）會在上一輪的
+      // 'ended' 把它從 _allAudio 移除之後才發生——這時它已經不在 Set 裡，之後
+      // 使用者按靜音鈕的 _allAudio.forEach(...) 迴圈完全碰不到它，鈕的畫面狀態
+      // 跟它實際的 muted 值就此永遠脫鉤（停在「上一輪被移除當下」那個早已過期
+      // 的值）。這裡在每次 play() 觸發時重新套用當下的靜音狀態、重新加回
+      // _allAudio，讓「一次建立、重複重播」的音訊物件也能持續跟著鈕走，不只
+      // 靠建構當下那一次性的 applyMute()。
+      a.addEventListener('play', () => { applyMute(); _allAudio.add(a); });
       return a;
     };
     window.Audio.prototype = _Orig.prototype;
