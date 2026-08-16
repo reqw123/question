@@ -23,4 +23,9 @@ contextBridge.exposeInMainWorld('settings', {
   // CLI 模式免確認模式——開啟時 main process 會先跳原生警告對話框二次確認，
   // 使用者取消的話回傳 { ok:false, cancelled:true }（跟 clear/clearMemory 同一套慣例）。
   setCliFreeMode: (enabled) => ipcRenderer.invoke('settings-set-cli-free-mode', enabled),
+  // 桌寵啟動時預設顯示 Live2D 模型／光粒子 3D 模型——目前值也包在 onInit 的
+  // showLive2DOnStartup/showParticleModelOnStartup 裡；改這兩個只影響「下次開機」，
+  // 不會立刻套用到目前正在跑的桌寵（見 main.js 的 settings-set-show-live2d 說明）。
+  setShowLive2D: (enabled) => ipcRenderer.invoke('settings-set-show-live2d', enabled),
+  setShowParticleModel: (enabled) => ipcRenderer.invoke('settings-set-show-particle-model', enabled),
 });

@@ -6,13 +6,15 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "inspect-model": "node particle-effect/tools/inspect-model.mjs"
   },
   "devDependencies": {
     "electron": "^43.0.0",
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.3.223"
+    "@anthropic-ai/claude-agent-sdk": "^0.3.223",
+    "three": "^0.185.1"
   }
 }

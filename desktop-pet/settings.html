@@ -114,6 +114,25 @@
       </div>
       <div id="cliFreeModeMsg" class="msg"></div>
     </section>
+    <section id="startupDisplaySection">
+      <label class="section-title">桌寵啟動預設顯示</label>
+      <div class="hint">決定桌寵下次啟動（或 F8／套用角色選擇這種重新整理）時，Live2D 模型跟光粒子 3D 模型要不要預設顯示出來。改完不會立刻套用到目前畫面，下次啟動／重整才會生效——光粒子特效現在開著/關著，還是照原本系統匣選單的開關為準，這裡改的是「下次開機」的起始狀態。</div>
+      <div class="field">
+        <label>Live2D 模型</label>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button id="btn-live2d-off" class="btn-toggle">🙈 不顯示</button>
+          <button id="btn-live2d-on" class="btn-toggle">🙂 顯示</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>光粒子 3D 模型</label>
+        <div class="btn-row">
+          <button id="btn-particle-off" class="btn-toggle">關閉</button>
+          <button id="btn-particle-on" class="btn-toggle">✨ 開啟</button>
+        </div>
+      </div>
+      <div id="startupDisplayMsg" class="msg"></div>
+    </section>
     <section id="micSection">
       <label class="section-title">語音輸入靈敏度</label>
       <div class="hint">用來判斷「有沒有真的講話」，避免完全沒說話時被 Whisper 幻覺出文字照樣送出。改完下次點 🎤 開始錄音就會生效，不用重開桌寵。</div>
@@ -160,10 +179,15 @@
   const cliFreeOffBtn = document.getElementById('btn-cli-free-off');
   const cliFreeOnBtn = document.getElementById('btn-cli-free-on');
   const cliFreeModeMsgEl = document.getElementById('cliFreeModeMsg');
+  const live2dOffBtn = document.getElementById('btn-live2d-off');
+  const live2dOnBtn = document.getElementById('btn-live2d-on');
+  const particleOffBtn = document.getElementById('btn-particle-off');
+  const particleOnBtn = document.getElementById('btn-particle-on');
+  const startupDisplayMsgEl = document.getElementById('startupDisplayMsg');
 
   // 只顯示「有沒有設定過」，不把已存的 key 本身送回這個視窗顯示——
   // 避免沒必要地把密鑰暴露在畫面/DOM 裡（見 docs/specs/0001-desktop-pet-tts-playback.md）。
-  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings, cliFreePermissionMode }) => {
+  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings, cliFreePermissionMode, showLive2DOnStartup, showParticleModelOnStartup }) => {
     statusEl.textContent = hasKey ? '目前已設定過 API key（輸入新的並儲存即可覆蓋）' : '目前尚未設定 API key';
     if (micSettings) {
       micRmsInputEl.value = micSettings.rmsThreshold;
@@ -175,7 +199,42 @@
       ollamaModelEl.value = chatProviderSettings.ollamaModel;
     }
     setCliFreeModeUI(!!cliFreePermissionMode);
+    // showLive2DOnStartup 沒傳值（理論上不會發生，settingsStore 一定回傳布林值）時
+    // 保守當作顯示——「不小心把角色藏起來」比「不小心一直顯示」更容易讓使用者以為
+    // 桌寵壞掉，寧可預設值那一側偏安全。
+    setLive2DUI(showLive2DOnStartup !== false);
+    setParticleModelUI(!!showParticleModelOnStartup);
   });
+
+  // Live2D／光粒子 3D 模型的「開機預設顯示」：跟 CLI 免確認模式同一種「選中=主色」
+  // 雙鈕切換，但這兩個不是風險操作，不用二次確認對話框，存檔訊息共用同一個
+  // startupDisplayMsgEl（跟 CLI 免確認各自獨立訊息欄不同，因為這兩個是同一個
+  // section 底下的一組設定，不用分開顯示存檔結果）。
+  function setLive2DUI(enabled) {
+    live2dOffBtn.classList.toggle('active', !enabled);
+    live2dOnBtn.classList.toggle('active', enabled);
+  }
+  function setParticleModelUI(enabled) {
+    particleOffBtn.classList.toggle('active', !enabled);
+    particleOnBtn.classList.toggle('active', enabled);
+  }
+  function wireStartupToggle(offBtn, onBtn, setFn, uiFn) {
+    async function handle(enabled) {
+      const result = await setFn(enabled);
+      if (result.ok) {
+        uiFn(enabled);
+        startupDisplayMsgEl.className = 'msg';
+        startupDisplayMsgEl.textContent = '✅ 已存，下次啟動桌寵（或 F8／套用角色選擇）才會套用';
+      } else {
+        startupDisplayMsgEl.className = 'msg error';
+        startupDisplayMsgEl.textContent = '❌ ' + result.error;
+      }
+    }
+    offBtn.addEventListener('click', () => handle(false));
+    onBtn.addEventListener('click', () => handle(true));
+  }
+  wireStartupToggle(live2dOffBtn, live2dOnBtn, window.settings.setShowLive2D, setLive2DUI);
+  wireStartupToggle(particleOffBtn, particleOnBtn, window.settings.setShowParticleModel, setParticleModelUI);
 
   // 跟 provider 鈕同一套「選中=主色」慣例，但這裡選中「開啟」代表的是風險狀態，
   // 不是單純的功能切換——按鈕文字本身已經用 🔒／⚡ 跟顏色語意做區分。

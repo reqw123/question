@@ -182,9 +182,58 @@ function setCliFreePermissionMode(enabled) {
   }
 }
 
+// 桌寵啟動（或 F8／套用角色選擇這種 reload）時要不要預設顯示 Live2D 模型／光粒子
+// 3D 模型（particle-effect）——這兩個是「開機預設值本身」，使用者在設定畫面調整，
+// 所以要存進 settings.json；跟 main.js 的 clickThrough／extraPetWander／
+// particleEffectOn 那種「每次重開都固定同一個值、故意不記使用者上次操作」是不同
+// 性質的東西——那些是「這次 session 的即時狀態」不用記，這兩個則是「往後每次開機
+// 該用哪個預設值」要能記住。
+//
+// Live2D 預設顯示：沒存過就是 true（顯示）——桌寵的核心賣點就是看得到角色，維持
+// 舊使用者原本「一開就看得到」的行為，不因為新加了這個開關就悄悄變了預設體驗。
+function getShowLive2DOnStartup() {
+  const { showLive2DOnStartup } = readSettings();
+  return typeof showLive2DOnStartup === 'boolean' ? showLive2DOnStartup : true;
+}
+
+function setShowLive2DOnStartup(enabled) {
+  try {
+    const current = readSettings();
+    current.showLive2DOnStartup = !!enabled;
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    fs.writeFileSync(settingsPath(), JSON.stringify(current, null, 2));
+    return { ok: true, enabled: !!enabled };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// 光粒子 3D 模型（particle-effect）預設顯示：沒存過就是 false——跟 main.js 原本
+// `let particleEffectOn = false` 那個「預設關閉，不吵，使用者自己決定要不要開」的
+// 意圖一致，只是現在這個「false」本身變成可以被使用者在設定畫面改掉的一份設定，
+// 不再是寫死在程式碼裡的常數。
+function getShowParticleModelOnStartup() {
+  const { showParticleModelOnStartup } = readSettings();
+  return typeof showParticleModelOnStartup === 'boolean' ? showParticleModelOnStartup : false;
+}
+
+function setShowParticleModelOnStartup(enabled) {
+  try {
+    const current = readSettings();
+    current.showParticleModelOnStartup = !!enabled;
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    fs.writeFileSync(settingsPath(), JSON.stringify(current, null, 2));
+    return { ok: true, enabled: !!enabled };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 module.exports = {
   getApiKey, saveApiKey, clearApiKey,
   getMicSettings, saveMicSettings, resetMicSettings,
   getChatProviderSettings, saveChatProviderSettings,
   getCliFreePermissionMode, setCliFreePermissionMode,
+  getShowLive2DOnStartup, setShowLive2DOnStartup,
+  getShowParticleModelOnStartup, setShowParticleModelOnStartup,
 };

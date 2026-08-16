@@ -5,6 +5,10 @@ node_modules/
 Live2d-model-master/
 live2d-master/
 cat_data/
+
+# desktop-pet 光粒子特效候選 GLB 模型：同上，私人收集的遊戲資源截取（LoL 角色皮膚
+# 拆包），檔案動輒 10MB+，且授權來源不明，不適合進版本控制。
+desktop-pet/particle-effect/models/
 # ==================================================
 # Live2D models：預設全部排除
 # ==================================================

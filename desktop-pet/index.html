@@ -24,6 +24,21 @@
     padding: 4px 10px;
     border-radius: 6px;
   }
+  /* lib/live2d.js（唯讀共用檔案）的 L2D.init() 一開始就把角色 canvas 同步
+     appendChild 進 body、完全沒帶 display:none，可見度全靠之後才會呼叫的
+     window.setLive2DVisible() 補設 inline style 修正。「開機預設不顯示」那個
+     設定值要從 main process 的 settingsStore 經 did-finish-load → IPC →
+     executeJavaScript 才送得到這裡，這段路程一定比同步的 appendChild 晚——
+     如果 Live2D 角色模型剛好在這段路程跑完前就載入完成、開始畫面，畫面上就會
+     先冒出角色，setLive2DVisible(false) 才姍姍來遲把它藏起來，使用者看到的就是
+     「開機一瞬間閃出來又消失」。這裡用 CSS 把「body 底下的 canvas 預設隱藏」
+     這件事挪到最早的樣式套用階段（比任何 JS 都早），從根本上不給那個空窗期
+     機會：setLive2DVisible(true) 呼叫到的時候會設 inline style display:''，
+     inline style 優先權比這條規則高，蓋得過去，「應該顯示」的情況不受影響，
+     只是跟原本一樣要等那段路程跑完才會出現（不會再有「先出現、才被藏起來」
+     這種倒過來的順序）。particle-effect.js 的 canvas 本來就自帶 inline
+     display:none（見 createCanvas()），這條規則對它是重複但無害。 */
+  body > canvas { display: none; }
 </style>
 </head>
 <body>
@@ -147,6 +162,22 @@
      player.html 用的是同一支檔案，本身沒有任何 DOM／MP_CFG／MP_TOPICS 依賴，桌寵這種
      沒有 MQTT/計分板的環境一樣能單獨載入。 -->
 <script src="../multi/L2DGesturePlayer.js"></script>
+
+<!-- 光粒子裝飾（particle-effect/）：獨立於 Live2D 角色之外、常駐可切換的浮動裝飾，
+     技術上跟 C:\morph-particles 同一套手法（GLB 表面取樣 → FBO GPGPU → 粒子聚合/消散），
+     精簡成單一模型的「聚合⇄消散」版本，見 docs/adr（若日後補上）與 particle-effect/*.js
+     內的說明。這裡沒有 bundler，用瀏覽器原生 import map 直接指到 node_modules 裡的
+     ESM 版 three.js（threejs.org 官方文件給「不用 bundler」場景的標準做法）。 -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./node_modules/three/build/three.module.js",
+    "three/addons/": "./node_modules/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="particle-effect/particle-effect.js"></script>
+
 <script>
   // ── 桌寵可調參數集中在這裡，方便找、方便改（其餘程式碼一律讀這個物件，不要散在各處寫死數字）──
   const PET_CFG = {
@@ -233,11 +264,47 @@
   // 只是提早把新台詞餵進去，不用等閒置循環自然轉到下一輪。
   window.reloadIdleChat = _loadIdleChat;
 
+  // Live2D 模型「開機是否預設顯示」這個開關（main.js 的 settingsStore.getShowLive2DOnStartup()
+  // 存的值），跟光粒子特效 canvas 顯示/隱藏是同一招（display:none），只是這裡操作的是
+  // L2D.app.view——lib/live2d.js 本身沒有顯示/隱藏開關，這裡只碰 CSS 樣式，不改動
+  // 那份共用檔案（跟 index.html 別處「唯讀引用共用檔案」的既有原則一致）。
+  // L2D.init() 完成前 L2D.app 還不存在，這時候呼叫先記住目標值（_pendingLive2DVisible），
+  // 等下面 Promise.all(...).then() 真的 ready 了再補套用——跟 particle-effect.js 的
+  // pendingEnabled 是同一種「還沒 ready 就先記住、ready 後自動補套用」寫法。
+  window._pendingLive2DVisible = null;
+  // 只藏畫布（L2D.app.view）不夠——文字泡泡是 lib/live2d.js 的 speakFor() 自己
+  // append 到 document.body 的獨立 DOM（見該檔案 _Z_BUBBLE 附近），完全不受畫布
+  // display:none 影響，實測會出現「角色不見了、泡泡還飄在原地」的孤兒泡泡。
+  // speak()/speak2()/startIdleChat() 內部全部經由 speakFor() 這一個入口（lib/live2d.js
+  // 尾端 speak(){this.speakFor('c1',...)} / speak2(){this.speakFor('c2',...)}），
+  // 所以在這裡包一層薄薄的守門就能一次擋掉所有來源，不用個別攔截每個呼叫點，
+  // 也不用改動那份共用檔案本身（跟上面「只碰 CSS」同一個不動 lib/live2d.js 的原則）。
+  window._live2dVisible = true;
+  const _origSpeakFor = L2D.speakFor.bind(L2D);
+  L2D.speakFor = function (key, text, opts) {
+    if (window._live2dVisible === false) return;
+    return _origSpeakFor(key, text, opts);
+  };
+  window.setLive2DVisible = function setLive2DVisible(visible) {
+    window._live2dVisible = !!visible;
+    if (!window._l2dReady || !L2D.app) {
+      window._pendingLive2DVisible = !!visible;
+      return false;
+    }
+    L2D.app.view.style.display = visible ? '' : 'none';
+    return true;
+  };
+
   Promise.all([L2D.init(), _loadIdleChat()]).then(() => {
     window._l2dReady = true;
     L2D.startIdleChat(PET_CFG.idleMotionMs);
     L2D.startIdleMotion(PET_CFG.idleMotionMs);
     loadExtraPets();
+
+    if (window._pendingLive2DVisible !== null) {
+      window.setLive2DVisible(window._pendingLive2DVisible);
+      window._pendingLive2DVisible = null;
+    }
 
     // lib/live2d.js 把畫布 CSS 設成 pointer-events:none（給網頁模式擋住其他 UI 用），
     // 桌寵這邊完全靠 Electron 視窗層級的點擊穿透（main.js 的 setIgnoreMouseEvents／F9）
@@ -1056,7 +1123,11 @@
     function syncOverlay(charKey) {
       const state = L2D['_' + charKey];
       const div = overlays[charKey];
-      if (!state || !state.ready || !state.model) { div.style.display = 'none'; return; }
+      // Live2D 設成不顯示時（window._live2dVisible，見上面 setLive2DVisible 那段）這個
+      // overlay 也要跟著藏起來——不然角色/泡泡都不見了，畫面上卻還留著一塊跟角色
+      // 原本位置等大、完全透明的可點擊區域，滑鼠划過去就誤觸開出聊天輸入框，看起來
+      // 像「明明什麼都沒有，這裡卻黏著一個看不見的東西」。
+      if (!state || !state.ready || !state.model || window._live2dVisible === false) { div.style.display = 'none'; return; }
       const m = state.model;
       const w = (typeof m.width === 'number' && m.width > 0) ? m.width : FALLBACK_W;
       const h = (typeof m.height === 'number' && m.height > 0) ? m.height : FALLBACK_H;

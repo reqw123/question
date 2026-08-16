@@ -2,6 +2,7 @@
 const { app, BrowserWindow, globalShortcut, screen, Tray, Menu, nativeImage, ipcMain, session, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { pathToFileURL } = require('url');
 const settingsStore = require('./settings-store.js');
 const { synthesizeSpeech } = require('./tts.js');
 const { sendChatMessage } = require('./chat.js');
@@ -46,6 +47,26 @@ let pendingExtraPetIds = [];
 // 額外寵物隨機遊走總開關（全體共用一個，不分寵物）。刻意不存 localStorage——
 // 跟 clickThrough 一樣，每次重開桌寵預設「開」，不用像位置/縮放那樣記住上次設定。
 let extraPetWander = true;
+
+// 光粒子裝飾（particle-effect/particle-effect.js）開關：獨立於 Live2D 角色之外，
+// 初始值來自使用者在設定畫面存的「開機預設顯示」（settingsStore.getShowParticleModelOnStartup()，
+// 沒設定過就是 false，跟原本寫死的預設一致）。這裡的初始值只在「桌寵這次真的剛啟動」
+// 時有意義——之後任何 reload（F8、套用角色選擇...）particleEffectOn 都是靠
+// syncParticleEffectEnabledFromRenderer() 讀 renderer 的真實狀態校正（見那個函式的
+// 說明：reload 後 renderer 一律回到關閉，這是刻意修好的行為），不會再套用這個開機
+// 預設值，兩者互不衝突（見 did-finish-load 那段 hasAppliedParticleEffectStartupDefault
+// 的說明）。
+let particleEffectOn = settingsStore.getShowParticleModelOnStartup();
+// 上面 particleEffectOn 的開機預設值只應該在「桌寵這次真的剛啟動」套用一次
+// （執行 window.setParticleEffect(true)），不能每次 reload 都套用，否則會把 F8
+// 「reload 一律回到關閉」的既有修正蓋掉，變成每次 F8 都自動重新打開特效。
+let hasAppliedParticleEffectStartupDefault = false;
+
+// 「模型序列播放」（一鍵觸發、在 sources.js 設定的多個模型之間連續變形、無限
+// 循環播放，直到手動停止，見 particle-effect.js 的 window.setParticleSequencePlayback()）
+// 開關。刻意不像 particleEffectOn 那樣有「開機預設顯示」選項——這是一次性觸發的
+// 展示效果，不是常駐狀態，每次開機/reload 都預設關閉即可。
+let particleSequenceOn = false;
 
 function loadMyLikeManifest() {
   try {
@@ -110,6 +131,184 @@ function toggleExtraPetWander() {
     })
     .catch((err) => console.error('[desktop-pet] 切換額外寵物遊走開關失敗：', err))
     .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+}
+
+// 切換「光粒子特效」開關：跟 toggleExtraPetWander() 同一種寫法，呼叫
+// particle-effect/particle-effect.js 掛在 window 上的 setParticleEffect()。
+// 該模組要先讀完 GLB 才算「就緒」，開關可能在還沒就緒時就被按下——setParticleEffect()
+// 自己會記住目標狀態、等就緒後補套用，這裡收到 ok:false 只是印個提示，不是錯誤。
+function toggleParticleEffect() {
+  particleEffectOn = !particleEffectOn;
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        if (window.setParticleEffect) { return window.setParticleEffect(${particleEffectOn}); }
+        return false;
+      })();`
+    )
+    .then((ok) => {
+      if (!ok) console.warn('[desktop-pet] 光粒子特效尚未就緒（模型可能還在載入中），就緒後會自動套用目前的開關狀態');
+    })
+    .catch((err) => console.error('[desktop-pet] 切換光粒子特效失敗：', err))
+    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+}
+
+// 切換「模型序列播放」開關：跟 toggleParticleEffect() 同一種寫法，呼叫
+// particle-effect.js 掛在 window 上的 setParticleSequencePlayback()。那個函式是
+// async（開啟時要先載入 sequenceModels 清單裡的每個模型才算真的播放起來），
+// Electron 的 executeJavaScript 會等 IIFE 回傳的 Promise resolve 才進到
+// .then()，所以這裡不用另外處理「非同步中」的中間狀態——收到 ok:false 代表
+// 還沒就緒/正忙/取樣站數不足，印個提示，不是致命錯誤。
+function toggleParticleSequence() {
+  particleSequenceOn = !particleSequenceOn;
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        if (window.setParticleSequencePlayback) { return window.setParticleSequencePlayback(${particleSequenceOn}); }
+        return false;
+      })();`
+    )
+    .then((ok) => {
+      if (!ok) {
+        particleSequenceOn = false; // 沒有真的生效就把選單勾選狀態改回去，不要跟畫面實際狀態脫勾
+        console.warn('[desktop-pet] 模型序列播放沒有生效（可能還沒就緒、正忙、或取樣站數不足），已還原開關狀態');
+      }
+    })
+    .catch((err) => {
+      particleSequenceOn = false;
+      console.error('[desktop-pet] 切換模型序列播放失敗：', err);
+    })
+    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+}
+
+// 「光粒子特效」子選單裡列出的模型清單，讀自 particle-effect/sources.js。
+// sources.js 是 particle-effect.js（renderer 端）用 <script type="module"> 直接
+// import 的 ES module，跟 main.js 這支 CommonJS 檔案是不同的模組系統，不能直接
+// require()——particle-effect/package.json 的 {"type":"module"} 讓 Node 也能把
+// 它當 ES module 動態 import()。URL 加時間戳查詢字串是為了繞過 Node 的 ES module
+// cache，確保每次都讀到磁碟上最新內容（跟「情境演出」子選單每次開都重讀
+// scenes.json 是同一種「改完設定不用重開桌寵」體驗）；讀取失敗（例如 sources.js
+// 語法錯了）就維持舊清單，不讓桌寵其他功能被拖垮。
+let particleModelKeys = [];
+// 目前作用中的模型 key。null 代表還沒跟 renderer 同步過——這裡不寫死預設值去對齊
+// particle-effect.js 的 DEFAULT_MODEL，改成用 syncParticleModelFromRenderer()
+// （did-finish-load 時）跟 renderer 問真正的值，兩邊只要維護一份就好。
+let activeParticleModel = null;
+
+async function refreshParticleModelKeys() {
+  try {
+    const url = pathToFileURL(path.join(__dirname, 'particle-effect', 'sources.js')).href + `?t=${Date.now()}`;
+    const mod = await import(url);
+    particleModelKeys = Object.keys(mod.default || {});
+  } catch (err) {
+    console.warn('[desktop-pet] 讀取光粒子模型清單失敗（particle-effect/sources.js 可能有語法錯誤）：', err.message);
+  }
+}
+
+// sources.js 改了（例如加一個新模型）就自動重讀清單、重畫選單，不用重開桌寵。
+// Windows 上同一次存檔常常連續觸發兩次 change 事件，debounce 一下避免重複刷新。
+let particleSourcesWatchTimer = null;
+function watchParticleModelSources() {
+  const sourcesPath = path.join(__dirname, 'particle-effect', 'sources.js');
+  try {
+    fs.watch(sourcesPath, () => {
+      clearTimeout(particleSourcesWatchTimer);
+      particleSourcesWatchTimer = setTimeout(() => {
+        refreshParticleModelKeys().then(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+      }, 300);
+    });
+  } catch (err) {
+    console.warn('[desktop-pet] 監看 particle-effect/sources.js 失敗（模型清單只能靠重開桌寵刷新）：', err.message);
+  }
+}
+
+// 系統匣選單點模型清單裡的某一個：跟 toggleParticleEffect() 同一種
+// executeJavaScript 寫法，呼叫 particle-effect.js 掛的 setParticleActiveModel()。
+// 該函式自己會處理「目前正顯示中就先消散、換完模型再重新聚合」的動畫轉場，
+// 這裡不用管顯示狀態，也不用等它真的換完才更新選單勾選。
+function selectParticleModel(key) {
+  activeParticleModel = key;
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        if (window.setParticleActiveModel) { return window.setParticleActiveModel(${JSON.stringify(key)}); }
+        return false;
+      })();`
+    )
+    .then((ok) => {
+      if (!ok) console.warn(`[desktop-pet] 光粒子模型切換尚未就緒或找不到 "${key}"`);
+    })
+    .catch((err) => console.error('[desktop-pet] 切換光粒子模型失敗：', err))
+    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+}
+
+// 跟 syncMyLikeSelectionFromRenderer() 同一種「reload 後跟畫面實際狀態對一次」
+// 的必要性：particle-effect.js 每次重新初始化都會用它自己的 DEFAULT_MODEL，
+// 這裡讀回來才知道選單該勾哪一個，不用在 main.js 這邊重複寫死同一個預設值。
+function syncParticleModelFromRenderer() {
+  win.webContents
+    .executeJavaScript(`window.getParticleActiveModel ? window.getParticleActiveModel() : null`)
+    .then((key) => {
+      if (key && key !== activeParticleModel) {
+        activeParticleModel = key;
+        if (tray) tray.setContextMenu(buildTrayMenu());
+      }
+    })
+    .catch(() => {});
+}
+
+// 把目前真正的互動/穿透狀態推給 particle-effect.js，讓它知道現在滑鼠移到粒子
+// 模型上該不該顯示「抓取」游標——mousemove 因為 win.setIgnoreMouseEvents 的
+// forward:true 選項，穿透模式下還是會送到 renderer（這是既有 F9 機制的既定
+// 行為），但穿透模式下實際上完全點不到、拖不動任何東西，游標卻顯示可抓取會
+// 誤導使用者，所以 renderer 端無法只靠「有沒有收到 mousemove」自己判斷，
+// 需要 main.js 主動把 clickThrough 的反相值推過去。setClickThrough() 每次
+// 切換都會呼叫；reload 後（F8、套用角色選擇...）particle-effect.js 重新初始化
+// 預設值又會歸零，所以 did-finish-load 也要補呼叫一次。
+function syncParticleEffectStateFromMain() {
+  win.webContents
+    .executeJavaScript(
+      `(function() {
+        if (window.setParticleEffectInteractiveMode) { window.setParticleEffectInteractiveMode(${!clickThrough}); }
+        return true;
+      })();`
+    )
+    .catch(() => {});
+}
+
+// 跟 syncParticleModelFromRenderer() 同一種「reload 後跟畫面實際狀態對一次」的
+// 必要性，但方向反過來：particleEffectOn 是 main.js 自己記的一份狀態（系統匣
+// 「光粒子特效」開關的勾選/標籤用這個），particle-effect.js 每次 reload 都是全新
+// 模組實例、一定會回到關閉狀態（見 window.getParticleEffectEnabled() 開頭的說明），
+// 但 reload 不會自動幫忙把 particleEffectOn 這個 main.js 這邊的變數改回 false——
+// 沒有這個同步的話，F8 之後畫面上的特效確實變回關閉了，系統匣選單卻還停在
+// reload 前的勾選狀態，兩邊對不上（使用者會看到選單寫「關閉」這個下一步動作，
+// 以為現在是開著的，但畫面早就是關的）。
+function syncParticleEffectEnabledFromRenderer() {
+  win.webContents
+    .executeJavaScript(`window.getParticleEffectEnabled ? window.getParticleEffectEnabled() : false`)
+    .then((enabled) => {
+      if (enabled !== particleEffectOn) {
+        particleEffectOn = enabled;
+        if (tray) tray.setContextMenu(buildTrayMenu());
+      }
+    })
+    .catch(() => {});
+}
+
+// 跟 syncParticleEffectEnabledFromRenderer() 完全同一種必要性、同一種寫法，只是
+// 問的是「模型序列播放」——reload 後 particle-effect.js 是全新模組實例，
+// sequenceModeActive 一定會回到 false，這裡讀回來才能讓系統匣選單勾選狀態對齊。
+function syncParticleSequenceEnabledFromRenderer() {
+  win.webContents
+    .executeJavaScript(`window.getParticleSequencePlaying ? window.getParticleSequencePlaying() : false`)
+    .then((playing) => {
+      if (playing !== particleSequenceOn) {
+        particleSequenceOn = playing;
+        if (tray) tray.setContextMenu(buildTrayMenu());
+      }
+    })
+    .catch(() => {});
 }
 
 // 按「確定套用（額外寵物）」時，才把 pendingExtraPetIds 跟目前已套用的 extraPetIds 做差集，
@@ -360,6 +559,8 @@ function openSettings() {
       micSettings: settingsStore.getMicSettings(),
       chatProviderSettings: settingsStore.getChatProviderSettings(),
       cliFreePermissionMode: settingsStore.getCliFreePermissionMode(),
+      showLive2DOnStartup: settingsStore.getShowLive2DOnStartup(),
+      showParticleModelOnStartup: settingsStore.getShowParticleModelOnStartup(),
     });
     return;
   }
@@ -385,6 +586,8 @@ function openSettings() {
       micSettings: settingsStore.getMicSettings(),
       chatProviderSettings: settingsStore.getChatProviderSettings(),
       cliFreePermissionMode: settingsStore.getCliFreePermissionMode(),
+      showLive2DOnStartup: settingsStore.getShowLive2DOnStartup(),
+      showParticleModelOnStartup: settingsStore.getShowParticleModelOnStartup(),
     });
     raiseAboveDesktopPets(settingsWin);
   });
@@ -462,6 +665,15 @@ ipcMain.handle('settings-reset-mic-settings', () => settingsStore.resetMicSettin
 
 // 即時對話 provider（OpenAI／Ollama 本機）——見 docs/specs/0005-desktop-pet-ollama-provider.md。
 ipcMain.handle('settings-save-chat-provider', (_event, payload) => settingsStore.saveChatProviderSettings(payload));
+
+// 桌寵啟動時預設顯示 Live2D 模型／光粒子 3D 模型——不是不可逆操作，也不影響安全性，
+// 不用像 CLI 免確認模式那樣跳原生對話框二次確認，跟語音輸入靈敏度／即時對話 provider
+// 同一種「存了下次生效」等級。這裡刻意只存值，不順便呼叫 executeJavaScript 立刻套用
+// 到目前正在跑的桌寵——「開機預設值」跟「這個 session 目前的狀態」是兩件事，硬要
+// 兩者同步反而會製造新的狀態對不齊問題（尤其光粒子特效已經有系統匣選單管「現在」
+// 開不開，這裡改的是「下次開機」該是什麼狀態，兩條路徑分開才不會互相打架）。
+ipcMain.handle('settings-set-show-live2d', (_event, enabled) => settingsStore.setShowLive2DOnStartup(enabled));
+ipcMain.handle('settings-set-show-particle-model', (_event, enabled) => settingsStore.setShowParticleModelOnStartup(enabled));
 
 // 設定畫面「測試連線」：main process 直接呼叫 Ollama（Node fetch 不受瀏覽器同源政策
 // 限制，不會撞到 ai-quiz-generator 那邊要另外設定 OLLAMA_ORIGINS 的 CORS 問題），
@@ -732,6 +944,7 @@ function setClickThrough(value) {
   clearInteractiveAutoRevertTimer();
   clickThrough = value;
   win.setIgnoreMouseEvents(clickThrough, { forward: true });
+  syncParticleEffectStateFromMain();
   const label = clickThrough ? '穿透模式（滑鼠會穿透到桌面）' : '互動模式（可拖曳角色）';
   console.log(`[desktop-pet] 目前狀態：${label}`);
   if (tray) {
@@ -1274,6 +1487,41 @@ function buildSceneSubmenu() {
   }));
 }
 
+// 「光粒子特效」開合成一個子選單：開關 + 分隔線 + particleModelKeys 清單（radio，
+// 選了哪個就打勾）。particleModelKeys 由 refreshParticleModelKeys() 讀
+// particle-effect/sources.js 填好，這裡單純渲染，不重讀檔案（避免每次開選單都
+// 觸發一次動態 import()）。
+function buildParticleEffectSubmenu() {
+  const modelItems = particleModelKeys.length
+    ? particleModelKeys.map((key) => ({
+        label: key,
+        type: 'radio',
+        checked: key === activeParticleModel,
+        click: () => selectParticleModel(key),
+      }))
+    : [{ label: '（sources.js 讀不到模型，或裡面還沒有任何項目）', enabled: false }];
+
+  return [
+    {
+      label: particleEffectOn ? '關閉' : '開啟',
+      type: 'checkbox',
+      checked: particleEffectOn,
+      click: () => toggleParticleEffect(),
+    },
+    {
+      // 模式層級的控制，跟上面總開關放一起、跟下面的模型清單分開一段——選這個
+      // 不是選某一個模型，是切換「要不要在全部模型之間連續變形」這個播放模式。
+      // 快捷鍵 Ctrl+Alt+S 是同一個開關，兩邊觸發都會呼叫同一個 toggleParticleSequence()。
+      label: `模型序列播放（Ctrl+Alt+S）${particleSequenceOn ? '：播放中' : ''}`,
+      type: 'checkbox',
+      checked: particleSequenceOn,
+      click: () => toggleParticleSequence(),
+    },
+    { type: 'separator' },
+    ...modelItems,
+  ];
+}
+
 function buildTrayMenu() {
   const hasPendingChange = pendingChar1 !== currentChar1 || pendingChar2 !== currentChar2;
   const extraPetCandidates = getExtraPetCandidates();
@@ -1315,6 +1563,7 @@ function buildTrayMenu() {
     { label: '動作測試', submenu: buildMotionSubmenu() },
     { label: '語音測試', submenu: buildSpeechTestSubmenu() },
     { label: '情境演出', submenu: buildSceneSubmenu() },
+    { label: '光粒子特效', submenu: buildParticleEffectSubmenu() },
     ...charMenuItems,
     { type: 'separator' },
     { label: '設定...', click: () => openSettings() },
@@ -1371,6 +1620,17 @@ function createWindow() {
   // 使用者剛點的其他視窗的焦點，反而干擾他去做別的事。
   win.setAlwaysOnTop(true, 'screen-saver');
 
+  // 把 renderer 端「手動微調 debug 工具」（particle-effect.js 的
+  // handleManualNudgeKey()）印的 [particle-debug] 開頭訊息轉印到這個終端機——
+  // renderer 的 console.log 預設只會出現在 DevTools 的 Console 分頁，不會進到
+  // `npm start` 這個終端機視窗。只過濾 [particle-debug] 開頭的訊息，不是全部
+  // renderer console 訊息都轉印：particle-sampler.js／particle-effect.js 其他地方
+  // 的 log 已經很多，全部轉印會把終端機灌爆，而且那些原本就只是給 DevTools 除錯用，
+  // 沒有「一定要在終端機看到」的需求。
+  win.webContents.on('console-message', (_event, _level, message) => {
+    if (message.startsWith('[particle-debug]')) console.log(message);
+  });
+
   // 專案持續在開發，index.html／lib 底下的檔案隨時可能被改動，強制這個視窗永遠拿最新版，
   // 不要被 Chromium 自己的磁碟快取卡住（跟瀏覽器分頁踩過的 Cache-Control 問題是同一類風險）：
   // 1) 每次啟動先清掉舊視窗累積下來的快取
@@ -1401,7 +1661,49 @@ function createWindow() {
   });
 
   // 每次載入/重新整理完成後，跟畫面上實際生效的角色選擇對一次（包含 applyMyLikeSelection() 觸發的 reload）
-  win.webContents.on('did-finish-load', syncMyLikeSelectionFromRenderer);
+  win.webContents.on('did-finish-load', () => {
+    syncMyLikeSelectionFromRenderer();
+    // particle-effect.js 每次 reload（F8、套用角色選擇...）都會重新初始化成它
+    // 自己的預設值（開關永遠回到關閉），這裡補兩次同步，讓系統匣選單勾選狀態、
+    // 滑鼠抓取游標判斷跟畫面實際狀態對齊（見 syncParticleModelFromRenderer()／
+    // syncParticleEffectStateFromMain() 開頭的說明）。
+    syncParticleModelFromRenderer();
+    syncParticleEffectStateFromMain();
+    // 模型序列播放沒有「開機預設值」這種東西（見 particleSequenceOn 宣告處的
+    // 說明），每次 reload 都直接同步，不用像下面 particleEffectOn 那樣分
+    // 「第一次啟動」跟「之後 reload」兩種情況處理。
+    syncParticleSequenceEnabledFromRenderer();
+
+    // Live2D 顯示：套用使用者在設定畫面存的開機預設值（settingsStore.getShowLive2DOnStartup()）。
+    // 這個沒有運行期切換（不像光粒子特效有系統匣選單可以隨時開關），永遠等於這份
+    // 設定，每次 reload 都套用同一個值即可，不用像下面 particleEffectOn 那樣分
+    // 「第一次啟動」跟「之後 reload」兩種情況處理。
+    win.webContents.executeJavaScript(
+      `window.setLive2DVisible ? window.setLive2DVisible(${settingsStore.getShowLive2DOnStartup()}) : null`
+    ).catch(() => {});
+
+    if (!hasAppliedParticleEffectStartupDefault) {
+      // 桌寵這次真的剛啟動：套用使用者設定的開機預設值，不透過
+      // syncParticleEffectEnabledFromRenderer() 校正——那個函式是拿 renderer 的
+      // 「真實現況」回頭校正 main.js 記的 particleEffectOn，但第一次啟動時
+      // renderer 才剛開始載入、還沒套用任何東西，讀到的是「還沒套用開機預設值前」
+      // 的暫時關閉狀態，這時候校正只會把剛剛從設定畫面讀回來的 particleEffectOn
+      // 錯誤地蓋回 false。
+      hasAppliedParticleEffectStartupDefault = true;
+      if (particleEffectOn) {
+        win.webContents
+          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
+          .catch(() => {});
+      }
+    } else {
+      // 之後任何 reload（F8、套用角色選擇...）：維持原本修好的行為——
+      // particle-effect.js reload 後一律回到關閉，這裡讓 main.js 記的狀態（系統匣
+      // 勾選）跟著對齊，不會卡在 reload 前的勾選狀態（見 syncParticleEffectEnabledFromRenderer()
+      // 開頭的說明）。這裡刻意不再套用開機預設值，不然每次 F8 都會自動重新打開
+      // 特效，跟「F8 reload 一律回到關閉」的既有修正互相矛盾。
+      syncParticleEffectEnabledFromRenderer();
+    }
+  });
 
   // F9：切換「點擊穿透」。單一按鍵，比組合鍵好按。若跟其他軟體快捷鍵衝突導致註冊失敗，
   // 系統匣圖示（右下角、右鍵選單）是保證能用的備援切換方式。
@@ -1413,6 +1715,25 @@ function createWindow() {
 
   const okReset = globalShortcut.register('F8', resetPosition);
   if (!okReset) console.warn('[desktop-pet] F8 全域快捷鍵註冊失敗，請改用系統匣圖示右鍵選單還原');
+
+  // Ctrl+Shift+I：開關 DevTools。這個視窗沒有設定應用程式選單（frame:false 本來就沒有
+  // 選單列），Electron 預設綁在選單上的「切換開發人員工具」F12/Ctrl+Shift+I 快捷鍵不會
+  // 生效，所以跟 F8/F9/F10 一樣手動註冊一個。原本試過 F12，但那顆鍵很容易被其他軟體
+  // （截圖/錄影工具等）全域佔用，改用瀏覽器 DevTools 同款的 Ctrl+Shift+I 組合鍵比較不
+  // 容易撞。主要是給校正 particle-effect（光粒子特效）模型的 scale/position/rotation
+  // 用——particle-sampler.js 沒填 scale/position 時會把自動置中縮放算出來的包圍盒
+  // 尺寸/中心印在 Console，直接照著抄就是校正起點。
+  const okDevTools = globalShortcut.register('CommandOrControl+Shift+I', () => win.webContents.toggleDevTools());
+  if (!okDevTools) console.warn('[desktop-pet] Ctrl+Shift+I 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
+  // Ctrl+Alt+S：切換「模型序列播放」（S 對應 Sequence；一鍵在 sources.js 的多個
+  // 模型之間連續變形，無限循環，直到再按一次停止，見 particle-effect.js 的
+  // window.setParticleSequencePlayback()）。原本試過 Ctrl+Alt+M，註冊失敗（跟
+  // 其他程式衝突，Windows 上很多軟體的靜音/切換快捷鍵會搶 Ctrl+Alt+M），改用
+  // 這個。跟下面 Ctrl+Alt+數字鍵盤同一種安全前綴慣例（避開會被日常打字誤觸的
+  // 裸鍵），註冊失敗時比照 F8/F9/F10，提示改用系統匣選單。
+  const okSequence = globalShortcut.register('Control+Alt+S', () => toggleParticleSequence());
+  if (!okSequence) console.warn('[desktop-pet] Ctrl+Alt+S 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用系統匣圖示右鍵選單切換');
 
   // Ctrl+Alt+數字鍵盤 1~9：依序觸發 scenes.json 裡的情境，順序跟系統匣「情境演出」子選單
   // （buildSceneSubmenu()）完全一致——都是 Object.keys(readScenes())，同一份資料來源，
@@ -1455,11 +1776,15 @@ function getControlStatus() {
   };
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   loadMyLikeManifest();
+  // 開 tray 選單前先把光粒子模型清單讀好，避免「光粒子特效」子選單第一次打開
+  // 時是空的、要等下一次選單重畫才補上（見 refreshParticleModelKeys() 開頭說明）。
+  await refreshParticleModelKeys();
+  watchParticleModelSources();
   createWindow();
   createTray();
-  console.log('[desktop-pet] 啟動完成 — F8 還原預設位置/縮放，F9 切換互動/穿透模式，F10 結束，Ctrl+Alt+數字鍵盤 1-9 依序觸發情境');
+  console.log('[desktop-pet] 啟動完成 — F8 還原預設位置/縮放，F9 切換互動/穿透模式，F10 結束，Ctrl+Alt+數字鍵盤 1-9 依序觸發情境，Ctrl+Shift+I 開關 DevTools（校正 particle-effect 模型 scale/position 用，見 particle-effect/動畫參數說明.md）');
   setClickThrough(clickThrough);
   startControlServer({
     getStatus: getControlStatus,

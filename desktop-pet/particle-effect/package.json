@@ -1,0 +1,5 @@
+{
+  "type": "module",
+  "private": true,
+  "description": "只用來讓 Node（main.js 的動態 import()）把這個資料夾底下的 .js 檔當 ES module 解析，不是一個獨立可安裝的套件。particle-effect.js/fbo.js/particle-sampler.js/shaders.js/sources.js 本身一直都是 ES module（renderer 端用 <script type=\"module\"> 直接 import），這份 package.json 只是把同一件事也告訴 Node，讓 main.js 能用 import() 動態讀 sources.js 的模型清單（見 main.js 的 refreshParticleModelKeys()）。"
+}
