@@ -141,7 +141,7 @@ export function ControlPanel() {
           </p>
         )}
 
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <ActionButton
             label={status?.visible ? '讓牠躲起來' : '讓牠出現'}
             icon={status?.visible ? EyeOff : Eye}

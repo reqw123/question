@@ -89,7 +89,7 @@ export default {
       // rotationX: 0,   // 不填預設 0
       // rotationY: 0,   // 不填——朝向沒特別校過
       // rotationZ: 0,   // 不填預設 0
-      sequenceAction: { name: 'Attack1' },
+      sequenceAction: { name: 'Channel_Wndup' },
       sequenceVoice: '亞托克斯.mp3',
 
       // — 動畫定格/循環（單幀定格，animatedIdle 沒開）—

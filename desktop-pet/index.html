@@ -58,6 +58,8 @@
   // 呼叫端（playTtsAudio）建立音訊物件前後把旗標開/關是最單純可靠的做法。
   var soundEnabled = false;     // 閒置閒聊音效，預設靜音（跟原本行為一致）
   var ttsSoundEnabled = true;   // 即時對話/語音測試回覆，預設開（主動觸發才會有聲音，預設要聽得到）
+  var soundVolume = 1;          // 閒置閒聊音效音量，0~1，跟靜音（soundEnabled）是兩件事：
+  var ttsVolume   = 1;          // 靜音管「有沒有聲音」，音量管「聲音多大」，關掉靜音時音量值還是會保留。
   // 記錄所有建立過的音訊元素，讓靜音按鈕能立刻停掉當下正在播的聲音
   // （不只是影響之後新建立的），跟 multi/SoundSystem.js 同樣手法
   var _allAudio = new Set();
@@ -67,8 +69,13 @@
     window.Audio = function (...args) {
       const a = new _Orig(...args);
       a._isTts = _creatingTtsAudio;
-      const applyMute = () => { a.muted = a._isTts ? !ttsSoundEnabled : !soundEnabled; };
-      applyMute();
+      // 靜音（muted）+ 音量（volume）一起套用：跟原本只管 muted 的 applyMute() 是
+      // 同一個掛勾點，改名反映職責擴大，呼叫時機（建構當下 / 每次 play()）不變。
+      const applyAudioSettings = () => {
+        a.muted  = a._isTts ? !ttsSoundEnabled : !soundEnabled;
+        a.volume = a._isTts ? ttsVolume : soundVolume;
+      };
+      applyAudioSettings();
       _allAudio.add(a);
       a.addEventListener('ended', () => _allAudio.delete(a));
       // 重播（例如 particle-effect.js 的 sequenceVoice/sequenceBgm 只 new Audio()
@@ -76,14 +83,35 @@
       // 'ended' 把它從 _allAudio 移除之後才發生——這時它已經不在 Set 裡，之後
       // 使用者按靜音鈕的 _allAudio.forEach(...) 迴圈完全碰不到它，鈕的畫面狀態
       // 跟它實際的 muted 值就此永遠脫鉤（停在「上一輪被移除當下」那個早已過期
-      // 的值）。這裡在每次 play() 觸發時重新套用當下的靜音狀態、重新加回
+      // 的值）。這裡在每次 play() 觸發時重新套用當下的靜音/音量狀態、重新加回
       // _allAudio，讓「一次建立、重複重播」的音訊物件也能持續跟著鈕走，不只
-      // 靠建構當下那一次性的 applyMute()。
-      a.addEventListener('play', () => { applyMute(); _allAudio.add(a); });
+      // 靠建構當下那一次性的 applyAudioSettings()。
+      a.addEventListener('play', () => { applyAudioSettings(); _allAudio.add(a); });
       return a;
     };
     window.Audio.prototype = _Orig.prototype;
   })();
+
+  // 音量微調快捷鍵（main.js 的 Ctrl+Alt+[／] 調閒置閒聊、Ctrl+Alt+-／= 調對話語音回覆，
+  // 見該檔案定義處說明）：跟兩顆靜音鈕的 toggleIdleChatSound()/toggleTtsSound() 同一種
+  // 「window 掛函式給 main process executeJavaScript 呼叫」寫法。只調當下已存在的
+  // Audio 元素（_allAudio），新建立的音訊元素本來就會在建構/play() 當下讀最新的
+  // soundVolume/ttsVolume（見上面 applyAudioSettings()），不用另外處理。
+  // 静音時（muted）音量還是可以調，只是要等使用者自己解除靜音才聽得到——跟一般
+  // 系統音量的心智模型一致，調音量不會連帶自動解除靜音。
+  function _clampVolume(v) { return Math.min(1, Math.max(0, Math.round(v * 100) / 100)); }
+  window.adjustIdleChatVolume = function adjustIdleChatVolume(delta) {
+    soundVolume = _clampVolume(soundVolume + delta);
+    _allAudio.forEach(a => { if (!a._isTts) a.volume = soundVolume; });
+    console.log(`[desktop-pet] 閒置閒聊音效音量：${Math.round(soundVolume * 100)}%`);
+    return soundVolume;
+  };
+  window.adjustTtsVolume = function adjustTtsVolume(delta) {
+    ttsVolume = _clampVolume(ttsVolume + delta);
+    _allAudio.forEach(a => { if (a._isTts) a.volume = ttsVolume; });
+    console.log(`[desktop-pet] 對話語音回覆音量：${Math.round(ttsVolume * 100)}%`);
+    return ttsVolume;
+  };
 
   // ── 語音播放（main process 呼叫 OpenAI TTS 後把音檔 bytes 送過來播）─────────
   // 音檔用 new Audio(dataUrl) 播放，會自動被上面的 Audio 建構子攔截接管
@@ -301,7 +329,75 @@
       window._pendingLive2DVisible = !!visible;
       return false;
     }
-    L2D.app.view.style.display = visible ? '' : 'none';
+    // 不能設成空字串——空字串是「清掉 inline 覆蓋」，不是「設成可見」，清掉之後
+    // 會整個退回去看 stylesheet 的 `body > canvas { display: none; }`（見上面
+    // <style> 那段説明），那條規則命中所有直接掛在 body 下的 canvas，包含這顆，
+    // 等於「顯示」這個分支永遠不會真的生效。用 'block' 蓋掉，才是真的可見。
+    L2D.app.view.style.display = visible ? 'block' : 'none';
+    return true;
+  };
+
+  // 「隱藏桌寵」真的釋放模型資源（main.js 的 show()/hide()，給 desktop-pet-web 控制面板
+  // 的顯示/隱藏按鈕用；見 control-server.js）——跟上面 setLive2DVisible() 只是 CSS
+  // display:none 不同，這裡會把 L2D._c1/_c2 的 Live2D 模型整個 destroy() 掉，藏起來時
+  // 不再占用 GPU/貼圖記憶體，重新顯示時才照原本 cfg 重新載入。
+  //
+  // 直接讀寫 L2D._c1/_c2（底線開頭是「引擎內部狀態」的命名慣例，不是語言層級的私有）、
+  // 呼叫 L2D._load() 重新載入，不在 lib/live2d.js 本身新增 unload/reload 方法——跟
+  // lipsync.js 讀 L2D['_'+charKey].model.internalModel 是同一種「讀寫引擎內部狀態、
+  // 不改動共用檔案本身」的既有作法（見上面 setLive2DVisible 註解、index.html 開頭「唯讀
+  // 引用共用檔案」的原則）。host.html/player.html 從未呼叫這兩個函式，行為不受影響。
+  window._live2dUnloadedForHide = false;
+
+  function _unloadCharForHide(key) {
+    const state = L2D['_' + key];
+    if (!state || !state.model) return;
+    // visibilitySync 是掛在 PIXI.Ticker.shared 上的每幀回呼（見 lib/live2d.js
+    // _attachVisibilitySync），model destroy 後沒拔掉的話下一幀還是會被呼叫、摸到
+    // 已經銷毀的 coreModel 而丟例外。
+    if (state.visibilitySync) {
+      PIXI.Ticker.shared.remove(state.visibilitySync);
+      state.visibilitySync = null;
+    }
+    L2D.dismissFor(key); // 收掉可能還飄著的文字泡泡，跟角色一起「消失」，不留孤兒泡泡
+    L2D.app.stage.removeChild(state.model);
+    state.model.destroy({ children: true }); // 確實釋放 GPU/貼圖資源，跟 destroyExtraPet() 同一招
+    state.model      = null;
+    state.gMap       = {};
+    state.expList    = [];
+    state.expQueue   = [];
+    state.lastExpIdx = -1;
+    state.ready      = false;
+  }
+
+  async function _reloadCharForShow(key) {
+    const state = L2D['_' + key];
+    if (!state || state.model || !state.cfg) return; // 沒卸載過（例如該角色本來就沒啟用）就跳過
+    await L2D._load(key, state.cfg, state.cfg.side || 'left');
+  }
+
+  window.unloadLive2DForHide = async function unloadLive2DForHide() {
+    if (!window._l2dReady || !L2D.app || window._live2dUnloadedForHide) return false;
+    L2D.stopIdleMotion();
+    L2D.stopIdleChat();
+    L2D._activeSlotKeys.forEach(_unloadCharForHide);
+    window._live2dUnloadedForHide = true;
+    return true;
+  };
+
+  window.reloadLive2DForShow = async function reloadLive2DForShow() {
+    if (!window._l2dReady || !L2D.app || !window._live2dUnloadedForHide) return false;
+    await Promise.all(L2D._activeSlotKeys.map(_reloadCharForShow));
+    window._live2dUnloadedForHide = false;
+    // 「開機預設不顯示」是靠 setLive2DVisible(false) 的 CSS display:none 藏起來的
+    // （見上面 setLive2DVisible 註解），跟這裡的 destroy/reload 是完全獨立的兩套機制。
+    // 如果角色從頭到尾都是被那套 CSS 藏著、從沒被這裡 unload 過，canvas 的
+    // display:none 不會因為重新 _load() 模型就自動消失——這裡補呼叫
+    // setLive2DVisible(true) 把兩套狀態校正成一致，確保「顯示」無論一開始是被哪套
+    // 機制藏起來的都能正確生效。
+    window.setLive2DVisible(true);
+    L2D.startIdleChat(PET_CFG.idleMotionMs);
+    L2D.startIdleMotion(PET_CFG.idleMotionMs);
     return true;
   };
 
@@ -1047,17 +1143,35 @@
   // （原本 114px，-53px）。
   // 每顆各自只影響自己那類的 Audio 元素（用 _isTts 標記分辨，見上面 Audio 建構子攔截）
   // ——切換閒置閒聊音效不會連帶把正在播的對話語音也停掉，反之亦然。
-  function makeMuteButton({ bottom, title, isEnabled, setEnabled, matches }) {
+  // accent（左側色條）+ badge（右上角小徽章）：兩顆鈕原本只靠 bottom 位置區分，
+  // 長得完全一樣，使用者容易搞混「這顆是角色待機音效還是對話語音」。加這兩個視覺
+  // 線索後，跟主要的 🔊/🔇 靜音狀態圖示各自獨立、互不影響——accent/badge 固定代表
+  // 「這顆鈕管哪一類聲音」，🔊/🔇 才是「目前開/關」。
+  function makeMuteButton({ bottom, title, isEnabled, setEnabled, matches, accent, badge }) {
     const btn = document.createElement('button');
     btn.title = title;
-    btn.textContent = isEnabled() ? '🔊' : '🔇';
     btn.style.cssText =
       `position:fixed;left:6px;bottom:${bottom}px;z-index:10000;width:45px;height:45px;` +
-      'border-radius:9px;border:1px solid rgba(255,255,255,.18);' +
-      'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;';
-    btn.addEventListener('click', () => {
+      `border-radius:9px;border:1px solid rgba(255,255,255,.18);border-left:4px solid ${accent};` +
+      'background:rgba(0,0,0,.5);color:#888;font-size:21px;cursor:pointer;padding:0;' +
+      'display:flex;align-items:center;justify-content:center;';
+
+    const badgeEl = document.createElement('span');
+    badgeEl.textContent = badge;
+    badgeEl.setAttribute('aria-hidden', 'true');
+    badgeEl.style.cssText = 'position:absolute;top:1px;right:3px;font-size:10px;line-height:1;opacity:.9;';
+    btn.appendChild(badgeEl);
+
+    const iconEl = document.createElement('span');
+    iconEl.textContent = isEnabled() ? '🔊' : '🔇';
+    btn.appendChild(iconEl);
+
+    // 拆成獨立的 toggle() 而不是寫死在 click handler 裡：main.js 的 Ctrl+Alt+E／
+    // Ctrl+Alt+V 全域快捷鍵（見 main.js 該處註解）要能觸發跟滑鼠點按鈕完全同一條
+    // 邏輯，兩邊共用同一份實作才不會日後改了按鈕邏輯、快捷鍵那份忘記同步改。
+    function toggle() {
       setEnabled(!isEnabled());
-      btn.textContent = isEnabled() ? '🔊' : '🔇';
+      iconEl.textContent = isEnabled() ? '🔊' : '🔇';
       const mute = !isEnabled();
       _allAudio.forEach(a => {
         if (a.ended) { _allAudio.delete(a); return; }
@@ -1065,26 +1179,36 @@
         a.muted = mute;
         if (mute) a.pause();
       });
-    });
+    }
+    btn.addEventListener('click', toggle);
     document.body.appendChild(btn);
+    return toggle;
   }
 
-  // 閒置閒聊音效（chatSounds）：維持原本位置 bottom:61px
-  makeMuteButton({
+  // 閒置閒聊音效（chatSounds，角色待機/答話時的環境音效）：維持原本位置 bottom:61px。
+  // 青色色條 + 💬 徽章，跟 L2D_CFG.char1 的泡泡識別色（0,212,255）同色系，呼應「角色本身」。
+  // 回傳的 toggle 函式掛到 window，給 main.js 的 Ctrl+Alt+E 全域快捷鍵呼叫。
+  window.toggleIdleChatSound = makeMuteButton({
     bottom: 61,
-    title: '開關閒置閒聊音效',
+    title: '開關閒置閒聊音效（角色待機時的環境音效，Ctrl+Alt+E）',
     isEnabled: () => soundEnabled,
     setEnabled: (v) => { soundEnabled = v; },
     matches: (a) => !a._isTts,
+    accent: 'rgba(0,212,255,.85)',
+    badge: '💬',
   });
   // 即時對話/語音測試回覆：新的一顆，疊在上面 bottom:114px（跟原本「拖曳角色二」
-  // 鈕空出來之前的舊位置同一個格位，見上面註解的 -53px 由來）
-  makeMuteButton({
+  // 鈕空出來之前的舊位置同一個格位，見上面註解的 -53px 由來）。
+  // 紫色色條 + 🎙️ 徽章，特意跟上面那顆的青色拉開區分，代表「即時語音」這個不同類別。
+  // 回傳的 toggle 函式掛到 window，給 main.js 的 Ctrl+Alt+V 全域快捷鍵呼叫。
+  window.toggleTtsSound = makeMuteButton({
     bottom: 114,
-    title: '開關對話語音回覆',
+    title: '開關對話語音回覆（即時對話的 TTS 語音，Ctrl+Alt+V）',
     isEnabled: () => ttsSoundEnabled,
     setEnabled: (v) => { ttsSoundEnabled = v; },
     matches: (a) => !!a._isTts,
+    accent: 'rgba(167,139,250,.9)',
+    badge: '🎙️',
   });
 
   // ── 即時對話：點角色本體開輸入框（docs/specs/0002-desktop-pet-live-chat.md）───

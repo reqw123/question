@@ -1735,6 +1735,66 @@ function createWindow() {
   const okSequence = globalShortcut.register('Control+Alt+S', () => toggleParticleSequence());
   if (!okSequence) console.warn('[desktop-pet] Ctrl+Alt+S 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用系統匣圖示右鍵選單切換');
 
+  // Ctrl+Alt+E／Ctrl+Alt+V：切換桌寵左下角那兩顆音效按鈕（見 index.html 的
+  // makeMuteButton()），不用切成互動模式、點得到按鈕才能操作。E 對應「閒置閒聊
+  // 音效」（角色待機時的環境音效，Effect）、V 對應「對話語音回覆」（即時對話的
+  // TTS 語音，Voice）——兩顆按鈕本來就用不同顏色色條/徽章區分（見 index.html
+  // makeMuteButton() 的說明），這裡的快捷鍵字母跟著同一組英文意象取，方便記。
+  // 跟 Ctrl+Alt+S 同一種安全前綴慣例，避開日常打字會誤觸的裸鍵；實際切換邏輯
+  // 呼叫 index.html 掛在 window 上的 toggleIdleChatSound()/toggleTtsSound()，
+  // 跟滑鼠點按鈕共用同一份 toggle()，不會兩邊邏輯兜不起來。
+  const okChatSound = globalShortcut.register('Control+Alt+E', () => {
+    win.webContents
+      .executeJavaScript('window.toggleIdleChatSound ? window.toggleIdleChatSound() : null')
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+E 切換閒置閒聊音效失敗：', err));
+  });
+  if (!okChatSound) console.warn('[desktop-pet] Ctrl+Alt+E 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用畫面左下角的音效按鈕切換');
+
+  const okTtsSound = globalShortcut.register('Control+Alt+V', () => {
+    win.webContents
+      .executeJavaScript('window.toggleTtsSound ? window.toggleTtsSound() : null')
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+V 切換對話語音回覆失敗：', err));
+  });
+  if (!okTtsSound) console.warn('[desktop-pet] Ctrl+Alt+V 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用畫面左下角的音效按鈕切換');
+
+  // Ctrl+Alt+[／]：調「閒置閒聊音效」音量（跟上面 Ctrl+Alt+E 切的是同一顆按鈕）；
+  // Ctrl+Alt+-／=：調「對話語音回覆」音量（跟 Ctrl+Alt+V 切的是同一顆）。方括號/
+  // 減等號各自成對、位置相鄰好記，跟切靜音用的 E/V 字母刻意分開，避免同一顆鍵
+  // 身兼「切靜音」跟「調音量」兩種語意。呼叫 index.html 掛在 window 上的
+  // adjustIdleChatVolume()/adjustTtsVolume()，每次 ±10%，並在 DevTools Console
+  // 印目前音量（見 index.html 該函式的說明），跟 particle-effect 那組鍵盤微調
+  // 工具「按了印數字」是同一種除錯風格；不特地轉印到終端機，避免按住連發時把
+  // 終端機洗版（跟 console-message 只轉印 [particle-debug] 開頭訊息同一個顧慮，
+  // 見上面 win.webContents.on('console-message', ...) 的說明）。
+  const VOLUME_STEP = 0.1;
+  const okChatVolDown = globalShortcut.register('Control+Alt+[', () => {
+    win.webContents
+      .executeJavaScript(`window.adjustIdleChatVolume ? window.adjustIdleChatVolume(-${VOLUME_STEP}) : null`)
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+[ 調降閒置閒聊音效音量失敗：', err));
+  });
+  if (!okChatVolDown) console.warn('[desktop-pet] Ctrl+Alt+[ 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
+  const okChatVolUp = globalShortcut.register('Control+Alt+]', () => {
+    win.webContents
+      .executeJavaScript(`window.adjustIdleChatVolume ? window.adjustIdleChatVolume(${VOLUME_STEP}) : null`)
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+] 調升閒置閒聊音效音量失敗：', err));
+  });
+  if (!okChatVolUp) console.warn('[desktop-pet] Ctrl+Alt+] 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
+  const okTtsVolDown = globalShortcut.register('Control+Alt+-', () => {
+    win.webContents
+      .executeJavaScript(`window.adjustTtsVolume ? window.adjustTtsVolume(-${VOLUME_STEP}) : null`)
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+- 調降對話語音回覆音量失敗：', err));
+  });
+  if (!okTtsVolDown) console.warn('[desktop-pet] Ctrl+Alt+- 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
+  const okTtsVolUp = globalShortcut.register('Control+Alt+=', () => {
+    win.webContents
+      .executeJavaScript(`window.adjustTtsVolume ? window.adjustTtsVolume(${VOLUME_STEP}) : null`)
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+= 調升對話語音回覆音量失敗：', err));
+  });
+  if (!okTtsVolUp) console.warn('[desktop-pet] Ctrl+Alt+= 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
   // Ctrl+Alt+數字鍵盤 1~9：依序觸發 scenes.json 裡的情境，順序跟系統匣「情境演出」子選單
   // （buildSceneSubmenu()）完全一致——都是 Object.keys(readScenes())，同一份資料來源，
   // 不會兩邊對不上。每次按下才即時呼叫 readScenes()，不是註冊當下就把情境名稱寫死，
@@ -1784,12 +1844,40 @@ app.whenReady().then(async () => {
   watchParticleModelSources();
   createWindow();
   createTray();
-  console.log('[desktop-pet] 啟動完成 — F8 還原預設位置/縮放，F9 切換互動/穿透模式，F10 結束，Ctrl+Alt+數字鍵盤 1-9 依序觸發情境，Ctrl+Shift+I 開關 DevTools（校正 particle-effect 模型 scale/position 用，見 particle-effect/動畫參數說明.md）');
+  console.log([
+    '[desktop-pet] 啟動完成，快捷鍵：',
+    '[desktop-pet]   F8 還原預設位置/縮放',
+    '[desktop-pet]   F9 切換互動/穿透模式',
+    '[desktop-pet]   F10 結束',
+    '[desktop-pet]   Ctrl+Alt+數字鍵盤 1-9 依序觸發情境',
+    '[desktop-pet]   Ctrl+Alt+E 切換閒置閒聊音效',
+    '[desktop-pet]   Ctrl+Alt+V 切換對話語音回覆',
+    '[desktop-pet]   Ctrl+Alt+[ / ] 調降/調升閒置閒聊音效音量',
+    '[desktop-pet]   Ctrl+Alt+- / = 調降/調升對話語音回覆音量',
+    '[desktop-pet]   Ctrl+Shift+I 開關 DevTools（校正 particle-effect 模型 scale/position 用，見 particle-effect/動畫參數說明.md）',
+  ].join('\n'));
   setClickThrough(clickThrough);
   startControlServer({
     getStatus: getControlStatus,
-    show: () => { if (win && !win.isDestroyed()) win.show(); },
-    hide: () => { if (win && !win.isDestroyed()) win.hide(); },
+    // show()/hide() 除了視窗層級的顯示/隱藏，還會呼叫 index.html 的
+    // reloadLive2DForShow()/unloadLive2DForHide()（見該檔案定義處說明），讓「隱藏」
+    // 真的把主角色模型 destroy() 掉、釋放 GPU/貼圖資源，不是只有視窗看不到而已。
+    // win.show()/win.hide() 先執行讓使用者感受到的顯示/隱藏是立即的，卸載/重新載入
+    // 模型另外非同步跑、失敗只印警告，不擋住視窗顯示/隱藏本身。
+    show: () => {
+      if (!win || win.isDestroyed()) return;
+      win.show();
+      win.webContents
+        .executeJavaScript('window.reloadLive2DForShow ? window.reloadLive2DForShow() : Promise.resolve(false)')
+        .catch((err) => console.error('[desktop-pet] 顯示桌寵時重新載入模型失敗：', err));
+    },
+    hide: () => {
+      if (!win || win.isDestroyed()) return;
+      win.hide();
+      win.webContents
+        .executeJavaScript('window.unloadLive2DForHide ? window.unloadLive2DForHide() : Promise.resolve(false)')
+        .catch((err) => console.error('[desktop-pet] 隱藏桌寵時卸載模型失敗：', err));
+    },
     toggleInteractive: toggleInteractiveFromWeb,
     randomMotion,
     resetPosition,
