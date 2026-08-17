@@ -1,0 +1,143 @@
+- generic [active] [ref=f12e1]:
+  - iframe [ref=f12e2]:
+    
+  - iframe [ref=f12e3]:
+    
+  - generic [ref=f12e5]:
+    - generic [ref=f12e7]:
+      - button "Google 應用程式" [ref=f12e10] [cursor=pointer]
+      - button "Google 帳戶： 56 1 (reqw123abc@gmail.com)" [ref=f12e13] [cursor=pointer]
+    - link "圖書" [ref=f12e18] [cursor=pointer]:
+      - /url: https://books.google.com.tw/?hl=zh-TW&tab=pp&authuser=0
+    - generic [ref=f12e24]:
+      - group [ref=f12e25]:
+        - combobox [ref=f12e29]: artificial intelligence
+      - button "Google 搜尋" [ref=f12e31]
+  - alert [ref=f12e34]:
+    - link [ref=f12e35] [cursor=pointer]:
+      - /url: https://books.google.com.tw/books?hl=zh-TW&lr=&id=HACaS635bYcC&oi=fnd&pg=PA1&dq=artificial+intelligence&ots=Kn7BkVXN2O&sig=tGUnHP2jIEfOkAhiXGzv1XlD_-E&redir_esc=y&output=html_text
+      - img "螢幕閱讀器使用者：按一下這個連結即可進入協助工具模式。協助工具模式的基本功能與普通模式相同，但與您的閱讀器搭配運作的效能更好。" [ref=f12e36]
+  - generic [ref=f12e37]:
+    - heading [level=2] [ref=f12e38]:
+      - link "圖書" [ref=f12e39] [cursor=pointer]:
+        - /url: /books?hl=zh-TW
+    - generic [ref=f12e40]:
+      - link:
+        - /url: ""
+      - link:
+        - /url: ""
+      - link:
+        - /url: ""
+      - link:
+        - /url: ""
+      - link:
+        - /url: ""
+      - link:
+        - /url: ""
+      - toolbar [ref=f12e41]:
+        - button "加入我的圖書館" [ref=f12e42]
+    - toolbar [ref=f12e44]:
+      - button [ref=f12e45]
+  - generic [ref=f12e49]:
+    - navigation [ref=f12e52]:
+      - button [ref=f12e53]:
+        - link "購買印刷本書籍" [ref=f12e54] [cursor=pointer]:
+          - /url: https://books.google.com.tw/books?id=HACaS635bYcC&sitesec=buy&hl=zh-TW&source=gbs_atb
+      - paragraph [ref=f12e55]: 未提供電子書
+      - paragraph
+      - list [ref=f12e58]:
+        - listitem [ref=f12e59]:
+          - link "博客來網路書店" [ref=f12e60] [cursor=pointer]:
+            - /url: http://search.books.com.tw/exep/prod_search.php?cat=all&key=9788131703069
+        - listitem [ref=f12e61]:
+          - link "eslite 誠品" [ref=f12e62] [cursor=pointer]:
+            - /url: http://www.eslite.com/Search_Pro.aspx?query=9788131703069&pagecount=10&cat=3
+        - listitem [ref=f12e63]:
+          - link "金石堂網路書店" [ref=f12e64] [cursor=pointer]:
+            - /url: http://search.kingstone.com.tw/Result.asp?SE_Type=ISBN&k=8131703061
+        - listitem [ref=f12e65]:
+          - separator [ref=f12e66]
+        - listitem [ref=f12e67]:
+          - link "搜尋圖書館目錄" [ref=f12e68] [cursor=pointer]:
+            - /url: https://books.google.com.tw/url?id=HACaS635bYcC&q=http://worldcat.org/isbn/8131703061&clientid=librarylink&usg=AOvVaw0b_6XOXWlQm6P739Ggl04c&source=gbs_buy_r
+        - listitem [ref=f12e69]:
+          - link "所有書商 »" [ref=f12e70] [cursor=pointer]:
+            - /url: https://books.google.com.tw/books?id=HACaS635bYcC&sitesec=buy&hl=zh-TW&source=gbs_buy_r
+      - link [ref=f12e74] [cursor=pointer]:
+        - /url: https://play.google.com/store/books
+        - heading "在 Google Play 中購買書籍" [level=3] [ref=f12e76]
+        - paragraph [ref=f12e77]: 瀏覽全球規模最大的電子書店，立即透過網路、平板電腦、手機或電子書閱讀裝置享受開卷之樂。
+        - paragraph [ref=f12e78]: 立即前往 Google Play »
+      - list [ref=f12e82]:
+        - tab [ref=f12e83]:
+          - link "我的圖書館" [ref=f12e84] [cursor=pointer]:
+            - /url: https://books.google.com.tw/books?uid=101073732053472299052&hl=zh-TW&source=gbs_lp_bookshelf_list
+        - tab "我的記錄" [ref=f12e85]
+    - main [ref=f12e87]:
+      - table [ref=f12e92]:
+        - rowgroup [ref=f12e93]:
+          - row [ref=f12e94]:
+            - cell "Introduction to Artificial Intelligence 封面 Eugene Charniak Pearson Education, 1985 - 720 頁" [ref=f12e95]:
+              - heading "Introduction to Artificial Intelligence" [level=1] [ref=f12e96]
+              - img "封面" [ref=f12e99]
+              - generic [ref=f12e100]:
+                - link "Eugene Charniak" [ref=f12e102] [cursor=pointer]:
+                  - /url: https://www.google.com.tw/search?hl=zh-TW&tbo=p&tbm=bks&q=inauthor:%22Eugene+Charniak%22
+                - generic [ref=f12e103]: Pearson Education, 1985 - 720 頁
+      - generic [ref=f12e104]:
+        - heading "書目資訊" [level=3] [ref=f12e105]
+        - table [ref=f12e108]:
+          - rowgroup [ref=f12e109]:
+            - row [ref=f12e110]:
+              - cell "書名" [ref=f12e111]
+              - cell [ref=f12e112]:
+                - text: Introduction to Artificial Intelligence
+                - link "ADDISON-WESLEY SERIES IN COMPUTER SCIENCE" [ref=f12e113] [cursor=pointer]:
+                  - /url: https://www.google.com.tw/search?hl=zh-TW&tbo=p&tbm=bks&q=bibliogroup:%22ADDISON-WESLEY+SERIES+IN+COMPUTER+SCIENCE%22&source=gbs_metadata_r&cad=1
+            - row [ref=f12e115]:
+              - cell "作者" [ref=f12e116]
+              - cell [ref=f12e117]:
+                - link "Eugene Charniak" [ref=f12e118] [cursor=pointer]:
+                  - /url: https://www.google.com.tw/search?hl=zh-TW&tbo=p&tbm=bks&q=inauthor:%22Eugene+Charniak%22&source=gbs_metadata_r&cad=1
+            - row [ref=f12e119]:
+              - cell "出版者" [ref=f12e120]
+              - cell "Pearson Education, 1985" [ref=f12e121]
+            - row [ref=f12e122]:
+              - cell "ISBN" [ref=f12e123]
+              - cell "8131703061, 9788131703069" [ref=f12e124]
+            - row [ref=f12e125]:
+              - cell "頁數" [ref=f12e126]
+              - cell "720 頁" [ref=f12e127]
+            - row [ref=f12e128]:
+              - cell [ref=f12e129]
+              - cell [ref=f12e130]
+            - row [ref=f12e131]:
+              - cell "匯出書目資料" [ref=f12e132]
+              - cell [ref=f12e133]:
+                - link "BiBTeX" [ref=f12e134]:
+                  - /url: https://books.google.com.tw/books/download/Introduction_to_Artificial_Intelligence.bibtex?id=HACaS635bYcC&hl=zh-TW&output=bibtex
+                - link "EndNote" [ref=f12e135]:
+                  - /url: https://books.google.com.tw/books/download/Introduction_to_Artificial_Intelligence.enw?id=HACaS635bYcC&hl=zh-TW&output=enw
+                - link "RefMan" [ref=f12e136]:
+                  - /url: https://books.google.com.tw/books/download/Introduction_to_Artificial_Intelligence.ris?id=HACaS635bYcC&hl=zh-TW&output=ris
+      - generic [ref=f12e138]:
+        - link "關於 Google 圖書" [ref=f12e139] [cursor=pointer]:
+          - /url: /intl/zh-TW/googlebooks/about.html
+        - text: "-"
+        - link "隱私權政策" [ref=f12e140] [cursor=pointer]:
+          - /url: /intl/zh-TW/googlebooks/privacy.html
+        - text: "-"
+        - link "服務條款" [ref=f12e141] [cursor=pointer]:
+          - /url: /intl/zh-TW/googlebooks/tos.html
+        - text: "-"
+        - link "給出版者的話" [ref=f12e142] [cursor=pointer]:
+          - /url: http://books.google.com.tw/support/partner/?hl=zh-TW-TW
+        - text: "-"
+        - link "回報問題" [ref=f12e143] [cursor=pointer]:
+          - /url: http://books.google.com.tw/support/answer/180577?hl=zh-TW-TW&url=https://books.google.com.tw/books?hl=zh-TW&lr=&id=HACaS635bYcC&oi=fnd&pg=PA1&dq=artificial+intelligence&ots=Kn7BkVXN2O&sig=tGUnHP2jIEfOkAhiXGzv1XlD_-E&redir_esc=y&v=HACaS635bYcC&is=atb
+        - text: "-"
+        - link "說明" [ref=f12e144] [cursor=pointer]:
+          - /url: http://books.google.com.tw/support/topic/4359341?hl=zh-TW-TW
+        - text: "-"
+        - link "Google 首頁" [ref=f12e145] [cursor=pointer]:
+          - /url: https://www.google.com.tw/search?hl=zh-TW

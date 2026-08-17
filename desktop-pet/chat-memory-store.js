@@ -62,4 +62,4 @@ function clearHistory(charKey) {
   }
 }
 
-module.exports = { getHistory, appendTurn, clearHistory, MAX_TURNS };
+module.exports = { getHistory, appendTurn, clearHistory, memoryPath, MAX_TURNS };

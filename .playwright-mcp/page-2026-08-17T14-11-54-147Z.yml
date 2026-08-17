@@ -1,0 +1,866 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - banner [ref=f1e4]:
+      - generic [ref=f1e6]:
+        - generic [ref=f1e7]:
+          - button "導覽" [active] [pressed] [ref=f1e9] [cursor=pointer]
+          - generic [ref=f1e13]:
+            - link "YouTube 首頁" [ref=f1e14] [cursor=pointer]:
+              - /url: /
+            - generic [ref=f1e20]: TW
+          - button "略過導覽功能" [ref=f1e24] [cursor=pointer]
+        - generic [ref=f1e28]:
+          - search [ref=f1e29]:
+            - generic [ref=f1e31]:
+              - generic [ref=f1e32]:
+                - combobox "搜尋" [expanded] [ref=f1e34]: Gemini X AI 通識素養認證課程
+                - button "清除搜尋查詢" [ref=f1e36] [cursor=pointer]
+              - button "Search" [ref=f1e43] [cursor=pointer]
+          - generic [ref=f1e48]:
+            - button "使用語音搜尋" [ref=f1e50] [cursor=pointer]
+            - tooltip "tooltip"
+        - generic [ref=f1e55]:
+          - button "建立" [ref=f1e58] [cursor=pointer]
+          - generic [ref=f1e62]:
+            - button "通知" [ref=f1e64] [cursor=pointer]
+            - tooltip "tooltip"
+          - button "帳戶選單" [ref=f1e72]:
+            - img "顯示圖片" [ref=f1e74] [cursor=pointer]
+    - navigation [ref=f1e75]:
+      - generic [ref=f1e81]:
+        - generic [ref=f1e82]:
+          - generic [ref=f1e84]:
+            - link [ref=f1e86] [cursor=pointer]:
+              - /url: /
+              - link "首頁" [ref=f1e87]
+            - link [ref=f1e93] [cursor=pointer]:
+              - link "Shorts" [ref=f1e94]
+            - link [ref=f1e100] [cursor=pointer]:
+              - /url: /feed/subscriptions
+              - link "訂閱內容" [ref=f1e101]
+          - generic [ref=f1e108]:
+            - link [ref=f1e111] [cursor=pointer]:
+              - /url: /feed/you
+              - link "個人中心" [ref=f1e112]
+            - generic [ref=f1e117]:
+              - link [ref=f1e119] [cursor=pointer]:
+                - /url: /feed/history
+                - link "觀看記錄" [ref=f1e120]
+              - link [ref=f1e126] [cursor=pointer]:
+                - /url: /feed/playlists
+                - link "播放清單" [ref=f1e127]
+              - link [ref=f1e133] [cursor=pointer]:
+                - /url: /playlist?list=WL
+                - link "稍後觀看" [ref=f1e134]
+              - link [ref=f1e140] [cursor=pointer]:
+                - /url: /playlist?list=LL
+                - link "喜歡的影片" [ref=f1e141]
+              - link [ref=f1e147] [cursor=pointer]:
+                - /url: /create_channel?channel_creation_token=EhHSoN25AQsSCUZFbGlicmFyeRojEg4yDGF0b20tYWNjb3VudNKg3bkBDRILRkVteV92aWRlb3M%253D&upsell=channel
+                - link "你的影片" [ref=f1e148]
+              - link [ref=f1e155] [cursor=pointer]:
+                - /url: /feed/downloads
+                - link "已下載的內容" [ref=f1e156]
+          - generic [ref=f1e161]:
+            - heading "更多 YouTube 功能" [level=3] [ref=f1e162]
+            - generic [ref=f1e164]:
+              - link [ref=f1e166] [cursor=pointer]:
+                - /url: /premium
+                - link "YouTube Premium" [ref=f1e167]
+              - link [ref=f1e173] [cursor=pointer]:
+                - /url: https://music.youtube.com/
+                - link "YouTube Music" [ref=f1e174]
+              - link [ref=f1e180] [cursor=pointer]:
+                - /url: https://www.youtubekids.com/?source=youtube_web
+                - link "YouTube Kids" [ref=f1e181]
+          - generic [ref=f1e186]:
+            - heading "探索" [level=3] [ref=f1e187]
+            - generic [ref=f1e189]:
+              - link [ref=f1e191] [cursor=pointer]:
+                - /url: /channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ
+                - link "音樂" [ref=f1e192]
+              - link [ref=f1e198] [cursor=pointer]:
+                - /url: /feed/storefront?bp=ogUCKAU%3D
+                - link "電影" [ref=f1e199]
+              - link [ref=f1e205] [cursor=pointer]:
+                - /url: /channel/UC4R8DWoMoI7CAwX8_LjQHig
+                - link "直播" [ref=f1e206]
+              - button [ref=f1e212]:
+                - link [ref=f1e213] [cursor=pointer]:
+                  - link "顯示更多" [ref=f1e214]
+          - link [ref=f1e222] [cursor=pointer]:
+            - /url: /reporthistory
+            - link "檢舉記錄" [ref=f1e223]
+        - generic [ref=f1e228]:
+          - generic [ref=f1e229]:
+            - link "簡介" [ref=f1e230] [cursor=pointer]:
+              - /url: https://www.youtube.com/about/
+            - link "媒體" [ref=f1e231] [cursor=pointer]:
+              - /url: https://www.youtube.com/about/press/
+            - link "著作權" [ref=f1e232] [cursor=pointer]:
+              - /url: https://www.youtube.com/about/copyright/
+            - link "與我們聯絡" [ref=f1e233] [cursor=pointer]:
+              - /url: /t/contact_us/
+            - link "創作者" [ref=f1e234] [cursor=pointer]:
+              - /url: https://www.youtube.com/creators/
+            - link "廣告" [ref=f1e235] [cursor=pointer]:
+              - /url: https://www.youtube.com/ads/
+            - link "開發人員" [ref=f1e236] [cursor=pointer]:
+              - /url: https://developers.google.com/youtube
+          - generic [ref=f1e237]:
+            - link "條款" [ref=f1e238] [cursor=pointer]:
+              - /url: /t/terms
+            - link "隱私權" [ref=f1e239] [cursor=pointer]:
+              - /url: /t/privacy
+            - link "政策與安全性" [ref=f1e240] [cursor=pointer]:
+              - /url: https://www.youtube.com/about/policies/
+            - link "YouTube 運作方式" [ref=f1e241] [cursor=pointer]:
+              - /url: https://www.youtube.com/howyoutubeworks?utm_campaign=ytgen&utm_source=ythp&utm_medium=LeftNav&utm_content=txt&u=https%3A%2F%2Fwww.youtube.com%2Fhowyoutubeworks%3Futm_source%3Dythp%26utm_medium%3DLeftNav%26utm_campaign%3Dytgen
+            - link "測試新功能" [ref=f1e242] [cursor=pointer]:
+              - /url: /new
+          - generic [ref=f1e243]: © 2026 Google LLC
+    - generic [ref=f1e244]:
+      - main [ref=f1e245]:
+        - generic [ref=f1e246]:
+          - generic [ref=f1e248]:
+            - tablist [ref=f1e253]:
+              - tab "全部" [selected] [ref=f1e257] [cursor=pointer]
+              - tab "Shorts" [ref=f1e266] [cursor=pointer]
+              - tab "未觀看" [ref=f1e275] [cursor=pointer]
+              - tab "已觀看" [ref=f1e284] [cursor=pointer]
+              - tab "影片" [ref=f1e293] [cursor=pointer]
+              - tab "最新上傳" [ref=f1e302] [cursor=pointer]
+              - tab "直播中" [ref=f1e311] [cursor=pointer]
+            - generic [ref=f1e318]:
+              - button "搜尋篩選器" [ref=f1e320] [cursor=pointer]:
+                - generic: 篩選器
+              - tooltip "tooltip"
+          - generic [ref=f1e327]:
+            - generic [ref=f1e329]:
+              - generic [ref=f1e338] [cursor=pointer]:
+                - link [ref=f1e339]:
+                  - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CGXyTpRaDao3UGrPFr7wP6d2z2QH058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoE3gJP0ALRJJLnXFOe69u2Yj8gcqOn6t1d-dOipSmNn_fFXAFZBUNRhvU0Nqm8cr-De1fyPDTuU8NyKgmNrlVRGYWFHgO16-ZD0MRisyyyWJ55tlokI8Qt8QDrLTQL4IKjlpQDNhmjK6M0Y6L5KjOcE8FD8Nm0kUVvy8LDl_AGBOn19VityGYFTLJy8HSHJ4spLxf687GvghOHklj6BhvlmOOwJ07F7bqBwiK1QQXQoopeiNyyP8wPJJptpTYdtrkiUFa6j_hPmoOLZHnVB5L8MigbrOD4nh2b1lBR7Awo3kepTzWxrHkc-moELC-_-7WSCpZ_fwXe8G5dNRyWzhtTT2vhCeo4m0WjA3TmI4NGZiZ4Lrve8Z2RC0a6nAlrUwzG_rKVWktYXKv0iqsZXeU7Dro6NvadD0nXxj6PpTB5vTjxnFwjDjb5l5z2uQpqBMAsK1BBwpLAHQEj7s22S7PTfogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWJClt4Lsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDgkNzHlL-h7BESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQ3RIZ0tNQ0hxRjE3U2xrbjBmQlRZR3dsOFFIY1YtZ2gtYnpQLWRGVW9VZmlYZ2MxWFY4WlpOQVlEeXdoNVBvazItcjZ5V2dfQmk3TkpvY1E7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwvl2Uq5gjFfjgkuyoKiOWkJnBTbsrq_PBqZfO6sVjZZNB5pS-kxgkaAgLmEALw_wcB&num=1&cid=CAESvQHg9sb7rBwGyUUXukH31qqc6tzLaoKXMp7SD6tkxdFxVzayAI13AKDhYqy32C4SCThiOafF7UKu1hy5jBNTJ4pThJMBY9tJDY02WrRPgm8vE54CqzFPsr5YDuhwKsRKYDUghITg0SK2aFJ8sWrYEuNK8FFT0046LEjZL8XBxIXcITG5lOiZq7pO9-RV_bGHQoJNZoSugAIu4s-JR1_Ai-y2lCLPDGvRQWJgM6nKQsNqryYICwiotxTaGTqTlHs&ad_cpn=%5BCPN%5D&sig=AOD64_0n5zRJBu5r52x5p-V90PbTCn7INQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=21&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                  - button [ref=f1e344]
+                - generic [ref=f1e348]:
+                  - generic [ref=f1e349]:
+                    - generic [ref=f1e350]:
+                      - link "Adobe Acrobat Pro DC gives you the most-trusted tools to manage, edit, and share PDFs." [ref=f1e353]:
+                        - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CGXyTpRaDao3UGrPFr7wP6d2z2QH058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoE3gJP0ALRJJLnXFOe69u2Yj8gcqOn6t1d-dOipSmNn_fFXAFZBUNRhvU0Nqm8cr-De1fyPDTuU8NyKgmNrlVRGYWFHgO16-ZD0MRisyyyWJ55tlokI8Qt8QDrLTQL4IKjlpQDNhmjK6M0Y6L5KjOcE8FD8Nm0kUVvy8LDl_AGBOn19VityGYFTLJy8HSHJ4spLxf687GvghOHklj6BhvlmOOwJ07F7bqBwiK1QQXQoopeiNyyP8wPJJptpTYdtrkiUFa6j_hPmoOLZHnVB5L8MigbrOD4nh2b1lBR7Awo3kepTzWxrHkc-moELC-_-7WSCpZ_fwXe8G5dNRyWzhtTT2vhCeo4m0WjA3TmI4NGZiZ4Lrve8Z2RC0a6nAlrUwzG_rKVWktYXKv0iqsZXeU7Dro6NvadD0nXxj6PpTB5vTjxnFwjDjb5l5z2uQpqBMAsK1BBwpLAHQEj7s22S7PTfogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWJClt4Lsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDgkNzHlL-h7BESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQ3RIZ0tNQ0hxRjE3U2xrbjBmQlRZR3dsOFFIY1YtZ2gtYnpQLWRGVW9VZmlYZ2MxWFY4WlpOQVlEeXdoNVBvazItcjZ5V2dfQmk3TkpvY1E7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwvl2Uq5gjFfjgkuyoKiOWkJnBTbsrq_PBqZfO6sVjZZNB5pS-kxgkaAgLmEALw_wcB&num=1&cid=CAESvQHg9sb7rBwGyUUXukH31qqc6tzLaoKXMp7SD6tkxdFxVzayAI13AKDhYqy32C4SCThiOafF7UKu1hy5jBNTJ4pThJMBY9tJDY02WrRPgm8vE54CqzFPsr5YDuhwKsRKYDUghITg0SK2aFJ8sWrYEuNK8FFT0046LEjZL8XBxIXcITG5lOiZq7pO9-RV_bGHQoJNZoSugAIu4s-JR1_Ai-y2lCLPDGvRQWJgM6nKQsNqryYICwiotxTaGTqTlHs&ad_cpn=%5BCPN%5D&sig=AOD64_0n5zRJBu5r52x5p-V90PbTCn7INQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=0&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                      - link "Built to work where you work." [ref=f1e356]:
+                        - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CGXyTpRaDao3UGrPFr7wP6d2z2QH058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoE3gJP0ALRJJLnXFOe69u2Yj8gcqOn6t1d-dOipSmNn_fFXAFZBUNRhvU0Nqm8cr-De1fyPDTuU8NyKgmNrlVRGYWFHgO16-ZD0MRisyyyWJ55tlokI8Qt8QDrLTQL4IKjlpQDNhmjK6M0Y6L5KjOcE8FD8Nm0kUVvy8LDl_AGBOn19VityGYFTLJy8HSHJ4spLxf687GvghOHklj6BhvlmOOwJ07F7bqBwiK1QQXQoopeiNyyP8wPJJptpTYdtrkiUFa6j_hPmoOLZHnVB5L8MigbrOD4nh2b1lBR7Awo3kepTzWxrHkc-moELC-_-7WSCpZ_fwXe8G5dNRyWzhtTT2vhCeo4m0WjA3TmI4NGZiZ4Lrve8Z2RC0a6nAlrUwzG_rKVWktYXKv0iqsZXeU7Dro6NvadD0nXxj6PpTB5vTjxnFwjDjb5l5z2uQpqBMAsK1BBwpLAHQEj7s22S7PTfogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWJClt4Lsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDgkNzHlL-h7BESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQ3RIZ0tNQ0hxRjE3U2xrbjBmQlRZR3dsOFFIY1YtZ2gtYnpQLWRGVW9VZmlYZ2MxWFY4WlpOQVlEeXdoNVBvazItcjZ5V2dfQmk3TkpvY1E7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwvl2Uq5gjFfjgkuyoKiOWkJnBTbsrq_PBqZfO6sVjZZNB5pS-kxgkaAgLmEALw_wcB&num=1&cid=CAESvQHg9sb7rBwGyUUXukH31qqc6tzLaoKXMp7SD6tkxdFxVzayAI13AKDhYqy32C4SCThiOafF7UKu1hy5jBNTJ4pThJMBY9tJDY02WrRPgm8vE54CqzFPsr5YDuhwKsRKYDUghITg0SK2aFJ8sWrYEuNK8FFT0046LEjZL8XBxIXcITG5lOiZq7pO9-RV_bGHQoJNZoSugAIu4s-JR1_Ai-y2lCLPDGvRQWJgM6nKQsNqryYICwiotxTaGTqTlHs&ad_cpn=%5BCPN%5D&sig=AOD64_0n5zRJBu5r52x5p-V90PbTCn7INQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=7&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                      - generic [ref=f1e357]:
+                        - button "Adobe Acrobat" [ref=f1e361]
+                        - generic [ref=f1e365]:
+                          - generic [ref=f1e366]: 贊助商廣告
+                          - text: ·
+                        - generic [ref=f1e367]: Adobe Acrobat
+                    - button "我的廣告中心" [ref=f1e371]
+                  - generic [ref=f1e377]:
+                    - link "觀看" [ref=f1e380]:
+                      - /url: /watch?v=KwnjktJaSrs
+                    - link "瞭解詳情" [ref=f1e386]:
+                      - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CGXyTpRaDao3UGrPFr7wP6d2z2QH058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoE3gJP0ALRJJLnXFOe69u2Yj8gcqOn6t1d-dOipSmNn_fFXAFZBUNRhvU0Nqm8cr-De1fyPDTuU8NyKgmNrlVRGYWFHgO16-ZD0MRisyyyWJ55tlokI8Qt8QDrLTQL4IKjlpQDNhmjK6M0Y6L5KjOcE8FD8Nm0kUVvy8LDl_AGBOn19VityGYFTLJy8HSHJ4spLxf687GvghOHklj6BhvlmOOwJ07F7bqBwiK1QQXQoopeiNyyP8wPJJptpTYdtrkiUFa6j_hPmoOLZHnVB5L8MigbrOD4nh2b1lBR7Awo3kepTzWxrHkc-moELC-_-7WSCpZ_fwXe8G5dNRyWzhtTT2vhCeo4m0WjA3TmI4NGZiZ4Lrve8Z2RC0a6nAlrUwzG_rKVWktYXKv0iqsZXeU7Dro6NvadD0nXxj6PpTB5vTjxnFwjDjb5l5z2uQpqBMAsK1BBwpLAHQEj7s22S7PTfogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWJClt4Lsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDgkNzHlL-h7BESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQ3RIZ0tNQ0hxRjE3U2xrbjBmQlRZR3dsOFFIY1YtZ2gtYnpQLWRGVW9VZmlYZ2MxWFY4WlpOQVlEeXdoNVBvazItcjZ5V2dfQmk3TkpvY1E7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwvl2Uq5gjFfjgkuyoKiOWkJnBTbsrq_PBqZfO6sVjZZNB5pS-kxgkaAgLmEALw_wcB&num=1&cid=CAESvQHg9sb7rBwGyUUXukH31qqc6tzLaoKXMp7SD6tkxdFxVzayAI13AKDhYqy32C4SCThiOafF7UKu1hy5jBNTJ4pThJMBY9tJDY02WrRPgm8vE54CqzFPsr5YDuhwKsRKYDUghITg0SK2aFJ8sWrYEuNK8FFT0046LEjZL8XBxIXcITG5lOiZq7pO9-RV_bGHQoJNZoSugAIu4s-JR1_Ai-y2lCLPDGvRQWJgM6nKQsNqryYICwiotxTaGTqTlHs&ad_cpn=%5BCPN%5D&sig=AOD64_0n5zRJBu5r52x5p-V90PbTCn7INQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=8&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+              - generic [ref=f1e391] [cursor=pointer]:
+                - link [ref=f1e392]:
+                  - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                  - generic [ref=f1e393]: 10 堂課
+                - generic [ref=f1e408]:
+                  - generic [ref=f1e409]:
+                    - heading "YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [level=3] [ref=f1e410]:
+                      - link "YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [ref=f1e411]:
+                        - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                    - generic [ref=f1e413]:
+                      - group [ref=f1e414]:
+                        - link "泛科學院" [ref=f1e417]:
+                          - /url: /@panscischool
+                        - generic [ref=f1e418]: •
+                        - link "課程" [ref=f1e421]:
+                          - /url: /@panscischool
+                      - group [ref=f1e422]
+                      - group [ref=f1e423]:
+                        - link "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】 · 2:14" [ref=f1e425]:
+                          - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                      - group [ref=f1e426]
+                      - group [ref=f1e427]:
+                        - link "觀看完整課程" [ref=f1e430]:
+                          - /url: /playlist?list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                  - button "其他動作" [ref=f1e433]
+              - generic [ref=f1e438]:
+                - link [ref=f1e440] [cursor=pointer]:
+                  - /url: /watch?v=ILEXHnt31nU&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e442] [cursor=pointer]:
+                  - generic [ref=f1e443]:
+                    - generic [ref=f1e444]:
+                      - heading [level=3] [ref=f1e445]:
+                        - link "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】 2 分鐘 14 秒" [ref=f1e446]:
+                          - /url: /watch?v=ILEXHnt31nU&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: 【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】
+                      - button "動作選單" [ref=f1e450]
+                    - generic [ref=f1e456]:
+                      - generic [ref=f1e457]: 觀看次數：3.7萬次
+                      - generic [ref=f1e458]: •1 年前
+                  - generic [ref=f1e459]:
+                    - link "前往頻道：泛科學院" [ref=f1e460]:
+                      - /url: /@panscischool
+                    - link "泛科學院" [ref=f1e466]:
+                      - /url: /@panscischool
+                  - generic [ref=f1e467]:
+                    - generic [ref=f1e468]: https://www.youtube.com/playlist?list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu 這堂【Gemini X AI通識素養認證課程】由泛 ...
+                    - tooltip "tooltip"
+            - generic [ref=f1e475]:
+              - generic [ref=f1e476]: 直播實作教學 新手友善AI實戰課
+              - generic [ref=f1e486] [cursor=pointer]:
+                - generic [ref=f1e487]:
+                  - link "最貼近產業的 AI 實戰學程 - 實作12大產業專案，從行為分析、品質預測到自駕車應用 ，全面提升實戰力，從0到1打造完整作品集" [ref=f1e490]:
+                    - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwi72u2C7KeWAxUh0RYFHdpCBcMYACICCAEQBhoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qzeI2yA8U0gP5naZM2lJZg_rASkSCHzTIhIqpfauZYc5wWwQ6cI41waAj4BEALw_wcB&num=1&cid=CAAS0wHkaKzjwvicFyJs2sHbh5uk_BNLdEpjT0qEf9p_imp-0_bLuJsAMgUe1_xJy3d7aMNciQgb3hk1dg6VNoneLq5IxrjiwgudGFHODd4RlWNyw_aI6JT0xQeeKV3WmwtzEWzFpfmiw_cfjZK3aSydItgpF85bwH-mIi0Zq7OSOAZAXuH3vW4rJr2u92G0lHnRyVZTaaWjZNfkn3mHUtIMjEfV-jDuVuHR0Ojn5nN1yt_ZU5zOExveWdI09YJIkYXdmov0DrvtThwOefhyODjvOxw0G062&cce=2&category=acrcp_v1_32&sig=AOD64_1HDM7Me9ugAx1EZk193O-srYSwqA&adurl=https://www.tibame.com/program/ai_datascientist%3Fgad_source%3D2%26gad_campaignid%3D23710340102&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                  - generic [ref=f1e491]:
+                    - generic [ref=f1e493]:
+                      - generic [ref=f1e494]: 贊助商廣告
+                      - text: ·
+                    - generic [ref=f1e495]: https://www.tibame.com/
+                - button "我的廣告中心" [ref=f1e499]
+            - generic [ref=f1e504]:
+              - generic [ref=f1e506] [cursor=pointer]:
+                - link [ref=f1e507]:
+                  - /url: /watch?v=VE4-2AkCzJ8&list=PLp-hFjVIn_eW71di7OGZksXw1fuG-V4Ya
+                  - generic [ref=f1e508]: 21 部影片
+                - generic [ref=f1e523]:
+                  - generic [ref=f1e524]:
+                    - heading "Google Gemini X NotebookLM Google生態系｜AI入門學習者的好幫手" [level=3] [ref=f1e525]:
+                      - link "Google Gemini X NotebookLM Google生態系｜AI入門學習者的好幫手" [ref=f1e526]:
+                        - /url: /watch?v=VE4-2AkCzJ8&list=PLp-hFjVIn_eW71di7OGZksXw1fuG-V4Ya
+                    - generic [ref=f1e528]:
+                      - group [ref=f1e529]:
+                        - link "泛科學院" [ref=f1e532]:
+                          - /url: /@panscischool
+                        - generic [ref=f1e533]: •
+                        - link "播放清單" [ref=f1e536]:
+                          - /url: /@panscischool
+                        - generic [ref=f1e537]: •
+                        - generic [ref=f1e538]: 4 天前更新
+                      - group [ref=f1e539]
+                      - group [ref=f1e540]:
+                        - link "NotebookLM 大升級！超強「Gemini Notebook」實戰教學：合約、保險、信用卡優惠 一次掌握！｜泛科學院 · 15:34" [ref=f1e542]:
+                          - /url: /watch?v=VE4-2AkCzJ8&list=PLp-hFjVIn_eW71di7OGZksXw1fuG-V4Ya&pp=0gcJCeYE0aJEHMZM
+                      - group [ref=f1e543]:
+                        - link "AI工具怎麼選？AI 免費版大評比！ChatGPT、Gemini、Claude 該選誰？5 大情境實測全公開｜泛科學院 · 14:47" [ref=f1e545]:
+                          - /url: /watch?v=y7mFMDxc1VM&list=PLp-hFjVIn_eW71di7OGZksXw1fuG-V4Ya
+                      - group [ref=f1e546]
+                      - group [ref=f1e547]:
+                        - link "查看完整播放清單" [ref=f1e550]:
+                          - /url: /playlist?list=PLp-hFjVIn_eW71di7OGZksXw1fuG-V4Ya
+                  - button "其他動作" [ref=f1e553]
+              - generic [ref=f1e558] [cursor=pointer]:
+                - link [ref=f1e559]:
+                  - /url: /watch?v=3mi9U4hhh_c&list=PLAK2i2x9fucZXz_bTyykrueXBUVVxGKoZ
+                  - generic [ref=f1e560]: 35 部影片
+                - generic [ref=f1e575]:
+                  - generic [ref=f1e576]:
+                    - 'heading "Gemini AI 教學 #Gemini #Gem #ai #簡報 #提示詞 #觀點LAB #GEMINI3 #GEMINI教學 #GEMINI介紹" [level=3] [ref=f1e577]':
+                      - 'link "Gemini AI 教學 #Gemini #Gem #ai #簡報 #提示詞 #觀點LAB #GEMINI3 #GEMINI教學 #GEMINI介紹" [ref=f1e578]':
+                        - /url: /watch?v=3mi9U4hhh_c&list=PLAK2i2x9fucZXz_bTyykrueXBUVVxGKoZ
+                    - generic [ref=f1e580]:
+                      - group [ref=f1e581]:
+                        - link "觀點LAB" [ref=f1e584]:
+                          - /url: /@%E8%A7%80%E9%BB%9ELAB
+                        - generic [ref=f1e585]: •
+                        - link "播放清單" [ref=f1e588]:
+                          - /url: /@%E8%A7%80%E9%BB%9ELAB
+                      - group [ref=f1e589]
+                      - group [ref=f1e590]:
+                        - link "【告別熬夜寫 PPT！三分鐘生成簡報的「職場外掛」】程式碼使用教學 · 1:52" [ref=f1e592]:
+                          - /url: /watch?v=3mi9U4hhh_c&list=PLAK2i2x9fucZXz_bTyykrueXBUVVxGKoZ
+                      - group [ref=f1e593]:
+                        - 'link "再不學就落伍了！「提示詞資料庫」：讓簡報從發想到排版全自動完成 #簡報技巧 #AI工作流 #Gemini #職場生存術 #GOOGLE #GoogleSlides #PPTX #觀點LAB #ai · 5:18" [ref=f1e595]':
+                          - /url: /watch?v=sBdTvoG2Yzo&list=PLAK2i2x9fucZXz_bTyykrueXBUVVxGKoZ
+                      - group [ref=f1e596]
+                      - group [ref=f1e597]:
+                        - link "查看完整播放清單" [ref=f1e600]:
+                          - /url: /playlist?list=PLAK2i2x9fucZXz_bTyykrueXBUVVxGKoZ
+                  - button "其他動作" [ref=f1e603]
+            - generic [ref=f1e613]:
+              - generic [ref=f1e614]: 如何讓同仁都可以輕鬆上手使用AI
+              - generic [ref=f1e623]:
+                - generic [ref=f1e624] [cursor=pointer]:
+                  - generic [ref=f1e625]:
+                    - 'link "即開即用 全員都可用的生成式AI - Ciao是Openfind推出的AI智慧搜尋引擎，透過對話式問答提供所需的知識和資訊，提升效率與生產力！ 即開即用，可隨時自由切換包含GPT 4o和Gemini 2.0等AI模型，企業團購AI最佳選擇！ 避免跨國請款耗時費力。提供後臺方便企業管理。踏出AI企業的第一步。全公司員工即開即用。一次可使用多個AI模型。服務: 跟上時代的腳步導入AI, 不需額外的人力與經費, 人人都能輕鬆上手使用。" [ref=f1e628]':
+                      - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwi72u2C7KeWAxUh0RYFHdpCBcMYACICCAEQARoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qzu2F0JqxmeUKNhD5E-1LlcOyvgqHDBcdZ7MZHJGbgvU0zxXLerUJAaAqJyEALw_wcB&num=2&cid=CAAS0wHkaKzjwvicFyJs2sHbh5uk_BNLdEpjT0qEf9p_imp-0_bLuJsAMgUe1_xJy3d7aMNciQgb3hk1dg6VNoneLq5IxrjiwgudGFHODd4RlWNyw_aI6JT0xQeeKV3WmwtzEWzFpfmiw_cfjZK3aSydItgpF85bwH-mIi0Zq7OSOAZAXuH3vW4rJr2u92G0lHnRyVZTaaWjZNfkn3mHUtIMjEfV-jDuVuHR0Ojn5nN1yt_ZU5zOExveWdI09YJIkYXdmov0DrvtThwOefhyODjvOxw0G062&cce=2&category=acrcp_v1_32&sig=AOD64_2ToOiA63hrTCoDawDN4EoX4CUXnQ&adurl=https://www.openfind.com.tw/taiwan/ciao.html%3Fgad_source%3D2%26gad_campaignid%3D22148239343&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                    - generic [ref=f1e629]:
+                      - generic [ref=f1e631]:
+                        - generic [ref=f1e632]: 贊助商廣告
+                        - text: ·
+                      - generic [ref=f1e633]: https://www.openfind.com.tw/ciao/ai智慧問答引擎
+                  - button "我的廣告中心" [ref=f1e637]
+                - generic [ref=f1e641]:
+                  - link "《成功案例》看這裡" [ref=f1e642]
+                  - link "《相關文章》立即看" [ref=f1e644]
+                  - link "《更多資訊》立即索取" [ref=f1e646]
+                  - link "《聯繫我們》瞭解更多" [ref=f1e648]
+            - generic [ref=f1e651]:
+              - generic [ref=f1e653] [cursor=pointer]:
+                - link [ref=f1e654]:
+                  - /url: /watch?v=W23qyBnymLE&list=PLp-hFjVIn_eUMBjh6s3vespdkPBrvY8Mo
+                  - generic [ref=f1e655]: 6 堂課
+                - generic [ref=f1e670]:
+                  - generic [ref=f1e671]:
+                    - heading "【Gemini AI 教學手札｜YouTube Course官方課程】" [level=3] [ref=f1e672]:
+                      - link "【Gemini AI 教學手札｜YouTube Course官方課程】" [ref=f1e673]:
+                        - /url: /watch?v=W23qyBnymLE&list=PLp-hFjVIn_eUMBjh6s3vespdkPBrvY8Mo
+                    - generic [ref=f1e675]:
+                      - group [ref=f1e676]:
+                        - link "泛科學院" [ref=f1e679]:
+                          - /url: /@panscischool
+                        - generic [ref=f1e680]: •
+                        - link "課程" [ref=f1e683]:
+                          - /url: /@panscischool
+                      - group [ref=f1e684]
+                      - group [ref=f1e685]:
+                        - link "【AI 教學手札｜YouTube Course 官方課程】五大領域 Google 導師親授 AI 教學心法！帶你真正學會把 AI 用在課室裡｜泛科學院 X YouTube Learning · 2:40" [ref=f1e687]:
+                          - /url: /watch?v=W23qyBnymLE&list=PLp-hFjVIn_eUMBjh6s3vespdkPBrvY8Mo&pp=0gcJCeYE0aJEHMZM
+                      - group [ref=f1e688]
+                      - group [ref=f1e689]:
+                        - link "觀看完整課程" [ref=f1e692]:
+                          - /url: /playlist?list=PLp-hFjVIn_eUMBjh6s3vespdkPBrvY8Mo
+                  - button "其他動作" [ref=f1e695]
+              - generic [ref=f1e700] [cursor=pointer]:
+                - link [ref=f1e701]:
+                  - /url: /watch?v=ydeBs91SVpc&list=PL1BHO-AUVmwl-05sK4ZMSxYsq43R3AbpF
+                  - generic [ref=f1e702]: 59 堂課
+                - generic [ref=f1e717]:
+                  - generic [ref=f1e718]:
+                    - heading "生成式AI應用效率提升 300%（Gemini, AI Studio, 問問Gemini, AI Studio Live, Gemini API Key, 逐字稿, 資料分析, 翻譯, RWD網站製作, 互動式機器人, 爬蟲）" [level=3] [ref=f1e719]:
+                      - link "生成式AI應用效率提升 300%（Gemini, AI Studio, 問問Gemini, AI Studio Live, Gemini API Key, 逐字稿, 資料分析, 翻譯, RWD網站製作, 互動式機器人, 爬蟲）" [ref=f1e720]:
+                        - /url: /watch?v=ydeBs91SVpc&list=PL1BHO-AUVmwl-05sK4ZMSxYsq43R3AbpF
+                    - generic [ref=f1e722]:
+                      - group [ref=f1e723]:
+                        - link "施育廷Andrew Shih_生成式AI應用" [ref=f1e726]:
+                          - /url: /@ytshihclassworld
+                        - generic [ref=f1e727]: •
+                        - link "課程" [ref=f1e730]:
+                          - /url: /@ytshihclassworld
+                        - generic [ref=f1e731]: •
+                        - generic [ref=f1e732]: 3 天前更新
+                      - group [ref=f1e733]
+                      - group [ref=f1e734]:
+                        - link "[演講]隱藏的Google AI工具，Google AI Studio ｜AI工具應用分享 教學、校務應用 2025 09 12（圖片辨識OCR、影片辨識逐字稿與影片摘要、文件格式化產出html · 1:28:52" [ref=f1e736]:
+                          - /url: /watch?v=ydeBs91SVpc&list=PL1BHO-AUVmwl-05sK4ZMSxYsq43R3AbpF
+                      - group [ref=f1e737]:
+                        - link "[說明]Gemini Gem 即將停用？快速解析 Gemini Spark 的 Skill、排程與 Gmail 監控2026 08 13 06 55 · 14:31" [ref=f1e739]:
+                          - /url: /watch?v=PiIq0owR2XA&list=PL1BHO-AUVmwl-05sK4ZMSxYsq43R3AbpF
+                      - group [ref=f1e740]
+                      - group [ref=f1e741]:
+                        - link "觀看完整課程" [ref=f1e744]:
+                          - /url: /playlist?list=PL1BHO-AUVmwl-05sK4ZMSxYsq43R3AbpF
+                  - button "其他動作" [ref=f1e747]
+              - generic [ref=f1e752] [cursor=pointer]:
+                - link [ref=f1e753]:
+                  - /url: /watch?v=DQ7piBUdF18&list=PLmvLOUyx8RK9rZWZGfx6y23SstghMwBhx
+                  - generic [ref=f1e754]: 91 堂課
+                - generic [ref=f1e769]:
+                  - generic [ref=f1e770]:
+                    - heading "職場後半場的翻盤武器：Google AI 全實戰(創造被動收入實現人生自由的必備技能)" [level=3] [ref=f1e771]:
+                      - link "職場後半場的翻盤武器：Google AI 全實戰(創造被動收入實現人生自由的必備技能)" [ref=f1e772]:
+                        - /url: /watch?v=DQ7piBUdF18&list=PLmvLOUyx8RK9rZWZGfx6y23SstghMwBhx
+                    - generic [ref=f1e774]:
+                      - group [ref=f1e775]:
+                        - link "龍龍AI實戰學院" [ref=f1e778]:
+                          - /url: /@changlunglung
+                        - generic [ref=f1e779]: •
+                        - link "課程" [ref=f1e782]:
+                          - /url: /@changlunglung
+                      - group [ref=f1e783]
+                      - group [ref=f1e784]:
+                        - link "00 - 序 | Google Gemini 3的職場AI全實戰，不用寫程式，也能把工作變快！ · 5:27" [ref=f1e786]:
+                          - /url: /watch?v=DQ7piBUdF18&list=PLmvLOUyx8RK9rZWZGfx6y23SstghMwBhx
+                      - group [ref=f1e787]:
+                        - link "01-01 任務一：用 Gemini 寫出一封你今天真的要回的Email · 8:07" [ref=f1e789]:
+                          - /url: /watch?v=trtYIM0F2g4&list=PLmvLOUyx8RK9rZWZGfx6y23SstghMwBhx
+                      - group [ref=f1e790]
+                      - group [ref=f1e791]:
+                        - link "觀看完整課程" [ref=f1e794]:
+                          - /url: /playlist?list=PLmvLOUyx8RK9rZWZGfx6y23SstghMwBhx
+                  - button "其他動作" [ref=f1e797]
+              - generic [ref=f1e802]:
+                - link [ref=f1e804] [cursor=pointer]:
+                  - /url: /watch?v=MKlcdE-v6ZA&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e806] [cursor=pointer]:
+                  - generic [ref=f1e807]:
+                    - generic [ref=f1e808]:
+                      - heading [level=3] [ref=f1e809]:
+                        - link "【2025 教師必看】4 招把 Gemini 變成最強 AI 助教｜備課、出題、行政一次搞定 16 秒" [ref=f1e810]:
+                          - /url: /watch?v=MKlcdE-v6ZA&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: 【2025 教師必看】4 招把 Gemini 變成最強 AI 助教｜備課、出題、行政一次搞定
+                      - button "動作選單" [ref=f1e814]
+                    - generic [ref=f1e820]:
+                      - generic [ref=f1e821]: 觀看次數：624次
+                      - generic [ref=f1e822]: •7 個月前
+                  - generic [ref=f1e823]:
+                    - link "前往頻道：AI教育學院 | AI Edcademy" [ref=f1e824]:
+                      - /url: /@AIEdcademy
+                    - link "AI教育學院 | AI Edcademy" [ref=f1e829]:
+                      - /url: /@AIEdcademy
+                  - generic [ref=f1e830]:
+                    - generic [ref=f1e831]: 2025 年，老師不需要更累，只需要用對AI。 這支影片完整整理4 招實戰技巧，教你如何在Google Workspace for Education 教育版 ...
+                    - tooltip "tooltip"
+              - generic [ref=f1e832]:
+                - generic [ref=f1e833]:
+                  - heading "Shorts" [level=2] [ref=f1e839]
+                  - button "其他動作" [ref=f1e845] [cursor=pointer]
+                - generic [ref=f1e850]:
+                  - generic [ref=f1e853]:
+                    - generic [ref=f1e855]:
+                      - link [ref=f1e856] [cursor=pointer]:
+                        - /url: /shorts/pbfYfKe8ybo
+                      - generic [ref=f1e860] [cursor=pointer]:
+                        - link "🚀 Google 免費推出 AI 認證！老師學生都能學！#Gemini 教學新神器登場！" [ref=f1e861]:
+                          - /url: /shorts/pbfYfKe8ybo
+                        - generic [ref=f1e862]: 觀看次數：314次
+                      - button "其他動作" [ref=f1e864] [cursor=pointer]
+                    - generic [ref=f1e869]:
+                      - link [ref=f1e870] [cursor=pointer]:
+                        - /url: /shorts/6hz9CT_pB0E
+                        - img [ref=f1e875]:
+                          - generic [ref=f1e876]: 新影片
+                      - generic [ref=f1e877] [cursor=pointer]:
+                        - link "Gemini隱藏玩法，一句Prompt做出線上測驗的App" [ref=f1e878]:
+                          - /url: /shorts/6hz9CT_pB0E
+                        - generic [ref=f1e879]: 觀看次數：0次
+                      - button "其他動作" [ref=f1e881] [cursor=pointer]
+                    - generic [ref=f1e886]:
+                      - link [ref=f1e887] [cursor=pointer]:
+                        - /url: /shorts/Azo-WI05eGU
+                      - generic [ref=f1e891] [cursor=pointer]:
+                        - link "學生限定：Gemini Pro 方案免費一年 | 用 Gemini 量身打造備考計畫" [ref=f1e892]:
+                          - /url: /shorts/Azo-WI05eGU
+                        - generic [ref=f1e893]: 觀看次數：41萬次
+                      - button "其他動作" [ref=f1e895] [cursor=pointer]
+                    - generic [ref=f1e900]:
+                      - link [ref=f1e901] [cursor=pointer]:
+                        - /url: /shorts/9aKfpyAc22s
+                      - generic [ref=f1e905] [cursor=pointer]:
+                        - link "【Google Gemini 教學 2025】90% 的人都不知道的 6 個隱藏核心技巧，小白輕鬆變專家，讓你的賺錢和工作效率翻 10 倍！(附上Gemini 學習筆記)" [ref=f1e906]:
+                          - /url: /shorts/9aKfpyAc22s
+                        - generic [ref=f1e907]: 觀看次數：18萬次
+                      - button "其他動作" [ref=f1e909] [cursor=pointer]
+                    - generic [ref=f1e914]:
+                      - link [ref=f1e915] [cursor=pointer]:
+                        - /url: /shorts/OxQANTgebjI
+                      - generic [ref=f1e919] [cursor=pointer]:
+                        - link "學生限定：Gemini Pro 方案免費一年 | 引導式學習功能" [ref=f1e920]:
+                          - /url: /shorts/OxQANTgebjI
+                        - generic [ref=f1e921]: 觀看次數：48萬次
+                      - button "其他動作" [ref=f1e923] [cursor=pointer]
+                  - button "下一部" [ref=f1e929] [cursor=pointer]
+            - generic [ref=f1e939]:
+              - generic [ref=f1e940]: AI 分身 打造替你工作的高效自動化團隊 知識衛星
+              - generic [ref=f1e950] [cursor=pointer]:
+                - generic [ref=f1e951]:
+                  - link "AI 時代下，你有了更多選擇：不一定只靠一份工作換收入，你可以發展一人公司、開始副業，或把現有事業做得更有效益。這堂課帶你學會如何與 AI agent 一起聰明工作，善用現成資源、減少踩雷，把資料、工具與方法重新..." [ref=f1e954]:
+                    - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwi72u2C7KeWAxUh0RYFHdpCBcMYACICCAEQABoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwGZ61OYRZQ8JywoWvy4bTZmZduejF3uZ0M_YdYJTjlfM-u62hqCusaAjZeEALw_wcB&num=3&cid=CAAS0wHkaKzjwvicFyJs2sHbh5uk_BNLdEpjT0qEf9p_imp-0_bLuJsAMgUe1_xJy3d7aMNciQgb3hk1dg6VNoneLq5IxrjiwgudGFHODd4RlWNyw_aI6JT0xQeeKV3WmwtzEWzFpfmiw_cfjZK3aSydItgpF85bwH-mIi0Zq7OSOAZAXuH3vW4rJr2u92G0lHnRyVZTaaWjZNfkn3mHUtIMjEfV-jDuVuHR0Ojn5nN1yt_ZU5zOExveWdI09YJIkYXdmov0DrvtThwOefhyODjvOxw0G062&cce=2&category=acrcp_v1_32&sig=AOD64_0OLQBPjVGGya80A54ve_xqS-kDnQ&adurl=https://sat.cool/course/201%3Fgad_source%3D2%26gad_campaignid%3D22910715756&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                  - generic [ref=f1e955]:
+                    - generic [ref=f1e957]:
+                      - generic [ref=f1e958]: 贊助商廣告
+                      - text: ·
+                    - generic [ref=f1e959]: https://www.sat.cool/
+                - button "我的廣告中心" [ref=f1e963]
+            - generic [ref=f1e968]:
+              - generic [ref=f1e970]:
+                - link [ref=f1e972] [cursor=pointer]:
+                  - /url: /watch?v=aVVMcliYJIw&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e974] [cursor=pointer]:
+                  - generic [ref=f1e975]:
+                    - generic [ref=f1e976]:
+                      - heading [level=3] [ref=f1e977]:
+                        - link "【免費AI證書】Google Gemini 教師認證開放！不只老師能考，20分鐘為你的履歷加分！ 5 分鐘 19 秒" [ref=f1e978]:
+                          - /url: /watch?v=aVVMcliYJIw&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: 【免費AI證書】Google Gemini 教師認證開放！不只老師能考，20分鐘為你的履歷加分！
+                      - button "動作選單" [ref=f1e982]
+                    - generic [ref=f1e988]:
+                      - generic [ref=f1e989]: 觀看次數：1.9萬次
+                      - generic [ref=f1e990]: •11 個月前
+                  - generic [ref=f1e991]:
+                    - link "前往頻道：The walking fish 步行魚" [ref=f1e992]:
+                      - /url: /@the_walking_fish
+                    - link "The walking fish 步行魚" [ref=f1e997]:
+                      - /url: /@the_walking_fish
+                  - generic [ref=f1e998]:
+                    - generic [ref=f1e999]: 最近Google 推出了一個免費證書── Gemini AI 教師認證證書，主要是考驗教師在教學領域應用AI，與引導學生正確使用AI的相關 ...
+                    - tooltip "tooltip"
+                  - img "字幕" [ref=f1e1004]
+                  - generic [ref=f1e1008]:
+                    - generic [ref=f1e1009]:
+                      - generic [ref=f1e1012]: 11 個章節
+                      - button "Gemini 教師認證是什麼？ | 誰適合考？考試內容與難度 | 證照目標對象與四大驗證能力 | 手把手教學：如何註冊考試？ | 正式測驗開始！考試介面與翻譯技巧 | 考試題目解析 (1)：AI 幻覺與事實查核 | 考試題目解析 (2)：教育應用與 NotebookLM 功能 | 考試題目解析 (3)：AI 道德與行政應用 | 測驗結果出爐！我的分數與答錯的題目 | 考完後呢？如何領取與分享證書 | 影片總結" [ref=f1e1014]
+                    - button "其他項目" [ref=f1e1019]
+              - generic [ref=f1e1024]:
+                - link [ref=f1e1026] [cursor=pointer]:
+                  - /url: /watch?v=04qQ0-ttMyM&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e1028] [cursor=pointer]:
+                  - generic [ref=f1e1029]:
+                    - generic [ref=f1e1030]:
+                      - heading [level=3] [ref=f1e1031]:
+                        - link "外掛開起來！AI 證照這樣考：Google Gemini 就是你的最強神隊友！ 9 分鐘 48 秒" [ref=f1e1032]:
+                          - /url: /watch?v=04qQ0-ttMyM&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: 外掛開起來！AI 證照這樣考：Google Gemini 就是你的最強神隊友！
+                      - button "動作選單" [ref=f1e1036]
+                    - generic [ref=f1e1042]:
+                      - generic [ref=f1e1043]: 觀看次數：130次
+                      - generic [ref=f1e1044]: •2 個月前
+                  - generic [ref=f1e1045]:
+                    - link "前往頻道：AI live & life" [ref=f1e1046]:
+                      - /url: /@%E5%B0%8F%E7%99%BDAI%E7%9A%84%E5%B8%B6%E8%B7%AF%E4%BA%BA
+                    - link "AI live & life" [ref=f1e1051]:
+                      - /url: /@%E5%B0%8F%E7%99%BDAI%E7%9A%84%E5%B8%B6%E8%B7%AF%E4%BA%BA
+                  - generic [ref=f1e1052]:
+                    - generic [ref=f1e1053]: 指導考生如何運用Google Gemini 轉化學習思維，以攻克iPAS AI 應用規劃師的中級證照考試。作者指出，現代考試趨勢已從死背 ...
+                    - tooltip "tooltip"
+                  - img "字幕" [ref=f1e1058]
+              - generic [ref=f1e1061] [cursor=pointer]:
+                - link [ref=f1e1062]:
+                  - /url: /watch?v=gEcFgKzUgoM&list=PLdNy3Vbqr7ZxP98UYbO1k2s3GcIDbJD9f
+                  - generic [ref=f1e1063]: 85 部影片
+                - generic [ref=f1e1078]:
+                  - generic [ref=f1e1079]:
+                    - heading "熱鍵大師" [level=3] [ref=f1e1080]:
+                      - link "熱鍵大師" [ref=f1e1081]:
+                        - /url: /watch?v=gEcFgKzUgoM&list=PLdNy3Vbqr7ZxP98UYbO1k2s3GcIDbJD9f
+                    - generic [ref=f1e1083]:
+                      - group [ref=f1e1084]:
+                        - link "Wei Hsu" [ref=f1e1087]:
+                          - /url: /@weihsu2149
+                        - generic [ref=f1e1088]: •
+                        - link "播放清單" [ref=f1e1091]:
+                          - /url: /@weihsu2149
+                      - group [ref=f1e1092]
+                      - group [ref=f1e1093]:
+                        - link "X86 開機流程小記 (2005 Flash 備份) · 2:42" [ref=f1e1095]:
+                          - /url: /watch?v=gEcFgKzUgoM&list=PLdNy3Vbqr7ZxP98UYbO1k2s3GcIDbJD9f
+                      - group [ref=f1e1096]:
+                        - link "【星事神最懂】「連結至 Windows」：Galaxy 手機 x Windows 11 同步神器！保持電腦與手機完美聯繫 · 3:42" [ref=f1e1098]:
+                          - /url: /watch?v=ugMIX5Ex5wQ&list=PLdNy3Vbqr7ZxP98UYbO1k2s3GcIDbJD9f
+                      - group [ref=f1e1099]
+                      - group [ref=f1e1100]:
+                        - link "查看完整播放清單" [ref=f1e1103]:
+                          - /url: /playlist?list=PLdNy3Vbqr7ZxP98UYbO1k2s3GcIDbJD9f
+                  - button "其他動作" [ref=f1e1106]
+              - generic [ref=f1e1110]:
+                - generic [ref=f1e1111]:
+                  - heading "Shorts" [level=2] [ref=f1e1117]
+                  - button "其他動作" [ref=f1e1123] [cursor=pointer]
+                - generic [ref=f1e1128]:
+                  - generic [ref=f1e1131]:
+                    - generic [ref=f1e1133]:
+                      - link [ref=f1e1134] [cursor=pointer]:
+                        - /url: /shorts/Y7baIBKWFMg
+                        - img [ref=f1e1139]:
+                          - generic [ref=f1e1140]: 新影片
+                      - generic [ref=f1e1141] [cursor=pointer]:
+                        - 'link "免費版ChatGPT、Gemini、Claude 誰作筆記最強？｜泛科學院 #claude #chatgpt #智慧工廠" [ref=f1e1142]':
+                          - /url: /shorts/Y7baIBKWFMg
+                        - generic [ref=f1e1143]: 觀看次數：2864次
+                      - button "其他動作" [ref=f1e1145] [cursor=pointer]
+                    - generic [ref=f1e1150]:
+                      - link [ref=f1e1151] [cursor=pointer]:
+                        - /url: /shorts/oibMb99m-dE
+                        - img [ref=f1e1156]:
+                          - generic [ref=f1e1157]: 新影片
+                      - generic [ref=f1e1158] [cursor=pointer]:
+                        - link "固定 AI Agent 產出品質靠這招！（Gemini Spark）" [ref=f1e1159]:
+                          - /url: /shorts/oibMb99m-dE
+                        - generic [ref=f1e1160]: 觀看次數：1660次
+                      - button "其他動作" [ref=f1e1162] [cursor=pointer]
+                    - generic [ref=f1e1167]:
+                      - link [ref=f1e1168] [cursor=pointer]:
+                        - /url: /shorts/-FZgGfqDTXI
+                        - img [ref=f1e1173]:
+                          - generic [ref=f1e1174]: 新影片
+                      - generic [ref=f1e1175] [cursor=pointer]:
+                        - 'link "Gemini Spark介紹與實作 #Gemini #Spark" [ref=f1e1176]':
+                          - /url: /shorts/-FZgGfqDTXI
+                        - generic [ref=f1e1177]: 觀看次數：91次
+                      - button "其他動作" [ref=f1e1179] [cursor=pointer]
+                    - generic [ref=f1e1184]:
+                      - link [ref=f1e1185] [cursor=pointer]:
+                        - /url: /shorts/9JFvJPOhif4
+                        - img [ref=f1e1190]:
+                          - generic [ref=f1e1191]: 新影片
+                      - generic [ref=f1e1192] [cursor=pointer]:
+                        - 'link "Change this Gemini setting to protect your data #tutorial #gemini" [ref=f1e1193]':
+                          - /url: /shorts/9JFvJPOhif4
+                        - generic [ref=f1e1194]: 觀看次數：48次
+                      - button "其他動作" [ref=f1e1196] [cursor=pointer]
+                    - generic [ref=f1e1201]:
+                      - link [ref=f1e1202] [cursor=pointer]:
+                        - /url: /shorts/VjWdexE13gg
+                        - img [ref=f1e1207]:
+                          - generic [ref=f1e1208]: 新影片
+                      - generic [ref=f1e1209] [cursor=pointer]:
+                        - link "我只丟進課堂筆記，Gemini 竟然開始考我" [ref=f1e1210]:
+                          - /url: /shorts/VjWdexE13gg
+                        - generic [ref=f1e1211]: 觀看次數：7次
+                      - button "其他動作" [ref=f1e1213] [cursor=pointer]
+                    - generic [ref=f1e1218]:
+                      - link [ref=f1e1219] [cursor=pointer]:
+                        - /url: /shorts/0EAeUGTFPsc
+                      - generic [ref=f1e1223] [cursor=pointer]:
+                        - 'link "#一分鐘AI教學 ▌Gemini App 快速翻譯 | 效率翻倍！#aitools #ai教學 #ai工具 #gemini #翻譯 #gemini使用教程 gemini live中文" [ref=f1e1224]':
+                          - /url: /shorts/0EAeUGTFPsc
+                        - generic [ref=f1e1225]: 觀看次數：10萬次
+                      - button "其他動作" [ref=f1e1227] [cursor=pointer]
+                  - button "下一部" [ref=f1e1233] [cursor=pointer]
+              - generic [ref=f1e1238] [cursor=pointer]:
+                - link [ref=f1e1239]:
+                  - /url: /watch?v=awVEzg0LKLk&list=PLkmXxzADgcQ1OZLP0Sc_6LikpxABRp8Qs
+                  - generic [ref=f1e1240]: 831 部影片
+                - generic [ref=f1e1255]:
+                  - generic [ref=f1e1256]:
+                    - heading "科技" [level=3] [ref=f1e1257]:
+                      - link "科技" [ref=f1e1258]:
+                        - /url: /watch?v=awVEzg0LKLk&list=PLkmXxzADgcQ1OZLP0Sc_6LikpxABRp8Qs
+                    - generic [ref=f1e1260]:
+                      - group [ref=f1e1261]:
+                        - link "林宛玲" [ref=f1e1264]:
+                          - /url: /@%E6%9E%97%E5%AE%9B%E7%8E%B2-n5w
+                        - generic [ref=f1e1265]: •
+                        - link "播放清單" [ref=f1e1268]:
+                          - /url: /@%E6%9E%97%E5%AE%9B%E7%8E%B2-n5w
+                      - group [ref=f1e1269]
+                      - group [ref=f1e1270]:
+                        - link "Nano Banana 爆紅原因大公開｜AI 繪圖八大功能一次看！｜AI製作故事繪本｜Nano Banana 實測｜AI商業大帝國｜EP13 · 12:45" [ref=f1e1272]:
+                          - /url: /watch?v=awVEzg0LKLk&list=PLkmXxzADgcQ1OZLP0Sc_6LikpxABRp8Qs
+                      - group [ref=f1e1273]:
+                        - link "【免費AI證書】Google Gemini 教師認證開放！不只老師能考，20分鐘為你的履歷加分！ · 5:19" [ref=f1e1275]:
+                          - /url: /watch?v=aVVMcliYJIw&list=PLkmXxzADgcQ1OZLP0Sc_6LikpxABRp8Qs
+                      - group [ref=f1e1276]
+                      - group [ref=f1e1277]:
+                        - link "查看完整播放清單" [ref=f1e1280]:
+                          - /url: /playlist?list=PLkmXxzADgcQ1OZLP0Sc_6LikpxABRp8Qs
+                  - button "其他動作" [ref=f1e1283]
+            - generic [ref=f1e1303] [cursor=pointer]:
+              - generic [ref=f1e1304]:
+                - link "新竹市 AI課程推薦" [ref=f1e1307]:
+                  - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwi72u2C7KeWAxUh0RYFHdpCBcMYACICCAEQBxoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qy8M2Oo0PncWmzYuHLbd4249u52jTEoX3olnWpK_j2gsm5PF662qLgaApTQEALw_wcB&num=4&cid=CAAS0wHkaKzjwvicFyJs2sHbh5uk_BNLdEpjT0qEf9p_imp-0_bLuJsAMgUe1_xJy3d7aMNciQgb3hk1dg6VNoneLq5IxrjiwgudGFHODd4RlWNyw_aI6JT0xQeeKV3WmwtzEWzFpfmiw_cfjZK3aSydItgpF85bwH-mIi0Zq7OSOAZAXuH3vW4rJr2u92G0lHnRyVZTaaWjZNfkn3mHUtIMjEfV-jDuVuHR0Ojn5nN1yt_ZU5zOExveWdI09YJIkYXdmov0DrvtThwOefhyODjvOxw0G062&cce=2&category=acrcp_v1_32&sig=AOD64_3M2QWZ7Qd3tJJ_dp6HSfU2UJbI1A&adurl=https://www.pcschool.com.tw/activity/2025/gen-current/ai-cert/index.html%3Ffromto%3D9900399P%26gad_source%3D2%26gad_campaignid%3D20718611455&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                - link "AI關鍵力養成課程 - 完成認證可了解AI基本概念與服務，以及成熟運用AI生成式工具，達到快速提升工作流程的目的。" [ref=f1e1310]:
+                  - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwi72u2C7KeWAxUh0RYFHdpCBcMYACICCAEQBxoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qy8M2Oo0PncWmzYuHLbd4249u52jTEoX3olnWpK_j2gsm5PF662qLgaApTQEALw_wcB&num=4&cid=CAAS0wHkaKzjwvicFyJs2sHbh5uk_BNLdEpjT0qEf9p_imp-0_bLuJsAMgUe1_xJy3d7aMNciQgb3hk1dg6VNoneLq5IxrjiwgudGFHODd4RlWNyw_aI6JT0xQeeKV3WmwtzEWzFpfmiw_cfjZK3aSydItgpF85bwH-mIi0Zq7OSOAZAXuH3vW4rJr2u92G0lHnRyVZTaaWjZNfkn3mHUtIMjEfV-jDuVuHR0Ojn5nN1yt_ZU5zOExveWdI09YJIkYXdmov0DrvtThwOefhyODjvOxw0G062&cce=2&category=acrcp_v1_32&sig=AOD64_3M2QWZ7Qd3tJJ_dp6HSfU2UJbI1A&adurl=https://www.pcschool.com.tw/activity/2025/gen-current/ai-cert/index.html%3Ffromto%3D9900399P%26gad_source%3D2%26gad_campaignid%3D20718611455&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=7
+                - generic [ref=f1e1311]:
+                  - generic [ref=f1e1313]:
+                    - generic [ref=f1e1314]: 贊助商廣告
+                    - text: ·
+                  - generic [ref=f1e1315]: https://www.pcschool.com.tw/ai能力雙認證班/巨匠電腦
+              - button "我的廣告中心" [ref=f1e1319]
+            - generic [ref=f1e1324]:
+              - generic [ref=f1e1326]:
+                - link [ref=f1e1328] [cursor=pointer]:
+                  - /url: /watch?v=VE4-2AkCzJ8&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e1330] [cursor=pointer]:
+                  - generic [ref=f1e1331]:
+                    - generic [ref=f1e1332]:
+                      - heading [level=3] [ref=f1e1333]:
+                        - link "NotebookLM 大升級！超強「Gemini Notebook」實戰教學：合約、保險、信用卡優惠 一次掌握！｜泛科學院 15 分鐘" [ref=f1e1334]:
+                          - /url: /watch?v=VE4-2AkCzJ8&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: NotebookLM 大升級！超強「Gemini Notebook」實戰教學：合約、保險、信用卡優惠 一次掌握！｜泛科學院
+                      - button "動作選單" [ref=f1e1338]
+                    - generic [ref=f1e1344]:
+                      - generic [ref=f1e1345]: 觀看次數：2.2萬次
+                      - generic [ref=f1e1346]: •4 天前
+                  - generic [ref=f1e1347]:
+                    - link "前往頻道：泛科學院" [ref=f1e1348]:
+                      - /url: /@panscischool
+                    - link "泛科學院" [ref=f1e1353]:
+                      - /url: /@panscischool
+                  - generic [ref=f1e1354]:
+                    - text: 歡迎加入頻道會員➤ https://www.youtube.com/channel/UCATnB3v_NkTTd9iD_4W2A-g/join 退租被扣押金、保險不知道賠什麼、勞 ...
+                    - tooltip "tooltip"
+                  - generic [ref=f1e1356]:
+                    - img "新影片" [ref=f1e1359]
+                    - img "字幕" [ref=f1e1363]
+                  - generic [ref=f1e1367]:
+                    - generic [ref=f1e1368]:
+                      - generic [ref=f1e1371]: 13 個章節
+                      - button "開場：AI 幫你搞定四大大人課題 | Gemini Notebook 是什麼？改名與更新總覽 | 和其他 AI 最大的差異：只根據你的資料回答 | 介面導覽：合集、資料來源、對話與輸出 | 情境一：保單筆記本，看懂理賠與等待期 | 情境二：打造自己的勞健保查詢站 | 中場 | 情境三：簽租約前抓出合約地雷 | 情境四：信用卡權益一次比清楚 | 短影音、語音摘要、資訊圖表實測 | 新功能：資料表格＋匯出 Google Sheets | 更多筆記本靈感：健檢、員工手冊、報稅 | 三個重要提醒與結語" [ref=f1e1373]
+                    - button "其他項目" [ref=f1e1378]
+              - generic [ref=f1e1383] [cursor=pointer]:
+                - link [ref=f1e1384]:
+                  - /url: /watch?v=VPYdvprk1F8&list=PL0EP5ZD3EGEed9ABol6slPgvvIq6TQhkZ&pp=0gcJCfoCOCosWNin
+                  - generic [ref=f1e1385]: 19 部影片
+                - generic [ref=f1e1400]:
+                  - generic [ref=f1e1401]:
+                    - heading "AI" [level=3] [ref=f1e1402]:
+                      - link "AI" [ref=f1e1403]:
+                        - /url: /watch?v=VPYdvprk1F8&list=PL0EP5ZD3EGEed9ABol6slPgvvIq6TQhkZ&pp=0gcJCfoCOCosWNin
+                    - generic [ref=f1e1405]:
+                      - group [ref=f1e1406]:
+                        - link "shenzo47" [ref=f1e1409]:
+                          - /url: /@shenzo4751
+                        - generic [ref=f1e1410]: •
+                        - link "播放清單" [ref=f1e1413]:
+                          - /url: /@shenzo4751
+                      - group [ref=f1e1414]
+                      - group [ref=f1e1415]:
+                        - link "AI 語言模型正在崩解？ · 1:31" [ref=f1e1417]:
+                          - /url: /watch?v=VPYdvprk1F8&list=PL0EP5ZD3EGEed9ABol6slPgvvIq6TQhkZ
+                      - group [ref=f1e1418]:
+                        - 'link "PPT、報表一秒搞定！2026 必備 5 大 AI 工具推薦 #電競 #pc #電腦小技巧 #Ai #ProactorAI · 0:49" [ref=f1e1420]':
+                          - /url: /watch?v=WUmNx2V80vQ&list=PL0EP5ZD3EGEed9ABol6slPgvvIq6TQhkZ
+                      - group [ref=f1e1421]
+                      - group [ref=f1e1422]:
+                        - link "查看完整播放清單" [ref=f1e1425]:
+                          - /url: /playlist?list=PL0EP5ZD3EGEed9ABol6slPgvvIq6TQhkZ
+                  - button "其他動作" [ref=f1e1428]
+              - generic [ref=f1e1433]:
+                - link [ref=f1e1435] [cursor=pointer]:
+                  - /url: /watch?v=B83HtNnHjkM&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL0gcJCf4LAYcqIYzv
+                - generic [ref=f1e1437] [cursor=pointer]:
+                  - generic [ref=f1e1438]:
+                    - generic [ref=f1e1439]:
+                      - heading [level=3] [ref=f1e1440]:
+                        - link "【你的 AI 神隊友｜YouTube Course 官方課程】五堂課全面解鎖 Gemini 實戰操作！學會讓 AI 幫你助攻一切！｜泛科學院 X YouTube 2 分鐘 19 秒" [ref=f1e1441]:
+                          - /url: /watch?v=B83HtNnHjkM&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL0gcJCf4LAYcqIYzv
+                          - text: 【你的 AI 神隊友｜YouTube Course 官方課程】五堂課全面解鎖 Gemini 實戰操作！學會讓 AI 幫你助攻一切！｜泛科學院 X YouTube
+                      - button "動作選單" [ref=f1e1445]
+                    - generic [ref=f1e1451]:
+                      - generic [ref=f1e1452]: 觀看次數：2.1萬次
+                      - generic [ref=f1e1453]: •10 個月前
+                  - generic [ref=f1e1454]:
+                    - link "前往頻道：泛科學院" [ref=f1e1455]:
+                      - /url: /@panscischool
+                    - link "泛科學院" [ref=f1e1460]:
+                      - /url: /@panscischool
+                  - generic [ref=f1e1461]:
+                    - generic [ref=f1e1462]: 當大家都在喊「要學AI」的時候，真正能運用AI 做出成果、解決問題的人，才是未來最稀缺的關鍵人才。 這不只是學會操作工具， ...
+                    - tooltip "tooltip"
+                  - img "字幕" [ref=f1e1467]
+              - generic [ref=f1e1470] [cursor=pointer]:
+                - link [ref=f1e1471]:
+                  - /url: /watch?v=T3sjpFXvdFo&list=PL6e-FC-9kgn4HHsuFTWIE-i7YJGepLvYN
+                  - generic [ref=f1e1472]: 342 部影片
+                - generic [ref=f1e1487]:
+                  - generic [ref=f1e1488]:
+                    - heading "推推影片" [level=3] [ref=f1e1489]:
+                      - link "推推影片" [ref=f1e1490]:
+                        - /url: /watch?v=T3sjpFXvdFo&list=PL6e-FC-9kgn4HHsuFTWIE-i7YJGepLvYN
+                    - generic [ref=f1e1492]:
+                      - group [ref=f1e1493]:
+                        - link "Tsung Yu Tsai" [ref=f1e1496]:
+                          - /url: /@a0927510013
+                        - generic [ref=f1e1497]: •
+                        - link "播放清單" [ref=f1e1500]:
+                          - /url: /@a0927510013
+                      - group [ref=f1e1501]
+                      - group [ref=f1e1502]:
+                        - link "自費開箱！Pocket 4 Pro對決Luna Ultra！【Joeman】 · 18:49" [ref=f1e1504]:
+                          - /url: /watch?v=T3sjpFXvdFo&list=PL6e-FC-9kgn4HHsuFTWIE-i7YJGepLvYN
+                      - group [ref=f1e1505]:
+                        - link "【好書推薦】想改變人生必讀：改變我一生的 10 本好書 · 19:40" [ref=f1e1507]:
+                          - /url: /watch?v=RHmCzC1pKtE&list=PL6e-FC-9kgn4HHsuFTWIE-i7YJGepLvYN
+                      - group [ref=f1e1508]
+                      - group [ref=f1e1509]:
+                        - link "查看完整播放清單" [ref=f1e1512]:
+                          - /url: /playlist?list=PL6e-FC-9kgn4HHsuFTWIE-i7YJGepLvYN
+                  - button "其他動作" [ref=f1e1515]
+              - generic [ref=f1e1520] [cursor=pointer]:
+                - link [ref=f1e1521]:
+                  - /url: /watch?v=Bm6t3jzgC2M&list=PLlJ1UvPD758en8p_x47OqNORTm09cNIOy
+                  - generic [ref=f1e1522]: 17 部影片
+                - generic [ref=f1e1537]:
+                  - generic [ref=f1e1538]:
+                    - heading "tech" [level=3] [ref=f1e1539]:
+                      - link "tech" [ref=f1e1540]:
+                        - /url: /watch?v=Bm6t3jzgC2M&list=PLlJ1UvPD758en8p_x47OqNORTm09cNIOy
+                    - generic [ref=f1e1542]:
+                      - group [ref=f1e1543]:
+                        - link "Weng Y. T." [ref=f1e1546]:
+                          - /url: /@wengy.t.4322
+                        - generic [ref=f1e1547]: •
+                        - link "播放清單" [ref=f1e1550]:
+                          - /url: /@wengy.t.4322
+                      - group [ref=f1e1551]
+                      - group [ref=f1e1552]:
+                        - link "(CC中文字幕)解釋家用電池：特斯拉Powerwall - Tesla Powerwall Explained · 7:06" [ref=f1e1554]:
+                          - /url: /watch?v=Bm6t3jzgC2M&list=PLlJ1UvPD758en8p_x47OqNORTm09cNIOy
+                      - group [ref=f1e1555]:
+                        - link "詳解比特幣原理和運行機制 · 22:40" [ref=f1e1557]:
+                          - /url: /watch?v=P4seQcP77H4&list=PLlJ1UvPD758en8p_x47OqNORTm09cNIOy
+                      - group [ref=f1e1558]
+                      - group [ref=f1e1559]:
+                        - link "查看完整播放清單" [ref=f1e1562]:
+                          - /url: /playlist?list=PLlJ1UvPD758en8p_x47OqNORTm09cNIOy
+                  - button "其他動作" [ref=f1e1565]
+              - generic [ref=f1e1570]:
+                - link [ref=f1e1572] [cursor=pointer]:
+                  - /url: /watch?v=4n8jswc2pAI&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e1574] [cursor=pointer]:
+                  - generic [ref=f1e1575]:
+                    - generic [ref=f1e1576]:
+                      - heading [level=3] [ref=f1e1577]:
+                        - link "Google Gemini 全系列教學 (上集)！這21個超強AI應用，很多還免費！95%的人都還不知道，ChatGPT要哭了｜簡報製作｜APP設計｜NotebookLM 24 分鐘" [ref=f1e1578]:
+                          - /url: /watch?v=4n8jswc2pAI&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: Google Gemini 全系列教學 (上集)！這21個超強AI應用，很多還免費！95%的人都還不知道，ChatGPT要哭了｜簡報製作｜APP設計｜NotebookLM
+                      - button "動作選單" [ref=f1e1582]
+                    - generic [ref=f1e1588]:
+                      - generic [ref=f1e1589]: 觀看次數：177萬次
+                      - generic [ref=f1e1590]: •8 個月前
+                  - generic [ref=f1e1591]:
+                    - link "前往頻道：大有牧森 Austin Chou" [ref=f1e1592]:
+                      - /url: /@austinchou888
+                    - link "大有牧森 Austin Chou" [ref=f1e1597]:
+                      - /url: /@austinchou888
+                  - generic [ref=f1e1598]:
+                    - generic [ref=f1e1599]: 這集深入介紹Gemini和Google旗下各種AI工具，ChatGPT團隊為此發出紅色警戒，因為Google太強了，很都GPT用戶跳槽Gemini！
+                    - tooltip "tooltip"
+                  - generic [ref=f1e1601]:
+                    - img "4K" [ref=f1e1604]
+                    - img "字幕" [ref=f1e1608]
+                  - generic [ref=f1e1612]:
+                    - generic [ref=f1e1613]:
+                      - generic [ref=f1e1616]: 13 個章節
+                      - button "開場 | 多模態分析 | 直出簡報 | Canvas圖表 | 深入研究 | Gmail助理 | Google文件插入 | 估價浮動視窗 | Opal自動化流程 | 網頁程式介面設計 | 製作GEM機器人 | NotebookLM新功能 | 下集預告" [ref=f1e1618]
+                    - button "其他項目" [ref=f1e1623]
+              - generic [ref=f1e1628]:
+                - link [ref=f1e1630] [cursor=pointer]:
+                  - /url: /watch?v=y7mFMDxc1VM&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                - generic [ref=f1e1632] [cursor=pointer]:
+                  - generic [ref=f1e1633]:
+                    - generic [ref=f1e1634]:
+                      - heading [level=3] [ref=f1e1635]:
+                        - link "AI工具怎麼選？AI 免費版大評比！ChatGPT、Gemini、Claude 該選誰？5 大情境實測全公開｜泛科學院 14 分鐘 47 秒" [ref=f1e1636]:
+                          - /url: /watch?v=y7mFMDxc1VM&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL
+                          - text: AI工具怎麼選？AI 免費版大評比！ChatGPT、Gemini、Claude 該選誰？5 大情境實測全公開｜泛科學院
+                      - button "動作選單" [ref=f1e1640]
+                    - generic [ref=f1e1646]:
+                      - generic [ref=f1e1647]: 觀看次數：5.5萬次
+                      - generic [ref=f1e1648]: •11 天前
+                  - generic [ref=f1e1649]:
+                    - link "前往頻道：泛科學院" [ref=f1e1650]:
+                      - /url: /@panscischool
+                    - link "泛科學院" [ref=f1e1655]:
+                      - /url: /@panscischool
+                  - generic [ref=f1e1656]:
+                    - generic [ref=f1e1657]: ChatGPT、Gemini、Claude 到底差在哪？免費額度用完怎麼辦？如果一個月只能訂一家，該把錢花在誰身上？ 這集我們把三家免費 ...
+                    - tooltip "tooltip"
+                  - img "字幕" [ref=f1e1662]
+              - generic [ref=f1e1665]:
+                - link [ref=f1e1667] [cursor=pointer]:
+                  - /url: /watch?v=4U0963giQyE&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL0gcJCf4LAYcqIYzv
+                - generic [ref=f1e1669] [cursor=pointer]:
+                  - generic [ref=f1e1670]:
+                    - generic [ref=f1e1671]:
+                      - heading [level=3] [ref=f1e1672]:
+                        - 'link "老頑童AI學堂-Gemini 基礎入門與圖片生成 #ai教學 2 分鐘 51 秒" [ref=f1e1673]':
+                          - /url: /watch?v=4U0963giQyE&pp=ygUkR2VtaW5pIFggQUkg6YCa6K2Y57Sg6aSK6KqN6K2J6Kqy56iL0gcJCf4LAYcqIYzv
+                          - text: "老頑童AI學堂-Gemini 基礎入門與圖片生成 #ai教學"
+                      - button "動作選單" [ref=f1e1677]
+                    - generic [ref=f1e1683]:
+                      - generic [ref=f1e1684]: 觀看次數：647次
+                      - generic [ref=f1e1685]: •10 個月前
+                  - generic [ref=f1e1686]:
+                    - link "前往頻道：許博-輕鬆學" [ref=f1e1687]:
+                      - /url: /@everyday168168
+                    - link "許博-輕鬆學" [ref=f1e1692]:
+                      - /url: /@everyday168168
+                  - generic [ref=f1e1693]:
+                    - text: 許博輕鬆學頻道| 讓您輕鬆學習四大單元： 智慧生活優化| 健康樂活人生| 斜槓職能優化| 講師精進教學歡迎訂閱本頻道，一起學習成長!
+                    - tooltip "tooltip"
+      - text: •
+  - generic "YouTube 影片播放器" [ref=f1e1724] [cursor=pointer]:
+    - button "播放" [ref=f1e1728]

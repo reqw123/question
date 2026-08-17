@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { sendChatMessage, ChatError } from './chat.js';
+import { sendChatMessage } from './chat.js';
 
 describe('sendChatMessage', () => {
   it('returns the assistant reply when the API call succeeds', async () => {
@@ -79,5 +79,20 @@ describe('sendChatMessage', () => {
     await expect(
       sendChatMessage({ message: '你好', systemPrompt: '人設', apiKey: 'sk-test-key', fetchImpl })
     ).rejects.toMatchObject({ name: 'ChatError', code: 'NETWORK_ERROR' });
+  });
+
+  it('passes the abort signal through to fetch and rethrows AbortError as-is (not wrapped in ChatError)', async () => {
+    const abortError = new Error('The operation was aborted');
+    abortError.name = 'AbortError';
+    const fetchImpl = vi.fn().mockRejectedValue(abortError);
+    const controller = new AbortController();
+
+    await expect(
+      sendChatMessage({
+        message: '你好', systemPrompt: '人設', apiKey: 'sk-test-key', fetchImpl, signal: controller.signal,
+      })
+    ).rejects.toBe(abortError);
+
+    expect(fetchImpl.mock.calls[0][1].signal).toBe(controller.signal);
   });
 });

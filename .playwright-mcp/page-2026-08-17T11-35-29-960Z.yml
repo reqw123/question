@@ -1,0 +1,152 @@
+- generic [ref=f11e1]:
+  - iframe [ref=f11e2]:
+    - table [ref=f12e2]:
+      - rowgroup [ref=f12e3]:
+        - row [ref=f12e4]:
+          - cell [ref=f12e5]
+          - cell [ref=f12e6]
+          - cell [ref=f12e9]
+  - generic [ref=f11e3]:
+    - iframe
+    - iframe [active] [ref=f11e4]:
+      - generic [ref=f14e2]:
+        - table [ref=f14e3]:
+          - rowgroup [ref=f14e4]:
+            - row [ref=f14e5]:
+              - cell [ref=f14e6]:
+                - table [ref=f14e7]:
+                  - rowgroup [ref=f14e8]:
+                    - row [ref=f14e9]:
+                      - cell "帳號" [ref=f14e10]
+                      - cell [ref=f14e12]:
+                        - textbox [active] [ref=f14e13]
+                    - row [ref=f14e14]:
+                      - cell "密碼" [ref=f14e15]
+                      - cell [ref=f14e17]:
+                        - textbox [ref=f14e18]
+                    - row [ref=f14e19]:
+                      - cell [ref=f14e20]:
+                        - text: 訪客帳號-密碼皆為:yist
+                        - button "確定登入" [ref=f14e21]
+                        - button "清除重填" [ref=f14e22]
+                        - paragraph
+              - cell [ref=f14e23]:
+                - table [ref=f14e24]:
+                  - rowgroup [ref=f14e25]:
+                    - row [ref=f14e26]:
+                      - cell [ref=f14e27]
+                      - cell "帳號密碼問題?" [ref=f14e28]
+                      - cell [ref=f14e31]
+                    - row [ref=f14e32]:
+                      - cell [ref=f14e33]
+                      - cell [ref=f14e34]:
+                        - list [ref=f14e35]:
+                          - listitem [ref=f14e36]: 學生帳號為學號，新生初次登入密碼為身分證號後八碼 ，新生可登入。
+                          - listitem [ref=f14e37]:
+                            - generic [ref=f14e38]:
+                              - text: 忘記密碼
+                              - link "請按此說明" [ref=f14e41] [cursor=pointer]:
+                                - /url: http://w3.cc.ypu.edu.tw/yu/form/resetPassword.html
+                              - text: 。
+                          - listitem [ref=f14e42]:
+                            - text: 查學號
+                            - link "請按此" [ref=f14e44] [cursor=pointer]:
+                              - /url: https://w6.ypu.edu.tw/yu/yust_enroll/e_askStdID.jsp
+                            - link:
+                              - /url: https://w6.ypu.edu.tw/yu/yust_enroll/e_askStdID.jsp
+                          - link:
+                            - /url: https://w6.ypu.edu.tw/yu/yust_enroll/e_askStdID.jsp
+                        - link:
+                          - /url: https://w6.ypu.edu.tw/yu/yust_enroll/e_askStdID.jsp
+                      - cell [ref=f14e45]
+                    - row [ref=f14e46]:
+                      - cell [ref=f14e47]
+                      - cell [ref=f14e48]
+                      - cell [ref=f14e49]
+              - cell [ref=f14e50]:
+                - table [ref=f14e51]:
+                  - rowgroup [ref=f14e52]:
+                    - row [ref=f14e53]:
+                      - cell [ref=f14e54]
+                      - cell "建議及提醒?" [ref=f14e55]
+                      - cell [ref=f14e57]
+                    - row [ref=f14e58]:
+                      - cell [ref=f14e59]
+                      - cell [ref=f14e60]:
+                        - list [ref=f14e61]:
+                          - listitem [ref=f14e62]: 請勿使用卡巴斯基(Kaspersky) 防毒軟體。
+                          - listitem [ref=f14e63]:
+                            - generic [ref=f14e64]:
+                              - text: 如何清除Cache設定?
+                              - link "請按這裡" [ref=f14e66] [cursor=pointer]:
+                                - /url: https://w3.cc.ypu.edu.tw/yu/clean_cache.html
+                              - text: 。
+                          - listitem [ref=f14e67]:
+                            - generic [ref=f14e68]:
+                              - text: 校務系統 Email 確認?
+                              - link "請按這裡" [ref=f14e69] [cursor=pointer]:
+                                - /url: std_email.pdf
+                      - cell [ref=f14e70]
+                    - row [ref=f14e71]:
+                      - cell [ref=f14e72]
+                      - cell [ref=f14e73]
+                      - cell [ref=f14e74]
+            - row [ref=f14e75]:
+              - cell [ref=f14e76]:
+                - generic [ref=f14e77]:
+                  - link "選課相關訊息" [ref=f14e79] [cursor=pointer]:
+                    - /url: https://yus.ypu.edu.tw/sch3/selectclass.pdf
+                  - text: 校際選課，
+                  - link "請按此" [ref=f14e81] [cursor=pointer]:
+                    - /url: email/newMail.jsp
+              - cell [ref=f14e82]:
+                - table [ref=f14e83]:
+                  - rowgroup [ref=f14e84]:
+                    - row [ref=f14e85]:
+                      - cell [ref=f14e86]
+                      - cell "使用問題?" [ref=f14e87]
+                      - cell [ref=f14e90]
+                    - row [ref=f14e91]:
+                      - cell [ref=f14e92]
+                      - cell [ref=f14e93]:
+                        - list [ref=f14e94]:
+                          - listitem [ref=f14e95]:
+                            - generic [ref=f14e96]:
+                              - text: 校務系統改版了(03/16/2014 Sunday)，如您無法使用，請自行處理以下狀況。
+                              - generic [ref=f14e97]:
+                                - text: "狀況一 : 校務系統登入的畫面亂碼 -->請確認編碼 (點滑鼠右鍵/編碼/Unicode(UTF-8) )。"
+                                - generic [ref=f14e98]: "狀況二 : 校務系統登入後空白-->請重新到校務系統登入的畫面(不要登入)-->重新整理or 按鍵盤F5。"
+                          - generic [ref=f14e100]:
+                            - listitem [ref=f14e101]: 請記得更新預設密碼，每學期系統會強制要求修改 。
+                            - listitem [ref=f14e102]: 使用 Edge 瀏覽器 (09/09/2016 更新)於網頁右上方點選 「…」然後選 「使用Internet Explorer開啟」，以切換至Internet Explorer瀏覽器。
+                            - listitem [ref=f14e103]: IE 11 --不要設 相容性檢視 或使用其他瀏覽器如 Google Chrome
+                      - cell [ref=f14e104]
+                    - row [ref=f14e105]:
+                      - cell [ref=f14e106]
+                      - cell [ref=f14e107]
+                      - cell [ref=f14e108]
+              - cell [ref=f14e109]:
+                - table [ref=f14e110]:
+                  - rowgroup [ref=f14e111]:
+                    - row [ref=f14e112]:
+                      - cell [ref=f14e113]
+                      - cell "問題反應?" [ref=f14e114]
+                      - cell [ref=f14e117]
+                    - row [ref=f14e118]:
+                      - cell [ref=f14e119]
+                      - 'cell "非系統問題: 如出現非在校學生(含休學、退學、畢業之學生或無學籍者)不可使用校務系統！請洽註冊組。 系統操作問題:請以 E-Mail 傳送問題並請留下姓名及連絡方式，未留資料者恕不處理。" [ref=f14e120]':
+                        - list [ref=f14e121]:
+                          - listitem [ref=f14e122]: "非系統問題: 如出現非在校學生(含休學、退學、畢業之學生或無學籍者)不可使用校務系統！請洽註冊組。"
+                          - listitem [ref=f14e123]:
+                            - generic [ref=f14e124]:
+                              - generic [ref=f14e125]:
+                                - text: 系統操作問題:請以
+                                - link "E-Mail" [ref=f14e127] [cursor=pointer]:
+                                  - /url: mailto:yustschool@mail.ypu.edu.tw?subject=校務系統問題反應
+                              - text: 傳送問題並請留下姓名及連絡方式，未留資料者恕不處理。
+                      - cell [ref=f14e129]
+                    - row [ref=f14e130]:
+                      - cell [ref=f14e131]
+                      - cell [ref=f14e132]
+                      - cell [ref=f14e133]
+        - paragraph [ref=f14e134]: "元培醫事科技大學版權所有 2016 All Rights Reserved 300 新竹市元培街306 號 Tel: (03)538-1183"

@@ -1,0 +1,171 @@
+- generic [ref=f1e2]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e6]:
+      - generic [ref=f1e7]:
+        - button "導覽" [active] [pressed] [ref=f1e9] [cursor=pointer]
+        - generic [ref=f1e11]:
+          - link "YouTube 首頁" [ref=f1e12] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f1e16]: TW
+        - button "略過導覽功能" [ref=f1e20] [cursor=pointer]
+      - generic [ref=f1e24]:
+        - search [ref=f1e25]:
+          - generic [ref=f1e27]:
+            - generic [ref=f1e28]:
+              - combobox "搜尋" [expanded] [ref=f1e30]: 生命健康 YouTuber
+              - button "清除搜尋查詢" [ref=f1e32] [cursor=pointer]
+            - button "Search" [ref=f1e37] [cursor=pointer]
+        - generic [ref=f1e40]:
+          - button "使用語音搜尋" [ref=f1e42] [cursor=pointer]
+          - tooltip "tooltip"
+      - generic [ref=f1e47]:
+        - button "建立" [ref=f1e50] [cursor=pointer]
+        - generic [ref=f1e54]:
+          - button "通知" [ref=f1e56] [cursor=pointer]
+          - tooltip "tooltip"
+        - button "帳戶選單" [ref=f1e62]:
+          - generic [ref=f1e63] [cursor=pointer]
+  - navigation [ref=f1e64]
+  - main [ref=f1e71]:
+    - generic [ref=f1e72]:
+      - generic [ref=f1e74]:
+        - tablist [ref=f1e79]:
+          - tab "全部" [selected] [ref=f1e83] [cursor=pointer]
+          - tab "Shorts" [ref=f1e92] [cursor=pointer]
+          - tab "未觀看" [ref=f1e101] [cursor=pointer]
+          - tab "已觀看" [ref=f1e110] [cursor=pointer]
+          - tab "影片" [ref=f1e119] [cursor=pointer]
+          - tab "最新上傳" [ref=f1e128] [cursor=pointer]
+          - tab "直播中" [ref=f1e137] [cursor=pointer]
+        - generic [ref=f1e144]:
+          - button "搜尋篩選器" [ref=f1e146] [cursor=pointer]:
+            - generic: 篩選器
+          - tooltip "tooltip"
+      - generic [ref=f1e155]:
+        - generic [ref=f1e157]:
+          - link [ref=f1e159] [cursor=pointer]:
+            - /url: /@YourTrueAbundance
+          - generic [ref=f1e162]:
+            - link "生命清源 -True Abundance @YourTrueAbundance•2.79萬位訂閱者 歡迎來到“生命清源-True Abundance” 頻道！生命清源-True Abundance 關注於積極與健康的生活方式。和我們一起提升生命的能量 ..." [ref=f1e163] [cursor=pointer]:
+              - /url: /@YourTrueAbundance
+              - generic [ref=f1e164]:
+                - generic [ref=f1e165]: 生命清源 -True Abundance
+                - generic [ref=f1e169]: "@YourTrueAbundance•2.79萬位訂閱者"
+                - generic [ref=f1e170]: 歡迎來到“生命清源-True Abundance” 頻道！生命清源-True Abundance 關注於積極與健康的生活方式。和我們一起提升生命的能量 ...
+            - button "訂閱「生命清源 -True Abundance」。" [ref=f1e177] [cursor=pointer]:
+              - generic: 訂閱
+        - generic [ref=f1e182]:
+          - link [ref=f1e184] [cursor=pointer]:
+            - /url: /@havemary99
+          - generic [ref=f1e187]:
+            - link "健談HaveMary│健康動畫影音頻道 @havemary99•9920位訂閱者 健康生活上健談，專業易懂超簡單！ 「漫畫圖文」+「專業醫療顧問團隊」讓健康簡單易懂又正確。 阿木~之後要傳line貼圖，可以傳 ..." [ref=f1e188] [cursor=pointer]:
+              - /url: /@havemary99
+              - generic [ref=f1e189]:
+                - generic [ref=f1e190]: 健談HaveMary│健康動畫影音頻道
+                - generic [ref=f1e194]: "@havemary99•9920位訂閱者"
+                - generic [ref=f1e195]: 健康生活上健談，專業易懂超簡單！ 「漫畫圖文」+「專業醫療顧問團隊」讓健康簡單易懂又正確。 阿木~之後要傳line貼圖，可以傳 ...
+            - button "訂閱「健談HaveMary│健康動畫影音頻道」。" [ref=f1e202] [cursor=pointer]:
+              - generic: 訂閱
+        - generic [ref=f1e207] [cursor=pointer]:
+          - link [ref=f1e208]:
+            - /url: /watch?v=KhUImTmzRk8&list=PLTEncD8mNMNrYQHoqHm_YwH0iD5zDkXe9
+            - generic [ref=f1e209]: 9 部影片
+          - generic [ref=f1e222]:
+            - generic [ref=f1e223]:
+              - heading "系列講道 | 培養情緒健康的屬靈生命| 潘智翔牧師 |粵語" [level=3] [ref=f1e224]:
+                - link "系列講道 | 培養情緒健康的屬靈生命| 潘智翔牧師 |粵語" [ref=f1e225]:
+                  - /url: /watch?v=KhUImTmzRk8&list=PLTEncD8mNMNrYQHoqHm_YwH0iD5zDkXe9
+              - generic [ref=f1e227]:
+                - group [ref=f1e228]:
+                  - link "Immersing Grace" [ref=f1e231]:
+                    - /url: /@ImmersingGrace
+                  - generic [ref=f1e232]: •
+                  - link "播放清單" [ref=f1e235]:
+                    - /url: /@ImmersingGrace
+                - group [ref=f1e236]
+                - group [ref=f1e237]:
+                  - link "02-07-26 |為什麼情緒健康對靈命那麼重要 | 潘智翔牧師 | 粵語崇拜 · 36:45" [ref=f1e239]:
+                    - /url: /watch?v=KhUImTmzRk8&list=PLTEncD8mNMNrYQHoqHm_YwH0iD5zDkXe9
+                - group [ref=f1e240]:
+                  - link "03-07-26 |自我省察的重要 | 潘智翔牧師 | 粵語崇拜 · 35:57" [ref=f1e242]:
+                    - /url: /watch?v=Z-VRTfA6Qao&list=PLTEncD8mNMNrYQHoqHm_YwH0iD5zDkXe9&pp=0gcJCeYE0aJEHMZM
+                - group [ref=f1e243]
+                - group [ref=f1e244]:
+                  - link "查看完整播放清單" [ref=f1e247]:
+                    - /url: /playlist?list=PLTEncD8mNMNrYQHoqHm_YwH0iD5zDkXe9
+            - button "其他動作" [ref=f1e250]
+        - generic [ref=f1e262] [cursor=pointer]:
+          - link [ref=f1e263]:
+            - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CLwCJ9haDasuVCv_kr7wPjPbckQP058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoEzwJP0EA9WWQs_EU1_RISbndHw2KGi7s_rDsVbEAM6IuZ6TtUYedk6MRZ7W8K5w2ilXJXCJEpLEZ3wBNh2d4NmM3pLJYydKqF-GzfPy_AEJdVAnEgB13dHU-REVbxsKXTzJpCyTEwBhNci5a1i57Awqfw65gnOHL1urlwJFQO_g_34mBke7pbMqwePSQCDmRp-IUfN6Df1atkd0Xk5-gtiHJTnBM5WasoBdKhufj0jHRGhSPYW3RoobYBpysAaWTDkmlls6UKBpKEu0T7_bmgX5UQCpo4KzhuvNY816rW7ywWeN1tbucEtl5pmw5MOxMr66H_K-zIso98azkcysgmdkLwzW9xDha-be84oP-AA173cdKvhgWAWJ9E5W-4i1Qn0WGJsaCnkk1uSzbm7qCqsdvOfAriBNDnwwDXWAZnX6dRuHCxDNTN071nRAl97oR-fogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKDU9qjsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDw_dqGppmi5G4SAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjRFdQZVd2dlYxNU90enRFUG5KUHpCUlctMzFMcmpZYUNxWGFCMi1wVHJNOEp2TnptOXo0OWluOWNwaVJyYXZuSTQwaURoVmhQby1FUGpEVUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qxjruyOWDOicyDaMvBFCybWibbMJCX8Vs1FIQLR9qSotrAViMj_U5caAs7WEALw_wcB&num=1&cid=CAESvQHg9rO9ezm-wbaopBQ-zoBZxjkSXO3Niajir88kSIf9iYK0gIe8IoEGSF_wW1U7enGWeylTftduCAnJgNps-1I4k1LrnmmpbAMChKba2Owky98vLPm5WQWaWGgBnFvWfxMFqnEmzMK9WxQXPeOeS8PubjVntjRzH86FPIm6YcO3baB_M3uVT9pMnComeQawcyUaLm-Ful2vppFcopFddwC8JTth7XUwQt6-F351Cywy9XW_miJeV4UB_Bbqak8&ad_cpn=%5BCPN%5D&sig=AOD64_382pkORqviAY28PrabPPZIebtljQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=21&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+            - button [ref=f1e268]
+          - generic [ref=f1e272]:
+            - generic [ref=f1e273]:
+              - generic [ref=f1e274]:
+                - link "Adobe Acrobat Pro DC gives you the most-trusted tools to manage, edit, and share PDFs." [ref=f1e277]:
+                  - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CLwCJ9haDasuVCv_kr7wPjPbckQP058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoEzwJP0EA9WWQs_EU1_RISbndHw2KGi7s_rDsVbEAM6IuZ6TtUYedk6MRZ7W8K5w2ilXJXCJEpLEZ3wBNh2d4NmM3pLJYydKqF-GzfPy_AEJdVAnEgB13dHU-REVbxsKXTzJpCyTEwBhNci5a1i57Awqfw65gnOHL1urlwJFQO_g_34mBke7pbMqwePSQCDmRp-IUfN6Df1atkd0Xk5-gtiHJTnBM5WasoBdKhufj0jHRGhSPYW3RoobYBpysAaWTDkmlls6UKBpKEu0T7_bmgX5UQCpo4KzhuvNY816rW7ywWeN1tbucEtl5pmw5MOxMr66H_K-zIso98azkcysgmdkLwzW9xDha-be84oP-AA173cdKvhgWAWJ9E5W-4i1Qn0WGJsaCnkk1uSzbm7qCqsdvOfAriBNDnwwDXWAZnX6dRuHCxDNTN071nRAl97oR-fogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKDU9qjsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDw_dqGppmi5G4SAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjRFdQZVd2dlYxNU90enRFUG5KUHpCUlctMzFMcmpZYUNxWGFCMi1wVHJNOEp2TnptOXo0OWluOWNwaVJyYXZuSTQwaURoVmhQby1FUGpEVUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qxjruyOWDOicyDaMvBFCybWibbMJCX8Vs1FIQLR9qSotrAViMj_U5caAs7WEALw_wcB&num=1&cid=CAESvQHg9rO9ezm-wbaopBQ-zoBZxjkSXO3Niajir88kSIf9iYK0gIe8IoEGSF_wW1U7enGWeylTftduCAnJgNps-1I4k1LrnmmpbAMChKba2Owky98vLPm5WQWaWGgBnFvWfxMFqnEmzMK9WxQXPeOeS8PubjVntjRzH86FPIm6YcO3baB_M3uVT9pMnComeQawcyUaLm-Ful2vppFcopFddwC8JTth7XUwQt6-F351Cywy9XW_miJeV4UB_Bbqak8&ad_cpn=%5BCPN%5D&sig=AOD64_382pkORqviAY28PrabPPZIebtljQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=0&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                - link "Built to work where you work." [ref=f1e280]:
+                  - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CLwCJ9haDasuVCv_kr7wPjPbckQP058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoEzwJP0EA9WWQs_EU1_RISbndHw2KGi7s_rDsVbEAM6IuZ6TtUYedk6MRZ7W8K5w2ilXJXCJEpLEZ3wBNh2d4NmM3pLJYydKqF-GzfPy_AEJdVAnEgB13dHU-REVbxsKXTzJpCyTEwBhNci5a1i57Awqfw65gnOHL1urlwJFQO_g_34mBke7pbMqwePSQCDmRp-IUfN6Df1atkd0Xk5-gtiHJTnBM5WasoBdKhufj0jHRGhSPYW3RoobYBpysAaWTDkmlls6UKBpKEu0T7_bmgX5UQCpo4KzhuvNY816rW7ywWeN1tbucEtl5pmw5MOxMr66H_K-zIso98azkcysgmdkLwzW9xDha-be84oP-AA173cdKvhgWAWJ9E5W-4i1Qn0WGJsaCnkk1uSzbm7qCqsdvOfAriBNDnwwDXWAZnX6dRuHCxDNTN071nRAl97oR-fogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKDU9qjsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDw_dqGppmi5G4SAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjRFdQZVd2dlYxNU90enRFUG5KUHpCUlctMzFMcmpZYUNxWGFCMi1wVHJNOEp2TnptOXo0OWluOWNwaVJyYXZuSTQwaURoVmhQby1FUGpEVUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qxjruyOWDOicyDaMvBFCybWibbMJCX8Vs1FIQLR9qSotrAViMj_U5caAs7WEALw_wcB&num=1&cid=CAESvQHg9rO9ezm-wbaopBQ-zoBZxjkSXO3Niajir88kSIf9iYK0gIe8IoEGSF_wW1U7enGWeylTftduCAnJgNps-1I4k1LrnmmpbAMChKba2Owky98vLPm5WQWaWGgBnFvWfxMFqnEmzMK9WxQXPeOeS8PubjVntjRzH86FPIm6YcO3baB_M3uVT9pMnComeQawcyUaLm-Ful2vppFcopFddwC8JTth7XUwQt6-F351Cywy9XW_miJeV4UB_Bbqak8&ad_cpn=%5BCPN%5D&sig=AOD64_382pkORqviAY28PrabPPZIebtljQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=7&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                - generic [ref=f1e281]:
+                  - button "Adobe Acrobat" [ref=f1e285]
+                  - generic [ref=f1e289]:
+                    - generic [ref=f1e290]: 贊助商廣告
+                    - text: ·
+                  - generic [ref=f1e291]: Adobe Acrobat
+              - button "我的廣告中心" [ref=f1e295]
+            - generic [ref=f1e301]:
+              - link "觀看" [ref=f1e304]:
+                - /url: /watch?v=KwnjktJaSrs
+              - link "瞭解詳情" [ref=f1e310]:
+                - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CLwCJ9haDasuVCv_kr7wPjPbckQP058eIiQHN57uV2RWK1KaIly8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAGL4oqgAagDBMgDCqoEzwJP0EA9WWQs_EU1_RISbndHw2KGi7s_rDsVbEAM6IuZ6TtUYedk6MRZ7W8K5w2ilXJXCJEpLEZ3wBNh2d4NmM3pLJYydKqF-GzfPy_AEJdVAnEgB13dHU-REVbxsKXTzJpCyTEwBhNci5a1i57Awqfw65gnOHL1urlwJFQO_g_34mBke7pbMqwePSQCDmRp-IUfN6Df1atkd0Xk5-gtiHJTnBM5WasoBdKhufj0jHRGhSPYW3RoobYBpysAaWTDkmlls6UKBpKEu0T7_bmgX5UQCpo4KzhuvNY816rW7ywWeN1tbucEtl5pmw5MOxMr66H_K-zIso98azkcysgmdkLwzW9xDha-be84oP-AA173cdKvhgWAWJ9E5W-4i1Qn0WGJsaCnkk1uSzbm7qCqsdvOfAriBNDnwwDXWAZnX6dRuHCxDNTN071nRAl97oR-fogFx-Xi_ViSBQgIE3iLgPDgAqAGoQGAB92d9d8CiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB9XOG6gHvtmxAqgHq8UbqAec3BuoB7ehsQKoB9WpsQKoB-fasQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQKSCAtLd25qa3RKYVNyc6gIAdIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKDU9qjsp5YDYAGaCThodHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbLEJotqTMEtTP1PICRfICY8ByAnCAcgJlwK6C2EIAxAFGAQgBygBMBxAAUgAWH1gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQOAAgGIAgW6Awd2aXRwZXJi0AsS4AsBogwhIAFIAWoWChRjb20uYWRvYmUuc3BhcmsucG9zdHgBiAEB0gwCEAHaDCUKChDw_dqGppmi5G4SAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjRFdQZVd2dlYxNU90enRFUG5KUHpCUlctMzFMcmpZYUNxWGFCMi1wVHJNOEp2TnptOXo0OWluOWNwaVJyYXZuSTQwaURoVmhQby1FUGpEVUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qxjruyOWDOicyDaMvBFCybWibbMJCX8Vs1FIQLR9qSotrAViMj_U5caAs7WEALw_wcB&num=1&cid=CAESvQHg9rO9ezm-wbaopBQ-zoBZxjkSXO3Niajir88kSIf9iYK0gIe8IoEGSF_wW1U7enGWeylTftduCAnJgNps-1I4k1LrnmmpbAMChKba2Owky98vLPm5WQWaWGgBnFvWfxMFqnEmzMK9WxQXPeOeS8PubjVntjRzH86FPIm6YcO3baB_M3uVT9pMnComeQawcyUaLm-Ful2vppFcopFddwC8JTth7XUwQt6-F351Cywy9XW_miJeV4UB_Bbqak8&ad_cpn=%5BCPN%5D&sig=AOD64_382pkORqviAY28PrabPPZIebtljQ&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=8&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+        - generic [ref=f1e315]:
+          - link [ref=f1e317] [cursor=pointer]:
+            - /url: /watch?v=dP01s0VdzEc&pp=ygUV55Sf5ZG95YGl5bq3IFlvdVR1YmVy
+          - generic [ref=f1e319] [cursor=pointer]:
+            - generic [ref=f1e320]:
+              - heading [level=3] [ref=f1e322]:
+                - link "【健康】千萬不要這樣做，癌細胞狂飆長大！名醫曝3大水果霸主抗發炎：腫瘤全消失！ft. 劉博仁醫師｜下班經濟學529｜謝哲青 @TheStormMedia 22 分鐘" [ref=f1e323]:
+                  - /url: /watch?v=dP01s0VdzEc&pp=ygUV55Sf5ZG95YGl5bq3IFlvdVR1YmVy
+                  - text: 【健康】千萬不要這樣做，癌細胞狂飆長大！名醫曝3大水果霸主抗發炎：腫瘤全消失！ft. 劉博仁醫師｜下班經濟學529｜謝哲青 @TheStormMedia
+              - generic [ref=f1e326]:
+                - generic [ref=f1e327]: 觀看次數：163萬次
+                - generic [ref=f1e328]: •1 年前
+            - generic [ref=f1e329]:
+              - link "前往頻道：風傳媒 The Storm Media" [ref=f1e330]:
+                - /url: /@TheStormMedia
+              - generic [ref=f1e331]:
+                - link "風傳媒 The Storm Media" [ref=f1e335]:
+                  - /url: /@TheStormMedia
+                - img "已驗證" [ref=f1e340]
+            - generic [ref=f1e342]:
+              - generic [ref=f1e343]: 3種天然水果抗發炎，你吃對了嗎？今天邀請到名醫劉博仁來告訴大家，久坐不動等於慢性結束生命，「開燈睡覺」罹癌風險更是狂飆 ...
+              - tooltip "tooltip"
+            - img "字幕" [ref=f1e348]
+            - generic [ref=f1e352]:
+              - generic [ref=f1e353]:
+                - generic [ref=f1e356]: 8 個章節
+                - button "精彩開場 | 不想老後臥床？名醫曝抗癌、抗老、抗發炎這樣做！ | 慢性發炎怎麼吃？名醫公開5大抗發炎超級食物！ | 不喝水容易罹癌？5招防癌跟著名醫這樣吃！ | 5大NG行為讓你身體狂發炎！不想罹癌千萬別做！ | 夏天洗冷水身體更勇健？?5招抗發炎增強免疫！ | 藍區人瑞都這樣吃！全球最長壽飲食祕訣？ | 心念抗發炎！3個月腫瘤全消失怎麼做到？" [ref=f1e358]
+              - button "其他項目" [ref=f1e363]
+        - generic [ref=f1e368]:
+          - link [ref=f1e370] [cursor=pointer]:
+            - /url: /@%E7%94%9F%E5%91%BD%E5%92%8C%E8%B0%90
+          - generic [ref=f1e373]:
+            - link "生命和谐 @生命和谐•478位訂閱者 欢迎来到 生命和谐 – 简单健康生活从这里开始！ 生命和谐 不仅仅是一个 YouTube 频道—— 它是你每天汲取灵感的地方， 帮助你 ..." [ref=f1e374] [cursor=pointer]:
+              - /url: /@%E7%94%9F%E5%91%BD%E5%92%8C%E8%B0%90
+              - generic [ref=f1e375]:
+                - generic [ref=f1e376]: 生命和谐
+                - generic [ref=f1e380]: "@生命和谐•478位訂閱者"
+                - generic [ref=f1e381]: 欢迎来到 生命和谐 – 简单健康生活从这里开始！ 生命和谐 不仅仅是一个 YouTube 频道—— 它是你每天汲取灵感的地方， 帮助你 ...
+            - button "訂閱「生命和谐」。" [ref=f1e388] [cursor=pointer]:
+              - generic: 訂閱
+        - generic [ref=f1e404] [cursor=pointer]:
+          - generic [ref=f1e405]:
+            - link "Science-Backed ADHD Music" [ref=f1e408]:
+              - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CFL439haDasuVCv_kr7wPjPbckQOD3Mv8iAGY_eiJuRVkEAIgAGCfuYeO1CiCARdjYS1wdWItNjIxOTgxMTc0NzA0OTM3MaAB3eLRyAOoAwTIAwqqBKgCT9BAPVlkLPxFNf0SEm53R8Nihou7P6w7FWxADOiLmek7VGHnZOjEWe1vCucNopVyVwiRKSxGd8ATYdneDZjN6SyWMnSqhfhs3z8vwBCXVQJxIAdd3R1PkRFW8bCl08yaQskxMAYTXIuWtYuewMKn8OuYJzhy9bq5cCRUDv4P9-JgZHu6WzKsHj0kAg5kafiFHzeg39WrZHdF5OfoLYhyU5wTOVmrKAXSobn49Ix0RoUj2Ft0aKG2AacrAGlkw5JpZbOlCgaShLtE-_25oF-VEAqaOCs4brzWPNeq1u8sFnjdbW7_BAjNq2UCRDuIQkOKExdp2hCDh2CvOinnfruV3vVh-BTsfGeu57WMIyRuaFJRr5jcolIXSQHltVyyFgrQbU-qDppUP56IBYrMrItXkgUHCBN48-WTNqAGboAHi52uN4gHAZAHAqgH8sCxAqgHuMSxAqgH4baxAqgHpc-xAqgH552xAqgH6J2xAqgH77WxAqgH8LWxAqgH-dOxAqgHydqxAqgHqeCxAqgHhAioB6bUsQKoB6jSG6gHtgeoB7HcG6gHsJuxAqgHrrGxAqgH_bKxAqgHyM-xAqgHyc-xAqgHzcexAqgH8dGxAqgH_NWxAqgH-9WxAqgHjNaxAqgHi9axAqgHmuKxAqgHm-KxAqgHndexAqgHndSxAqgHgcYbqAf8r7ECqAe-2bECqAerxRuoB7ehsQKoB9WpsQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQLSCDEIABACGFoyAQA6FI_QgICAgASAwICAgICAgAKqgIAQSNmg0jVQFFig1Pao7KeWA2ABmgkVaHR0cHM6Ly93d3cuYnJhaW4uZm0vsQnYlspPDQu8WcgJAMgJigKYCwG6C2EIAxAFGAQgCCgBMBxAAUgAWE5gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQGAAgGIAga6Awd2aXRwZXJi0AsSogwsIAFIAWIOCgxmbS5icmFpbndhdmVqEQoPY29tLmJyYWluZm0uYXBweAGIAQHSDAIQAdoMJgoLEPCSpJKQ_eXR4wESAgEDGg0Yisysi1cgpaKYnMQFQAFKAhAfmg0BEqoNAlRXyA0B0g1zaHR0cHM6Ly93d3cuYnJhaW4uZm0vP3V0bV9zb3VyY2U9Z29vZ2xlLWFkcy1kZW1hbmQtZ2VuLXRpZXItMSZ1dG1fY2FtcGFpZ249JmdhZF9zb3VyY2U9MiZnYWRfY2FtcGFpZ25pZD0yMzM3NzY4Mzk3OLgT____________AbAUA8AVgYCAQNAVAdgVAZgWAeIWAggBgBcBihcYCAMYASABKAEwATgBQAFIAVABWAFgAmgBoBcBqRfoGsdEKWD0yLoXBigAMAA4AdAYAfAYAcIZAggB&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qz44rVIFmy-aU_z-_nctszh0Mh-1gFuKhNyT7cNgpU-kZnAUFSRa5YaAgO9EALw_wcB&num=2&cid=CAESvQHg9rO9ezm-wbaopBQ-zoBZxjkSXO3Niajir88kSIf9iYK0gIe8IoEGSF_wW1U7enGWeylTftduCAnJgNps-1I4k1LrnmmpbAMChKba2Owky98vLPm5WQWaWGgBnFvWfxMFqnEmzMK9WxQXPeOeS8PubjVntjRzH86FPIm6YcO3baB_M3uVT9pMnComeQawcyUaLm-Ful2vppFcopFddwC8JTth7XUwQt6-F351Cywy9XW_miJeV4UB_Bbqak8&sig=AOD64_2jrfmkHulsuSSVVd19FW3M0OlFCQ&ms=%5BCLICK_MS%5D&nb=0&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+            - link "Funded by the National Science Foundation." [ref=f1e411]:
+              - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CFL439haDasuVCv_kr7wPjPbckQOD3Mv8iAGY_eiJuRVkEAIgAGCfuYeO1CiCARdjYS1wdWItNjIxOTgxMTc0NzA0OTM3MaAB3eLRyAOoAwTIAwqqBKgCT9BAPVlkLPxFNf0SEm53R8Nihou7P6w7FWxADOiLmek7VGHnZOjEWe1vCucNopVyVwiRKSxGd8ATYdneDZjN6SyWMnSqhfhs3z8vwBCXVQJxIAdd3R1PkRFW8bCl08yaQskxMAYTXIuWtYuewMKn8OuYJzhy9bq5cCRUDv4P9-JgZHu6WzKsHj0kAg5kafiFHzeg39WrZHdF5OfoLYhyU5wTOVmrKAXSobn49Ix0RoUj2Ft0aKG2AacrAGlkw5JpZbOlCgaShLtE-_25oF-VEAqaOCs4brzWPNeq1u8sFnjdbW7_BAjNq2UCRDuIQkOKExdp2hCDh2CvOinnfruV3vVh-BTsfGeu57WMIyRuaFJRr5jcolIXSQHltVyyFgrQbU-qDppUP56IBYrMrItXkgUHCBN48-WTNqAGboAHi52uN4gHAZAHAqgH8sCxAqgHuMSxAqgH4baxAqgHpc-xAqgH552xAqgH6J2xAqgH77WxAqgH8LWxAqgH-dOxAqgHydqxAqgHqeCxAqgHhAioB6bUsQKoB6jSG6gHtgeoB7HcG6gHsJuxAqgHrrGxAqgH_bKxAqgHyM-xAqgHyc-xAqgHzcexAqgH8dGxAqgH_NWxAqgH-9WxAqgHjNaxAqgHi9axAqgHmuKxAqgHm-KxAqgHndexAqgHndSxAqgHgcYbqAf8r7ECqAe-2bECqAerxRuoB7ehsQKoB9WpsQKoB961sQKoB-qxsQKoB763sQKoB5m1sQKoB4XBsQKoB-ulsQKoB8qpsQLSCDEIABACGFoyAQA6FI_QgICAgASAwICAgICAgAKqgIAQSNmg0jVQFFig1Pao7KeWA2ABmgkVaHR0cHM6Ly93d3cuYnJhaW4uZm0vsQnYlspPDQu8WcgJAMgJigKYCwG6C2EIAxAFGAQgCCgBMBxAAUgAWE5gAGgAcAGIAQCYAQGiASoKHwgAIAMoA9q4BBUyEzoRCg8oMEit88Ph1A6YGQG4IAHQAQGoAgXAAgKoAQHYAQGAAgGIAga6Awd2aXRwZXJi0AsSogwsIAFIAWIOCgxmbS5icmFpbndhdmVqEQoPY29tLmJyYWluZm0uYXBweAGIAQHSDAIQAdoMJgoLEPCSpJKQ_eXR4wESAgEDGg0Yisysi1cgpaKYnMQFQAFKAhAfmg0BEqoNAlRXyA0B0g1zaHR0cHM6Ly93d3cuYnJhaW4uZm0vP3V0bV9zb3VyY2U9Z29vZ2xlLWFkcy1kZW1hbmQtZ2VuLXRpZXItMSZ1dG1fY2FtcGFpZ249JmdhZF9zb3VyY2U9MiZnYWRfY2FtcGFpZ25pZD0yMzM3NzY4Mzk3OLgT____________AbAUA8AVgYCAQNAVAdgVAZgWAeIWAggBgBcBihcYCAMYASABKAEwATgBQAFIAVABWAFgAmgBoBcBqRfoGsdEKWD0yLoXBigAMAA4AdAYAfAYAcIZAggB&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qz44rVIFmy-aU_z-_nctszh0Mh-1gFuKhNyT7cNgpU-kZnAUFSRa5YaAgO9EALw_wcB&num=2&cid=CAESvQHg9rO9ezm-wbaopBQ-zoBZxjkSXO3Niajir88kSIf9iYK0gIe8IoEGSF_wW1U7enGWeylTftduCAnJgNps-1I4k1LrnmmpbAMChKba2Owky98vLPm5WQWaWGgBnFvWfxMFqnEmzMK9WxQXPeOeS8PubjVntjRzH86FPIm6YcO3baB_M3uVT9pMnComeQawcyUaLm-Ful2vppFcopFddwC8JTth7XUwQt6-F351Cywy9XW_miJeV4UB_Bbqak8&sig=AOD64_2jrfmkHulsuSSVVd19FW3M0OlFCQ&ms=%5BCLICK_MS%5D&nb=7&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+            - generic [ref=f1e412]:
+              - generic [ref=f1e414]:
+                - generic [ref=f1e415]: 贊助商廣告
+                - text: ·
+              - generic [ref=f1e416]: Brain.fm
+          - button "我的廣告中心" [ref=f1e420]

@@ -1452,7 +1452,7 @@ function initLive2D() {
       // 根據 L2D_CFG.vfxMode 動態注入 VFX 腳本（只做一次，利用 srcs 鏈）
       const _vm = L2D_CFG.vfxMode;
       if (_vm !== 'off' && !srcs.some(s => s.includes('MagicShotVFX'))) {
-        srcs.push(_vm === 'simple' ? 'MagicShotVFX_backup.js' : 'MagicShotVFX.js');
+        srcs.push(_vm === 'simple' ? 'MagicShotVFX_simple.js' : 'MagicShotVFX.js');
         next();
         return;
       }

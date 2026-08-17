@@ -1,0 +1,5 @@
+[     377ms] [WARNING] Manifest: property 'migrate_from' ignored, manifest must specify an 'id' property in order to receive a migration. @ https://www.youtube.com/manifest.webmanifest:0
+[    1934ms] [INFO] LegacyDataMixin will be applied to all legacy elements.
+Set `_legacyUndefinedCheck: true` on element class to enable. @ https://www.youtube.com/s/_/ytmainappweb/_/js/k=ytmainappweb.kevlar_base.en_US.0bVTkA9yUAE.es5.O/am=AAAAIAAAEAASAw/d=1/br=1/rs=AGKMywFi57R7DljfvAtfxkRn1HpkD6Kskg/m=kevlar_base_module,kevlar_main_module,kevlar_base_sync_mod_chunk:10165
+[    3115ms] [INFO] Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner. @ https://www.youtube.com/results?search_query=%E5%81%A5%E5%BA%B7:0
+[    8652ms] [WARNING] The resource https://i.ytimg.com/generate_204 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://www.youtube.com/results?search_query=%E5%81%A5%E5%BA%B7:0

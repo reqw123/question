@@ -1,0 +1,7 @@
+[   68895ms] [LOG] limitedAds is  true @ :1
+[   68895ms] [WARNING] The following functions are deprecated: googletag.pubads().setTagForChildDirectedTreatment(), googletag.pubads().clearTagForChildDirectedTreatment(), googletag.pubads().setRequestNonPersonalizedAds(), and googletag.pubads().setTagForUnderAgeOfConsent(). Please use googletag.pubads().setPrivacySettings() instead. @ https://pagead2.googlesyndication.com/pagead/managed/js/gpt/m202608100101/pubads_impl.js?cb=122880346:18
+[   68896ms] [WARNING] [GPT] PubAdsService.enableSingleRequest is deprecated, use googletag.setConfig({singleRequest: ...}) instead.
+https://goo.gle/gpt-message#170 @ https://pagead2.googlesyndication.com/pagead/managed/js/gpt/m202608100101/pubads_impl.js?cb=122880346:18
+[   69008ms] [LOG] logged_in_to_sn_profile could not be retrieved from /exposed-details @ :0
+[   69061ms] [WARNING] [GPT] Slot.setTargeting is deprecated, use Slot.setConfig({targeting: ...}) instead.
+https://goo.gle/gpt-message#171 @ https://pagead2.googlesyndication.com/pagead/managed/js/gpt/m202608100101/pubads_impl.js?cb=122880346:18

@@ -1,0 +1,13 @@
+- generic [ref=f31e6]:
+  - generic [ref=f31e8]:
+    - generic [ref=f31e9]: 正在檢查瀏覽器以便讓您存取 pmc.ncbi.nlm.nih.gov...
+    - generic [ref=f31e10]:
+      - text: 如果 5 秒後未自動重新導向，請按
+      - link "這裡" [ref=f31e11] [cursor=pointer]:
+        - /url: "#"
+      - text: 。
+  - iframe [ref=f31e14]:
+    - generic [ref=f32e6]:
+      - text: 採用
+      - strong [ref=f32e7]: reCAPTCHA
+      - text: 保護機制

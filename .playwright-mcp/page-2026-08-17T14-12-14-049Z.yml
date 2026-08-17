@@ -1,0 +1,595 @@
+- generic [ref=f5e2]:
+  - banner [ref=f5e4]:
+    - generic [ref=f5e6]:
+      - generic [ref=f5e7]:
+        - button "導覽" [ref=f5e9] [cursor=pointer]
+        - generic [ref=f5e13]:
+          - link "YouTube 首頁" [ref=f5e14] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f5e20]: TW
+        - button "略過導覽功能" [ref=f5e24] [cursor=pointer]
+      - generic [ref=f5e28]:
+        - search [ref=f5e29]:
+          - generic [ref=f5e31]:
+            - combobox "搜尋" [expanded] [ref=f5e34]
+            - button "Search" [ref=f5e35] [cursor=pointer]
+        - generic [ref=f5e40]:
+          - button "使用語音搜尋" [ref=f5e42] [cursor=pointer]
+          - tooltip "tooltip"
+      - generic [ref=f5e47]:
+        - button "建立" [ref=f5e50] [cursor=pointer]
+        - generic [ref=f5e54]:
+          - button "通知" [ref=f5e56] [cursor=pointer]
+          - tooltip "tooltip"
+        - button "帳戶選單" [ref=f5e62]:
+          - img "顯示圖片" [ref=f5e64] [cursor=pointer]
+  - main [ref=f5e66]:
+    - generic [ref=f5e67]:
+      - generic [ref=f5e69]:
+        - generic [ref=f5e72]:
+          - generic [ref=f5e75] [cursor=pointer]
+          - complementary [ref=f5e76]:
+            - generic "YouTube 影片播放器" [active] [ref=f5e79]:
+              - generic:
+                - button "顯示資訊卡" [ref=f5e82] [cursor=pointer]
+                - button [ref=f5e87] [cursor=pointer]:
+                  - img "頻道浮水印" [ref=f5e88]
+              - generic [ref=f5e91]:
+                - generic [ref=f5e92] [cursor=pointer]:
+                  - slider "搜尋滑桿" [ref=f5e93]
+                  - generic:
+                    - generic:
+                      - generic:
+                        - slider "點選或捲動面板來使用精準跳轉功能。"
+                - generic [ref=f5e104]:
+                  - generic [ref=f5e105]:
+                    - button "暫停 (k)" [ref=f5e106] [cursor=pointer]
+                    - button "上一部 (SHIFT+p)" [ref=f5e107] [cursor=pointer]
+                    - button "下一個 (SHIFT+n)" [ref=f5e108] [cursor=pointer]
+                    - generic [ref=f5e109]:
+                      - button "靜音 (m)" [ref=f5e111] [cursor=pointer]
+                      - slider "音量":
+                        - generic [ref=f5e112] [cursor=pointer]
+                    - button "0 分鐘 1 秒，共 2 分鐘 13 秒" [ref=f5e115] [cursor=pointer]: 0:01 / 2:13
+                  - generic [ref=f5e116]:
+                    - generic [ref=f5e117]:
+                      - button "未提供字幕/隱藏式輔助字幕" [ref=f5e118] [cursor=pointer]
+                      - button "設定" [ref=f5e120] [cursor=pointer]
+                    - generic [ref=f5e121]:
+                      - button "劇院模式 (t)" [ref=f5e122] [cursor=pointer]
+                      - button "全螢幕 (f)" [ref=f5e123] [cursor=pointer]
+        - generic [ref=f5e125]:
+          - generic [ref=f5e127]:
+            - heading "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】" [level=1] [ref=f5e130]
+            - generic [ref=f5e131]:
+              - generic [ref=f5e132]:
+                - generic [ref=f5e133]:
+                  - link [ref=f5e134] [cursor=pointer]:
+                    - /url: /@panscischool
+                    - img "泛科學院" [ref=f5e136]
+                  - generic [ref=f5e137]:
+                    - generic "泛科學院" [ref=f5e141]:
+                      - link "泛科學院" [ref=f5e142] [cursor=pointer]:
+                        - /url: /@panscischool
+                    - generic "27.1萬位訂閱者" [ref=f5e143]
+                  - button "加入這個頻道" [ref=f5e150] [cursor=pointer]:
+                    - generic: 加入
+                - button "訂閱「泛科學院」。" [ref=f5e159] [cursor=pointer]:
+                  - generic: 訂閱
+              - generic [ref=f5e166]:
+                - generic [ref=f5e167]:
+                  - generic [ref=f5e171]:
+                    - button "和另外 364 人都喜歡這部影片" [ref=f5e175] [cursor=pointer]:
+                      - generic: "364"
+                    - button "對這部影片表示不喜歡" [ref=f5e182] [cursor=pointer]
+                  - button "分享" [ref=f5e188] [cursor=pointer]
+                - generic [ref=f5e192]:
+                  - button "儲存至播放清單" [ref=f5e195] [cursor=pointer]:
+                    - generic: 儲存
+                  - generic [ref=f5e200]:
+                    - button "下載" [ref=f5e202] [cursor=pointer]
+                    - tooltip "tooltip"
+                - button "其他動作" [ref=f5e207] [cursor=pointer]
+            - generic [ref=f5e213] [cursor=pointer]:
+              - generic [ref=f5e214]:
+                - generic [ref=f5e216]:
+                  - text: 觀看次數：3.7萬次 1 年前
+                  - link "YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [ref=f5e217]:
+                    - /url: /playlist?list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                - tooltip "tooltip"
+              - generic [ref=f5e218]:
+                - generic [ref=f5e219]:
+                  - generic [ref=f5e222]:
+                    - 'link "YouTube Channel Link: YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [ref=f5e225]':
+                      - /url: /playlist?list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                      - text: • YouTube Course官方課程：【Gemini X AI通識素養認證課程】
+                    - text: 這堂【Gemini X AI通識素養認證課程】由泛科學院製作、 Google 冠名、與台灣數位文化協會攜手合作，結合專業的知識內容與最新
+                  - generic: …
+                - button "...更多內容" [ref=f5e227]
+          - text: •
+          - generic [ref=f5e229]:
+            - generic [ref=f5e230]:
+              - heading "在「泛科學院」的商店中購物" [ref=f5e231]
+              - button "動作選單" [ref=f5e235] [cursor=pointer]
+            - generic [ref=f5e239]:
+              - generic [ref=f5e241]:
+                - generic "里斯本有軌電車 Lisboa Tram - 奧克爾木質精品模型套組 | 難易度:中 Lisboa Tram木製模型，$6,120.00 ，購買處：PanMART泛市集" [ref=f5e243] [cursor=pointer]:
+                  - generic [ref=f5e248]:
+                    - generic [ref=f5e249]: 里斯本有軌電車 Lisboa Tram - 奧克爾木質精品模型套組 | 難易度:中 Lisboa Tram木製模型
+                    - generic [ref=f5e250]: $6,120.00
+                    - generic [ref=f5e252]: PanMART泛市集
+                - generic "超大壹圓硬幣，$390.00 ，購買處：PanMART泛市集" [ref=f5e256] [cursor=pointer]:
+                  - generic [ref=f5e261]:
+                    - generic [ref=f5e262]: 超大壹圓硬幣
+                    - generic [ref=f5e263]: $390.00
+                    - generic [ref=f5e265]: PanMART泛市集
+                - generic "(任二件95折)QUALY| 手提式置物箱3.5L 灰，$750.00 ，購買處：PanMART泛市集" [ref=f5e269] [cursor=pointer]:
+                  - generic [ref=f5e274]:
+                    - generic [ref=f5e275]: (任二件95折)QUALY| 手提式置物箱3.5L 灰
+                    - generic [ref=f5e276]: $750.00
+                    - generic [ref=f5e278]: PanMART泛市集
+                - generic "Molymod《MKO101-45石墨分子模型》，$960.00 ，購買處：PanMART泛市集" [ref=f5e282] [cursor=pointer]:
+                  - generic [ref=f5e287]:
+                    - generic [ref=f5e288]: Molymod《MKO101-45石墨分子模型》
+                    - generic [ref=f5e289]: $960.00
+                    - generic [ref=f5e291]: PanMART泛市集
+                - generic "79折Pro’sKit 寶工AI編程變色龍-酷迪 GE-735+模型專用工具組 PK-603，$1,540.00 ，購買處：PanMART泛市集" [ref=f5e295] [cursor=pointer]:
+                  - generic [ref=f5e300]:
+                    - generic [ref=f5e301]: 79折Pro’sKit 寶工AI編程變色龍-酷迪 GE-735+模型專用工具組 PK-603
+                    - generic [ref=f5e302]: $1,540.00
+                    - generic [ref=f5e304]: PanMART泛市集
+                - generic "【SMART GAMES】IQ 雙胞大解謎，$435.00 ，購買處：PanMART泛市集" [ref=f5e308] [cursor=pointer]:
+                  - generic [ref=f5e313]:
+                    - generic [ref=f5e314]: 【SMART GAMES】IQ 雙胞大解謎
+                    - generic [ref=f5e315]: $435.00
+                    - generic [ref=f5e317]: PanMART泛市集
+              - generic [ref=f5e321] [cursor=pointer]
+      - generic [ref=f5e326]:
+        - generic [ref=f5e328]:
+          - generic [ref=f5e331]:
+            - generic [ref=f5e332]:
+              - heading [level=3] [ref=f5e333]:
+                - link "YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [ref=f5e336] [cursor=pointer]:
+                  - /url: /playlist?list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+              - generic [ref=f5e337]:
+                - generic "泛科學院" [ref=f5e338]:
+                  - link "泛科學院" [ref=f5e339] [cursor=pointer]:
+                    - /url: /@panscischool
+                - generic [ref=f5e340]:
+                  - text: "-"
+                  - generic [ref=f5e341]: 1/10
+            - button "動作選單" [ref=f5e346] [cursor=pointer]
+            - button "收合" [ref=f5e351] [cursor=pointer]
+          - generic [ref=f5e355]:
+            - generic [ref=f5e356]:
+              - link "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】 2 分鐘 14 秒 泛科學院" [ref=f5e357] [cursor=pointer]:
+                - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=1&pp=iAQB
+                - generic [ref=f5e358]:
+                  - link [ref=f5e366]:
+                    - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=1&pp=iAQB
+                    - img [ref=f5e373]:
+                      - generic [ref=f5e374]: 2:14
+                  - generic [ref=f5e375]:
+                    - heading "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】 2 分鐘 14 秒" [level=4] [ref=f5e376]:
+                      - generic "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】 2 分鐘 14 秒" [ref=f5e377]: 【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e379]
+              - button "動作選單" [ref=f5e383] [cursor=pointer]
+            - generic [ref=f5e387]:
+              - link "2 【Gemini X AI通識素養認證課程】第1集：「AI通識認知」什麼是AI？｜【泛科學院】 3 分鐘 58 秒 泛科學院" [ref=f5e388] [cursor=pointer]:
+                - /url: /watch?v=ulUlmdr_B-A&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=2&pp=iAQB
+                - generic [ref=f5e389]:
+                  - generic [ref=f5e390]: "2"
+                  - link [ref=f5e394]:
+                    - /url: /watch?v=ulUlmdr_B-A&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=2&pp=iAQB
+                    - img [ref=f5e399]:
+                      - generic [ref=f5e400]: 3:58
+                  - generic [ref=f5e401]:
+                    - heading "【Gemini X AI通識素養認證課程】第1集：「AI通識認知」什麼是AI？｜【泛科學院】 3 分鐘 58 秒" [level=4] [ref=f5e402]:
+                      - generic "【Gemini X AI通識素養認證課程】第1集：「AI通識認知」什麼是AI？｜【泛科學院】 3 分鐘 58 秒" [ref=f5e403]: 【Gemini X AI通識素養認證課程】第1集：「AI通識認知」什麼是AI？｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e405]
+              - button "動作選單" [ref=f5e409] [cursor=pointer]
+            - generic [ref=f5e413]:
+              - link "3 【Gemini X AI通識素養認證課程】第2集：「AI通識認知」AI的歷史沿革｜【泛科學院】 4 分鐘 39 秒 泛科學院" [ref=f5e414] [cursor=pointer]:
+                - /url: /watch?v=mze3zvf0XLs&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=3&pp=iAQB0gcJCfkLAYcqIYzv
+                - generic [ref=f5e415]:
+                  - generic [ref=f5e416]: "3"
+                  - link [ref=f5e420]:
+                    - /url: /watch?v=mze3zvf0XLs&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=3&pp=iAQB0gcJCfkLAYcqIYzv
+                    - img [ref=f5e425]:
+                      - generic [ref=f5e426]: 4:39
+                  - generic [ref=f5e427]:
+                    - heading "【Gemini X AI通識素養認證課程】第2集：「AI通識認知」AI的歷史沿革｜【泛科學院】 4 分鐘 39 秒" [level=4] [ref=f5e428]:
+                      - generic "【Gemini X AI通識素養認證課程】第2集：「AI通識認知」AI的歷史沿革｜【泛科學院】 4 分鐘 39 秒" [ref=f5e429]: 【Gemini X AI通識素養認證課程】第2集：「AI通識認知」AI的歷史沿革｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e431]
+              - button "動作選單" [ref=f5e435] [cursor=pointer]
+            - generic [ref=f5e439]:
+              - link "4 【Gemini X AI通識素養認證課程】第3集：「AI通識認知」AI的種類｜【泛科學院】 4 分鐘 13 秒 泛科學院" [ref=f5e440] [cursor=pointer]:
+                - /url: /watch?v=v0g32UoMC1A&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=4&pp=iAQB
+                - generic [ref=f5e441]:
+                  - generic [ref=f5e442]: "4"
+                  - link [ref=f5e446]:
+                    - /url: /watch?v=v0g32UoMC1A&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=4&pp=iAQB
+                    - img [ref=f5e451]:
+                      - generic [ref=f5e452]: 4:13
+                  - generic [ref=f5e453]:
+                    - heading "【Gemini X AI通識素養認證課程】第3集：「AI通識認知」AI的種類｜【泛科學院】 4 分鐘 13 秒" [level=4] [ref=f5e454]:
+                      - generic "【Gemini X AI通識素養認證課程】第3集：「AI通識認知」AI的種類｜【泛科學院】 4 分鐘 13 秒" [ref=f5e455]: 【Gemini X AI通識素養認證課程】第3集：「AI通識認知」AI的種類｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e457]
+              - button "動作選單" [ref=f5e461] [cursor=pointer]
+            - generic [ref=f5e465]:
+              - link "5 【Gemini X AI通識素養認證課程】第4集：「與 AI 溝通」prompt的基本概念｜【泛科學院】 2 分鐘 43 秒 泛科學院" [ref=f5e466] [cursor=pointer]:
+                - /url: /watch?v=EFFyGQ0jXsE&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=5&pp=iAQB
+                - generic [ref=f5e467]:
+                  - generic [ref=f5e468]: "5"
+                  - link [ref=f5e472]:
+                    - /url: /watch?v=EFFyGQ0jXsE&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=5&pp=iAQB
+                    - img [ref=f5e477]:
+                      - generic [ref=f5e478]: 2:43
+                  - generic [ref=f5e479]:
+                    - heading "【Gemini X AI通識素養認證課程】第4集：「與 AI 溝通」prompt的基本概念｜【泛科學院】 2 分鐘 43 秒" [level=4] [ref=f5e480]:
+                      - generic "【Gemini X AI通識素養認證課程】第4集：「與 AI 溝通」prompt的基本概念｜【泛科學院】 2 分鐘 43 秒" [ref=f5e481]: 【Gemini X AI通識素養認證課程】第4集：「與 AI 溝通」prompt的基本概念｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e483]
+              - button "動作選單" [ref=f5e487] [cursor=pointer]
+            - generic [ref=f5e491]:
+              - link "6 【Gemini X AI通識素養認證課程】第5集：「與 AI 溝通」撰寫prompt的技巧｜【泛科學院】 4 分鐘 4 秒 泛科學院" [ref=f5e492] [cursor=pointer]:
+                - /url: /watch?v=r4ufuTH-HP0&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=6&pp=iAQB
+                - generic [ref=f5e493]:
+                  - generic [ref=f5e494]: "6"
+                  - link [ref=f5e498]:
+                    - /url: /watch?v=r4ufuTH-HP0&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=6&pp=iAQB
+                    - img [ref=f5e503]:
+                      - generic [ref=f5e504]: 4:04
+                  - generic [ref=f5e505]:
+                    - heading "【Gemini X AI通識素養認證課程】第5集：「與 AI 溝通」撰寫prompt的技巧｜【泛科學院】 4 分鐘 4 秒" [level=4] [ref=f5e506]:
+                      - generic "【Gemini X AI通識素養認證課程】第5集：「與 AI 溝通」撰寫prompt的技巧｜【泛科學院】 4 分鐘 4 秒" [ref=f5e507]: 【Gemini X AI通識素養認證課程】第5集：「與 AI 溝通」撰寫prompt的技巧｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e509]
+              - button "動作選單" [ref=f5e513] [cursor=pointer]
+            - generic [ref=f5e517]:
+              - link "7 【Gemini X AI通識素養認證課程】第6集：「與 AI 溝通」prompt的應用場景｜【泛科學院】 3 分鐘 10 秒 泛科學院" [ref=f5e518] [cursor=pointer]:
+                - /url: /watch?v=D0uMvufnRHo&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=7&pp=iAQB
+                - generic [ref=f5e519]:
+                  - generic [ref=f5e520]: "7"
+                  - link [ref=f5e524]:
+                    - /url: /watch?v=D0uMvufnRHo&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=7&pp=iAQB
+                    - img [ref=f5e529]:
+                      - generic [ref=f5e530]: 3:10
+                  - generic [ref=f5e531]:
+                    - heading "【Gemini X AI通識素養認證課程】第6集：「與 AI 溝通」prompt的應用場景｜【泛科學院】 3 分鐘 10 秒" [level=4] [ref=f5e532]:
+                      - generic "【Gemini X AI通識素養認證課程】第6集：「與 AI 溝通」prompt的應用場景｜【泛科學院】 3 分鐘 10 秒" [ref=f5e533]: 【Gemini X AI通識素養認證課程】第6集：「與 AI 溝通」prompt的應用場景｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e535]
+              - button "動作選單" [ref=f5e539] [cursor=pointer]
+            - generic [ref=f5e543]:
+              - link "8 【Gemini X AI通識素養認證課程】第7集：「與 AI 溝通」prompt的最佳化與進階技巧｜【泛科學院】 5 分鐘 33 秒 泛科學院" [ref=f5e544] [cursor=pointer]:
+                - /url: /watch?v=lPn0m5NIGpo&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=8&pp=iAQB
+                - generic [ref=f5e545]:
+                  - generic [ref=f5e546]: "8"
+                  - link [ref=f5e550]:
+                    - /url: /watch?v=lPn0m5NIGpo&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=8&pp=iAQB
+                  - generic [ref=f5e552]:
+                    - heading "【Gemini X AI通識素養認證課程】第7集：「與 AI 溝通」prompt的最佳化與進階技巧｜【泛科學院】 5 分鐘 33 秒" [level=4] [ref=f5e553]:
+                      - generic "【Gemini X AI通識素養認證課程】第7集：「與 AI 溝通」prompt的最佳化與進階技巧｜【泛科學院】 5 分鐘 33 秒" [ref=f5e554]: 【Gemini X AI通識素養認證課程】第7集：「與 AI 溝通」prompt的最佳化與進階技巧｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e556]
+              - button "動作選單" [ref=f5e560] [cursor=pointer]
+            - generic [ref=f5e564]:
+              - link "9 【Gemini X AI通識素養認證課程】第8集：Gemini AI基礎操作教學｜【泛科學院】 14 分鐘 13 秒 泛科學院" [ref=f5e565] [cursor=pointer]:
+                - /url: /watch?v=c2uTQhCqJC8&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=9&pp=iAQB
+                - generic [ref=f5e566]:
+                  - generic [ref=f5e567]: "9"
+                  - link [ref=f5e571]:
+                    - /url: /watch?v=c2uTQhCqJC8&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=9&pp=iAQB
+                  - generic [ref=f5e573]:
+                    - heading "【Gemini X AI通識素養認證課程】第8集：Gemini AI基礎操作教學｜【泛科學院】 14 分鐘 13 秒" [level=4] [ref=f5e574]:
+                      - generic "【Gemini X AI通識素養認證課程】第8集：Gemini AI基礎操作教學｜【泛科學院】 14 分鐘 13 秒" [ref=f5e575]: 【Gemini X AI通識素養認證課程】第8集：Gemini AI基礎操作教學｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e577]
+              - button "動作選單" [ref=f5e581] [cursor=pointer]
+            - generic [ref=f5e585]:
+              - link "10 【Gemini X AI通識素養認證課程】第9集：未來的世界：與 AI 共存｜【泛科學院】 5 分鐘 22 秒 泛科學院" [ref=f5e586] [cursor=pointer]:
+                - /url: /watch?v=bxLABTrjhMA&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=10&pp=iAQB
+                - generic [ref=f5e587]:
+                  - generic [ref=f5e588]: "10"
+                  - link [ref=f5e592]:
+                    - /url: /watch?v=bxLABTrjhMA&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&index=10&pp=iAQB
+                  - generic [ref=f5e594]:
+                    - heading "【Gemini X AI通識素養認證課程】第9集：未來的世界：與 AI 共存｜【泛科學院】 5 分鐘 22 秒" [level=4] [ref=f5e595]:
+                      - generic "【Gemini X AI通識素養認證課程】第9集：未來的世界：與 AI 共存｜【泛科學院】 5 分鐘 22 秒" [ref=f5e596]: 【Gemini X AI通識素養認證課程】第9集：未來的世界：與 AI 共存｜【泛科學院】
+                    - generic "泛科學院" [ref=f5e598]
+              - button "動作選單" [ref=f5e602] [cursor=pointer]
+        - generic [ref=f5e609]:
+          - generic [ref=f5e614]:
+            - tablist [ref=f5e616]:
+              - tab "全部" [selected] [ref=f5e620] [cursor=pointer]
+              - tab "「泛科學院」上傳的影片" [ref=f5e629] [cursor=pointer]
+              - tab "學習" [ref=f5e638] [cursor=pointer]
+              - tab "相關內容" [ref=f5e647] [cursor=pointer]
+              - tab "為你推薦" [ref=f5e656] [cursor=pointer]
+              - tab "最新上傳" [ref=f5e665] [cursor=pointer]
+              - tab "已觀看" [ref=f5e674] [cursor=pointer]
+            - button "下一頁" [ref=f5e684] [cursor=pointer]
+          - generic [ref=f5e688]:
+            - generic [ref=f5e693]:
+              - generic [ref=f5e694] [cursor=pointer]
+              - generic [ref=f5e697]:
+                - generic [ref=f5e698] [cursor=pointer]:
+                  - generic [ref=f5e699]:
+                    - link "Seedance 2.0 正式亮相" [ref=f5e702]:
+                      - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CBoA7uxaDarDcCJyRr7wPi7rUsQ_tzbrviAGYt5KAuhZkEAEgAGCfuYeO1CiCARdjYS1wdWItNjIxOTgxMTc0NzA0OTM3MaABxNmEvz2oAwTIAwqqBPYCT9DoY9ud1hb6VrlBuM9NTyPkVVPpj5-pd_3Hx7SQ4u2hreRmLaTeDAGxpAwpACUhaqd7kGQSt05oQ40i1q6SfhX9_RJ-IfwLQ71j4tAFNMp4-j_4t8RIjr4Y7Pj64eBnNSNVCc15DH0o1DdwuWVxrInoRp5Fjptb-Sg4m0_4r4fBMAvquaPn94JKl-RL76x01VCv0J8PF05hR61kEFPjLJ9rt34SJOl2KrVEhfL3UCM6L_pq1IdKGuZDTPBwdamjyz_QSfHgxnQXVjx8g4AiL_y_YOo-dnH9bNrlOXyoRziNEQEpqc1xGEKrVM6VhTSA18vPK_8LjpZNdlb21Ncf2mYUcvSIm43krWP7RC14uACSuF-0XR3KKzij5ZWDMz3eUSBDiM7RoBsjj_azZKeGwPHj_EgXMw1_M8xrhROYmvENBkFp3Z70eYFKOplne02YfzoeNMQPGNf2khehNoZsqHUse7n2wcA630r6AkiqmZj6d4Cn9xOIBZv6teZZkgUKCBNoAnj-5tuiH6AGpAGAB7Dg7PseiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB77ZsQKoB6vFG6gHt6GxAqgH1amxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxAtIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKCP5Izsp5YDYAHyCB9jYS15dC1ob3N0LXB1Yi01OTUzMTI5NjU5OTQwNjQzmgkvaHR0cHM6Ly9haS5ieXRlcGx1cy5jb20vZW4vYWN0aXZpdHkvc2VlZGFuY2UyLTCxCYEW6lyevj5kyAkAmAsBoQvcH6iDLC8nZ7oLZQgBEAUYFiAIKAEwGkABSABYAWAAaABwAYgBAJgBAaIBLgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAVgBcAHQAQGoAgXAAgKoAQHYAQGAAgGIAga6Awd2aXRwZXJi0AsS0gwCEAHaDCUKChDwv5bflM-6pUgSAgEDGg0Ym_q15lkgmtfq8-oFQAFKAhAfmg0BEqoNAlRXyA0B0g3xAWh0dHBzOi8vYWkuYnl0ZXBsdXMuY29tL2VuL2FjdGl2aXR5L3NlZWRhbmNlMi0wP3V0bV9zb3VyY2U9Z29vZ2xlJnV0bV9tZWRpdW09cG1heCZ1dG1fY2FtcGFpZ249cHVyY2hhc2Vfc2VlZGFuY2VfZWFfY2hpbmVzZV8yMDI2MDgwNV9scmgmdXRtX3Rlcm09MjAyNjA4MDVfYWJpbGl0eV9hY2NvdW50MV9zZWVkYW5jZTIuMCZ1dG1fY29udGVudD10ZWNkbyZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjQxMDU1NDkwODOwDoeXx4wZuBP___________8BiBQBsBQBwBWBgIBA0BUB2BUBmBYB4hYCCAGAFwGKFxgIAxgBIAEoATABOAFAAUgBUAFYAWACaAGgFwGpF2OHblRUD3CKuhcGKAAwADgB0BgB8BgBwhkCCAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwIQlI1XV0-6UmyeIJxVm4lIMboAsgkbNfUELhbWJMVtKXUToiAYisaAkMIEALw_wcB&num=1&cid=CAESvQHg9hKM2jhToefDVNiWlVbgHAy2ckcoOQuZ_avYdtfUr7v2fJc2En6HFBxbTATF9A_CeWwV9tSbZShut3N0eVeBA3gEOvC6YffkRXdCdgwX1nOoKojBdHZxOyGipknv_wtyN41QTtAO97TccJsngTmc4YN6fbXAdR-fBykuuq3oCw55jgXz49ax7xKXS-dKS8WsvaqI5XDW_xULJI1VY-kjwR8c9EDNrV8QfC1kW0OejGyVQ7xDIjiiuro6vHo&sig=AOD64_36KgwzOfKIM9jpRKSZb3LwNNWAeA&ms=%5BCLICK_MS%5D&nb=0&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                    - link "超清畫質輸出消除模糊感，全面提升整體影片品質。" [ref=f5e705]:
+                      - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CBoA7uxaDarDcCJyRr7wPi7rUsQ_tzbrviAGYt5KAuhZkEAEgAGCfuYeO1CiCARdjYS1wdWItNjIxOTgxMTc0NzA0OTM3MaABxNmEvz2oAwTIAwqqBPYCT9DoY9ud1hb6VrlBuM9NTyPkVVPpj5-pd_3Hx7SQ4u2hreRmLaTeDAGxpAwpACUhaqd7kGQSt05oQ40i1q6SfhX9_RJ-IfwLQ71j4tAFNMp4-j_4t8RIjr4Y7Pj64eBnNSNVCc15DH0o1DdwuWVxrInoRp5Fjptb-Sg4m0_4r4fBMAvquaPn94JKl-RL76x01VCv0J8PF05hR61kEFPjLJ9rt34SJOl2KrVEhfL3UCM6L_pq1IdKGuZDTPBwdamjyz_QSfHgxnQXVjx8g4AiL_y_YOo-dnH9bNrlOXyoRziNEQEpqc1xGEKrVM6VhTSA18vPK_8LjpZNdlb21Ncf2mYUcvSIm43krWP7RC14uACSuF-0XR3KKzij5ZWDMz3eUSBDiM7RoBsjj_azZKeGwPHj_EgXMw1_M8xrhROYmvENBkFp3Z70eYFKOplne02YfzoeNMQPGNf2khehNoZsqHUse7n2wcA630r6AkiqmZj6d4Cn9xOIBZv6teZZkgUKCBNoAnj-5tuiH6AGpAGAB7Dg7PseiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB77ZsQKoB6vFG6gHt6GxAqgH1amxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxAtIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKCP5Izsp5YDYAHyCB9jYS15dC1ob3N0LXB1Yi01OTUzMTI5NjU5OTQwNjQzmgkvaHR0cHM6Ly9haS5ieXRlcGx1cy5jb20vZW4vYWN0aXZpdHkvc2VlZGFuY2UyLTCxCYEW6lyevj5kyAkAmAsBoQvcH6iDLC8nZ7oLZQgBEAUYFiAIKAEwGkABSABYAWAAaABwAYgBAJgBAaIBLgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAVgBcAHQAQGoAgXAAgKoAQHYAQGAAgGIAga6Awd2aXRwZXJi0AsS0gwCEAHaDCUKChDwv5bflM-6pUgSAgEDGg0Ym_q15lkgmtfq8-oFQAFKAhAfmg0BEqoNAlRXyA0B0g3xAWh0dHBzOi8vYWkuYnl0ZXBsdXMuY29tL2VuL2FjdGl2aXR5L3NlZWRhbmNlMi0wP3V0bV9zb3VyY2U9Z29vZ2xlJnV0bV9tZWRpdW09cG1heCZ1dG1fY2FtcGFpZ249cHVyY2hhc2Vfc2VlZGFuY2VfZWFfY2hpbmVzZV8yMDI2MDgwNV9scmgmdXRtX3Rlcm09MjAyNjA4MDVfYWJpbGl0eV9hY2NvdW50MV9zZWVkYW5jZTIuMCZ1dG1fY29udGVudD10ZWNkbyZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjQxMDU1NDkwODOwDoeXx4wZuBP___________8BiBQBsBQBwBWBgIBA0BUB2BUBmBYB4hYCCAGAFwGKFxgIAxgBIAEoATABOAFAAUgBUAFYAWACaAGgFwGpF2OHblRUD3CKuhcGKAAwADgB0BgB8BgBwhkCCAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwIQlI1XV0-6UmyeIJxVm4lIMboAsgkbNfUELhbWJMVtKXUToiAYisaAkMIEALw_wcB&num=1&cid=CAESvQHg9hKM2jhToefDVNiWlVbgHAy2ckcoOQuZ_avYdtfUr7v2fJc2En6HFBxbTATF9A_CeWwV9tSbZShut3N0eVeBA3gEOvC6YffkRXdCdgwX1nOoKojBdHZxOyGipknv_wtyN41QTtAO97TccJsngTmc4YN6fbXAdR-fBykuuq3oCw55jgXz49ax7xKXS-dKS8WsvaqI5XDW_xULJI1VY-kjwR8c9EDNrV8QfC1kW0OejGyVQ7xDIjiiuro6vHo&sig=AOD64_36KgwzOfKIM9jpRKSZb3LwNNWAeA&ms=%5BCLICK_MS%5D&nb=7&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                    - generic [ref=f5e706]:
+                      - generic [ref=f5e708]:
+                        - generic [ref=f5e709]: 贊助商廣告
+                        - text: ·
+                      - generic [ref=f5e710]: BytePlus
+                  - button "我的廣告中心" [ref=f5e714]
+                - link "訂閱" [ref=f5e719] [cursor=pointer]:
+                  - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CBoA7uxaDarDcCJyRr7wPi7rUsQ_tzbrviAGYt5KAuhZkEAEgAGCfuYeO1CiCARdjYS1wdWItNjIxOTgxMTc0NzA0OTM3MaABxNmEvz2oAwTIAwqqBPYCT9DoY9ud1hb6VrlBuM9NTyPkVVPpj5-pd_3Hx7SQ4u2hreRmLaTeDAGxpAwpACUhaqd7kGQSt05oQ40i1q6SfhX9_RJ-IfwLQ71j4tAFNMp4-j_4t8RIjr4Y7Pj64eBnNSNVCc15DH0o1DdwuWVxrInoRp5Fjptb-Sg4m0_4r4fBMAvquaPn94JKl-RL76x01VCv0J8PF05hR61kEFPjLJ9rt34SJOl2KrVEhfL3UCM6L_pq1IdKGuZDTPBwdamjyz_QSfHgxnQXVjx8g4AiL_y_YOo-dnH9bNrlOXyoRziNEQEpqc1xGEKrVM6VhTSA18vPK_8LjpZNdlb21Ncf2mYUcvSIm43krWP7RC14uACSuF-0XR3KKzij5ZWDMz3eUSBDiM7RoBsjj_azZKeGwPHj_EgXMw1_M8xrhROYmvENBkFp3Z70eYFKOplne02YfzoeNMQPGNf2khehNoZsqHUse7n2wcA630r6AkiqmZj6d4Cn9xOIBZv6teZZkgUKCBNoAnj-5tuiH6AGpAGAB7Dg7PseiAcBkAcCqAfywLECqAe4xLECqAfhtrECqAelz7ECqAfnnbECqAfonbECqAfvtbECqAfwtbECqAf507ECqAfJ2rECqAep4LECqAeECKgHptSxAqgHqNIbqAe2B6gHsdwbqAewm7ECqAeusbECqAf9srECqAfIz7ECqAfJz7ECqAfNx7ECqAfx0bECqAf81bECqAf71bECqAeM1rECqAeL1rECqAea4rECqAeb4rECqAed17ECqAed1LECqAeBxhuoB_yvsQKoB77ZsQKoB6vFG6gHt6GxAqgH1amxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxAtIIMQgAEAIYWjIBADoUj9CAgICABIDAgICAgICAAqqAgBBI2aDSNVAUWKCP5Izsp5YDYAHyCB9jYS15dC1ob3N0LXB1Yi01OTUzMTI5NjU5OTQwNjQzmgkvaHR0cHM6Ly9haS5ieXRlcGx1cy5jb20vZW4vYWN0aXZpdHkvc2VlZGFuY2UyLTCxCYEW6lyevj5kyAkAmAsBoQvcH6iDLC8nZ7oLZQgBEAUYFiAIKAEwGkABSABYAWAAaABwAYgBAJgBAaIBLgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAVgBcAHQAQGoAgXAAgKoAQHYAQGAAgGIAga6Awd2aXRwZXJi0AsS0gwCEAHaDCUKChDwv5bflM-6pUgSAgEDGg0Ym_q15lkgmtfq8-oFQAFKAhAfmg0BEqoNAlRXyA0B0g3xAWh0dHBzOi8vYWkuYnl0ZXBsdXMuY29tL2VuL2FjdGl2aXR5L3NlZWRhbmNlMi0wP3V0bV9zb3VyY2U9Z29vZ2xlJnV0bV9tZWRpdW09cG1heCZ1dG1fY2FtcGFpZ249cHVyY2hhc2Vfc2VlZGFuY2VfZWFfY2hpbmVzZV8yMDI2MDgwNV9scmgmdXRtX3Rlcm09MjAyNjA4MDVfYWJpbGl0eV9hY2NvdW50MV9zZWVkYW5jZTIuMCZ1dG1fY29udGVudD10ZWNkbyZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjQxMDU1NDkwODOwDoeXx4wZuBP___________8BiBQBsBQBwBWBgIBA0BUB2BUBmBYB4hYCCAGAFwGKFxgIAxgBIAEoATABOAFAAUgBUAFYAWACaAGgFwGpF2OHblRUD3CKuhcGKAAwADgB0BgB8BgBwhkCCAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwIQlI1XV0-6UmyeIJxVm4lIMboAsgkbNfUELhbWJMVtKXUToiAYisaAkMIEALw_wcB&num=1&cid=CAESvQHg9hKM2jhToefDVNiWlVbgHAy2ckcoOQuZ_avYdtfUr7v2fJc2En6HFBxbTATF9A_CeWwV9tSbZShut3N0eVeBA3gEOvC6YffkRXdCdgwX1nOoKojBdHZxOyGipknv_wtyN41QTtAO97TccJsngTmc4YN6fbXAdR-fBykuuq3oCw55jgXz49ax7xKXS-dKS8WsvaqI5XDW_xULJI1VY-kjwR8c9EDNrV8QfC1kW0OejGyVQ7xDIjiiuro6vHo&sig=AOD64_36KgwzOfKIM9jpRKSZb3LwNNWAeA&ms=%5BCLICK_MS%5D&nb=8&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+            - generic [ref=f5e724] [cursor=pointer]:
+              - link [ref=f5e725]:
+                - /url: /watch?v=7qO8-kx3gW8
+                - generic [ref=f5e726]: 32:31
+              - generic [ref=f5e734]:
+                - generic [ref=f5e735]:
+                  - heading "從 LLM 到 Agent Skill，一期視頻帶你打通底層邏輯！" [level=3] [ref=f5e736]:
+                    - link "從 LLM 到 Agent Skill，一期視頻帶你打通底層邏輯！ 32 分鐘" [ref=f5e737]:
+                      - /url: /watch?v=7qO8-kx3gW8
+                      - text: 從 LLM 到 Agent Skill，一期視頻帶你打通底層邏輯！
+                  - generic [ref=f5e739]:
+                    - group [ref=f5e740]:
+                      - generic [ref=f5e741]: 马克的技术工作坊
+                    - group [ref=f5e742]:
+                      - generic "觀看次數：72萬次" [ref=f5e746]: 72萬
+                      - generic "5 個月前" [ref=f5e747]
+                - button "其他動作" [ref=f5e750]
+            - generic [ref=f5e755] [cursor=pointer]:
+              - link [ref=f5e756]:
+                - /url: /watch?v=N1GJ8ZjyZA0
+                - generic [ref=f5e757]: 直播
+              - generic [ref=f5e768]:
+                - generic [ref=f5e769]:
+                  - heading "【原神】最後一段世界任務 曾為靈魂的木舟 下版本居然是薇斯納先來" [level=3] [ref=f5e770]:
+                    - link "【原神】最後一段世界任務 曾為靈魂的木舟 下版本居然是薇斯納先來" [ref=f5e771]:
+                      - /url: /watch?v=N1GJ8ZjyZA0
+                  - generic [ref=f5e773]:
+                    - group [ref=f5e774]:
+                      - generic [ref=f5e775]: ビい
+                    - group [ref=f5e776]:
+                      - generic "3 人正在觀看" [ref=f5e780]
+                - button "其他動作" [ref=f5e783]
+            - generic [ref=f5e788] [cursor=pointer]:
+              - link [ref=f5e789]:
+                - /url: /watch?v=97ydVMaRl1Y
+                - generic [ref=f5e790]: 直播
+              - generic [ref=f5e801]:
+                - generic [ref=f5e802]:
+                  - heading "今晚回艾歐澤亞繼續推進，看看今天又會出什麼事｜醬香高麗菜｜Final Fantasy XIV｜#台V" [level=3] [ref=f5e803]:
+                    - link "今晚回艾歐澤亞繼續推進，看看今天又會出什麼事｜醬香高麗菜｜Final Fantasy XIV｜#台V" [ref=f5e804]:
+                      - /url: /watch?v=97ydVMaRl1Y
+                  - generic [ref=f5e806]:
+                    - group [ref=f5e807]:
+                      - generic [ref=f5e808]: 靜靜子 / Shizumu Ch.
+                    - group [ref=f5e809]:
+                      - generic "60 人正在觀看" [ref=f5e813]
+                - button "其他動作" [ref=f5e816]
+            - generic [ref=f5e821] [cursor=pointer]:
+              - link [ref=f5e822]:
+                - /url: /watch?v=-Go9VATddKE&pp=0gcJCfkLAYcqIYzv
+                - generic [ref=f5e823]: 28:14
+              - generic [ref=f5e831]:
+                - generic [ref=f5e832]:
+                  - heading "1個人+AI，每天4小時，輕鬆年入100萬，AI賺錢新思路，2026下半年普通人最有潛力的搞錢賽道，全是真人真事！小學學歷、無科技背景也能賺數千美金，快來看AI暴富的商機⋯⋯" [level=3] [ref=f5e833]:
+                    - link "1個人+AI，每天4小時，輕鬆年入100萬，AI賺錢新思路，2026下半年普通人最有潛力的搞錢賽道，全是真人真事！小學學歷、無科技背景也能賺數千美金，快來看AI暴富的商機⋯⋯ 28 分鐘" [ref=f5e834]:
+                      - /url: /watch?v=-Go9VATddKE&pp=0gcJCfkLAYcqIYzv
+                      - text: 1個人+AI，每天4小時，輕鬆年入100萬，AI賺錢新思路，2026下半年普通人最有潛力的搞錢賽道，全是真人真事！小學學歷、無科技背景也能賺數千美金，快來看AI暴富的商機⋯⋯
+                  - generic [ref=f5e836]:
+                    - group [ref=f5e837]:
+                      - generic [ref=f5e838]: 小船
+                    - group [ref=f5e842]:
+                      - generic "觀看次數：6.1萬次" [ref=f5e846]: 6.1萬
+                      - generic "3 個月前" [ref=f5e847]
+                - button "其他動作" [ref=f5e850]
+            - generic [ref=f5e855] [cursor=pointer]:
+              - link [ref=f5e856]:
+                - /url: /watch?v=Fy6tKSHGEXQ&pp=ugUJEgd6aC1IYW5z
+                - generic [ref=f5e857]: 23:14
+              - generic [ref=f5e865]:
+                - generic [ref=f5e866]:
+                  - heading "梁文锋四小时讲话为何被全网封杀 | DeepSeek | AGI | 大模型 | 开源 | AI芯片 | 华为昇腾 | 英伟达 | CUDA | 持续学习 | 算力瓶颈 | TileLang" [level=3] [ref=f5e867]:
+                    - link "梁文锋四小时讲话为何被全网封杀 | DeepSeek | AGI | 大模型 | 开源 | AI芯片 | 华为昇腾 | 英伟达 | CUDA | 持续学习 | 算力瓶颈 | TileLang 23 分鐘" [ref=f5e868]:
+                      - /url: /watch?v=Fy6tKSHGEXQ&pp=ugUJEgd6aC1IYW5z
+                      - text: 梁文锋四小时讲话为何被全网封杀 | DeepSeek | AGI | 大模型 | 开源 | AI芯片 | 华为昇腾 | 英伟达 | CUDA | 持续学习 | 算力瓶颈 | TileLang
+                  - generic [ref=f5e870]:
+                    - group [ref=f5e871]:
+                      - generic [ref=f5e872]: 最佳拍档
+                    - group [ref=f5e873]:
+                      - generic "觀看次數：7.1萬次" [ref=f5e877]: 7.1萬
+                      - generic "2 週前" [ref=f5e878]
+                - button "其他動作" [ref=f5e881]
+            - generic [ref=f5e886] [cursor=pointer]:
+              - link [ref=f5e887]:
+                - /url: /watch?v=tAGu0ob4LoE
+                - generic [ref=f5e888]: 4:21
+              - generic [ref=f5e896]:
+                - generic [ref=f5e897]:
+                  - heading "【美國以外的AI新聞】亞太地區AI激戰，從人才育成到上市佈局【Bleep】" [level=3] [ref=f5e898]:
+                    - link "【美國以外的AI新聞】亞太地區AI激戰，從人才育成到上市佈局【Bleep】 4 分鐘 21 秒" [ref=f5e899]:
+                      - /url: /watch?v=tAGu0ob4LoE
+                      - text: 【美國以外的AI新聞】亞太地區AI激戰，從人才育成到上市佈局【Bleep】
+                  - generic [ref=f5e901]:
+                    - group [ref=f5e902]:
+                      - generic [ref=f5e903]: AI Portal Axis
+                    - group [ref=f5e904]:
+                      - generic "觀看次數：27次" [ref=f5e908]: "27"
+                      - generic "2 週前" [ref=f5e909]
+                - button "其他動作" [ref=f5e912]
+            - generic [ref=f5e917] [cursor=pointer]:
+              - link [ref=f5e918]:
+                - /url: /watch?v=9OCFLMgDscE
+                - generic [ref=f5e919]: 5:01
+              - generic [ref=f5e927]:
+                - generic [ref=f5e928]:
+                  - heading "5分鐘搞懂 Codex 業務銷售神器！OpenAI 官方示範：早上醒來，今天該打給誰、信怎麼寫都準備好了" [level=3] [ref=f5e929]:
+                    - link "5分鐘搞懂 Codex 業務銷售神器！OpenAI 官方示範：早上醒來，今天該打給誰、信怎麼寫都準備好了 5 分鐘 1 秒" [ref=f5e930]:
+                      - /url: /watch?v=9OCFLMgDscE
+                      - text: 5分鐘搞懂 Codex 業務銷售神器！OpenAI 官方示範：早上醒來，今天該打給誰、信怎麼寫都準備好了
+                  - generic [ref=f5e932]:
+                    - group [ref=f5e933]:
+                      - generic [ref=f5e934]: 可波 AI 白話
+                    - group [ref=f5e935]:
+                      - generic "觀看次數：163次" [ref=f5e939]: "163"
+                      - generic "2 週前" [ref=f5e940]
+                - button "其他動作" [ref=f5e943]
+            - generic [ref=f5e948] [cursor=pointer]:
+              - link [ref=f5e949]:
+                - /url: /watch?v=0NVRpJn5Teo&pp=0gcJCfkLAYcqIYzv
+                - generic [ref=f5e950]: 1:30
+              - generic [ref=f5e958]:
+                - generic [ref=f5e959]:
+                  - heading "《AI新時代》正式出發！用科技、媒體與正向價值影響下一代 | 兩個月近20萬觀看！《AI新時代》邀請您一起參與未來 | 《AI新時代》正式出發！用科技、媒體與正向價值影響下一代" [level=3] [ref=f5e960]:
+                    - link "《AI新時代》正式出發！用科技、媒體與正向價值影響下一代 | 兩個月近20萬觀看！《AI新時代》邀請您一起參與未來 | 《AI新時代》正式出發！用科技、媒體與正向價值影響下一代 1 分鐘 30 秒" [ref=f5e961]:
+                      - /url: /watch?v=0NVRpJn5Teo&pp=0gcJCfkLAYcqIYzv
+                      - text: 《AI新時代》正式出發！用科技、媒體與正向價值影響下一代 | 兩個月近20萬觀看！《AI新時代》邀請您一起參與未來 | 《AI新時代》正式出發！用科技、媒體與正向價值影響下一代
+                  - generic [ref=f5e963]:
+                    - group [ref=f5e964]:
+                      - generic [ref=f5e965]: 優視 • AI新時代 // AI NEW ERA UCH
+                    - group [ref=f5e966]:
+                      - generic "觀看次數：103次" [ref=f5e970]: "103"
+                      - generic "2 週前" [ref=f5e971]
+                - button "其他動作" [ref=f5e974]
+            - generic [ref=f5e979] [cursor=pointer]:
+              - link [ref=f5e980]:
+                - /url: /watch?v=OPVz4YTCgg8&pp=ugUEEgJ6aA%3D%3D
+                - generic [ref=f5e981]: 11:02
+              - generic [ref=f5e989]:
+                - generic [ref=f5e990]:
+                  - heading "Agentic AI 時代與自駕革命" [level=3] [ref=f5e991]:
+                    - link "Agentic AI 時代與自駕革命 11 分鐘 2 秒" [ref=f5e992]:
+                      - /url: /watch?v=OPVz4YTCgg8&pp=ugUEEgJ6aA%3D%3D
+                      - text: Agentic AI 時代與自駕革命
+                  - generic [ref=f5e994]:
+                    - group [ref=f5e995]:
+                      - generic [ref=f5e996]: snow
+                    - group [ref=f5e997]:
+                      - generic "觀看次數：45次" [ref=f5e1001]: "45"
+                      - generic "4 週前" [ref=f5e1002]
+                    - group [ref=f5e1003]:
+                      - generic [ref=f5e1004]: 自動配音
+                - button "其他動作" [ref=f5e1011]
+            - generic [ref=f5e1016] [cursor=pointer]:
+              - link [ref=f5e1017]:
+                - /url: /watch?v=T_30PbwtxXA
+                - generic [ref=f5e1018]: 11:04
+              - generic [ref=f5e1026]:
+                - generic [ref=f5e1027]:
+                  - heading "黃仁勳 X 首秀引爆 AI 內戰！🔥 聯手 25 巨頭捍衛「開源」，背後的商業算計全解析 | AI 週報 (07/27-08/02)" [level=3] [ref=f5e1028]:
+                    - link "黃仁勳 X 首秀引爆 AI 內戰！🔥 聯手 25 巨頭捍衛「開源」，背後的商業算計全解析 | AI 週報 (07/27-08/02) 11 分鐘 4 秒" [ref=f5e1029]:
+                      - /url: /watch?v=T_30PbwtxXA
+                      - text: 黃仁勳 X 首秀引爆 AI 內戰！🔥 聯手 25 巨頭捍衛「開源」，背後的商業算計全解析 | AI 週報 (07/27-08/02)
+                  - generic [ref=f5e1031]:
+                    - group [ref=f5e1032]:
+                      - generic [ref=f5e1033]: 拓必 AI 工作室
+                    - group [ref=f5e1034]:
+                      - generic "觀看次數：131次" [ref=f5e1038]: "131"
+                      - generic "2 週前" [ref=f5e1039]
+                - button "其他動作" [ref=f5e1042]
+            - generic [ref=f5e1047] [cursor=pointer]:
+              - link [ref=f5e1048]:
+                - /url: /watch?v=aSnjDtLwh1E
+                - generic [ref=f5e1049]: 8:00
+              - generic [ref=f5e1057]:
+                - generic [ref=f5e1058]:
+                  - heading "0803-0809 AI 週報：AI 代理人擁有錢包與身份！Cloudflare Wallet 震撼發布" [level=3] [ref=f5e1059]:
+                    - link "0803-0809 AI 週報：AI 代理人擁有錢包與身份！Cloudflare Wallet 震撼發布 8 分鐘" [ref=f5e1060]:
+                      - /url: /watch?v=aSnjDtLwh1E
+                      - text: 0803-0809 AI 週報：AI 代理人擁有錢包與身份！Cloudflare Wallet 震撼發布
+                  - generic [ref=f5e1062]:
+                    - group [ref=f5e1063]:
+                      - generic [ref=f5e1064]: 拓必 AI 工作室
+                    - group [ref=f5e1065]:
+                      - generic "觀看次數：54次" [ref=f5e1069]: "54"
+                      - generic "7 天前" [ref=f5e1070]
+                - button "其他動作" [ref=f5e1073]
+            - generic [ref=f5e1078] [cursor=pointer]:
+              - link [ref=f5e1079]:
+                - /url: /watch?v=RfSHmRCE6Ts
+                - generic [ref=f5e1080]: 2:00:00
+              - generic [ref=f5e1088]:
+                - generic [ref=f5e1089]:
+                  - heading "Decorative White Marble Apples 3D Art | 2 Hour Golden Frame TV Screensaver | 4K Elegant View" [level=3] [ref=f5e1090]:
+                    - link "Decorative White Marble Apples 3D Art | 2 Hour Golden Frame TV Screensaver | 4K Elegant View 2 小時" [ref=f5e1091]:
+                      - /url: /watch?v=RfSHmRCE6Ts
+                      - text: Decorative White Marble Apples 3D Art | 2 Hour Golden Frame TV Screensaver | 4K Elegant View
+                  - generic [ref=f5e1093]:
+                    - group [ref=f5e1094]:
+                      - generic [ref=f5e1095]: Frame 4 U
+                    - group [ref=f5e1096]:
+                      - generic "觀看次數：6.1萬次" [ref=f5e1100]: 6.1萬
+                      - generic "2 個月前" [ref=f5e1101]
+                - button "其他動作" [ref=f5e1104]
+            - generic [ref=f5e1109] [cursor=pointer]:
+              - link [ref=f5e1110]:
+                - /url: /watch?v=y7mFMDxc1VM
+                - generic [ref=f5e1111]: 14:47
+              - generic [ref=f5e1119]:
+                - generic [ref=f5e1120]:
+                  - heading "AI工具怎麼選？AI 免費版大評比！ChatGPT、Gemini、Claude 該選誰？5 大情境實測全公開｜泛科學院" [level=3] [ref=f5e1121]:
+                    - link "AI工具怎麼選？AI 免費版大評比！ChatGPT、Gemini、Claude 該選誰？5 大情境實測全公開｜泛科學院 14 分鐘 47 秒" [ref=f5e1122]:
+                      - /url: /watch?v=y7mFMDxc1VM
+                      - text: AI工具怎麼選？AI 免費版大評比！ChatGPT、Gemini、Claude 該選誰？5 大情境實測全公開｜泛科學院
+                  - generic [ref=f5e1124]:
+                    - group [ref=f5e1125]:
+                      - generic [ref=f5e1126]: 泛科學院
+                    - group [ref=f5e1127]:
+                      - generic "觀看次數：5.5萬次" [ref=f5e1131]: 5.5萬
+                      - generic "11 天前" [ref=f5e1132]
+                - button "其他動作" [ref=f5e1135]
+            - generic [ref=f5e1140] [cursor=pointer]:
+              - link [ref=f5e1141]:
+                - /url: /watch?v=aVVMcliYJIw
+                - generic [ref=f5e1142]: 5:19
+              - generic [ref=f5e1150]:
+                - generic [ref=f5e1151]:
+                  - heading "【免費AI證書】Google Gemini 教師認證開放！不只老師能考，20分鐘為你的履歷加分！" [level=3] [ref=f5e1152]:
+                    - link "【免費AI證書】Google Gemini 教師認證開放！不只老師能考，20分鐘為你的履歷加分！ 5 分鐘 19 秒" [ref=f5e1153]:
+                      - /url: /watch?v=aVVMcliYJIw
+                      - text: 【免費AI證書】Google Gemini 教師認證開放！不只老師能考，20分鐘為你的履歷加分！
+                  - generic [ref=f5e1155]:
+                    - group [ref=f5e1156]:
+                      - generic [ref=f5e1157]: The walking fish 步行魚
+                    - group [ref=f5e1158]:
+                      - generic "觀看次數：1.9萬次" [ref=f5e1162]: 1.9萬
+                      - generic "11 個月前" [ref=f5e1163]
+                - button "其他動作" [ref=f5e1166]
+            - generic [ref=f5e1171] [cursor=pointer]:
+              - link [ref=f5e1172]:
+                - /url: /watch?v=2n6qjz1-Br0
+                - generic [ref=f5e1173]: 13:44
+              - generic [ref=f5e1181]:
+                - generic [ref=f5e1182]:
+                  - heading "'클로드 디자인'은 디자이너의 일을 어떻게 바꾸고 있나 / 오그랲 / 비디오머그" [level=3] [ref=f5e1183]:
+                    - link "'클로드 디자인'은 디자이너의 일을 어떻게 바꾸고 있나 / 오그랲 / 비디오머그 13 分鐘 44 秒" [ref=f5e1184]:
+                      - /url: /watch?v=2n6qjz1-Br0
+                      - text: "'클로드 디자인'은 디자이너의 일을 어떻게 바꾸고 있나 / 오그랲 / 비디오머그"
+                  - generic [ref=f5e1186]:
+                    - group [ref=f5e1187]:
+                      - generic [ref=f5e1188]: 비디오머그 - VIDEOMUG
+                    - group [ref=f5e1192]:
+                      - generic "觀看次數：34萬次" [ref=f5e1196]: 34萬
+                      - generic "3 個月前" [ref=f5e1197]
+                - button "其他動作" [ref=f5e1200]
+            - generic [ref=f5e1205] [cursor=pointer]:
+              - link [ref=f5e1206]:
+                - /url: /watch?v=tMUbMIvOY_I
+                - generic [ref=f5e1207]: 2:00:18
+              - generic [ref=f5e1215]:
+                - generic [ref=f5e1216]:
+                  - heading "Haunting Autumn Ghost Art | Slideshow Art Framed Screensaver | Art for Your TV | 4K Halloween Decor" [level=3] [ref=f5e1217]:
+                    - link "Haunting Autumn Ghost Art | Slideshow Art Framed Screensaver | Art for Your TV | 4K Halloween Decor 2 小時" [ref=f5e1218]:
+                      - /url: /watch?v=tMUbMIvOY_I
+                      - text: Haunting Autumn Ghost Art | Slideshow Art Framed Screensaver | Art for Your TV | 4K Halloween Decor
+                  - generic [ref=f5e1220]:
+                    - group [ref=f5e1221]:
+                      - generic [ref=f5e1222]: Frame TV Art Gallery Wallpapers
+                    - group [ref=f5e1223]:
+                      - generic "觀看次數：77萬次" [ref=f5e1227]: 77萬
+                      - generic "1 年前" [ref=f5e1228]
+                - button "其他動作" [ref=f5e1231]

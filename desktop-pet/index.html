@@ -1369,6 +1369,11 @@
       if (result && result.ok) {
         chatStatusEl.textContent = '';
         chatInput.value = '';
+      } else if (result && result.cancelled) {
+        // 使用者「思考中」時按 Esc 收回（見下面 document 層級的 Esc 判斷、main.js 的
+        // chat-cancel handler）——不是錯誤，訊息本來就還留在輸入框（上面沒有清空的
+        // 分支只有 ok 才會走），可以直接修改後重新送出，不用重打一次。
+        chatStatusEl.textContent = '🚫 已取消，訊息還留在輸入框，可以修改後重新送出';
       } else {
         chatStatusEl.textContent = '❌ ' + ((result && result.error) || '未知錯誤');
       }
@@ -1398,6 +1403,11 @@
 
     let voiceInputActive = false;
     let isRecording = false;
+    // 錄音結束、正在等 Whisper 轉錄結果這段期間是 true（見 onRecordingStopped()）——
+    // 跟 isRecording 是互斥的兩個窄狀態，各自對應「按 Esc 該做什麼」不同的動作：
+    // isRecording 時 Esc 是丟掉這段錄音，transcribing 時 Esc 要中止還在進行中的
+    // Whisper 請求（見下面 document 層級的 Esc 判斷）。
+    let transcribing = false;
     let mediaRecorder = null;
     let audioChunks = [];
     let micStream = null;
@@ -1517,6 +1527,9 @@
       loudAudioMs = 0;
       audioChunks = [];
       isRecording = true;
+      // main process 完全看不到 MediaRecorder，只能靠這個通知知道現在能不能靠全域
+      // Escape 打斷錄音（見 preload.js／main.js 的 recording-active）。
+      if (window.petBridge && window.petBridge.notifyRecordingActive) window.petBridge.notifyRecordingActive(true);
       setChatBoxBusy(true);
       chatMicBtn.textContent = '🔴';
       chatMicBtn.title = '停止錄音';
@@ -1559,6 +1572,7 @@
       recordingCancelled = cancelled;
       clearRecordingTimers();
       isRecording = false;
+      if (window.petBridge && window.petBridge.notifyRecordingActive) window.petBridge.notifyRecordingActive(false);
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     }
 
@@ -1599,13 +1613,21 @@
       const arrayBuffer = await blob.arrayBuffer();
       const audioBase64 = arrayBufferToBase64(arrayBuffer);
 
+      transcribing = true;
       const sttResult = await window.petBridge.transcribeVoice(audioBase64, 'audio/webm');
+      transcribing = false;
       if (!sttResult || !sttResult.ok) {
-        // 轉錄本身失敗（額度/網路/key 問題），讓使用者看到錯誤、自己決定要不要
-        // 處理完再重新點 🎤。
         resetMicButtonToIdle();
         setChatBoxBusy(false);
-        chatStatusEl.textContent = '❌ ' + ((sttResult && sttResult.error) || '語音轉錄失敗');
+        if (sttResult && sttResult.cancelled) {
+          // 使用者「轉錄中」時按 Esc 收回（見下面 document 層級的 Esc 判斷、main.js 的
+          // voice-transcribe-cancel handler）——不是錯誤，安靜回到待命就好，不用嚇使用者。
+          chatStatusEl.textContent = '🚫 已取消';
+        } else {
+          // 轉錄本身失敗（額度/網路/key 問題），讓使用者看到錯誤、自己決定要不要
+          // 處理完再重新點 🎤。
+          chatStatusEl.textContent = '❌ ' + ((sttResult && sttResult.error) || '語音轉錄失敗');
+        }
         chatInput.focus();
         return;
       }
@@ -1631,7 +1653,7 @@
       resetMicButtonToIdle();
     }
 
-    chatMicBtn.addEventListener('click', () => {
+    function startVoiceInputForCurrentChar() {
       if (isRecording) {
         // 錄音中再點一次＝手動提前停止，跟自動偵測安靜走同一條轉錄＋送出流程。
         stopRecording(false);
@@ -1640,19 +1662,78 @@
       if (voiceInputActive || chatRequestPending) return; // 正在轉錄/送出中，按鈕本來就鎖住，防禦性擋一次
       voiceInputActive = true;
       startRecording();
-    });
+    }
+    chatMicBtn.addEventListener('click', startVoiceInputForCurrentChar);
+
+    // Ctrl+Alt+Z（main.js 全域快捷鍵，見該檔案 globalShortcut.register('Control+Alt+Z', ...)）
+    // 呼叫的入口：等同「先點角色開輸入框、再點🎤」兩個步驟一次做完。聊天框已經開著就沿用
+    // 目前這個角色，不會半路換人；還沒開的話預設挑角色一，角色一還沒就緒（ready）才退回
+    // 角色二——兩者都沒就緒的極端情況維持挑角色一，openChatBox 本身對未就緒角色沒有特別
+    // 防呆需求（跟點角色 overlay 開聊天框是同一份 UI，不會因為模型還沒載完就整個壞掉）。
+    // 開講前先打斷正在播放的角色語音：不這樣做的話，麥克風會錄到喇叭正在放的角色語音回覆，
+    // 這正是 docs/adr/0008 提過「聲學回授」問題的同一種成因，寧可先讓角色閉嘴。
+    window.startVoiceChatShortcut = function () {
+      if (window.isTtsPlaying && window.isTtsPlaying()) window.interruptTtsPlayback();
+      if (box.style.display === 'none') {
+        const targetKey = (L2D._c1 && L2D._c1.ready) ? 'c1' : 'c2';
+        openChatBox(targetKey, overlays[targetKey]);
+      }
+      startVoiceInputForCurrentChar();
+    };
 
     // 錄音中的 Esc 要能取消，但這時候 chatInput 是 disabled 的（disabled 的表單元素
     // 不會收到鍵盤事件），所以另外用 document 層級的監聽處理，跟上面 chatInput 自己的
     // Escape（關閉整個聊天框）分開，兩者刻意不共用同一個監聽。
+    //
+    // 抽成獨立函式 runEscapeInterruptAction()：main process 的全域 Escape
+    // （globalShortcut，見 main.js updateGlobalEscapeRegistration）在桌寵視窗沒有
+    // OS 鍵盤焦點時（例如穿透模式點擊底下的 Chrome 之後）也要能觸發同一套判斷順序，
+    // 靠 window.petBridge.onGlobalEscape 收 main process 轉送過來的事件——兩邊
+    // 共用同一份邏輯，不要在 main.js 另外重寫一份判斷順序（容易兩邊漏改不同步）。
+    function runEscapeInterruptAction() {
+      if (isRecording) { stopRecording(true); return; }
+      // 轉錄中（語音輸入專屬的一段窄狀態）：中止還在進行中的 Whisper 請求——這裡不能
+      // 落到下面 voiceInputActive 那支只重置外觀的分支，不然 Ctrl+Alt+Z／點🎤 送出的
+      // 語音訊息在「💭 轉錄中...」這段期間按 Esc 會變成只有麥克風按鈕外觀重置、實際
+      // 的轉錄請求繼續在背景跑完，跟打字訊息能真的收回不一致（voiceInputActive 從點
+      // 🎤 一路到整輪結束才會變 false，涵蓋了轉錄中／思考中這兩段，太籠統擋不到這裡）。
+      if (transcribing) {
+        if (window.petBridge && window.petBridge.cancelTranscription) window.petBridge.cancelTranscription();
+        return;
+      }
+      // 回覆已經回來、泡泡/語音正在播的話，「打斷」要搶在「取消」前面判斷——main.js
+      // 的 chat-send handler 是 await speakAndShow() 播完才 return，所以 chatRequestPending
+      // 其實涵蓋「等回覆」跟「回覆正在播」兩段，不是只有前者。如果 chatRequestPending
+      // 判斷擺前面，回覆已經播出來時按 Esc 會被底下那支「呼叫 cancelChatMessage()」
+      // 攔走：那時候網路請求早就結束了，controller.abort() 什麼都中止不了，也不會
+      // 落到「已取消」的分支去停掉正在播的泡泡/語音，變成 Esc 看起來完全沒反應
+      // ——使用者這輪反映的正是這個情況。isTtsPlaying() 是「回覆已經在畫面上」最
+      // 可靠的判斷依據，一旦為真就該直接打斷，不要再嘗試取消一個已經沒東西可取消
+      // 的請求。
+      if (window.isTtsPlaying && window.isTtsPlaying()) { window.interruptTtsPlayback(); return; }
+      // 訊息已經送出、還在等 main process 回覆、回覆也還沒開始顯示（chatInput 這時候
+      // 是 disabled 的，收不到自己那個 Escape 監聽，所以要靠這裡）：中止還在進行中的
+      // chat-send，讓使用者能收回打錯字/講錯話送出去的那句——不管這句話是打字還是
+      // 語音轉錄來的都走這裡（onRecordingStopped() 最後也是呼叫同一個
+      // sendTextMessage()）。實際的取消/不寫記憶邏輯在 main.js 的 chat-cancel／
+      // chat-send catch 區塊，這裡只是發出取消請求，UI 狀態更新等 sendTextMessage()
+      // 裡 await 的那個 Promise resolve 成 { cancelled:true } 後自然處理。
+      if (chatRequestPending && chatBoxCharKey && window.petBridge && window.petBridge.cancelChatMessage) {
+        window.petBridge.cancelChatMessage(chatBoxCharKey);
+        return;
+      }
+      // 只剩「點擊🎤後、MediaRecorder 真的開始錄音前」這段空檔——只有本機非同步檢查
+      // （hasApiKey/getMicSettings/getUserMedia），沒有可以中止的伺服器請求，重置外觀
+      // 讓上面 startRecording() 裡的 voiceInputActive 檢查自然中止即可。
+      if (voiceInputActive) resetMicButtonToIdle();
+    }
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      if (isRecording) { stopRecording(true); return; }
-      if (voiceInputActive) { resetMicButtonToIdle(); return; } // 取消「點擊後、還沒真的開始錄音」這段空檔
-      // 上面兩個都不是的話，才輪到「中途打斷語音播放」——鍵盤操作的使用者不用特地
-      // 點角色本體，Esc 就能讓角色閉嘴（跟點角色本體是同一個 interruptTtsPlayback()）。
-      if (window.isTtsPlaying && window.isTtsPlaying()) window.interruptTtsPlayback();
+      runEscapeInterruptAction();
     });
+    if (window.petBridge && window.petBridge.onGlobalEscape) {
+      window.petBridge.onGlobalEscape(runEscapeInterruptAction);
+    }
 
     // 點輸入框、點角色 overlay 以外的地方都關閉——避免輸入框一直卡在畫面上擋住其他操作
     document.addEventListener('click', (e) => {

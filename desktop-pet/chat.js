@@ -13,7 +13,7 @@ class ChatError extends Error {
   }
 }
 
-async function sendChatMessage({ message, systemPrompt, history = [], apiKey, model = 'gpt-4o-mini', fetchImpl = fetch }) {
+async function sendChatMessage({ message, systemPrompt, history = [], apiKey, model = 'gpt-4o-mini', fetchImpl = fetch, signal }) {
   if (!message || !message.trim()) {
     throw new ChatError('message is empty', 'INVALID_INPUT');
   }
@@ -36,8 +36,13 @@ async function sendChatMessage({ message, systemPrompt, history = [], apiKey, mo
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ model, messages }),
+      signal,
     });
   } catch (err) {
+    // 使用者主動取消（AbortController.abort()）——不包裝成 ChatError，讓呼叫端用
+    // err.name === 'AbortError' 自己判斷這是取消還是真的網路失敗，兩者要顯示的
+    // 訊息不一樣（取消不是錯誤，不用嚇使用者）。
+    if (err.name === 'AbortError') throw err;
     throw new ChatError(`network error: ${err.message}`, 'NETWORK_ERROR');
   }
 

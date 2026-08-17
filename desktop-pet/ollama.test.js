@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { sendOllamaChatMessage, listOllamaModels, normalizeOllamaUrl, OllamaError } from './ollama.js';
+import { sendOllamaChatMessage, listOllamaModels, normalizeOllamaUrl } from './ollama.js';
 
 describe('sendOllamaChatMessage', () => {
   it('returns the assistant reply when the API call succeeds', async () => {
@@ -101,6 +101,22 @@ describe('sendOllamaChatMessage', () => {
     await expect(
       sendOllamaChatMessage({ message: '你好', systemPrompt: '人設', model: 'qwen2.5:7b', baseUrl: 'http://localhost:11434', fetchImpl })
     ).rejects.toMatchObject({ name: 'OllamaError', code: 'NETWORK_ERROR' });
+  });
+
+  it('passes the abort signal through to fetch and rethrows AbortError as-is (not wrapped in OllamaError)', async () => {
+    const abortError = new Error('The operation was aborted');
+    abortError.name = 'AbortError';
+    const fetchImpl = vi.fn().mockRejectedValue(abortError);
+    const controller = new AbortController();
+
+    await expect(
+      sendOllamaChatMessage({
+        message: '你好', systemPrompt: '人設', model: 'qwen2.5:7b', baseUrl: 'http://localhost:11434',
+        fetchImpl, signal: controller.signal,
+      })
+    ).rejects.toBe(abortError);
+
+    expect(fetchImpl.mock.calls[0][1].signal).toBe(controller.signal);
   });
 
   it('treats an empty reply as an error rather than sending a blank message', async () => {

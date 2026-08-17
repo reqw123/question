@@ -1,0 +1,554 @@
+- generic [ref=f1e2]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e6]:
+      - generic [ref=f1e7]:
+        - button "導覽" [active] [pressed] [ref=f1e9] [cursor=pointer]
+        - generic [ref=f1e11]:
+          - link "YouTube 首頁" [ref=f1e12] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f1e16]: TW
+        - button "略過導覽功能" [ref=f1e20] [cursor=pointer]
+      - generic [ref=f1e24]:
+        - search [ref=f1e25]:
+          - generic [ref=f1e27]:
+            - generic [ref=f1e28]:
+              - combobox "搜尋" [expanded] [ref=f1e30]: 健康
+              - button "清除搜尋查詢" [ref=f1e32] [cursor=pointer]
+            - button "Search" [ref=f1e37] [cursor=pointer]
+        - generic [ref=f1e40]:
+          - button "使用語音搜尋" [ref=f1e42] [cursor=pointer]
+          - tooltip "tooltip"
+  - navigation [ref=f1e51]
+  - main [ref=f1e58]:
+    - generic [ref=f1e59]:
+      - generic [ref=f1e61]:
+        - tablist [ref=f1e66]:
+          - tab "全部" [selected] [ref=f1e70] [cursor=pointer]
+          - tab "Shorts" [ref=f1e79] [cursor=pointer]
+          - tab "未觀看" [ref=f1e88] [cursor=pointer]
+          - tab "已觀看" [ref=f1e97] [cursor=pointer]
+          - tab "影片" [ref=f1e106] [cursor=pointer]
+          - tab "最新上傳" [ref=f1e115] [cursor=pointer]
+          - tab "直播中" [ref=f1e124] [cursor=pointer]
+        - generic [ref=f1e131]:
+          - button "搜尋篩選器" [ref=f1e133] [cursor=pointer]:
+            - generic: 篩選器
+          - tooltip "tooltip"
+      - generic [ref=f1e140]:
+        - generic [ref=f1e142]:
+          - generic [ref=f1e151] [cursor=pointer]:
+            - link [ref=f1e152]:
+              - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CO6jLriCDaoryAdCFqsYP-am2MPTnx4iJAc3nu5XZFYrUpoiXLxABIABgn7mHjtQoggEXY2EtcHViLTYyMTk4MTE3NDcwNDkzNzGgAYviiqABqAMEyAMKqgTAAk_Q_TtGcKWzMt1_t4UMuTqEQpf-5nDprQfSSOt1DehsalEpxbTTkN3kpkOld4Sd2tPLFl_iW97Wwd6Tl4kNU7o_SagwxKPtQ0eb7QCAnU3-JHy1Hmpx-jVLCfgwS4rsd7XJOec0-pwSFDFJsOcOcaz-CWTLcGoOw9KJ815UCO_D-M2TvLZBLO0lpWmrqIf_lXHWNXiAV24uU3IQe8aZXt7N97NqbC5cqyEQaYI9rK5x-Jgehmz4YHTan_wjGt936SFQHPGlVWLh2mIgzi2VN4RXNvcnrXVeVAKx-p60JZaU1uj46HJ-jF6ImfFQvnc2kyNvHIg1dO3FT9PPqFRJkgmXAYiu4A21IzQ0TQSZ2wRKu1EVXsbGOlOkcucEX8ipscyRXU0pbzBvJ5gad9sfmM8nyuRucm5G0ag_7uox9_vxiAXH5eL9WJIFCAgTeIuA8OACoAahAYAH3Z313wKIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0t3bmprdEphU3JzqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRY4Omdy_WnlgNgAZoJOGh0dHA6Ly93d3cuYWRvYmUuY29tL3R3L2Fjcm9iYXQvZnJlZS10cmlhbC1kb3dubG9hZC5odG1ssQmi2pMwS1M_U8gJF8gJjwHICcIByAmXAroLYQgDEAUYBCAHKAEwHEABSABYfWAAaABwAYgBAJgBAaIBKgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAdABAagCBcACAqgBAdgBA4ACAYgCBboDB3ZpdHBlcmLQCxLgCwGiDCEgAUgBahYKFGNvbS5hZG9iZS5zcGFyay5wb3N0eAGIAQHSDAIQAdoMJgoLEIDsjpa1sbijlwESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQXp5bGNYejNFUEZNQURtSXIzaU9JOHpJaTRsVnBvQ2dSUFNKalUxX0hDSklTeS1hdVBCZFlfYS1lTzZNOUkydG1wM2JnQjBURGsya2otSUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qyha7E6mNLNRPtcxPTJYJBir0nzy_pt_6b7SYfBOjlPh1FOKkHSAsoaAq3jEALw_wcB&num=1&cid=CAESvQHg9tP5Y6jA8qtrFbPnbcQ_yWKSEgARweIYU-C-JoBLvqVKXVOAV0Pand2PbEXzZPq4uongeAJx_ueuOerbVIo7Q-QSuyxaeN08o30eMdhYL6BZSCERO9DnBhzidWgJAdI8IW4wPoi2aYlEN_MN8p8PFCDb8xjQzG8Uuw_cl_RMnZHGdQA8BErydaizsl3_3zoduglvMxyncUO3HwBMAZ_6VxVCNvtFqmQVr0G25Tn6lJ9MrCbblyqfPFtehR8&ad_cpn=%5BCPN%5D&sig=AOD64_0g1irmXfpdVpMbV7zCFHCz_WKngw&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=21&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+              - button [ref=f1e157]
+            - generic [ref=f1e161]:
+              - generic [ref=f1e162]:
+                - generic [ref=f1e163]:
+                  - link "Adobe Acrobat Pro DC gives you the most-trusted tools to manage, edit, and share PDFs." [ref=f1e166]:
+                    - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CO6jLriCDaoryAdCFqsYP-am2MPTnx4iJAc3nu5XZFYrUpoiXLxABIABgn7mHjtQoggEXY2EtcHViLTYyMTk4MTE3NDcwNDkzNzGgAYviiqABqAMEyAMKqgTAAk_Q_TtGcKWzMt1_t4UMuTqEQpf-5nDprQfSSOt1DehsalEpxbTTkN3kpkOld4Sd2tPLFl_iW97Wwd6Tl4kNU7o_SagwxKPtQ0eb7QCAnU3-JHy1Hmpx-jVLCfgwS4rsd7XJOec0-pwSFDFJsOcOcaz-CWTLcGoOw9KJ815UCO_D-M2TvLZBLO0lpWmrqIf_lXHWNXiAV24uU3IQe8aZXt7N97NqbC5cqyEQaYI9rK5x-Jgehmz4YHTan_wjGt936SFQHPGlVWLh2mIgzi2VN4RXNvcnrXVeVAKx-p60JZaU1uj46HJ-jF6ImfFQvnc2kyNvHIg1dO3FT9PPqFRJkgmXAYiu4A21IzQ0TQSZ2wRKu1EVXsbGOlOkcucEX8ipscyRXU0pbzBvJ5gad9sfmM8nyuRucm5G0ag_7uox9_vxiAXH5eL9WJIFCAgTeIuA8OACoAahAYAH3Z313wKIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0t3bmprdEphU3JzqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRY4Omdy_WnlgNgAZoJOGh0dHA6Ly93d3cuYWRvYmUuY29tL3R3L2Fjcm9iYXQvZnJlZS10cmlhbC1kb3dubG9hZC5odG1ssQmi2pMwS1M_U8gJF8gJjwHICcIByAmXAroLYQgDEAUYBCAHKAEwHEABSABYfWAAaABwAYgBAJgBAaIBKgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAdABAagCBcACAqgBAdgBA4ACAYgCBboDB3ZpdHBlcmLQCxLgCwGiDCEgAUgBahYKFGNvbS5hZG9iZS5zcGFyay5wb3N0eAGIAQHSDAIQAdoMJgoLEIDsjpa1sbijlwESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQXp5bGNYejNFUEZNQURtSXIzaU9JOHpJaTRsVnBvQ2dSUFNKalUxX0hDSklTeS1hdVBCZFlfYS1lTzZNOUkydG1wM2JnQjBURGsya2otSUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qyha7E6mNLNRPtcxPTJYJBir0nzy_pt_6b7SYfBOjlPh1FOKkHSAsoaAq3jEALw_wcB&num=1&cid=CAESvQHg9tP5Y6jA8qtrFbPnbcQ_yWKSEgARweIYU-C-JoBLvqVKXVOAV0Pand2PbEXzZPq4uongeAJx_ueuOerbVIo7Q-QSuyxaeN08o30eMdhYL6BZSCERO9DnBhzidWgJAdI8IW4wPoi2aYlEN_MN8p8PFCDb8xjQzG8Uuw_cl_RMnZHGdQA8BErydaizsl3_3zoduglvMxyncUO3HwBMAZ_6VxVCNvtFqmQVr0G25Tn6lJ9MrCbblyqfPFtehR8&ad_cpn=%5BCPN%5D&sig=AOD64_0g1irmXfpdVpMbV7zCFHCz_WKngw&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=0&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                  - link "Built to work where you work." [ref=f1e169]:
+                    - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CO6jLriCDaoryAdCFqsYP-am2MPTnx4iJAc3nu5XZFYrUpoiXLxABIABgn7mHjtQoggEXY2EtcHViLTYyMTk4MTE3NDcwNDkzNzGgAYviiqABqAMEyAMKqgTAAk_Q_TtGcKWzMt1_t4UMuTqEQpf-5nDprQfSSOt1DehsalEpxbTTkN3kpkOld4Sd2tPLFl_iW97Wwd6Tl4kNU7o_SagwxKPtQ0eb7QCAnU3-JHy1Hmpx-jVLCfgwS4rsd7XJOec0-pwSFDFJsOcOcaz-CWTLcGoOw9KJ815UCO_D-M2TvLZBLO0lpWmrqIf_lXHWNXiAV24uU3IQe8aZXt7N97NqbC5cqyEQaYI9rK5x-Jgehmz4YHTan_wjGt936SFQHPGlVWLh2mIgzi2VN4RXNvcnrXVeVAKx-p60JZaU1uj46HJ-jF6ImfFQvnc2kyNvHIg1dO3FT9PPqFRJkgmXAYiu4A21IzQ0TQSZ2wRKu1EVXsbGOlOkcucEX8ipscyRXU0pbzBvJ5gad9sfmM8nyuRucm5G0ag_7uox9_vxiAXH5eL9WJIFCAgTeIuA8OACoAahAYAH3Z313wKIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0t3bmprdEphU3JzqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRY4Omdy_WnlgNgAZoJOGh0dHA6Ly93d3cuYWRvYmUuY29tL3R3L2Fjcm9iYXQvZnJlZS10cmlhbC1kb3dubG9hZC5odG1ssQmi2pMwS1M_U8gJF8gJjwHICcIByAmXAroLYQgDEAUYBCAHKAEwHEABSABYfWAAaABwAYgBAJgBAaIBKgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAdABAagCBcACAqgBAdgBA4ACAYgCBboDB3ZpdHBlcmLQCxLgCwGiDCEgAUgBahYKFGNvbS5hZG9iZS5zcGFyay5wb3N0eAGIAQHSDAIQAdoMJgoLEIDsjpa1sbijlwESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQXp5bGNYejNFUEZNQURtSXIzaU9JOHpJaTRsVnBvQ2dSUFNKalUxX0hDSklTeS1hdVBCZFlfYS1lTzZNOUkydG1wM2JnQjBURGsya2otSUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qyha7E6mNLNRPtcxPTJYJBir0nzy_pt_6b7SYfBOjlPh1FOKkHSAsoaAq3jEALw_wcB&num=1&cid=CAESvQHg9tP5Y6jA8qtrFbPnbcQ_yWKSEgARweIYU-C-JoBLvqVKXVOAV0Pand2PbEXzZPq4uongeAJx_ueuOerbVIo7Q-QSuyxaeN08o30eMdhYL6BZSCERO9DnBhzidWgJAdI8IW4wPoi2aYlEN_MN8p8PFCDb8xjQzG8Uuw_cl_RMnZHGdQA8BErydaizsl3_3zoduglvMxyncUO3HwBMAZ_6VxVCNvtFqmQVr0G25Tn6lJ9MrCbblyqfPFtehR8&ad_cpn=%5BCPN%5D&sig=AOD64_0g1irmXfpdVpMbV7zCFHCz_WKngw&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=7&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                  - generic [ref=f1e170]:
+                    - button "Adobe Acrobat" [ref=f1e174]
+                    - generic [ref=f1e178]:
+                      - generic [ref=f1e179]: 贊助商廣告
+                      - text: ·
+                    - generic [ref=f1e180]: Adobe Acrobat
+                - button "我的廣告中心" [ref=f1e184]
+              - generic [ref=f1e190]:
+                - link "觀看" [ref=f1e193]:
+                  - /url: /watch?v=KwnjktJaSrs
+                - link "瞭解詳情" [ref=f1e199]:
+                  - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CO6jLriCDaoryAdCFqsYP-am2MPTnx4iJAc3nu5XZFYrUpoiXLxABIABgn7mHjtQoggEXY2EtcHViLTYyMTk4MTE3NDcwNDkzNzGgAYviiqABqAMEyAMKqgTAAk_Q_TtGcKWzMt1_t4UMuTqEQpf-5nDprQfSSOt1DehsalEpxbTTkN3kpkOld4Sd2tPLFl_iW97Wwd6Tl4kNU7o_SagwxKPtQ0eb7QCAnU3-JHy1Hmpx-jVLCfgwS4rsd7XJOec0-pwSFDFJsOcOcaz-CWTLcGoOw9KJ815UCO_D-M2TvLZBLO0lpWmrqIf_lXHWNXiAV24uU3IQe8aZXt7N97NqbC5cqyEQaYI9rK5x-Jgehmz4YHTan_wjGt936SFQHPGlVWLh2mIgzi2VN4RXNvcnrXVeVAKx-p60JZaU1uj46HJ-jF6ImfFQvnc2kyNvHIg1dO3FT9PPqFRJkgmXAYiu4A21IzQ0TQSZ2wRKu1EVXsbGOlOkcucEX8ipscyRXU0pbzBvJ5gad9sfmM8nyuRucm5G0ag_7uox9_vxiAXH5eL9WJIFCAgTeIuA8OACoAahAYAH3Z313wKIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0t3bmprdEphU3JzqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRY4Omdy_WnlgNgAZoJOGh0dHA6Ly93d3cuYWRvYmUuY29tL3R3L2Fjcm9iYXQvZnJlZS10cmlhbC1kb3dubG9hZC5odG1ssQmi2pMwS1M_U8gJF8gJjwHICcIByAmXAroLYQgDEAUYBCAHKAEwHEABSABYfWAAaABwAYgBAJgBAaIBKgofCAAgAygD2rgEFTITOhEKDygwSK3zw-HUDpgZAbggAdABAagCBcACAqgBAdgBA4ACAYgCBboDB3ZpdHBlcmLQCxLgCwGiDCEgAUgBahYKFGNvbS5hZG9iZS5zcGFyay5wb3N0eAGIAQHSDAIQAdoMJgoLEIDsjpa1sbijlwESAgEDGg0Yx-Xi_Vggyfa--OIFQAFKAhAfmg0BEqoNAlRXyA0B0g24BGh0dHBzOi8vYWQuZG91YmxlY2xpY2submV0L2RkbS90cmFja2Nsay9OOTcyOTUyLjI3OTM4MkJJRE1BTkFHRVJfREZBU0lURS9CMjYxMjYyMDAuMzE3MTM5NDU5O2RjX3Rya19haWQ9NTA5OTYyODczO2RjX3Rya19jaWQ9MTU5OTQzMzE3O2RjX2RibV90b2tlbj1BT2plTE5FQUFBQTdDalFLREFnQUZRQUFBQUFkQUFBQUFCSU1DQUFWQUFBQUFCMEFBQUFBSWhRSXgtWGlfVmlvQW91QThPQUNzQUtFMXF2cUEwQTdFSmZudWdINWRTM0M0LVpVVlhoS19iYXFodHBkO2RjX2xhdD07ZGNfcmRpZD07dGFnX2Zvcl9jaGlsZF9kaXJlY3RlZF90cmVhdG1lbnQ9O3RmdWE9O2x0ZD07ZGNfdGR2PTE7ZGNfdHJhbnNwYXJlbnQ9MTtkY19ydWk9MTtkY19lcHM9QUhhczhjQXp5bGNYejNFUEZNQURtSXIzaU9JOHpJaTRsVnBvQ2dSUFNKalUxX0hDSklTeS1hdVBCZFlfYS1lTzZNOUkydG1wM2JnQjBURGsya2otSUE7ZGNfcHViaWQ9Nj9odHRwOi8vd3d3LmFkb2JlLmNvbS90dy9hY3JvYmF0L2ZyZWUtdHJpYWwtZG93bmxvYWQuaHRtbD9zZGlkPTE5U0NESFRDJm12PXNvY2lhbCZtdjI9cGFpZHNvYyZnYWRfc291cmNlPTKwE53XoCS4E____________wGIFAGwFAPAFYGAgEDQFQHYFQGYFgGoFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXV7_CAho-GPC6FwYoADAAOAHQGAHwGAE&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qyha7E6mNLNRPtcxPTJYJBir0nzy_pt_6b7SYfBOjlPh1FOKkHSAsoaAq3jEALw_wcB&num=1&cid=CAESvQHg9tP5Y6jA8qtrFbPnbcQ_yWKSEgARweIYU-C-JoBLvqVKXVOAV0Pand2PbEXzZPq4uongeAJx_ueuOerbVIo7Q-QSuyxaeN08o30eMdhYL6BZSCERO9DnBhzidWgJAdI8IW4wPoi2aYlEN_MN8p8PFCDb8xjQzG8Uuw_cl_RMnZHGdQA8BErydaizsl3_3zoduglvMxyncUO3HwBMAZ_6VxVCNvtFqmQVr0G25Tn6lJ9MrCbblyqfPFtehR8&ad_cpn=%5BCPN%5D&sig=AOD64_0g1irmXfpdVpMbV7zCFHCz_WKngw&ctype=110&video_id=KwnjktJaSrs&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=8&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+          - generic [ref=f1e204]:
+            - link [ref=f1e206] [cursor=pointer]:
+              - /url: /@tvbshealth20
+            - generic [ref=f1e209]:
+              - link "健康2.0 已驗證 @tvbshealth20•183萬位訂閱者 每週六、日晚間6點TVBS(56) 由主持人鄭凱云、陳欣湄、韋汝以及各領域專業來賓群，帶領您一同探索健康的秘訣○成為《 ..." [ref=f1e210] [cursor=pointer]:
+                - /url: /@tvbshealth20
+                - generic [ref=f1e211]:
+                  - generic [ref=f1e212]:
+                    - generic [ref=f1e213]: 健康2.0
+                    - img "已驗證" [ref=f1e220]
+                  - generic [ref=f1e222]: "@tvbshealth20•183萬位訂閱者"
+                  - generic [ref=f1e223]: 每週六、日晚間6點TVBS(56) 由主持人鄭凱云、陳欣湄、韋汝以及各領域專業來賓群，帶領您一同探索健康的秘訣○成為《 ...
+              - button "訂閱「健康2.0」。" [ref=f1e230] [cursor=pointer]:
+                - generic: 訂閱
+          - generic [ref=f1e235]:
+            - heading "「健康2.0」的最新影片" [level=2] [ref=f1e238]
+            - generic [ref=f1e242]:
+              - generic [ref=f1e243]:
+                - generic [ref=f1e245]:
+                  - link [ref=f1e247] [cursor=pointer]:
+                    - /url: /watch?v=XPbyRA1apg8&pp=ygUG5YGl5bq3
+                    - img [ref=f1e252]:
+                      - generic [ref=f1e253]: 13:28
+                    - generic: 現正播放
+                  - generic [ref=f1e254] [cursor=pointer]:
+                    - generic [ref=f1e255]:
+                      - heading [level=3] [ref=f1e257]:
+                        - 'link "打嗝不止+頭暈 頑固性打嗝恐是腦幹中風警訊【健康2.0分段】@tvbshealth20 EP3221-3 20260815 #鄭凱云#袁明琦#甄瑞興#鄒瑋倫#王雪珮#雷議宗 13 分鐘 28 秒" [ref=f1e258]':
+                          - /url: /watch?v=XPbyRA1apg8&pp=ygUG5YGl5bq3
+                          - text: "打嗝不止+頭暈 頑固性打嗝恐是腦幹中風警訊【健康2.0分段】@tvbshealth20 EP3221-3 20260815 #鄭凱云#袁明琦#甄瑞興#鄒瑋倫#王雪珮#雷議宗"
+                      - generic [ref=f1e261]:
+                        - generic [ref=f1e262]: 觀看次數：44次
+                        - generic [ref=f1e263]: •54 分鐘前
+                    - generic [ref=f1e264]:
+                      - link "前往頻道：健康2.0" [ref=f1e265]:
+                        - /url: /@tvbshealth20
+                      - generic [ref=f1e267]:
+                        - link "健康2.0" [ref=f1e271]:
+                          - /url: /@tvbshealth20
+                        - img "已驗證" [ref=f1e276]
+                    - generic [ref=f1e278]:
+                      - generic [ref=f1e279]: 每天做一點，人生金健康 《健康2.0》更多會員獨家影片 https://bit.ly/30Jyoc3 本集完整內容：https://youtu.be/AFIIOiZXZsI ...
+                      - tooltip "tooltip"
+                    - img "新影片" [ref=f1e284]
+                - generic [ref=f1e287]:
+                  - link [ref=f1e289] [cursor=pointer]:
+                    - /url: /watch?v=PUBQNUgZrs0&pp=ygUG5YGl5bq3
+                  - generic [ref=f1e291] [cursor=pointer]:
+                    - generic [ref=f1e292]:
+                      - heading [level=3] [ref=f1e294]:
+                        - 'link "頻繁被口水嗆到？小心恐是口腔肌肉衰弱警訊【健康2.0分段】@tvbshealth20 EP3221-2 20260815 #鄭凱云#袁明琦#甄瑞興#鄒瑋倫#王雪珮#雷議宗 12 分鐘 50 秒" [ref=f1e295]':
+                          - /url: /watch?v=PUBQNUgZrs0&pp=ygUG5YGl5bq3
+                          - text: "頻繁被口水嗆到？小心恐是口腔肌肉衰弱警訊【健康2.0分段】@tvbshealth20 EP3221-2 20260815 #鄭凱云#袁明琦#甄瑞興#鄒瑋倫#王雪珮#雷議宗"
+                      - generic [ref=f1e298]:
+                        - generic [ref=f1e299]: 觀看次數：115次
+                        - generic [ref=f1e300]: •1 小時前
+                    - generic [ref=f1e301]:
+                      - link "前往頻道：健康2.0" [ref=f1e302]:
+                        - /url: /@tvbshealth20
+                      - generic [ref=f1e303]:
+                        - link "健康2.0" [ref=f1e307]:
+                          - /url: /@tvbshealth20
+                        - img "已驗證" [ref=f1e312]
+                    - generic [ref=f1e314]:
+                      - generic [ref=f1e315]: 每天做一點，人生金健康 《健康2.0》更多會員獨家影片 https://bit.ly/30Jyoc3 本集完整內容：https://youtu.be/AFIIOiZXZsI ...
+                      - tooltip "tooltip"
+                    - img "新影片" [ref=f1e320]
+              - button "以及另外 8 個" [ref=f1e323] [cursor=pointer]
+        - generic [ref=f1e338] [cursor=pointer]:
+          - generic [ref=f1e339]:
+            - link "大研生醫德國頂級魚油，台灣熱銷 - Omega3濃度高達99% - 促進新陳代謝，遠離健康高風險" [ref=f1e342]:
+              - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwjCnNrL9aeWAxUF4RYFHRFEJe8YACICCAEQBBoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qz1YXEyBtij-7zhi9Oa_QVWk7YP9uxmLhwyothFrKE-PKs2NO-CAMkaAmICEALw_wcB&num=1&cid=CAAS0wHkaIXNHAMaRqtYOwbjS1O0gO6e-IIl7KxcrSRtXKgZEUp7tNAEtyJwkjub8ptssCTWSNeKC_xP2BfbX1jJK9k_Rdc3AV36Ypk4-Kv10bw3s7SbrBeDApmcWNE-ynTnSnkp3dYr5TcCiLEMfzNemrhMhYGn2ijfQz4N8Wqhhl1dDd1c5agnekBJ6SYq-ILBbM0rHJ-FKQxzyfvcF4Xgkqmb2dF5qEcFDy1a3Lcf2qKuY2P2ysLNRFcxgpXTZgjRQBbXmJc4EZc5O5ecbFxArbHeqQy9&cce=2&category=acrcp_v1_32&sig=AOD64_3-B0rgBWBMux1Dh97QqnWegWlRuA&adurl=https://www.daikenshop.com/mkt/mktPush.php%3Fv%3DMzA2TgYQXg%26gad_source%3D2%26gad_campaignid%3D6941951418&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+            - link "大研生醫值得信賴的高濃度魚油品牌，rTG型式好吸收，維持思緒清晰，加分工作效率，調節生理機能。榮獲業界評比優秀魚油保健..." [ref=f1e345]:
+              - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwjCnNrL9aeWAxUF4RYFHRFEJe8YACICCAEQBBoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qz1YXEyBtij-7zhi9Oa_QVWk7YP9uxmLhwyothFrKE-PKs2NO-CAMkaAmICEALw_wcB&num=1&cid=CAAS0wHkaIXNHAMaRqtYOwbjS1O0gO6e-IIl7KxcrSRtXKgZEUp7tNAEtyJwkjub8ptssCTWSNeKC_xP2BfbX1jJK9k_Rdc3AV36Ypk4-Kv10bw3s7SbrBeDApmcWNE-ynTnSnkp3dYr5TcCiLEMfzNemrhMhYGn2ijfQz4N8Wqhhl1dDd1c5agnekBJ6SYq-ILBbM0rHJ-FKQxzyfvcF4Xgkqmb2dF5qEcFDy1a3Lcf2qKuY2P2ysLNRFcxgpXTZgjRQBbXmJc4EZc5O5ecbFxArbHeqQy9&cce=2&category=acrcp_v1_32&sig=AOD64_3-B0rgBWBMux1Dh97QqnWegWlRuA&adurl=https://www.daikenshop.com/mkt/mktPush.php%3Fv%3DMzA2TgYQXg%26gad_source%3D2%26gad_campaignid%3D6941951418&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=7
+            - generic [ref=f1e346]:
+              - generic [ref=f1e348]:
+                - generic [ref=f1e349]: 贊助商廣告
+                - text: ·
+              - generic [ref=f1e350]: https://www.daikenshop.com/大研生醫/保健食品
+          - button "我的廣告中心" [ref=f1e354]
+        - generic [ref=f1e359]:
+          - generic [ref=f1e360]:
+            - generic [ref=f1e361]:
+              - heading "「健康2.0」最新上傳的 Shorts" [level=2] [ref=f1e365]
+              - button "其他動作" [ref=f1e371] [cursor=pointer]
+            - generic [ref=f1e374]:
+              - generic [ref=f1e377]:
+                - generic [ref=f1e379]:
+                  - link [ref=f1e380] [cursor=pointer]:
+                    - /url: /shorts/dfc3KlLcF9Q
+                    - img [ref=f1e385]:
+                      - generic [ref=f1e386]: 新影片
+                  - generic [ref=f1e387] [cursor=pointer]:
+                    - link "想吃甜點又怕胖？2低卡甜點一次滿足😋" [ref=f1e388]:
+                      - /url: /shorts/dfc3KlLcF9Q
+                    - generic [ref=f1e389]: 觀看次數：3171次
+                  - button "其他動作" [ref=f1e391] [cursor=pointer]
+                - generic [ref=f1e396]:
+                  - link [ref=f1e397] [cursor=pointer]:
+                    - /url: /shorts/N8giZU1QcXk
+                  - generic [ref=f1e401] [cursor=pointer]:
+                    - link "有推薦的口袋早餐名單嗎？台中龍井這家早餐店絕對超乎想像！" [ref=f1e402]:
+                      - /url: /shorts/N8giZU1QcXk
+                    - generic [ref=f1e403]: 觀看次數：2750次
+                  - button "其他動作" [ref=f1e405] [cursor=pointer]
+                - generic [ref=f1e410]:
+                  - link [ref=f1e411] [cursor=pointer]:
+                    - /url: /shorts/ozfGxeDLhFY
+                  - generic [ref=f1e415] [cursor=pointer]:
+                    - 'link "原來每個人都有自己獨特的早餐風格！吃早餐，好好關心身旁的人與環境，也好好照顧自己💓#tvbsgood #ESG" [ref=f1e416]':
+                      - /url: /shorts/ozfGxeDLhFY
+                    - generic [ref=f1e417]: 觀看次數：3745次
+                  - button "其他動作" [ref=f1e419] [cursor=pointer]
+                - generic [ref=f1e424]:
+                  - link [ref=f1e425] [cursor=pointer]:
+                    - /url: /shorts/cJ_eCvi9fMw
+                  - generic [ref=f1e429] [cursor=pointer]:
+                    - 'link "長照3.0你了解多少？一起認識最新政策，為自己和家人多準備一分安心👉健康2.0官網搜尋 「樂齡長照友善共老」#樂齡長照友善共老 #每天做一點人生金健康 #陳欣湄 #韋汝 #ESG" [ref=f1e430]':
+                      - /url: /shorts/cJ_eCvi9fMw
+                    - generic [ref=f1e431]: 觀看次數：4818次
+                  - button "其他動作" [ref=f1e433] [cursor=pointer]
+                - generic [ref=f1e438]:
+                  - link [ref=f1e439] [cursor=pointer]:
+                    - /url: /shorts/VFgdoaNZtTI
+                  - generic [ref=f1e443] [cursor=pointer]:
+                    - link "VIVE 健康圓桌｜讓專家陪你聊健康" [ref=f1e444]:
+                      - /url: /shorts/VFgdoaNZtTI
+                    - generic [ref=f1e445]: 觀看次數：1513次
+                  - button "其他動作" [ref=f1e447] [cursor=pointer]
+                - generic [ref=f1e452]:
+                  - link [ref=f1e453] [cursor=pointer]:
+                    - /url: /shorts/eYMqIuYDWtw
+                  - generic [ref=f1e457] [cursor=pointer]:
+                    - 'link "三高、中風、失智都有年輕化趨勢！長照3.0擴大照護補助升級，帶你一次看懂最新長照資源👉健康2.0官網搜尋 「樂齡長照友善共來」 #樂齡長照友善共老 #每天做一點人生金健康 #鄭凱云 #ESG" [ref=f1e458]':
+                      - /url: /shorts/eYMqIuYDWtw
+                    - generic [ref=f1e459]: 觀看次數：3358次
+                  - button "其他動作" [ref=f1e461] [cursor=pointer]
+              - button "下一部" [ref=f1e467] [cursor=pointer]
+          - generic [ref=f1e472]:
+            - heading "「健康2.0」推出的最新影片" [level=2] [ref=f1e475]
+            - generic [ref=f1e479]:
+              - generic [ref=f1e482]:
+                - 'link "健康2.0 • 5 小時前 出去玩🧳你都怎麼找美食、查景點？ 《食尚玩家》想聽聽你的旅遊經驗！👀 只要花 2–3分鐘填寫問卷，就有機會把🎁帶回家 參加正式訪談，還可獲得最高 1,500元統一禮券！ 快來分享「你的國旅經驗」👉 https://www.surveycake.com/s/o813Z #旅遊 #問卷調查 #城市玩家 對這則貼文按讚，目前已有 16 人按讚 tooltip 16 人喜歡 對這則貼文按倒讚 tooltip 分享 tooltip 留言 tooltip 動作選單" [ref=f1e484] [cursor=pointer]':
+                  - generic [ref=f1e485]:
+                    - link [ref=f1e487]:
+                      - /url: /@tvbshealth20
+                    - link "健康2.0" [ref=f1e490]:
+                      - /url: /@tvbshealth20
+                    - generic [ref=f1e491]: •
+                    - link "5 小時前" [ref=f1e493]:
+                      - /url: /post/Ugkxw70aIAtC6VHg6TKblaOBsNEw8RmonnaF
+                  - generic [ref=f1e494]:
+                    - generic [ref=f1e496]:
+                      - text: 出去玩🧳你都怎麼找美食、查景點？ 《食尚玩家》想聽聽你的旅遊經驗！👀 只要花 2–3分鐘填寫問卷，就有機會把🎁帶回家 參加正式訪談，還可獲得最高 1,500元統一禮券！ 快來分享「你的國旅經驗」👉
+                      - link "https://www.surveycake.com/s/o813Z" [ref=f1e497]:
+                        - /url: https://www.youtube.com/redirect?event=backstage_event&redir_token=QUM4Zm9rU2tFejNGMFpHUWtqYy1EVDU0aFRYMHxBR3JiS2Fsc1RIanlnYWIxV2IyOEpuZFA3ay1tMWl3TUh1Q3lMUVJsMXlHX2dveW5BbnF4SW1Ka2RONVgzTFFWazRJamZKT1N4bjU1bWlhck1hQ1pnSzh1NTRiRmFMemRiWDM4&q=https%3A%2F%2Fwww.surveycake.com%2Fs%2Fo813Z
+                      - link "#旅遊" [ref=f1e498]:
+                        - /url: /hashtag/%E6%97%85%E9%81%8A
+                      - link "#問卷調查" [ref=f1e499]:
+                        - /url: /hashtag/%E5%95%8F%E5%8D%B7%E8%AA%BF%E6%9F%A5
+                      - link "#城市玩家" [ref=f1e500]:
+                        - /url: /hashtag/%E5%9F%8E%E5%B8%82%E7%8E%A9%E5%AE%B6
+                    - generic [ref=f1e501]:
+                      - group
+                  - generic [ref=f1e505]:
+                    - generic [ref=f1e507]:
+                      - generic [ref=f1e508]:
+                        - button "對這則貼文按讚，目前已有 16 人按讚" [ref=f1e510]
+                        - tooltip "tooltip"
+                      - generic "16 人喜歡" [ref=f1e514]: "16"
+                      - generic [ref=f1e515]:
+                        - button "對這則貼文按倒讚" [ref=f1e517]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e522]:
+                        - button "分享" [ref=f1e524]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e529]:
+                        - link "留言" [ref=f1e531]:
+                          - /url: /create_channel?upsell=comment
+                        - tooltip "tooltip"
+                    - button "動作選單" [ref=f1e538]
+                - 'link "健康2.0 • 3 天前 免費好用的健康網站介紹給你！ 今天中午12點 #如果云知道 🎥 https://youtu.be/J3AL7IYNC2E ‪‪‪‪‪‪‪‪‬‬ #鄭凱云 #布蘭妮 對這則貼文按讚，目前已有 69 人按讚 tooltip 69 人喜歡 對這則貼文按倒讚 tooltip 分享 tooltip 留言 tooltip 動作選單" [ref=f1e541] [cursor=pointer]':
+                  - generic [ref=f1e542]:
+                    - link [ref=f1e544]:
+                      - /url: /@tvbshealth20
+                    - link "健康2.0" [ref=f1e547]:
+                      - /url: /@tvbshealth20
+                    - generic [ref=f1e548]: •
+                    - link "3 天前" [ref=f1e550]:
+                      - /url: /post/UgkxU1LMahNfqNsQyb_dZMpwrlezCSG6kdAY
+                  - generic [ref=f1e551]:
+                    - generic [ref=f1e553]:
+                      - text: 免費好用的健康網站介紹給你！ 今天中午12點
+                      - link "#如果云知道" [ref=f1e554]:
+                        - /url: /hashtag/%E5%A6%82%E6%9E%9C%E4%BA%91%E7%9F%A5%E9%81%93
+                      - text: 🎥
+                      - link "https://youtu.be/J3AL7IYNC2E" [ref=f1e555]:
+                        - /url: /watch?v=J3AL7IYNC2E
+                      - text: ‪‪‪‪‪‪‪‪‬‬
+                      - link "#鄭凱云" [ref=f1e556]:
+                        - /url: /hashtag/%E9%84%AD%E5%87%B1%E4%BA%91
+                      - link "#布蘭妮" [ref=f1e557]:
+                        - /url: /hashtag/%E5%B8%83%E8%98%AD%E5%A6%AE
+                    - generic [ref=f1e558]:
+                      - group
+                  - generic [ref=f1e562]:
+                    - generic [ref=f1e564]:
+                      - generic [ref=f1e565]:
+                        - button "對這則貼文按讚，目前已有 69 人按讚" [ref=f1e567]
+                        - tooltip "tooltip"
+                      - generic "69 人喜歡" [ref=f1e571]: "69"
+                      - generic [ref=f1e572]:
+                        - button "對這則貼文按倒讚" [ref=f1e574]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e579]:
+                        - button "分享" [ref=f1e581]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e586]:
+                        - link "留言" [ref=f1e588]:
+                          - /url: /create_channel?upsell=comment
+                        - tooltip "tooltip"
+                    - button "動作選單" [ref=f1e595]
+                - 'link "健康2.0 • 5 天前 暈眩跟骨鬆有關？！3動作一周有效改善！ 今晚8點準時鎖定 #挖健康直播 🎥 https://youtu.be/RvK1zzxtmNo ‪‪‪‪‪‪ ‪@tvbshealth20‬ 對這則貼文按讚，目前已有 142 人按讚 tooltip 142 人喜歡 對這則貼文按倒讚 tooltip 分享 tooltip 2 則留言 tooltip 動作選單" [ref=f1e598] [cursor=pointer]':
+                  - generic [ref=f1e599]:
+                    - link [ref=f1e601]:
+                      - /url: /@tvbshealth20
+                    - link "健康2.0" [ref=f1e604]:
+                      - /url: /@tvbshealth20
+                    - generic [ref=f1e605]: •
+                    - link "5 天前" [ref=f1e607]:
+                      - /url: /post/UgkxxaWVapJoRsyUG9CwZIGkp7ApoPErVnPE
+                  - generic [ref=f1e608]:
+                    - generic [ref=f1e610]:
+                      - text: 暈眩跟骨鬆有關？！3動作一周有效改善！ 今晚8點準時鎖定
+                      - link "#挖健康直播" [ref=f1e611]:
+                        - /url: /hashtag/%E6%8C%96%E5%81%A5%E5%BA%B7%E7%9B%B4%E6%92%AD
+                      - text: 🎥
+                      - link "https://youtu.be/RvK1zzxtmNo" [ref=f1e612]:
+                        - /url: /watch?v=RvK1zzxtmNo
+                      - text: ‪‪‪‪‪‪
+                      - link "‪@tvbshealth20‬" [ref=f1e613]:
+                        - /url: /channel/UCAqzHNzLTC6Vm5UYE7xw_2A
+                    - generic [ref=f1e614]:
+                      - group
+                  - generic [ref=f1e618]:
+                    - generic [ref=f1e620]:
+                      - generic [ref=f1e621]:
+                        - button "對這則貼文按讚，目前已有 142 人按讚" [ref=f1e623]
+                        - tooltip "tooltip"
+                      - generic "142 人喜歡" [ref=f1e627]: "142"
+                      - generic [ref=f1e628]:
+                        - button "對這則貼文按倒讚" [ref=f1e630]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e635]:
+                        - button "分享" [ref=f1e637]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e642]:
+                        - link "2 則留言" [ref=f1e644]:
+                          - /url: /create_channel?upsell=comment
+                          - generic: "2"
+                        - tooltip "tooltip"
+                    - button "動作選單" [ref=f1e651]
+                - 'link "健康2.0 • 6 天前 2026購車風向球最新民調出爐！🚗🔥 64%民眾五年內想買車，貨物稅減徵真能助攻買氣？ 美製車若降價，68%民眾會心動；面對高油價，更有26%選擇「它」！👀 電動車真的退燒了嗎？充電、續航仍是購車關鍵⚡ 立即看完整民調🎁 還有好禮天天抽👉 https://tvbs.to/9fjl2q 活動時間只到8/23，立即把握抽獎GO ! #地球黃金線 #2026購車風向球 #蘇宗怡 對這則貼文按讚，目前已有 35 人按讚 tooltip 35 人喜歡 對這則貼文按倒讚 tooltip 分享 tooltip 留言 tooltip 動作選單" [ref=f1e654] [cursor=pointer]':
+                  - generic [ref=f1e655]:
+                    - link [ref=f1e657]:
+                      - /url: /@tvbshealth20
+                    - link "健康2.0" [ref=f1e660]:
+                      - /url: /@tvbshealth20
+                    - generic [ref=f1e661]: •
+                    - link "6 天前" [ref=f1e663]:
+                      - /url: /post/UgkxNMk2D5xv3MLhgzqniyCl-OHmdzf9UrYD
+                  - generic [ref=f1e664]:
+                    - generic [ref=f1e666]:
+                      - text: 2026購車風向球最新民調出爐！🚗🔥 64%民眾五年內想買車，貨物稅減徵真能助攻買氣？ 美製車若降價，68%民眾會心動；面對高油價，更有26%選擇「它」！👀 電動車真的退燒了嗎？充電、續航仍是購車關鍵⚡ 立即看完整民調🎁 還有好禮天天抽👉
+                      - link "https://tvbs.to/9fjl2q" [ref=f1e667]:
+                        - /url: https://www.youtube.com/redirect?event=backstage_event&redir_token=QUM4Zm9rVEtXZGRDaGJwcmFPLUVEMEdJNlB0UHxBR3JiS2FuSWVwbEVHLTJDcXI0N19raTZwMkJMS1luWjJHdDdxSFpseGdwaElqUmw0VFotcmN1UlFvUlZfbElwUW02cGNtSWxlZnhKZVF3bEppX2d3SGVOMkpOOWdQOXhHWERD&q=https%3A%2F%2Ftvbs.to%2F9fjl2q
+                      - text: 活動時間只到8/23，立即把握抽獎GO !
+                      - link "#地球黃金線" [ref=f1e668]:
+                        - /url: /hashtag/%E5%9C%B0%E7%90%83%E9%BB%83%E9%87%91%E7%B7%9A
+                      - link "#2026購車風向球" [ref=f1e669]:
+                        - /url: /hashtag/2026%E8%B3%BC%E8%BB%8A%E9%A2%A8%E5%90%91%E7%90%83
+                      - link "#蘇宗怡" [ref=f1e670]:
+                        - /url: /hashtag/%E8%98%87%E5%AE%97%E6%80%A1
+                    - generic [ref=f1e671]:
+                      - group
+                  - generic [ref=f1e675]:
+                    - generic [ref=f1e677]:
+                      - generic [ref=f1e678]:
+                        - button "對這則貼文按讚，目前已有 35 人按讚" [ref=f1e680]
+                        - tooltip "tooltip"
+                      - generic "35 人喜歡" [ref=f1e684]: "35"
+                      - generic [ref=f1e685]:
+                        - button "對這則貼文按倒讚" [ref=f1e687]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e692]:
+                        - button "分享" [ref=f1e694]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e699]:
+                        - link "留言" [ref=f1e701]:
+                          - /url: /create_channel?upsell=comment
+                        - tooltip "tooltip"
+                    - button "動作選單" [ref=f1e708]
+                - 'link "健康2.0 • 7 天前 TVBS新聞網換新裝啦！✨ 今天追星、明天找美食，還想看健康、汽車、生活大小事？👀 你關心的熱門話題，這裡通通幫你整理好！ 快來逛逛全新TVBS新聞網👉 https://tvbs.to/9fjkhf 新聞不只要快，還要一眼就想看！ #TVBS新聞網 對這則貼文按讚，目前已有 28 人按讚 tooltip 28 人喜歡 對這則貼文按倒讚 tooltip 分享 tooltip 留言 tooltip 動作選單" [ref=f1e711] [cursor=pointer]':
+                  - generic [ref=f1e712]:
+                    - link [ref=f1e714]:
+                      - /url: /@tvbshealth20
+                    - link "健康2.0" [ref=f1e717]:
+                      - /url: /@tvbshealth20
+                    - generic [ref=f1e718]: •
+                    - link "7 天前" [ref=f1e720]:
+                      - /url: /post/UgkxQ8jGdBPdP3bW_S0ykDSxQx7p_xGamA_I
+                  - generic [ref=f1e721]:
+                    - generic [ref=f1e723]:
+                      - text: TVBS新聞網換新裝啦！✨ 今天追星、明天找美食，還想看健康、汽車、生活大小事？👀 你關心的熱門話題，這裡通通幫你整理好！ 快來逛逛全新TVBS新聞網👉
+                      - link "https://tvbs.to/9fjkhf" [ref=f1e724]:
+                        - /url: https://www.youtube.com/redirect?event=backstage_event&redir_token=QUM4Zm9rVDYzTkZXOElXclJ3dnAtdnpXVU9qbXxBR3JiS2FrSU56TmlzZWhFZnFYb3ZpV3lFMU0yekVjbVFieDlMWUZBcFhQREY3eURseU9MMFI1alZ0R21SemZIZ1JjV0R6QkY0MExkUmhpbGZsaUhfZklqeFZxVkhhUUdUQkVv&q=https%3A%2F%2Ftvbs.to%2F9fjkhf
+                      - text: 新聞不只要快，還要一眼就想看！
+                      - link "#TVBS新聞網" [ref=f1e725]:
+                        - /url: /hashtag/tvbs%E6%96%B0%E8%81%9E%E7%B6%B2
+                    - generic [ref=f1e726]:
+                      - group
+                  - generic [ref=f1e730]:
+                    - generic [ref=f1e732]:
+                      - generic [ref=f1e733]:
+                        - button "對這則貼文按讚，目前已有 28 人按讚" [ref=f1e735]
+                        - tooltip "tooltip"
+                      - generic "28 人喜歡" [ref=f1e739]: "28"
+                      - generic [ref=f1e740]:
+                        - button "對這則貼文按倒讚" [ref=f1e742]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e747]:
+                        - button "分享" [ref=f1e749]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e754]:
+                        - link "留言" [ref=f1e756]:
+                          - /url: /create_channel?upsell=comment
+                        - tooltip "tooltip"
+                    - button "動作選單" [ref=f1e763]
+                - 'link "健康2.0 • 10 天前 不虧本退休計劃！ 今天中午12點 #如果云知道 🎥 https://youtu.be/FbaHiaBFBqg Feat.孫慶龍 理財專家 ‪‪‪‪‪‪‪‪‬‬ #鄭凱云 #孫慶龍 對這則貼文按讚，目前已有 114 人按讚 tooltip 114 人喜歡 對這則貼文按倒讚 tooltip 分享 tooltip 留言 tooltip 動作選單" [ref=f1e766] [cursor=pointer]':
+                  - generic [ref=f1e767]:
+                    - link [ref=f1e769]:
+                      - /url: /@tvbshealth20
+                    - link "健康2.0" [ref=f1e772]:
+                      - /url: /@tvbshealth20
+                    - generic [ref=f1e773]: •
+                    - link "10 天前" [ref=f1e775]:
+                      - /url: /post/Ugkx_wGWW8azF4g_HMBJybH7FLuSSXyv4_Dx
+                  - generic [ref=f1e776]:
+                    - generic [ref=f1e778]:
+                      - text: 不虧本退休計劃！ 今天中午12點
+                      - link "#如果云知道" [ref=f1e779]:
+                        - /url: /hashtag/%E5%A6%82%E6%9E%9C%E4%BA%91%E7%9F%A5%E9%81%93
+                      - text: 🎥
+                      - link "https://youtu.be/FbaHiaBFBqg" [ref=f1e780]:
+                        - /url: /watch?v=FbaHiaBFBqg
+                      - text: Feat.孫慶龍 理財專家 ‪‪‪‪‪‪‪‪‬‬
+                      - link "#鄭凱云" [ref=f1e781]:
+                        - /url: /hashtag/%E9%84%AD%E5%87%B1%E4%BA%91
+                      - link "#孫慶龍" [ref=f1e782]:
+                        - /url: /hashtag/%E5%AD%AB%E6%85%B6%E9%BE%8D
+                    - generic [ref=f1e783]:
+                      - group
+                  - generic [ref=f1e787]:
+                    - generic [ref=f1e789]:
+                      - generic [ref=f1e790]:
+                        - button "對這則貼文按讚，目前已有 114 人按讚" [ref=f1e792]
+                        - tooltip "tooltip"
+                      - generic "114 人喜歡" [ref=f1e796]: "114"
+                      - generic [ref=f1e797]:
+                        - button "對這則貼文按倒讚" [ref=f1e799]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e804]:
+                        - button "分享" [ref=f1e806]
+                        - tooltip "tooltip"
+                      - generic [ref=f1e811]:
+                        - link "留言" [ref=f1e813]:
+                          - /url: /create_channel?upsell=comment
+                        - tooltip "tooltip"
+                    - button "動作選單" [ref=f1e820]
+              - button "下一頁" [ref=f1e824] [cursor=pointer]
+        - generic [ref=f1e842] [cursor=pointer]:
+          - generic [ref=f1e843]:
+            - link "江欣樺營養師創立 10 年 - 創立10年 持續進步的營養師輕食 - 全球勇奪 60 項認證" [ref=f1e846]:
+              - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwjCnNrL9aeWAxUF4RYFHRFEJe8YACICCAEQBhoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qzNg8S8rPiWaD8HsMb7eo_1uTp2Bj5e1_7I0q2DJG7Ag70YJJ2rPgkaAnyhEALw_wcB&num=2&cid=CAAS0wHkaIXNHAMaRqtYOwbjS1O0gO6e-IIl7KxcrSRtXKgZEUp7tNAEtyJwkjub8ptssCTWSNeKC_xP2BfbX1jJK9k_Rdc3AV36Ypk4-Kv10bw3s7SbrBeDApmcWNE-ynTnSnkp3dYr5TcCiLEMfzNemrhMhYGn2ijfQz4N8Wqhhl1dDd1c5agnekBJ6SYq-ILBbM0rHJ-FKQxzyfvcF4Xgkqmb2dF5qEcFDy1a3Lcf2qKuY2P2ysLNRFcxgpXTZgjRQBbXmJc4EZc5O5ecbFxArbHeqQy9&cce=2&category=acrcp_v1_32&sig=AOD64_19WYmmpTGkLwUTsNZZqHvl9rrk1Q&adurl=https://www.dietician.com.tw/products/item/1031-fishoil.html%3Fgad_source%3D2%26gad_campaignid%3D23050269319&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+            - link "96%高濃度 法國超臨界魚油，業界唯一 Qualitysilver®專利保鮮技術，穩定性提高143% ，補充超有感。江欣樺創立11週年《法國超..." [ref=f1e849]:
+              - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwjCnNrL9aeWAxUF4RYFHRFEJe8YACICCAEQBhoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qzNg8S8rPiWaD8HsMb7eo_1uTp2Bj5e1_7I0q2DJG7Ag70YJJ2rPgkaAnyhEALw_wcB&num=2&cid=CAAS0wHkaIXNHAMaRqtYOwbjS1O0gO6e-IIl7KxcrSRtXKgZEUp7tNAEtyJwkjub8ptssCTWSNeKC_xP2BfbX1jJK9k_Rdc3AV36Ypk4-Kv10bw3s7SbrBeDApmcWNE-ynTnSnkp3dYr5TcCiLEMfzNemrhMhYGn2ijfQz4N8Wqhhl1dDd1c5agnekBJ6SYq-ILBbM0rHJ-FKQxzyfvcF4Xgkqmb2dF5qEcFDy1a3Lcf2qKuY2P2ysLNRFcxgpXTZgjRQBbXmJc4EZc5O5ecbFxArbHeqQy9&cce=2&category=acrcp_v1_32&sig=AOD64_19WYmmpTGkLwUTsNZZqHvl9rrk1Q&adurl=https://www.dietician.com.tw/products/item/1031-fishoil.html%3Fgad_source%3D2%26gad_campaignid%3D23050269319&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=7
+            - generic [ref=f1e850]:
+              - generic [ref=f1e852]:
+                - generic [ref=f1e853]: 贊助商廣告
+                - text: ·
+              - generic [ref=f1e854]: https://www.dietician.com.tw/江欣樺創立11年/全球77項認證
+          - button "我的廣告中心" [ref=f1e858]
+        - generic [ref=f1e863]:
+          - generic [ref=f1e865]:
+            - link [ref=f1e867] [cursor=pointer]:
+              - /url: /watch?v=ovKn2b-vgOw&pp=ygUG5YGl5bq3
+            - generic [ref=f1e869] [cursor=pointer]:
+              - generic [ref=f1e870]:
+                - heading [level=3] [ref=f1e872]:
+                  - link "吃\"保健食品\"保健康？藥師揭密驚人副作用！魚油、葉黃素、益生菌你吃對了嗎？｜胡廷岳藥師【#健康大錢線 | 錢怡君】2026.7.18 @love52health 28 分鐘" [ref=f1e873]:
+                    - /url: /watch?v=ovKn2b-vgOw&pp=ygUG5YGl5bq3
+                    - text: 吃"保健食品"保健康？藥師揭密驚人副作用！魚油、葉黃素、益生菌你吃對了嗎？｜胡廷岳藥師【#健康大錢線 | 錢怡君】2026.7.18 @love52health
+                - generic [ref=f1e876]:
+                  - generic [ref=f1e877]: 觀看次數：2.3萬次
+                  - generic [ref=f1e878]: •4 週前
+              - generic [ref=f1e879]:
+                - link "前往頻道：52健康💖我愛健康" [ref=f1e880]:
+                  - /url: /@love52health
+                - link "52健康💖我愛健康" [ref=f1e885]:
+                  - /url: /@love52health
+              - generic [ref=f1e886]:
+                - text: 主持：錢怡君🎙️來賓：減藥藥師胡廷岳https://www.facebook.com/nonohuofficial 內容重點每天吞好幾種保健食品， 真的代表 ...
+                - tooltip "tooltip"
+              - img "字幕" [ref=f1e891]
+              - generic [ref=f1e895]:
+                - generic [ref=f1e896]:
+                  - generic [ref=f1e899]: 18 個章節
+                  - button "本集精華 | 買保健食品是繳智商稅？ | 多吃益生菌腸道好健康？ | 菌種、菌數多真的好嗎？ | 吃益生菌助排便是迷思？ | 吃魚油通血路反害出血？ | 日常多吃魚更勝吞魚油！ | 服用高劑量需諮詢醫師！ | 顧目睭吃葉黃素就對了？ | 眼睛乾補水不夠？要補油 | 提神抗疲勞快來顆Ｂ群？ | 你補對了嗎？先查缺什麼 | 你該知道保健食品３真相 | 藥師親揭只吃「這３樣」 | 嘗百草！親身實測最有效 | 補充保健食品掌握２原則 | 回歸原始人生活養腸道！ | 抗發炎食物首選維他命Ｃ" [ref=f1e901]
+                - button "其他項目" [ref=f1e906]
+          - generic [ref=f1e911]:
+            - link [ref=f1e913] [cursor=pointer]:
+              - /url: /watch?v=b2hp47LU7TU&pp=ygUG5YGl5bq3
+            - generic [ref=f1e915] [cursor=pointer]:
+              - generic [ref=f1e916]:
+                - heading [level=3] [ref=f1e918]:
+                  - link "心跳快慢決定壽命長短 身體沒說的疾病地雷 健康2.0 20201020 (完整版) 48 分鐘" [ref=f1e919]:
+                    - /url: /watch?v=b2hp47LU7TU&pp=ygUG5YGl5bq3
+                    - text: 心跳快慢決定壽命長短 身體沒說的疾病地雷 健康2.0 20201020 (完整版)
+                - generic [ref=f1e922]:
+                  - generic [ref=f1e923]: 觀看次數：114萬次
+                  - generic [ref=f1e924]: •5 年前
+              - generic [ref=f1e925]:
+                - link "前往頻道：健康2.0" [ref=f1e926]:
+                  - /url: /@tvbshealth20
+                - generic [ref=f1e927]:
+                  - link "健康2.0" [ref=f1e931]:
+                    - /url: /@tvbshealth20
+                  - img "已驗證" [ref=f1e936]
+              - generic [ref=f1e938]:
+                - text: 心跳快慢會影響壽命？ 過快、過慢、不規則跳動竟隱藏#心血管疾病危機？ 今日來賓新光醫院心臟內科醫師魏丞駿家醫科醫師陳欣湄 ...
+                - tooltip "tooltip"
+              - generic [ref=f1e941]:
+                - generic [ref=f1e942]:
+                  - generic [ref=f1e945]: 23 個章節
+                  - button "簡介 | 心臟病26分鐘奪一命!心跳愈快血管愈危險 | 心跳變快現警訊!每分鐘超過70下死亡率增2倍 | 破解身體密碼!心跳快慢決定你的壽命長短? | 心跳每分鐘僅40幾下!醫生懷疑林勝傑命危? | 心跳愈快壽命愈短!平均快10下少10年壽命 | 心跳變快身體亮紅燈!癌症。糖尿病改變心跳速度? | 把脈知百病! 左右手脈象強弱分辨臟腑病徵 | 心跳愈快愈短命!老鼠1分鐘450下僅活1~2年 | 心跳愈慢活愈久!必學調息呼吸法讓心跳變健康 | 心跳太快,太慢,不規則! 心律不整年輕人猝死主因 | 體內蝴蝶效應風暴!心房顫動下一步恐中風? | 心跳變快,頭量超過半小時!深呼吸,洗脸自救 | 強度運動易心肌肥大!運動員激烈運動誘發猝死? | 嘴巴會說話!舌底暗沉冒榮航恐引發心血管疾病 | 養心肝,顧睡眠!健康2.0贈送觀眾養心茶飲! | 血液浮油!三酸甘油脂過高易引發致命併發症 | 血液抽出豬油!男子頭痛急診油脂卡住漢血機器 | 英化心臟,保護血管!常按四六道疏導氣血養心肝! | 讓血管變年輕!四招科學瑜伽調節心肺功能 | 足部發白,酸痛無力,傷口難!當心下肢動脈疾病 | 走10公尺都很困難!下肢動脈阻塞嚴重恐截肢 | 保養呼吸道,去除疼痛!按壓合谷穴加速心肺循環" [ref=f1e947]
+                - button "其他項目" [ref=f1e952]
+          - generic [ref=f1e957]:
+            - link [ref=f1e959] [cursor=pointer]:
+              - /url: /watch?v=E2OyszQCcMI&pp=ygUG5YGl5bq3
+            - generic [ref=f1e961] [cursor=pointer]:
+              - generic [ref=f1e962]:
+                - heading [level=3] [ref=f1e964]:
+                  - 'link "【特輯】3招不吃藥降膽固醇！吃魚油降膽固醇無效？ 營養學博士破除迷思！吃對燕麥酪梨 降血脂、抗發炎！｜健康2.0 #鄭凱云 #陳欣湄 #韋汝 47 分鐘" [ref=f1e965]':
+                    - /url: /watch?v=E2OyszQCcMI&pp=ygUG5YGl5bq3
+                    - text: "【特輯】3招不吃藥降膽固醇！吃魚油降膽固醇無效？ 營養學博士破除迷思！吃對燕麥酪梨 降血脂、抗發炎！｜健康2.0 #鄭凱云 #陳欣湄 #韋汝"
+                - generic [ref=f1e968]:
+                  - generic [ref=f1e969]: 觀看次數：13萬次
+                  - generic [ref=f1e970]: •11 個月前
+              - generic [ref=f1e971]:
+                - link "前往頻道：健康2.0" [ref=f1e972]:
+                  - /url: /@tvbshealth20
+                - generic [ref=f1e973]:
+                  - link "健康2.0" [ref=f1e977]:
+                    - /url: /@tvbshealth20
+                  - img "已驗證" [ref=f1e982]
+              - generic [ref=f1e984]:
+                - generic [ref=f1e985]: 降膽固醇#魚油#迷思#燕麥#酪梨#血脂#抗發炎#營養學#飲食#心血管《健康2.0》更多會員獨家影片 https://bit.ly/30Jyoc3 金健康上 ...
+                - tooltip "tooltip"
+          - generic [ref=f1e987]:
+            - link [ref=f1e989] [cursor=pointer]:
+              - /url: /watch?v=I-PMiyYZkrs&pp=ygUG5YGl5bq3
+            - generic [ref=f1e991] [cursor=pointer]:
+              - generic [ref=f1e992]:
+                - heading [level=3] [ref=f1e994]:
+                  - link "【你以為健康】其實天天慢性發炎@DrGrace 12 分鐘 39 秒" [ref=f1e995]:
+                    - /url: /watch?v=I-PMiyYZkrs&pp=ygUG5YGl5bq3
+                    - text: 【你以為健康】其實天天慢性發炎@DrGrace
+                - generic [ref=f1e998]:
+                  - generic [ref=f1e999]: 觀看次數：110萬次
+                  - generic [ref=f1e1000]: •2 個月前
+              - generic [ref=f1e1001]:
+                - link "前往頻道：Dr. Grace" [ref=f1e1002]:
+                  - /url: /@DrGrace
+                - generic [ref=f1e1003]:
+                  - link "Dr. Grace" [ref=f1e1007]:
+                    - /url: /@DrGrace
+                  - img "已驗證" [ref=f1e1012]
+              - generic [ref=f1e1014]:
+                - text: 訂閱頻道http://youtube.com/c/DrGrace?sub_confirmation=1 ✚ 到IG追蹤我https://www.instagram.com/itsdrgrace/ ✦ Dr. Grace 保養 ...
+                - tooltip "tooltip"
+              - generic [ref=f1e1016]:
+                - img "4K" [ref=f1e1019]
+                - img "字幕" [ref=f1e1023]

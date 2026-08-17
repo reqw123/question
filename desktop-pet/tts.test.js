@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { synthesizeSpeech, TtsError } from './tts.js';
+import { synthesizeSpeech } from './tts.js';
 
 describe('synthesizeSpeech', () => {
   it('returns audio bytes when the API call succeeds', async () => {

@@ -561,6 +561,7 @@ function openSettings() {
       cliFreePermissionMode: settingsStore.getCliFreePermissionMode(),
       showLive2DOnStartup: settingsStore.getShowLive2DOnStartup(),
       showParticleModelOnStartup: settingsStore.getShowParticleModelOnStartup(),
+      memoryFilePath: chatMemoryStore.memoryPath(),
     });
     return;
   }
@@ -588,6 +589,7 @@ function openSettings() {
       cliFreePermissionMode: settingsStore.getCliFreePermissionMode(),
       showLive2DOnStartup: settingsStore.getShowLive2DOnStartup(),
       showParticleModelOnStartup: settingsStore.getShowParticleModelOnStartup(),
+      memoryFilePath: chatMemoryStore.memoryPath(),
     });
     raiseAboveDesktopPets(settingsWin);
   });
@@ -1241,6 +1243,21 @@ async function speakText(charKey, text) {
 const DEFAULT_PERSONA = '你是桌面上的 Live2D 角色助理，回覆盡量簡短口語（一到三句話）。';
 const CHAT_URL_REGEX = /https?:\/\/[^\s]+/i;
 const chatInFlight = new Set(); // 同一個角色的訊息要排隊，避免並發請求把記憶寫入順序弄亂
+// 使用者打錯字/講錯話想收回時用（Esc，見 index.html 的 Esc 判斷邏輯）：charKey ->
+// 目前這則訊息的 AbortController，只在「等 OpenAI/Ollama 回覆」這段期間存在，
+// chat-send 的 finally 一定會清掉。這個 controller 只會餵給一般聊天（OpenAI/Ollama）
+// 的請求，CLI 模式的任務改走 ClaudeCliSession.abort()（見 chat-cancel handler）；
+// 但 chat-send 一開頭是無條件 set 這個 map（早於任何 CLI 模式判斷），所以 CLI
+// 任務執行期間這個 map 裡一樣有一筆（沒被用到的）entry，直到整個 handler 收尾
+// 才清掉——chat-cancel 判斷該用哪個機制時不能只看這個 map 有沒有 entry，得先看
+// cliModeActive（見那裡的說明，這裡曾經因為誤判「兩者互斥」而讓 CLI 模式的 Esc
+// 完全失效過）。
+const chatAbortControllers = new Map();
+// 同一種「思考中按 Esc 收回」，用在語音輸入的轉錄階段（見下面 voice-transcribe
+// handler）。這裡故意是單一變數不是 Map——跟 chat-send 不同，錄音/轉錄用的是
+// renderer 端單一共用的麥克風狀態（isRecording／voiceInputActive 都不分角色），
+// 同一時間本來就只可能有一段錄音在轉錄，不需要照 charKey 分開追蹤。
+let voiceTranscribeController = null;
 
 // ── CLI 模式（docs/specs/0006-desktop-pet-claude-cli-mode.md）──────────────
 // 觸發短語沿用既有的點擊錄音/打字流程，不新增背景常駐麥克風（見 ADR-0008：
@@ -1257,6 +1274,96 @@ const CLI_MODE_EXIT_PHRASES = new Set(['退出CLI模式', '離開CLI模式', 'ex
 const CLAUDE_CLI_CWD = path.join(__dirname, '..');
 const cliModeActive = new Set(); // 目前處於 CLI 模式的 charKey
 const claudeCliSessions = new Map(); // charKey -> ClaudeCliSession，退出 CLI 模式就整個丟掉
+
+// 桌寵主視窗 win 蓋滿整個螢幕、釘在 'screen-saver'（見上面 1703 行、raiseAboveDesktopPets
+// 的說明）——這是為了使用者點別的視窗時桌寵不會被蓋住，但副作用是 CLI 模式用瀏覽器工具
+// （docs/adr/0012）叫出來的 Chrome 分頁，永遠疊在桌寵這層透明視窗底下：實測過使用者在
+// 「互動模式」下完全看不到 Chrome 內容（畫面空白），要手動切成「穿透模式」再點一下畫面
+// 空白處，逼出一次重繪，Chrome 內容才會顯示——這樣使用者每次都要記得多做這個步驟。
+//
+// browserLoweredChars：目前「因為在跑瀏覽器工具而暫時降低置頂等級」的 charKey 集合。用
+// Set 而不是單一 boolean，是因為角色一、角色二可能同時各自在 CLI 模式跑瀏覽器工具——只要
+// 還有任何一個角色在跑，桌寵視窗就該維持降級狀態，讓 Chrome 顯示得出來；全部角色都結束了
+// 才恢復 'screen-saver'。Set.add()/delete() 本身是 idempotent 的，呼叫端不需要自己追蹤
+// 「這個角色是不是已經降過級了」，重複呼叫同一個 charKey 也不會有副作用。
+const browserLoweredChars = new Set();
+function setBrowserToolActive(charKey, active) {
+  if (active) browserLoweredChars.add(charKey);
+  else browserLoweredChars.delete(charKey);
+  if (!win) return; // 理論上呼叫這個函式時 win 一定已經存在，防禦性檢查避免初始化時序問題
+  win.setAlwaysOnTop(true, browserLoweredChars.size > 0 ? 'normal' : 'screen-saver');
+}
+
+// ── Esc 的全域快捷鍵版本（只在有東西可以取消時才註冊）───────────────────────
+// index.html 的 Esc 監聽（chatInput 的 keydown、document 的 keydown）只在桌寵視窗
+// 真的有 OS 鍵盤焦點時才收得到事件——但穿透模式下，滑鼠事件會 forward 給底下的視窗
+// （見 setClickThrough()），使用者點擊桌寵後面的其他視窗（例如 CLI 模式瀏覽器工具
+// 叫出來的 Chrome）時，那個視窗會拿到 OS 焦點，這之後按 Esc 只會傳給那個視窗，桌寵
+// 完全收不到，卡住的任務就沒辦法用 Esc 中斷了。
+//
+// 不能像 F9/F10 那樣永遠註冊：globalShortcut 是整個作業系統層級攔截，Esc 又是各種
+// 程式都在用的常見按鍵，如果桌寵一直開著就永遠搶走全系統的 Esc，會讓使用者在別的
+// 程式（例如正在瀏覽的 Chrome）也按不出 Esc 該有的效果，副作用太大。改成動態註冊：
+// 只有「目前真的有東西在跑、有必要被中斷」的時間窗才註冊，做完/沒有任何任務時立刻
+// 取消註冊，讓 Esc 還給其他程式。
+//
+// hasAnyAbortableOperation()：chatAbortControllers 非空就代表至少有一個角色的
+// chat-send handler 還在跑（不管是一般聊天還是 CLI 模式——後者的 entry 雖然沒有
+// 真的接到任何取消邏輯，見 chat-cancel handler 的說明，但存在與否仍然正確反映
+// 「這個 handler 呼叫還沒結束」，可以拿來當作「有東西在跑」的訊號；這也涵蓋
+// TTS 正在播放的階段，因為 chat-send handler 是 await speakAndShow() 播完才
+// return，chatAbortControllers 的 entry 要到那之後的 finally 才清掉）。
+// recordingActive：唯一main process 完全看不到、只能靠 renderer 主動回報的狀態——
+// 使用者剛點🎤、MediaRecorder 正在錄音，這時候還沒有任何送到 main process 的網路
+// 請求，chatAbortControllers／voiceTranscribeController 都是空的，但這正是使用者
+// 三個要打斷的情境之一（見 recording-active handler、index.html 的 notifyRecordingActive
+// 呼叫點）。
+let recordingActive = false;
+function hasAnyAbortableOperation() {
+  return chatAbortControllers.size > 0 || !!voiceTranscribeController || recordingActive;
+}
+
+// 全域 Escape 要做兩件事，缺一不可：
+// 1. 直接中止 main process 這邊看得到、管得到的東西（跟 chat-cancel IPC handler
+//    同一套判斷邏輯：CLI 模式優先查 claudeCliSessions，一般聊天才用
+//    chatAbortControllers）。這裡不透過 IPC、不透過「目前開著哪個聊天框」的
+//    renderer 狀態，一次處理所有角色——全域快捷鍵沒有「使用者按 Esc 時是針對哪個
+//    角色」這個上下文，穩妥起見全部一起中斷，多中斷到一個原本沒打算取消的任務，
+//    後果比「該中斷的中斷不了」小很多。
+// 2. 把「Escape 被按下」這件事轉送給 renderer——錄音（MediaRecorder）、TTS 播放
+//    中斷、麥克風按鈕外觀重置、聊天框關閉，這些狀態完全活在 renderer 裡，main
+//    process 沒有辦法直接操作，只能靠 index.html 收到這個事件後，用它自己既有的
+//    document keydown Escape 那套判斷順序處理（見 index.html 的
+//    window.petBridge.onGlobalEscape 註冊處）。兩邊都做，即使 renderer 那邊剛好
+//    也透過 cancelChatMessage/cancelTranscription 重複呼叫到同一個 abort()，
+//    AbortController.abort() 跟 ClaudeCliSession.abort() 本身都是重複呼叫安全的
+//    （後者對已經不是 busy 的 session 直接回傳 false，不會出錯）。
+function handleGlobalEscape() {
+  for (const charKey of chatAbortControllers.keys()) {
+    if (cliModeActive.has(charKey)) {
+      const cliSession = claudeCliSessions.get(charKey);
+      if (cliSession) cliSession.abort();
+    } else {
+      chatAbortControllers.get(charKey).abort();
+    }
+  }
+  if (voiceTranscribeController) voiceTranscribeController.abort();
+  if (win) win.webContents.send('global-escape');
+}
+
+let globalEscapeRegistered = false;
+function updateGlobalEscapeRegistration() {
+  const shouldBeRegistered = hasAnyAbortableOperation();
+  if (shouldBeRegistered && !globalEscapeRegistered) {
+    // register() 失敗（例如 Escape 已經被其他程式搶走）就靜靜放棄，退回「只有桌寵
+    // 視窗有焦點時，index.html 的本地監聽還是有效」這個原本就有的行為，不是關鍵路徑，
+    // 不用跳錯誤打斷使用者。
+    globalEscapeRegistered = globalShortcut.register('Escape', handleGlobalEscape);
+  } else if (!shouldBeRegistered && globalEscapeRegistered) {
+    globalShortcut.unregister('Escape');
+    globalEscapeRegistered = false;
+  }
+}
 
 // 把每一輪即時對話（使用者說了什麼、角色回了什麼）印到終端機（跟現有「未預期錯誤都印到
 // 終端機」同一個習慣，見桌面寵物說明.md）——CLI 模式的進入/離開/確認/任務結果，跟一般
@@ -1290,6 +1397,9 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
     return { ok: false, error: '上一則訊息還在處理中，請稍候' };
   }
   chatInFlight.add(charKey);
+  const controller = new AbortController();
+  chatAbortControllers.set(charKey, controller);
+  updateGlobalEscapeRegistration();
   try {
     if (!(await isL2dReady())) {
       return { ok: false, error: 'L2D 尚未就緒（角色可能還在載入中），請稍後再試' };
@@ -1313,7 +1423,18 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
     if (cliModeActive.has(charKey) && CLI_MODE_EXIT_PHRASES.has(normalizedMsg)) {
       cliModeActive.delete(charKey);
       claudeCliSessions.delete(charKey); // 半途的任務／待確認操作直接丟棄，不留著跨模式的殘留狀態
+      setBrowserToolActive(charKey, false); // 退出時如果剛好卡在瀏覽器工具的待確認操作，不留下降級狀態殘留
       const reply = '已退出 CLI 模式，回到一般聊天。';
+      logConversationTurn(charKey, 'CLI 模式', message, reply);
+      await speakAndShow(charKey, reply);
+      return { ok: true };
+    }
+    // 已經在 CLI 模式裡又講一次進入短語：不能落到下面的「已在 CLI 模式」邏輯，否則會被
+    // 誤當成待確認操作的同意/拒絕回覆（interpretYesNo 判不出來會回「聽不懂」），或者沒有
+    // 待確認操作時被當成任務 prompt 直接送給 Claude Code 執行。這裡當成無害的重申來處理，
+    // 不觸碰現有 session／確認狀態。
+    if (cliModeActive.has(charKey) && CLI_MODE_ENTER_PHRASES.has(normalizedMsg)) {
+      const reply = '已經在 CLI 模式了，不用再說一次，要離開請說「退出CLI模式」。';
       logConversationTurn(charKey, 'CLI 模式', message, reply);
       await speakAndShow(charKey, reply);
       return { ok: true };
@@ -1344,11 +1465,20 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
               logConversationTurn(charKey, 'CLI 模式（免確認自動執行）', '(無，自動執行中)', text);
               return speakAndShow(charKey, text, { spokenText });
             },
+            // 見上面 setBrowserToolActive() 的說明：瀏覽器工具一開始要跑（不管最後是問過
+            // 使用者還是免確認自動放行）就先把桌寵視窗降級，讓 Chrome 顯示得出來。
+            onToolUse: (toolName) => {
+              if (toolName.startsWith('mcp__playwright__')) setBrowserToolActive(charKey, true);
+            },
           });
           claudeCliSessions.set(charKey, session);
         }
         outcome = await session.start(message);
       }
+      // 任務真的結束了（不是還在等下一個確認）才恢復置頂等級——同一個任務裡可能連續
+      // 好幾個瀏覽器工具呼叫，每次都呼叫 setBrowserToolActive(charKey, true) 是安全的
+      // （Set 語意），但只有整個任務收尾（result／error／cancelled）才該恢復。
+      if (outcome.type !== 'confirm') setBrowserToolActive(charKey, false);
       logConversationTurn(charKey, 'CLI 模式', message, outcome.text);
       // outcome.spokenText 只有 confirm 類型（等待同意/拒絕的風險操作）才會有值——result／
       // error 是 Claude 自己生成的自然語言或我們自己組的錯誤訊息，本來就適合直接念出來，
@@ -1376,12 +1506,15 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
     if (urlMatch) {
       const messageWithoutUrl = message.replace(urlMatch[0], '').trim();
       try {
-        const pageText = await fetchPageText({ url: urlMatch[0] });
+        const pageText = await fetchPageText({ url: urlMatch[0], signal: controller.signal });
         const instruction = messageWithoutUrl
           ? '供回答參考'
           : '使用者只貼了網址、沒有附加問題，預設請摘要這個網頁的重點內容給使用者';
         context = `\n\n[使用者提到的網頁內容，${instruction}]\n${pageText}`;
       } catch (err) {
+        // 使用者按 Esc 取消（見 index.html 的 Esc 判斷邏輯）：整個 chat-send 到此為止，
+        // 不要當成「網址讀取失敗、照樣送去問 AI」繼續往下跑——那樣等於使用者取消不掉。
+        if (err.name === 'AbortError') return { ok: false, cancelled: true };
         context = `\n\n[使用者提到的網址讀取失敗，請告知使用者無法讀取這個網頁：${err.message}]`;
       }
     }
@@ -1395,15 +1528,32 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
         const result = await sendOllamaChatMessage({
           message: message + context, systemPrompt, history,
           model: providerSettings.ollamaModel, baseUrl: providerSettings.ollamaBaseUrl,
+          signal: controller.signal,
         });
         reply = result.reply;
       } else {
-        const result = await sendChatMessage({ message: message + context, systemPrompt, history, apiKey });
+        const result = await sendChatMessage({
+          message: message + context, systemPrompt, history, apiKey, signal: controller.signal,
+        });
         reply = result.reply;
       }
     } catch (err) {
+      // 使用者按 Esc 取消——沒有回覆可以存，直接結束，不寫進 chatMemoryStore、也不
+      // 呼叫 speakAndShow（沒有東西可以顯示/念出來）。跟上面網址讀取那段取消是同一種
+      // 判斷方式（err.name === 'AbortError'），呼叫端（index.html）看 cancelled 這個
+      // 欄位決定要不要顯示成錯誤——見那邊 sendTextMessage() 的說明。
+      if (err.name === 'AbortError') return { ok: false, cancelled: true };
       return { ok: false, error: `聊天失敗（${err.code || 'UNKNOWN_ERROR'}）：${err.message}` };
     }
+
+    // 使用者按 Esc 取消，但 OpenAI/Ollama 剛好在 abort() 送達前就已經回完整段回覆——
+    // fetch 本身沒有東西可以中止，AbortError 不會發生，會直接落到這裡而不是上面的
+    // catch。單靠「fetch 有沒有被真的中止」判斷取消，在回覆很快的短訊息上常常會因為
+    // 這個時間差而「按了 Esc 卻還是看到回覆」，體感上像是 Esc 沒作用。這裡用
+    // controller.signal.aborted 補一道判斷：只要 chat-cancel 呼叫過 abort()，
+    // 不管底層 fetch 有沒有來得及被中止，一律當成取消處理，不寫進記憶、不顯示、
+    // 不念出來——使用者的取消意圖優先於「回覆技術上已經拿到手」這件事。
+    if (controller.signal.aborted) return { ok: false, cancelled: true };
 
     // 記憶只存原始使用者訊息（不含抓來的網頁內容），避免記憶檔案被網頁全文塞爆。
     chatMemoryStore.appendTurn(charKey, message, reply);
@@ -1412,7 +1562,39 @@ ipcMain.handle('chat-send', async (_event, { charKey, message }) => {
     return { ok: true };
   } finally {
     chatInFlight.delete(charKey);
+    chatAbortControllers.delete(charKey);
+    updateGlobalEscapeRegistration();
   }
+});
+
+// 使用者打錯字/講錯話，趁「思考中」還沒收到回覆時按 Esc 收回——見 chatAbortControllers
+// 宣告處的說明、index.html 的 Esc 判斷邏輯。只是呼叫 controller.abort()，實際的
+// 「回傳取消結果、不寫進記憶、不念出來」邏輯都在 chat-send 的 catch 區塊處理，這裡
+// 不用重複判斷狀態。
+// CLI 模式的訊息也是走同一個 chat-send／chatRequestPending，index.html 那邊的 Esc
+// 判斷邏輯不分辨目前是不是 CLI 模式，一律呼叫這個 IPC。
+//
+// 這裡曾經先查 chatAbortControllers、找不到才退回 claudeCliSessions，註解寫著
+// 「兩者互斥（同一個 charKey 不會同時有 chatAbortControllers 的 entry 又在 CLI
+// 模式）」——這個假設是錯的：chatAbortControllers.set(charKey, controller) 在
+// chat-send 一開頭就無條件執行（早於任何 CLI 模式判斷），要到整個 handler 函式
+// 結束（含 CLI 分支跑完）的 finally 才 delete。也就是說 CLI 任務執行期間，這個
+// map 裡一樣有一筆 entry——但這個 controller 從來沒有被傳進 ClaudeCliSession
+// 或 canUseTool 的任何地方，呼叫 controller.abort() 對 CLI 任務完全是空操作。
+// 原本的寫法會先命中這個空操作、直接 return { ok: true }，實際上根本沒有取消
+// 到任何東西，等於 CLI 模式底下 Esc 從來沒有真的生效過——即使桌寵視窗當下確實
+// 有鍵盤焦點。改成先看 cliModeActive 判斷目前是不是 CLI 模式，是的話直接找
+// claudeCliSessions 處理，不會被這個一直存在、卻沒有實際作用的 controller 攔截。
+// 都找不到（例如訊息剛好在這個 IPC 送達前就已經處理完）就安靜什麼都不做，不當成
+// 錯誤。
+ipcMain.handle('chat-cancel', (_event, { charKey }) => {
+  if (cliModeActive.has(charKey)) {
+    const cliSession = claudeCliSessions.get(charKey);
+    return { ok: cliSession ? cliSession.abort() : false };
+  }
+  const controller = chatAbortControllers.get(charKey);
+  if (controller) { controller.abort(); return { ok: true }; }
+  return { ok: false };
 });
 
 // 語音輸入要在真的呼叫 getUserMedia／開始錄音之前，先知道有沒有設定 API key
@@ -1434,12 +1616,42 @@ ipcMain.handle('voice-transcribe', async (_event, { audioBase64, mimeType }) => 
   } catch {
     return { ok: false, error: '收到的錄音資料格式不對' };
   }
+  const controller = new AbortController();
+  voiceTranscribeController = controller;
+  updateGlobalEscapeRegistration();
   try {
-    const { text } = await transcribeAudio({ audioBuffer, mimeType, apiKey });
+    const { text } = await transcribeAudio({ audioBuffer, mimeType, apiKey, signal: controller.signal });
+    // 使用者按 Esc 取消，但 Whisper 剛好在 abort() 送達前就已經回完轉錄結果——跟
+    // chat-send 那邊同一個時間差問題（見那裡的說明），短音檔常常來得及在使用者按下
+    // Esc 前就轉錄完成。一律用 controller.signal.aborted 補判斷，取消意圖優先於
+    // 「轉錄技術上已經拿到手」這件事。
+    if (controller.signal.aborted) return { ok: false, cancelled: true };
     return { ok: true, text };
   } catch (err) {
+    // 使用者按 Esc 取消（見 index.html 的 Esc 判斷邏輯）——跟 chat-cancel 同一套判斷方式。
+    if (err.name === 'AbortError') return { ok: false, cancelled: true };
     return { ok: false, error: `語音轉錄失敗（${err.code || 'UNKNOWN_ERROR'}）：${err.message}` };
+  } finally {
+    if (voiceTranscribeController === controller) voiceTranscribeController = null;
+    updateGlobalEscapeRegistration();
   }
+});
+
+// 使用者打錯字/講錯話，趁「轉錄中」按 Esc 收回（跟 chat-cancel 同一種模式，見那裡的
+// 說明）。沒有進行中的轉錄就安靜什麼都不做，不當成錯誤。
+ipcMain.handle('voice-transcribe-cancel', () => {
+  const controller = voiceTranscribeController;
+  if (controller) controller.abort();
+  return { ok: !!controller };
+});
+
+// renderer 主動回報「現在有沒有在錄音」（見 preload.js notifyRecordingActive、
+// index.html 的 isRecording 兩個切換點）——main process 看不到 MediaRecorder，
+// 只能靠這個訊號決定全域 Escape 該不該保持註冊（見 hasAnyAbortableOperation）。
+// 用 ipcMain.on 不是 handle：這只是單向通知，不需要回傳值。
+ipcMain.on('recording-active', (_event, active) => {
+  recordingActive = !!active;
+  updateGlobalEscapeRegistration();
 });
 
 function buildSpeechTestSubmenu() {
@@ -1623,12 +1835,20 @@ function createWindow() {
   // 把 renderer 端「手動微調 debug 工具」（particle-effect.js 的
   // handleManualNudgeKey()）印的 [particle-debug] 開頭訊息轉印到這個終端機——
   // renderer 的 console.log 預設只會出現在 DevTools 的 Console 分頁，不會進到
-  // `npm start` 這個終端機視窗。只過濾 [particle-debug] 開頭的訊息，不是全部
-  // renderer console 訊息都轉印：particle-sampler.js／particle-effect.js 其他地方
-  // 的 log 已經很多，全部轉印會把終端機灌爆，而且那些原本就只是給 DevTools 除錯用，
-  // 沒有「一定要在終端機看到」的需求。
+  // `npm start` 這個終端機視窗。只過濾白名單前綴的訊息，不是全部 renderer console
+  // 訊息都轉印：particle-sampler.js／particle-effect.js 其他地方的 log 已經很多，
+  // 全部轉印會把終端機灌爆，而且那些原本就只是給 DevTools 除錯用，沒有「一定要在
+  // 終端機看到」的需求。「閒置閒聊音效音量」/「對話語音回覆音量」（Ctrl+Alt+[/]/-/=
+  // 調整時印的，見下面音量快捷鍵註冊處）也在白名單內——使用者要求按下這幾顆快捷鍵
+  // 時終端機也要看得到目前音量，即使按住連發會多印幾行，這裡優先滿足這個需求。
   win.webContents.on('console-message', (_event, _level, message) => {
-    if (message.startsWith('[particle-debug]')) console.log(message);
+    if (
+      message.startsWith('[particle-debug]') ||
+      message.startsWith('[desktop-pet] 閒置閒聊音效音量：') ||
+      message.startsWith('[desktop-pet] 對話語音回覆音量：')
+    ) {
+      console.log(message);
+    }
   });
 
   // 專案持續在開發，index.html／lib 底下的檔案隨時可能被改動，強制這個視窗永遠拿最新版，
@@ -1713,6 +1933,16 @@ function createWindow() {
   const okQ = globalShortcut.register('F10', () => app.quit());
   if (!okQ) console.warn('[desktop-pet] F10 全域快捷鍵註冊失敗，請改用系統匣圖示右鍵選單結束');
 
+  // Ctrl+Alt+C：跟 F10 做同一件事（結束桌寵），多一個安全前綴組合鍵當備援——F10 是
+  // 裸鍵，比較容易跟其他常駐軟體（截圖/錄影工具、瀏覽器擴充功能等）的全域快捷鍵衝突。
+  // 使用者要求這顆一定要在終端機印出提示，跟 F10 靜默結束不同，好讓「桌寵是被快捷鍵
+  // 結束的，不是當掉」這件事在終端機看得到，不用回頭猜。
+  const okQuit = globalShortcut.register('Control+Alt+C', () => {
+    console.log('[desktop-pet] 收到 Ctrl+Alt+C，結束桌寵。');
+    app.quit();
+  });
+  if (!okQuit) console.warn('[desktop-pet] Ctrl+Alt+C 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用 F10 或系統匣圖示右鍵選單結束');
+
   const okReset = globalShortcut.register('F8', resetPosition);
   if (!okReset) console.warn('[desktop-pet] F8 全域快捷鍵註冊失敗，請改用系統匣圖示右鍵選單還原');
 
@@ -1757,15 +1987,44 @@ function createWindow() {
   });
   if (!okTtsSound) console.warn('[desktop-pet] Ctrl+Alt+V 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用畫面左下角的音效按鈕切換');
 
+  // Ctrl+Alt+N：切換 3D 模型微調 debug 模式（N 對應「Nudge」，跟 particle-effect.js
+  // 的 MANUAL_NUDGE_KEYS／handleManualNudgeKey() 是同一組詞彙）。這組方向鍵/[ ]/
+  // PageUp/PageDown/Home/End/R/P 原本借用「互動模式」當開關，但互動模式同時也是能
+  // 打字聊天的狀態，方向鍵會被這裡搶走、聊天輸入框的游標移動反而失效——改成獨立、
+  // 預設關閉的開關，只有明確按過這顆快捷鍵才會生效，用完記得再按一次關掉，避免忘記
+  // 開著、之後打字時又被搶鍵。呼叫 particle-effect.js 掛在 window 上的
+  // toggleParticleNudgeMode()，開/關都會印 [particle-debug] 開頭的訊息（見上面
+  // console-message 白名單，會同時出現在 DevTools Console 跟這個終端機視窗）。
+  const okNudgeMode = globalShortcut.register('Control+Alt+N', () => {
+    win.webContents
+      .executeJavaScript('window.toggleParticleNudgeMode ? window.toggleParticleNudgeMode() : null')
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+N 切換 3D 模型微調模式失敗：', err));
+  });
+  if (!okNudgeMode) console.warn('[desktop-pet] Ctrl+Alt+N 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
+  // Ctrl+Alt+Z：等同直接點麥克風鈕，不用先點角色開輸入框再點🎤兩個步驟。原本用
+  // Ctrl+Alt+M（M 對應「Mic」），但上面 Ctrl+Alt+S 那段註解就記過 Windows 上很多
+  // 軟體的靜音/切換快捷鍵會搶 Ctrl+Alt+M，這裡也一樣踩到，改用 Z（跟其他既有快捷鍵
+  // 沒有衝突，鍵盤位置也好按）。因為是全域快捷鍵（OS 層級攔截），互動/穿透模式都
+  // 按得到——穿透模式下滑鼠點不到角色本體，這是唯一能直接開口說話的入口。呼叫
+  // index.html 掛在 window 上的 startVoiceChatShortcut()：聊天框沒開就先開給目前
+  // 有就緒的角色，再等同觸發一次🎤點擊（見該函式定義處說明，含「錄音中再按一次＝
+  // 提前停止」「開講前先打斷正在播放的角色語音，避免錄到自己回覆造成回授」這些跟
+  // 滑鼠操作一致的行為）。
+  const okVoiceChat = globalShortcut.register('Control+Alt+Z', () => {
+    win.webContents
+      .executeJavaScript('window.startVoiceChatShortcut ? window.startVoiceChatShortcut() : null')
+      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+Z 觸發語音輸入失敗：', err));
+  });
+  if (!okVoiceChat) console.warn('[desktop-pet] Ctrl+Alt+Z 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+
   // Ctrl+Alt+[／]：調「閒置閒聊音效」音量（跟上面 Ctrl+Alt+E 切的是同一顆按鈕）；
   // Ctrl+Alt+-／=：調「對話語音回覆」音量（跟 Ctrl+Alt+V 切的是同一顆）。方括號/
   // 減等號各自成對、位置相鄰好記，跟切靜音用的 E/V 字母刻意分開，避免同一顆鍵
   // 身兼「切靜音」跟「調音量」兩種語意。呼叫 index.html 掛在 window 上的
-  // adjustIdleChatVolume()/adjustTtsVolume()，每次 ±10%，並在 DevTools Console
-  // 印目前音量（見 index.html 該函式的說明），跟 particle-effect 那組鍵盤微調
-  // 工具「按了印數字」是同一種除錯風格；不特地轉印到終端機，避免按住連發時把
-  // 終端機洗版（跟 console-message 只轉印 [particle-debug] 開頭訊息同一個顧慮，
-  // 見上面 win.webContents.on('console-message', ...) 的說明）。
+  // adjustIdleChatVolume()/adjustTtsVolume()，每次 ±10%，並印目前音量（見 index.html
+  // 該函式的說明）——這則 log 在上面 win.webContents.on('console-message', ...) 的
+  // 白名單內，會同時出現在 DevTools Console 跟這個終端機視窗。
   const VOLUME_STEP = 0.1;
   const okChatVolDown = globalShortcut.register('Control+Alt+[', () => {
     win.webContents
@@ -1849,9 +2108,12 @@ app.whenReady().then(async () => {
     '[desktop-pet]   F8 還原預設位置/縮放',
     '[desktop-pet]   F9 切換互動/穿透模式',
     '[desktop-pet]   F10 結束',
+    '[desktop-pet]   Ctrl+Alt+C 結束（跟 F10 一樣，備援組合鍵，觸發時會印這行提示）',
     '[desktop-pet]   Ctrl+Alt+數字鍵盤 1-9 依序觸發情境',
     '[desktop-pet]   Ctrl+Alt+E 切換閒置閒聊音效',
     '[desktop-pet]   Ctrl+Alt+V 切換對話語音回覆',
+    '[desktop-pet]   Ctrl+Alt+N 切換 3D 模型微調 debug 模式（開啟後方向鍵/[ ]/PageUp/PageDown/Home/End/R/P 才會生效）',
+    '[desktop-pet]   Ctrl+Alt+Z 直接開始語音輸入（等同點🎤，穿透模式下也按得到）',
     '[desktop-pet]   Ctrl+Alt+[ / ] 調降/調升閒置閒聊音效音量',
     '[desktop-pet]   Ctrl+Alt+- / = 調降/調升對話語音回覆音量',
     '[desktop-pet]   Ctrl+Shift+I 開關 DevTools（校正 particle-effect 模型 scale/position 用，見 particle-effect/動畫參數說明.md）',

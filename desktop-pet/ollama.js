@@ -27,7 +27,7 @@ function normalizeOllamaUrl(raw) {
   try { return new URL(s).origin; } catch { return s; }
 }
 
-async function sendOllamaChatMessage({ message, systemPrompt, history = [], model, baseUrl, fetchImpl = fetch }) {
+async function sendOllamaChatMessage({ message, systemPrompt, history = [], model, baseUrl, fetchImpl = fetch, signal }) {
   if (!message || !message.trim()) {
     throw new OllamaError('message is empty', 'INVALID_INPUT');
   }
@@ -51,8 +51,13 @@ async function sendOllamaChatMessage({ message, systemPrompt, history = [], mode
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages, stream: false }),
+      signal,
     });
   } catch (err) {
+    // 使用者主動取消（AbortController.abort()）——不包裝成 OllamaError，讓呼叫端用
+    // err.name === 'AbortError' 自己判斷這是取消還是真的連不上，兩者要顯示的
+    // 訊息不一樣（取消不是錯誤，不用嚇使用者）。
+    if (err.name === 'AbortError') throw err;
     // fetch 本身丟出例外（連不上主機）——這是「本機根本沒開 Ollama」最常見的樣子，
     // 訊息裡帶上 origin 讓使用者一眼看出是連錯位址還是真的沒開。
     throw new OllamaError(`network error: 無法連線到 ${origin}（${err.message}）`, 'NETWORK_ERROR');

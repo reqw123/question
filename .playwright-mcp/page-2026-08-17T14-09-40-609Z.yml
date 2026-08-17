@@ -1,0 +1,876 @@
+- generic [ref=f1e2]:
+  - banner [ref=f1e4]:
+    - generic [ref=f1e6]:
+      - generic [ref=f1e7]:
+        - button "導覽" [active] [pressed] [ref=f1e9] [cursor=pointer]
+        - generic [ref=f1e11]:
+          - link "YouTube 首頁" [ref=f1e12] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f1e16]: TW
+        - button "略過導覽功能" [ref=f1e20] [cursor=pointer]
+      - generic [ref=f1e24]:
+        - search [ref=f1e25]:
+          - generic [ref=f1e27]:
+            - generic [ref=f1e28]:
+              - combobox "搜尋" [expanded] [ref=f1e30]: 人工智慧 入門
+              - button "清除搜尋查詢" [ref=f1e32] [cursor=pointer]
+            - button "Search" [ref=f1e37] [cursor=pointer]
+        - generic [ref=f1e40]:
+          - button "使用語音搜尋" [ref=f1e42] [cursor=pointer]
+          - tooltip "tooltip"
+      - generic [ref=f1e47]:
+        - button "建立" [ref=f1e50] [cursor=pointer]
+        - generic [ref=f1e54]:
+          - button "通知" [ref=f1e56] [cursor=pointer]
+          - tooltip "tooltip"
+        - button "帳戶選單" [ref=f1e62]:
+          - generic [ref=f1e63] [cursor=pointer]
+  - navigation [ref=f1e64]:
+    - generic [ref=f1e70]:
+      - generic [ref=f1e71]:
+        - generic [ref=f1e73]:
+          - link [ref=f1e75] [cursor=pointer]:
+            - /url: /
+            - link "首頁" [ref=f1e76]
+          - link [ref=f1e80] [cursor=pointer]:
+            - link "Shorts" [ref=f1e81]
+          - link [ref=f1e85] [cursor=pointer]:
+            - /url: /feed/subscriptions
+            - link "訂閱內容" [ref=f1e86]
+        - generic [ref=f1e91]:
+          - link [ref=f1e94] [cursor=pointer]:
+            - /url: /feed/you
+            - link "個人中心" [ref=f1e95]
+          - generic [ref=f1e98]:
+            - link [ref=f1e100] [cursor=pointer]:
+              - /url: /feed/history
+              - link "觀看記錄" [ref=f1e101]
+            - link [ref=f1e105] [cursor=pointer]:
+              - /url: /feed/playlists
+              - link "播放清單" [ref=f1e106]
+            - link [ref=f1e110] [cursor=pointer]:
+              - /url: /playlist?list=WL
+              - link "稍後觀看" [ref=f1e111]
+            - link [ref=f1e115] [cursor=pointer]:
+              - /url: /playlist?list=LL
+              - link "喜歡的影片" [ref=f1e116]
+            - link [ref=f1e120] [cursor=pointer]:
+              - /url: /create_channel?channel_creation_token=EhHSoN25AQsSCUZFbGlicmFyeRojEg4yDGF0b20tYWNjb3VudNKg3bkBDRILRkVteV92aWRlb3M%253D&upsell=channel
+              - link "你的影片" [ref=f1e121]
+            - link [ref=f1e126] [cursor=pointer]:
+              - /url: /feed/downloads
+              - link "已下載的內容" [ref=f1e127]
+        - generic [ref=f1e130]:
+          - heading "更多 YouTube 功能" [level=3] [ref=f1e131]
+          - generic [ref=f1e133]:
+            - link [ref=f1e135] [cursor=pointer]:
+              - /url: /premium
+              - link "YouTube Premium" [ref=f1e136]
+            - link [ref=f1e140] [cursor=pointer]:
+              - /url: https://music.youtube.com/
+              - link "YouTube Music" [ref=f1e141]
+            - link [ref=f1e145] [cursor=pointer]:
+              - /url: https://www.youtubekids.com/?source=youtube_web
+              - link "YouTube Kids" [ref=f1e146]
+        - generic [ref=f1e149]:
+          - heading "探索" [level=3] [ref=f1e150]
+          - generic [ref=f1e152]:
+            - link [ref=f1e154] [cursor=pointer]:
+              - /url: /channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ
+              - link "音樂" [ref=f1e155]
+            - link [ref=f1e159] [cursor=pointer]:
+              - /url: /feed/storefront?bp=ogUCKAU%3D
+              - link "電影" [ref=f1e160]
+            - link [ref=f1e164] [cursor=pointer]:
+              - /url: /channel/UC4R8DWoMoI7CAwX8_LjQHig
+              - link "直播" [ref=f1e165]
+            - button [ref=f1e169]:
+              - link [ref=f1e170] [cursor=pointer]:
+                - link "顯示更多" [ref=f1e171]
+        - link [ref=f1e177] [cursor=pointer]:
+          - /url: /reporthistory
+          - link "檢舉記錄" [ref=f1e178]
+      - generic [ref=f1e181]:
+        - generic [ref=f1e182]:
+          - link "簡介" [ref=f1e183] [cursor=pointer]:
+            - /url: https://www.youtube.com/about/
+          - link "媒體" [ref=f1e184] [cursor=pointer]:
+            - /url: https://www.youtube.com/about/press/
+          - link "著作權" [ref=f1e185] [cursor=pointer]:
+            - /url: https://www.youtube.com/about/copyright/
+          - link "與我們聯絡" [ref=f1e186] [cursor=pointer]:
+            - /url: /t/contact_us/
+          - link "創作者" [ref=f1e187] [cursor=pointer]:
+            - /url: https://www.youtube.com/creators/
+          - link "廣告" [ref=f1e188] [cursor=pointer]:
+            - /url: https://www.youtube.com/ads/
+          - link "開發人員" [ref=f1e189] [cursor=pointer]:
+            - /url: https://developers.google.com/youtube
+        - generic [ref=f1e190]:
+          - link "條款" [ref=f1e191] [cursor=pointer]:
+            - /url: /t/terms
+          - link "隱私權" [ref=f1e192] [cursor=pointer]:
+            - /url: /t/privacy
+          - link "政策與安全性" [ref=f1e193] [cursor=pointer]:
+            - /url: https://www.youtube.com/about/policies/
+          - link "YouTube 運作方式" [ref=f1e194] [cursor=pointer]:
+            - /url: https://www.youtube.com/howyoutubeworks?utm_campaign=ytgen&utm_source=ythp&utm_medium=LeftNav&utm_content=txt&u=https%3A%2F%2Fwww.youtube.com%2Fhowyoutubeworks%3Futm_source%3Dythp%26utm_medium%3DLeftNav%26utm_campaign%3Dytgen
+          - link "測試新功能" [ref=f1e195] [cursor=pointer]:
+            - /url: /new
+        - generic [ref=f1e196]: © 2026 Google LLC
+  - main [ref=f1e198]:
+    - generic [ref=f1e199]:
+      - generic [ref=f1e201]:
+        - tablist [ref=f1e206]:
+          - tab "全部" [selected] [ref=f1e210] [cursor=pointer]
+          - tab "Shorts" [ref=f1e219] [cursor=pointer]
+          - tab "未觀看" [ref=f1e228] [cursor=pointer]
+          - tab "已觀看" [ref=f1e237] [cursor=pointer]
+          - tab "影片" [ref=f1e246] [cursor=pointer]
+          - tab "最新上傳" [ref=f1e255] [cursor=pointer]
+          - tab "直播中" [ref=f1e264] [cursor=pointer]
+        - generic [ref=f1e271]:
+          - button "搜尋篩選器" [ref=f1e273] [cursor=pointer]:
+            - generic: 篩選器
+          - tooltip "tooltip"
+      - generic [ref=f1e280]:
+        - generic [ref=f1e282]:
+          - generic [ref=f1e291] [cursor=pointer]:
+            - link [ref=f1e292]:
+              - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CIEWyIRaDauGyF8TPrfcPvJW5kA653M3niAH9i86rgRazkB8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAHby9rSPagDBMgDCqoEswJP0Mr_wAXSsKxV5KbszRqBMm4fTKyVNszW9KO_22WUIPEWXbvsV3zlG_cIeoqmcfPtNlZ9Xsj0m_dzS3V_LdpH21VY0RTJ0TQueNkaUFje38uFZw4OsJbR5RCOJhWbfIr_gtbXI3qrrErJKAr8TmF5ZJBOs-vpcOia8YQd7tpssKrRZT1rHgFNF5qT9xoIUh2s6mWpjCyJNCpR-vHo3Dl7P8kS0sGiMpyD8fFDVGaBMvMdpGYefJsEX4m6Ij2f31PFEkbr7PHyM2YYdBsiwOUO7Api19m7qPyFq64TkMtr-l6iIYnd5_5hdeTAZtHTRQFIErqI8e6NkB5fSMTpiaTCcKJRvf3ir_rv6rNQxzg6Hd3j4mm-KH9UzVswdOXkAQR6r0e1UmzU4jwj8OQxAkjDJn9xiAWL6fWVWJIFCAgTeMCxlLYYoAahAYAH24OrshiIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0ZVUF9KRmx1T0owqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRYiLW7w-unlgNgAZoJEGh0dHBzOi8vc3Vuby5jb22xCTb_YeaDxBRByAkXyAmPAcgJwgHICZcCmAsBugtjCAMQBRgEIAcoATAcQAFIAFh9YABoAHABiAEAmAEBogEqCh8IACADKAPauAQVMhM6EQoPKDBIrfPD4dQOmBkBuCAB0AEBqAIFwAICqAEB2AEBgAIBiAIRugMJdml0cGV6YWFh0AsSogwsIAFIAWINCgthaS5zdW5vLmlvc2oSChBjb20uc3Vuby5hbmRyb2lkeAGIAQHSDAIQAdoMJQoKEMDf0bfJqpGcfBICAQMaDRiL6fWVWCDy_8WJ4QVAAUoCEB-aDQESqg0CVFfIDQHSDZkCaHR0cHM6Ly9zdW5vLmNvbT91dG1fc291cmNlPWdvb2dsZSZ1dG1fbWVkaXVtPWNwYyZ1dG1fY2FtcGFpZ249MjM2NjgyOTA2OTkmdXRtX3Rlcm09JnV0bV9jb250ZW50PTgyMDAyMjA2NzU5MiZ3cHNyYz1Hb29nbGUlMjBBZFdvcmRzJndwY2lkPTIzNjY4MjkwNjk5Jndwc2NpZD0xOTc4NTY5NTIzMDYmd3BjcmlkPTgyMDAyMjA2NzU5MiZ3cGt3aWQ9YXVkLTI1MDA0MzE5MzQ5NjQmd3Brd249Jndwa21hdGNoPSZ3cHNuZXRuPSZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjM2NjgyOTA2OTm4E____________wGwFAPAFYGAgEDQFQHYFQGYFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXXQMw8wqYIZ66FwYoADAAOAHQGAHwGAHCGQIIAQ&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qynOk0kN_2v-jFg2fR5EKnPvECuVoyAfPNe9T8SKl1eS0qqPD4YC78aAqHJEALw_wcB&num=1&cid=CAESvQHg9rKoj87XvLXjWlIIQfNT331ypOhqNy5XOgeSUp_zQHDxyjMYTclaeSUPApDasiEZdxqRhB7gNZT_Cl8bAXc4HRGMzl6pv805TNmPYwjMqTuFuF64e2m8SVTBqwhXX7D0uFVbKJbFJyjcQJkgNlHJIg8LElqLWVLxO_5iMjVWmGSwqvrM8XpHeJmJJ7XEBjWD8fwO28TF3JXUEotNtBKZGPNWf1eDdDzJAnW80uu8P2ehs5DjZDQmgmejVNk&ad_cpn=%5BCPN%5D&sig=AOD64_1dLMD_vdLtnEOYrdlfUiasqfCl0Q&ctype=110&video_id=FUP_JFluOJ0&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=21&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+              - button [ref=f1e297]
+            - generic [ref=f1e301]:
+              - generic [ref=f1e302]:
+                - generic [ref=f1e303]:
+                  - link "Suno—AI for Music Creators. Pro-Level Music Tools Here" [ref=f1e306]:
+                    - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CIEWyIRaDauGyF8TPrfcPvJW5kA653M3niAH9i86rgRazkB8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAHby9rSPagDBMgDCqoEswJP0Mr_wAXSsKxV5KbszRqBMm4fTKyVNszW9KO_22WUIPEWXbvsV3zlG_cIeoqmcfPtNlZ9Xsj0m_dzS3V_LdpH21VY0RTJ0TQueNkaUFje38uFZw4OsJbR5RCOJhWbfIr_gtbXI3qrrErJKAr8TmF5ZJBOs-vpcOia8YQd7tpssKrRZT1rHgFNF5qT9xoIUh2s6mWpjCyJNCpR-vHo3Dl7P8kS0sGiMpyD8fFDVGaBMvMdpGYefJsEX4m6Ij2f31PFEkbr7PHyM2YYdBsiwOUO7Api19m7qPyFq64TkMtr-l6iIYnd5_5hdeTAZtHTRQFIErqI8e6NkB5fSMTpiaTCcKJRvf3ir_rv6rNQxzg6Hd3j4mm-KH9UzVswdOXkAQR6r0e1UmzU4jwj8OQxAkjDJn9xiAWL6fWVWJIFCAgTeMCxlLYYoAahAYAH24OrshiIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0ZVUF9KRmx1T0owqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRYiLW7w-unlgNgAZoJEGh0dHBzOi8vc3Vuby5jb22xCTb_YeaDxBRByAkXyAmPAcgJwgHICZcCmAsBugtjCAMQBRgEIAcoATAcQAFIAFh9YABoAHABiAEAmAEBogEqCh8IACADKAPauAQVMhM6EQoPKDBIrfPD4dQOmBkBuCAB0AEBqAIFwAICqAEB2AEBgAIBiAIRugMJdml0cGV6YWFh0AsSogwsIAFIAWINCgthaS5zdW5vLmlvc2oSChBjb20uc3Vuby5hbmRyb2lkeAGIAQHSDAIQAdoMJQoKEMDf0bfJqpGcfBICAQMaDRiL6fWVWCDy_8WJ4QVAAUoCEB-aDQESqg0CVFfIDQHSDZkCaHR0cHM6Ly9zdW5vLmNvbT91dG1fc291cmNlPWdvb2dsZSZ1dG1fbWVkaXVtPWNwYyZ1dG1fY2FtcGFpZ249MjM2NjgyOTA2OTkmdXRtX3Rlcm09JnV0bV9jb250ZW50PTgyMDAyMjA2NzU5MiZ3cHNyYz1Hb29nbGUlMjBBZFdvcmRzJndwY2lkPTIzNjY4MjkwNjk5Jndwc2NpZD0xOTc4NTY5NTIzMDYmd3BjcmlkPTgyMDAyMjA2NzU5MiZ3cGt3aWQ9YXVkLTI1MDA0MzE5MzQ5NjQmd3Brd249Jndwa21hdGNoPSZ3cHNuZXRuPSZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjM2NjgyOTA2OTm4E____________wGwFAPAFYGAgEDQFQHYFQGYFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXXQMw8wqYIZ66FwYoADAAOAHQGAHwGAHCGQIIAQ&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qynOk0kN_2v-jFg2fR5EKnPvECuVoyAfPNe9T8SKl1eS0qqPD4YC78aAqHJEALw_wcB&num=1&cid=CAESvQHg9rKoj87XvLXjWlIIQfNT331ypOhqNy5XOgeSUp_zQHDxyjMYTclaeSUPApDasiEZdxqRhB7gNZT_Cl8bAXc4HRGMzl6pv805TNmPYwjMqTuFuF64e2m8SVTBqwhXX7D0uFVbKJbFJyjcQJkgNlHJIg8LElqLWVLxO_5iMjVWmGSwqvrM8XpHeJmJJ7XEBjWD8fwO28TF3JXUEotNtBKZGPNWf1eDdDzJAnW80uu8P2ehs5DjZDQmgmejVNk&ad_cpn=%5BCPN%5D&sig=AOD64_1dLMD_vdLtnEOYrdlfUiasqfCl0Q&ctype=110&video_id=FUP_JFluOJ0&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=0&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                  - link "Unlock vocal remover, stem export, and full song editing with Suno Pro. Subscribe now." [ref=f1e309]:
+                    - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CIEWyIRaDauGyF8TPrfcPvJW5kA653M3niAH9i86rgRazkB8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAHby9rSPagDBMgDCqoEswJP0Mr_wAXSsKxV5KbszRqBMm4fTKyVNszW9KO_22WUIPEWXbvsV3zlG_cIeoqmcfPtNlZ9Xsj0m_dzS3V_LdpH21VY0RTJ0TQueNkaUFje38uFZw4OsJbR5RCOJhWbfIr_gtbXI3qrrErJKAr8TmF5ZJBOs-vpcOia8YQd7tpssKrRZT1rHgFNF5qT9xoIUh2s6mWpjCyJNCpR-vHo3Dl7P8kS0sGiMpyD8fFDVGaBMvMdpGYefJsEX4m6Ij2f31PFEkbr7PHyM2YYdBsiwOUO7Api19m7qPyFq64TkMtr-l6iIYnd5_5hdeTAZtHTRQFIErqI8e6NkB5fSMTpiaTCcKJRvf3ir_rv6rNQxzg6Hd3j4mm-KH9UzVswdOXkAQR6r0e1UmzU4jwj8OQxAkjDJn9xiAWL6fWVWJIFCAgTeMCxlLYYoAahAYAH24OrshiIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0ZVUF9KRmx1T0owqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRYiLW7w-unlgNgAZoJEGh0dHBzOi8vc3Vuby5jb22xCTb_YeaDxBRByAkXyAmPAcgJwgHICZcCmAsBugtjCAMQBRgEIAcoATAcQAFIAFh9YABoAHABiAEAmAEBogEqCh8IACADKAPauAQVMhM6EQoPKDBIrfPD4dQOmBkBuCAB0AEBqAIFwAICqAEB2AEBgAIBiAIRugMJdml0cGV6YWFh0AsSogwsIAFIAWINCgthaS5zdW5vLmlvc2oSChBjb20uc3Vuby5hbmRyb2lkeAGIAQHSDAIQAdoMJQoKEMDf0bfJqpGcfBICAQMaDRiL6fWVWCDy_8WJ4QVAAUoCEB-aDQESqg0CVFfIDQHSDZkCaHR0cHM6Ly9zdW5vLmNvbT91dG1fc291cmNlPWdvb2dsZSZ1dG1fbWVkaXVtPWNwYyZ1dG1fY2FtcGFpZ249MjM2NjgyOTA2OTkmdXRtX3Rlcm09JnV0bV9jb250ZW50PTgyMDAyMjA2NzU5MiZ3cHNyYz1Hb29nbGUlMjBBZFdvcmRzJndwY2lkPTIzNjY4MjkwNjk5Jndwc2NpZD0xOTc4NTY5NTIzMDYmd3BjcmlkPTgyMDAyMjA2NzU5MiZ3cGt3aWQ9YXVkLTI1MDA0MzE5MzQ5NjQmd3Brd249Jndwa21hdGNoPSZ3cHNuZXRuPSZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjM2NjgyOTA2OTm4E____________wGwFAPAFYGAgEDQFQHYFQGYFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXXQMw8wqYIZ66FwYoADAAOAHQGAHwGAHCGQIIAQ&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qynOk0kN_2v-jFg2fR5EKnPvECuVoyAfPNe9T8SKl1eS0qqPD4YC78aAqHJEALw_wcB&num=1&cid=CAESvQHg9rKoj87XvLXjWlIIQfNT331ypOhqNy5XOgeSUp_zQHDxyjMYTclaeSUPApDasiEZdxqRhB7gNZT_Cl8bAXc4HRGMzl6pv805TNmPYwjMqTuFuF64e2m8SVTBqwhXX7D0uFVbKJbFJyjcQJkgNlHJIg8LElqLWVLxO_5iMjVWmGSwqvrM8XpHeJmJJ7XEBjWD8fwO28TF3JXUEotNtBKZGPNWf1eDdDzJAnW80uu8P2ehs5DjZDQmgmejVNk&ad_cpn=%5BCPN%5D&sig=AOD64_1dLMD_vdLtnEOYrdlfUiasqfCl0Q&ctype=110&video_id=FUP_JFluOJ0&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=7&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+                  - generic [ref=f1e310]:
+                    - button "Suno Music" [ref=f1e314]
+                    - generic [ref=f1e318]:
+                      - generic [ref=f1e319]: 贊助商廣告
+                      - text: ·
+                    - generic [ref=f1e320]: Suno
+                - button "我的廣告中心" [ref=f1e324]
+              - generic [ref=f1e330]:
+                - link "觀看" [ref=f1e333]:
+                  - /url: /watch?v=FUP_JFluOJ0
+                - link "訂閱" [ref=f1e339]:
+                  - /url: https://www.googleadservices.com/pagead/aclk?sa=L&ai=CIEWyIRaDauGyF8TPrfcPvJW5kA653M3niAH9i86rgRazkB8QASAAYJ-5h47UKIIBF2NhLXB1Yi02MjE5ODExNzQ3MDQ5MzcxoAHby9rSPagDBMgDCqoEswJP0Mr_wAXSsKxV5KbszRqBMm4fTKyVNszW9KO_22WUIPEWXbvsV3zlG_cIeoqmcfPtNlZ9Xsj0m_dzS3V_LdpH21VY0RTJ0TQueNkaUFje38uFZw4OsJbR5RCOJhWbfIr_gtbXI3qrrErJKAr8TmF5ZJBOs-vpcOia8YQd7tpssKrRZT1rHgFNF5qT9xoIUh2s6mWpjCyJNCpR-vHo3Dl7P8kS0sGiMpyD8fFDVGaBMvMdpGYefJsEX4m6Ij2f31PFEkbr7PHyM2YYdBsiwOUO7Api19m7qPyFq64TkMtr-l6iIYnd5_5hdeTAZtHTRQFIErqI8e6NkB5fSMTpiaTCcKJRvf3ir_rv6rNQxzg6Hd3j4mm-KH9UzVswdOXkAQR6r0e1UmzU4jwj8OQxAkjDJn9xiAWL6fWVWJIFCAgTeMCxlLYYoAahAYAH24OrshiIBwGQBwKoB_LAsQKoB7jEsQKoB-G2sQKoB6XPsQKoB-edsQKoB-idsQKoB--1sQKoB_C1sQKoB_nTsQKoB8nasQKoB6ngsQKoB4QIqAem1LECqAeo0huoB7YHqAex3BuoB7CbsQKoB66xsQKoB_2ysQKoB8jPsQKoB8nPsQKoB83HsQKoB_HRsQKoB_zVsQKoB_vVsQKoB4zWsQKoB4vWsQKoB5risQKoB5visQKoB53XsQKoB53UsQKoB4HGG6gH_K-xAqgH1c4bqAe-2bECqAerxRuoB5zcG6gHt6GxAqgH1amxAqgH59qxAqgH3rWxAqgH6rGxAqgHvrexAqgHmbWxAqgHhcGxAqgH66WxAqgHyqmxApIIC0ZVUF9KRmx1T0owqAgB0ggxCAAQAhhaMgEAOhSP0ICAgIAEgMCAgICAgIACqoCAEEjZoNI1UBRYiLW7w-unlgNgAZoJEGh0dHBzOi8vc3Vuby5jb22xCTb_YeaDxBRByAkXyAmPAcgJwgHICZcCmAsBugtjCAMQBRgEIAcoATAcQAFIAFh9YABoAHABiAEAmAEBogEqCh8IACADKAPauAQVMhM6EQoPKDBIrfPD4dQOmBkBuCAB0AEBqAIFwAICqAEB2AEBgAIBiAIRugMJdml0cGV6YWFh0AsSogwsIAFIAWINCgthaS5zdW5vLmlvc2oSChBjb20uc3Vuby5hbmRyb2lkeAGIAQHSDAIQAdoMJQoKEMDf0bfJqpGcfBICAQMaDRiL6fWVWCDy_8WJ4QVAAUoCEB-aDQESqg0CVFfIDQHSDZkCaHR0cHM6Ly9zdW5vLmNvbT91dG1fc291cmNlPWdvb2dsZSZ1dG1fbWVkaXVtPWNwYyZ1dG1fY2FtcGFpZ249MjM2NjgyOTA2OTkmdXRtX3Rlcm09JnV0bV9jb250ZW50PTgyMDAyMjA2NzU5MiZ3cHNyYz1Hb29nbGUlMjBBZFdvcmRzJndwY2lkPTIzNjY4MjkwNjk5Jndwc2NpZD0xOTc4NTY5NTIzMDYmd3BjcmlkPTgyMDAyMjA2NzU5MiZ3cGt3aWQ9YXVkLTI1MDA0MzE5MzQ5NjQmd3Brd249Jndwa21hdGNoPSZ3cHNuZXRuPSZnYWRfc291cmNlPTImZ2FkX2NhbXBhaWduaWQ9MjM2NjgyOTA2OTm4E____________wGwFAPAFYGAgEDQFQHYFQGYFgHiFgIIAYAXAYoXGAgDGAEgASgBMAE4AUABSAFQAVgBYAJoAaAXAakXXQMw8wqYIZ66FwYoADAAOAHQGAHwGAHCGQIIAQ&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qynOk0kN_2v-jFg2fR5EKnPvECuVoyAfPNe9T8SKl1eS0qqPD4YC78aAqHJEALw_wcB&num=1&cid=CAESvQHg9rKoj87XvLXjWlIIQfNT331ypOhqNy5XOgeSUp_zQHDxyjMYTclaeSUPApDasiEZdxqRhB7gNZT_Cl8bAXc4HRGMzl6pv805TNmPYwjMqTuFuF64e2m8SVTBqwhXX7D0uFVbKJbFJyjcQJkgNlHJIg8LElqLWVLxO_5iMjVWmGSwqvrM8XpHeJmJJ7XEBjWD8fwO28TF3JXUEotNtBKZGPNWf1eDdDzJAnW80uu8P2ehs5DjZDQmgmejVNk&ad_cpn=%5BCPN%5D&sig=AOD64_1dLMD_vdLtnEOYrdlfUiasqfCl0Q&ctype=110&video_id=FUP_JFluOJ0&label=video_click_to_advertiser_site&ms=%5BCLICK_MS%5D&nb=8&nx=%5BNX%5D&ny=%5BNY%5D&dim=%5BDIM%5D
+          - generic [ref=f1e344] [cursor=pointer]:
+            - link [ref=f1e345]:
+              - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+              - generic [ref=f1e346]: 10 堂課
+            - generic [ref=f1e359]:
+              - generic [ref=f1e360]:
+                - heading "YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [level=3] [ref=f1e361]:
+                  - link "YouTube Course官方課程：【Gemini X AI通識素養認證課程】" [ref=f1e362]:
+                    - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+                - generic [ref=f1e364]:
+                  - group [ref=f1e365]:
+                    - link "泛科學院" [ref=f1e368]:
+                      - /url: /@panscischool
+                    - generic [ref=f1e369]: •
+                    - link "課程" [ref=f1e372]:
+                      - /url: /@panscischool
+                  - group [ref=f1e373]
+                  - group [ref=f1e374]:
+                    - link "【Gemini X AI通識素養認證課程】從基礎素養到靈活運用，9 堂課無痛掌握 AI 時代新篇章！｜【泛科學院】 · 2:14" [ref=f1e376]:
+                      - /url: /watch?v=ILEXHnt31nU&list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu&pp=0gcJCeYE0aJEHMZM
+                  - group [ref=f1e377]
+                  - group [ref=f1e378]:
+                    - link "觀看完整課程" [ref=f1e381]:
+                      - /url: /playlist?list=PLp-hFjVIn_eXjeLVJwlDYAwNCYtO3Nyyu
+              - button "其他動作" [ref=f1e384]
+          - generic [ref=f1e389] [cursor=pointer]:
+            - link [ref=f1e390]:
+              - /url: /watch?v=JKLdpfdhRnc&list=PLPh89N96p445XqgyBL0BrcZhxQ2JncYwq
+              - generic [ref=f1e391]: 7 部影片
+            - generic [ref=f1e404]:
+              - generic [ref=f1e405]:
+                - heading "YouTube 學習課程｜AI 知識和語言" [level=3] [ref=f1e406]:
+                  - link "YouTube 學習課程｜AI 知識和語言" [ref=f1e407]:
+                    - /url: /watch?v=JKLdpfdhRnc&list=PLPh89N96p445XqgyBL0BrcZhxQ2JncYwq
+                - generic [ref=f1e409]:
+                  - group [ref=f1e410]:
+                    - link "Google Taiwan" [ref=f1e413]:
+                      - /url: /@GoogleTaiwan
+                    - generic [ref=f1e414]: •
+                    - link "播放清單" [ref=f1e417]:
+                      - /url: /@GoogleTaiwan
+                  - group [ref=f1e418]
+                  - group [ref=f1e419]:
+                    - link "1-1. AI 是什麼？｜你的第一堂 AI 課 · 6:44" [ref=f1e421]:
+                      - /url: /watch?v=JKLdpfdhRnc&list=PLPh89N96p445XqgyBL0BrcZhxQ2JncYwq
+                  - group [ref=f1e422]:
+                    - link "2-1. AI 發展趨勢｜測 AI，好心安 · 5:27" [ref=f1e424]:
+                      - /url: /watch?v=ANxcofy0ZzI&list=PLPh89N96p445XqgyBL0BrcZhxQ2JncYwq
+                  - group [ref=f1e425]
+                  - group [ref=f1e426]:
+                    - link "查看完整播放清單" [ref=f1e429]:
+                      - /url: /playlist?list=PLPh89N96p445XqgyBL0BrcZhxQ2JncYwq
+              - button "其他動作" [ref=f1e432]
+        - generic [ref=f1e442]:
+          - generic [ref=f1e443]: 程式小白從零開始 前進科技業
+          - generic [ref=f1e450]:
+            - generic [ref=f1e451] [cursor=pointer]:
+              - generic [ref=f1e452]:
+                - 'link "3-6個月 學AI+程式開發技術 - 你的收入，取決於你的職涯選擇，加入AI工程師就業培訓，一次掌握Python多元應用，加值履歷趁現在。為自己爭取AI產業入場券，一次習得Python網路爬蟲、資料探勘、機器學習，結訓保證面試，免費體驗。品保履約機制 學習掛保障。政府職訓補助就業培訓。獲政府就業服務A級評鑑。產學媒合打造專屬求職計畫。全國勞工就業職訓進修補助。原廠認證授權教學中心。雲端＋實體課程，雙效學習。專業養成結訓直接保送面試。全國產業徵才就業培訓。資訊/設計類電腦技能培訓。課程: 政府補助就業訓練, 青年職訓補助。" [ref=f1e455]':
+                  - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwiYj-TD66eWAxVc7BYFHQDjO-oYACICCAEQCRoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwvTjaZNBPNhoOnL04mDi6WIksm_13EBfWm0WBMjdui4fTrEIhKdz4aAoV_EALw_wcB&num=1&cid=CAAS0wHkaPqPyjQufssWajLDvpPOd_g4UyuxAdDzz47mrjlHCZIzfcGwjvPLrv56zMXGvDs95zjbOMb64kKcXQViRv3vHBptjnYXrCg1gBs2rdco5J1xa3bI_kNmuIUWIVU0c0bYL-nQRkyym2HVwYOXT2-GNxwkERC0cbj8E4Nu7_UQwCfa9y9SL9ypDjhy_0VctvEp418a9O4f5wR5ZL7jM2w1dyiM_mWuuqId3UMdTCGdCO7K_X0Qh-ExJVK5OJfceUArZO_dJxH2gVHEVyLBVS3qjOJi&cce=2&category=acrcp_v1_37&sig=AOD64_1Xr96XFQZBGwL6WDxlYl46oCrqGA&adurl=https://ad.doubleclick.net/searchads/link/click%3Flid%3D58700008211325378%26ds_a_cid%3D39142452%26ds_a_caid%3D23416898556%26ds_a_agid%3D%26ds_a_fiid%3D%26ds_a_lid%3D%26ds_a_extid%3D%26%26ds_e_adid%3D%26ds_e_matchtype%3D%26ds_e_device%3Dc%26ds_e_network%3Dx%26%26ds_url_v%3D2%26ds_dest_url%3Dhttps://www.lccnet.com.tw/commercial/program/05/artificial-intelligence-training_gad.asp%3Fmed%3Dag003%26mpo%3D43894%26gclsrc%3Daw.ds%26gad_source%3D2%26gad_campaignid%3D23416904574&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                - generic [ref=f1e456]:
+                  - generic [ref=f1e458]:
+                    - generic [ref=f1e459]: 贊助商廣告
+                    - text: ·
+                  - generic [ref=f1e460]: https://www.lccnet.com.tw/聯成電腦/培養ai硬實力
+              - button "我的廣告中心" [ref=f1e464]
+            - generic [ref=f1e468]:
+              - link "全國勞工就業培訓 招生中" [ref=f1e469]
+              - link "AI入門課怎麼學?新手也可以" [ref=f1e471]
+              - link "政府補助AI課程，你符合嗎?" [ref=f1e473]
+              - link "產業人才培訓計劃 立即體驗" [ref=f1e475]
+        - generic [ref=f1e478]:
+          - generic [ref=f1e480] [cursor=pointer]:
+            - link [ref=f1e481]:
+              - /url: /watch?v=sldjBAhufKg&list=PLXiXcDkQM7Ptwu9eWWTOfAr6yCsn95uHc
+              - generic [ref=f1e482]: 37 部影片
+            - generic [ref=f1e495]:
+              - generic [ref=f1e496]:
+                - heading "【全568集】清华大佬终于把AI大模型教程做成动画片了，教学通俗易懂，2025最新版，学完即可就业！拿走不谢，别再走弯路了，学不会我退出IT界" [level=3] [ref=f1e497]:
+                  - link "【全568集】清华大佬终于把AI大模型教程做成动画片了，教学通俗易懂，2025最新版，学完即可就业！拿走不谢，别再走弯路了，学不会我退出IT界" [ref=f1e498]:
+                    - /url: /watch?v=sldjBAhufKg&list=PLXiXcDkQM7Ptwu9eWWTOfAr6yCsn95uHc
+                - generic [ref=f1e500]:
+                  - group [ref=f1e501]:
+                    - link "大模型" [ref=f1e504]:
+                      - /url: /@%E5%A4%A7%E6%A8%A1%E5%9E%8B-%E6%95%99%E7%A8%8B
+                    - generic [ref=f1e505]: •
+                    - link "播放清單" [ref=f1e508]:
+                      - /url: /@%E5%A4%A7%E6%A8%A1%E5%9E%8B-%E6%95%99%E7%A8%8B
+                  - group [ref=f1e509]
+                  - group [ref=f1e510]:
+                    - link "【入门篇】从函数到神经网络 · 9:16" [ref=f1e512]:
+                      - /url: /watch?v=sldjBAhufKg&list=PLXiXcDkQM7Ptwu9eWWTOfAr6yCsn95uHc
+                  - group [ref=f1e513]:
+                    - link "【入门篇】计算神经网络的参数 · 10:05" [ref=f1e515]:
+                      - /url: /watch?v=iCrnlJUXFfM&list=PLXiXcDkQM7Ptwu9eWWTOfAr6yCsn95uHc&pp=0gcJCeYE0aJEHMZM
+                  - group [ref=f1e516]
+                  - group [ref=f1e517]:
+                    - link "查看完整播放清單" [ref=f1e520]:
+                      - /url: /playlist?list=PLXiXcDkQM7Ptwu9eWWTOfAr6yCsn95uHc
+              - button "其他動作" [ref=f1e523]
+          - generic [ref=f1e528] [cursor=pointer]:
+            - link [ref=f1e529]:
+              - /url: /watch?v=b0egn1l6KGc&list=PLKAoRrOoyw84DJJxgERAKTH5xQtAEZ7uj
+              - generic [ref=f1e530]: 14 部影片
+            - generic [ref=f1e543]:
+              - generic [ref=f1e544]:
+                - heading "3小时超快速入门AI Agent，保姆级AIAgent智能应用从0到1定制开发教程，2025最新版！全程通俗易懂，少走99%弯路！AI大模型|Agent|智能体" [level=3] [ref=f1e545]:
+                  - link "3小时超快速入门AI Agent，保姆级AIAgent智能应用从0到1定制开发教程，2025最新版！全程通俗易懂，少走99%弯路！AI大模型|Agent|智能体" [ref=f1e546]:
+                    - /url: /watch?v=b0egn1l6KGc&list=PLKAoRrOoyw84DJJxgERAKTH5xQtAEZ7uj
+                - generic [ref=f1e548]:
+                  - group [ref=f1e549]:
+                    - link "大模型唐文" [ref=f1e552]:
+                      - /url: /@%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%94%90%E6%96%87
+                    - generic [ref=f1e553]: •
+                    - link "播放清單" [ref=f1e556]:
+                      - /url: /@%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%94%90%E6%96%87
+                  - group [ref=f1e557]
+                  - group [ref=f1e558]:
+                    - link "导学：什么是AI Agent，如何更好地学习AI Agent？ · 13:49" [ref=f1e560]:
+                      - /url: /watch?v=b0egn1l6KGc&list=PLKAoRrOoyw84DJJxgERAKTH5xQtAEZ7uj
+                  - group [ref=f1e561]:
+                    - link "2-2 主流智能体产品介绍和效果对比（DeepResearch、Manus、GLM沉思、通义千问） · 10:37" [ref=f1e563]:
+                      - /url: /watch?v=CgK9qop6s2g&list=PLKAoRrOoyw84DJJxgERAKTH5xQtAEZ7uj
+                  - group [ref=f1e564]
+                  - group [ref=f1e565]:
+                    - link "查看完整播放清單" [ref=f1e568]:
+                      - /url: /playlist?list=PLKAoRrOoyw84DJJxgERAKTH5xQtAEZ7uj
+              - button "其他動作" [ref=f1e571]
+        - generic [ref=f1e581]:
+          - generic [ref=f1e582]: 【OpenAI】1小時初學者教學
+          - generic [ref=f1e589]:
+            - generic [ref=f1e590] [cursor=pointer]:
+              - generic [ref=f1e591]:
+                - link "【機器學習】3小時初學者教學 - 理論結合實作，全面建立機器學習的知識、架構，並且利用python完成模型建構、訓練。 使用OpenAI API製作AI應用，利用ChatGPT..." [ref=f1e594]:
+                  - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwiYj-TD66eWAxVc7BYFHQDjO-oYACICCAEQABoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qzB8p3nXro7V9hL8UvGgo_Zs4CjtG6_FyUNRlIEqacebTQFzpy3Mo8aAh4ZEALw_wcB&num=2&cid=CAAS0wHkaPqPyjQufssWajLDvpPOd_g4UyuxAdDzz47mrjlHCZIzfcGwjvPLrv56zMXGvDs95zjbOMb64kKcXQViRv3vHBptjnYXrCg1gBs2rdco5J1xa3bI_kNmuIUWIVU0c0bYL-nQRkyym2HVwYOXT2-GNxwkERC0cbj8E4Nu7_UQwCfa9y9SL9ypDjhy_0VctvEp418a9O4f5wR5ZL7jM2w1dyiM_mWuuqId3UMdTCGdCO7K_X0Qh-ExJVK5OJfceUArZO_dJxH2gVHEVyLBVS3qjOJi&cce=2&category=acrcp_v1_32&sig=AOD64_2PdU9ycZm_HmGjpE17_qkzyKFq-A&adurl=https://grandmacan.com/courses/WQgj9SntAQ5Vwrk7QpSB%3Fgad_source%3D2%26gad_campaignid%3D23675873895&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                - generic [ref=f1e595]:
+                  - generic [ref=f1e597]:
+                    - generic [ref=f1e598]: 贊助商廣告
+                    - text: ·
+                  - generic [ref=f1e599]: https://www.grandmacan.com/免費python課程/免費ai課程
+              - button "我的廣告中心" [ref=f1e603]
+            - generic [ref=f1e607]:
+              - link "OpenAI—1小時初學者教學" [ref=f1e608]
+              - link "python、AI組合包" [ref=f1e610]
+              - link "全面了解機器學習" [ref=f1e612]
+              - link "全面了解 HTML & CSS" [ref=f1e614]
+              - link "20全面了解Python" [ref=f1e616]
+              - link "踹開新世界的大門" [ref=f1e618]
+        - generic [ref=f1e621]:
+          - generic [ref=f1e623]:
+            - link [ref=f1e625] [cursor=pointer]:
+              - /url: /watch?v=wm9yR1VspPs&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+            - generic [ref=f1e627] [cursor=pointer]:
+              - generic [ref=f1e628]:
+                - heading [level=3] [ref=f1e630]:
+                  - 'link "【機器學習 Machine Learning】3小時初學者教學 | 人工智慧 AI | Python | 機器學習入門 | 機器學習教學 #AI #ML #深度學習 2 小時 57 分鐘" [ref=f1e631]':
+                    - /url: /watch?v=wm9yR1VspPs&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+                    - text: "【機器學習 Machine Learning】3小時初學者教學 | 人工智慧 AI | Python | 機器學習入門 | 機器學習教學 #AI #ML #深度學習"
+                - generic [ref=f1e634]:
+                  - generic [ref=f1e635]: 觀看次數：161萬次
+                  - generic [ref=f1e636]: •3 年前
+              - generic [ref=f1e637]:
+                - link "前往頻道：GrandmaCan -我阿嬤都會" [ref=f1e638]:
+                  - /url: /@GrandmaCan
+                - generic [ref=f1e639]:
+                  - link "GrandmaCan -我阿嬤都會" [ref=f1e643]:
+                    - /url: /@GrandmaCan
+                  - img "已驗證" [ref=f1e648]
+              - generic [ref=f1e650]:
+                - generic [ref=f1e651]: "AI 人工智慧機器學習Machine Learning ML python ⭐️ 目錄⭐️ ⌨️ (0:00:00) 哈囉大家好，我是小白章節1 : 介紹⌨️ ..."
+                - tooltip "tooltip"
+              - generic [ref=f1e653]:
+                - img "字幕" [ref=f1e656]
+                - img "入門" [ref=f1e660]
+              - generic [ref=f1e664]:
+                - generic [ref=f1e665]:
+                  - generic [ref=f1e668]: 22 個章節
+                  - button "哈囉大家好，我是小白 | AI vs ML vs DL | 機器如何學習? | 環境建置(colab) | 介紹 | y = w*x + b | 最適合資料的直線? | 成本函數 Cost Function | 怎麼有效率的找出w b | 梯度下降 Gradient Descent (part1) | 梯度下降 Gradient Descent (part2) | 總結 | 介紹 | 資料預處理 - Label Encoding | 資料預處理 - One-Hot Encoding | 資料預處理 - Train & Test | w1x1 + w2x2... + b | 設定 Cost Function | 設定 Optimizer - Gradient Descent | 特徵縮放 Feature Scaling | 介紹 | Sigmoid Function" [ref=f1e670]
+                - button "其他項目" [ref=f1e675]
+          - generic [ref=f1e680] [cursor=pointer]:
+            - link [ref=f1e681]:
+              - /url: /watch?v=DIxu1oi7sKE&list=PL5y2P1AqpsZ-eD0uitRVWRybSX0DZdWNG
+              - generic [ref=f1e682]: 7 部影片
+            - generic [ref=f1e695]:
+              - generic [ref=f1e696]:
+                - heading "AI大语言模型科普课" [level=3] [ref=f1e697]:
+                  - link "AI大语言模型科普课" [ref=f1e698]:
+                    - /url: /watch?v=DIxu1oi7sKE&list=PL5y2P1AqpsZ-eD0uitRVWRybSX0DZdWNG
+                - generic [ref=f1e700]:
+                  - group [ref=f1e701]:
+                    - link "林粒粒呀" [ref=f1e704]:
+                      - /url: /@linliliya
+                    - generic [ref=f1e705]: •
+                    - link "播放清單" [ref=f1e708]:
+                      - /url: /@linliliya
+                  - group [ref=f1e709]
+                  - group [ref=f1e710]:
+                    - link "人人都能懂的AI大模型科普课 | 预告片 | Large Language Model Crash Course · 2:27" [ref=f1e712]:
+                      - /url: /watch?v=DIxu1oi7sKE&list=PL5y2P1AqpsZ-eD0uitRVWRybSX0DZdWNG
+                  - group [ref=f1e713]:
+                    - link "【生成式AI科普1】啥是“AIGC”？带你分清一堆AI技术词 | What is Generative AI? · 8:24" [ref=f1e715]:
+                      - /url: /watch?v=5IAgze909Mc&list=PL5y2P1AqpsZ-eD0uitRVWRybSX0DZdWNG&pp=0gcJCeYE0aJEHMZM
+                  - group [ref=f1e716]
+                  - group [ref=f1e717]:
+                    - link "查看完整播放清單" [ref=f1e720]:
+                      - /url: /playlist?list=PL5y2P1AqpsZ-eD0uitRVWRybSX0DZdWNG
+              - button "其他動作" [ref=f1e723]
+          - generic [ref=f1e728]:
+            - link [ref=f1e730] [cursor=pointer]:
+              - /url: /watch?v=r1O-guROtWQ&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgNIHCQn-CwGHKiGM7w%3D%3D
+            - generic [ref=f1e732] [cursor=pointer]:
+              - generic [ref=f1e733]:
+                - heading [level=3] [ref=f1e735]:
+                  - link "給非專業人士製作的 AI概念解析 | 從零入門，講講人與AI的故事 27 分鐘" [ref=f1e736]:
+                    - /url: /watch?v=r1O-guROtWQ&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgNIHCQn-CwGHKiGM7w%3D%3D
+                    - text: 給非專業人士製作的 AI概念解析 | 從零入門，講講人與AI的故事
+                - generic [ref=f1e739]:
+                  - generic [ref=f1e740]: 觀看次數：87萬次
+                  - generic [ref=f1e741]: •1 年前
+              - generic [ref=f1e742]:
+                - link "前往頻道：青蛙刀圣1993" [ref=f1e743]:
+                  - /url: /@frogfrog1993
+                - link "青蛙刀圣1993" [ref=f1e748]:
+                  - /url: /@frogfrog1993
+              - generic [ref=f1e749]:
+                - generic [ref=f1e750]: 【简介】 本片从零入门，通过与人的类比，给大家泛科普AI的创造过程，让大家了解到AI的本质。 其中，对ai原理的专业知识，我做 ...
+                - tooltip "tooltip"
+          - generic [ref=f1e751]:
+            - generic [ref=f1e752]:
+              - heading "Shorts" [level=2] [ref=f1e756]
+              - button "其他動作" [ref=f1e762] [cursor=pointer]
+            - generic [ref=f1e765]:
+              - generic [ref=f1e768]:
+                - generic [ref=f1e770]:
+                  - link [ref=f1e771] [cursor=pointer]:
+                    - /url: /shorts/LG3Ebyz6f2I
+                  - generic [ref=f1e775] [cursor=pointer]:
+                    - 'link "第1集：人工智慧是什麼？ # 1分鐘學人工智慧" [ref=f1e776]':
+                      - /url: /shorts/LG3Ebyz6f2I
+                    - generic [ref=f1e777]: 觀看次數：2.2萬次
+                  - button "其他動作" [ref=f1e779] [cursor=pointer]
+                - generic [ref=f1e784]:
+                  - link [ref=f1e785] [cursor=pointer]:
+                    - /url: /shorts/Mh5bhKvv_B8
+                  - generic [ref=f1e789] [cursor=pointer]:
+                    - link "免費的基礎AI課程及銀髮族適用AI教學 這基礎課程 適合銀髮族、初學者！ 教學 ChatGPT3.5免費版 | ChatGPT APP" [ref=f1e790]:
+                      - /url: /shorts/Mh5bhKvv_B8
+                    - generic [ref=f1e791]: 觀看次數：1.7萬次
+                  - button "其他動作" [ref=f1e793] [cursor=pointer]
+                - generic [ref=f1e798]:
+                  - link [ref=f1e799] [cursor=pointer]:
+                    - /url: /shorts/15T4rcup3uA
+                  - generic [ref=f1e803] [cursor=pointer]:
+                    - link "別再亂用 AI 了！AI新手入門指南，看這就對了！" [ref=f1e804]:
+                      - /url: /shorts/15T4rcup3uA
+                    - generic [ref=f1e805]: 觀看次數：1910次
+                  - button "其他動作" [ref=f1e807] [cursor=pointer]
+                - generic [ref=f1e812]:
+                  - link [ref=f1e813] [cursor=pointer]:
+                    - /url: /shorts/3h29-EA3g6Y
+                  - generic [ref=f1e817] [cursor=pointer]:
+                    - 'link "#一分鐘AI教學 ▌新手必看！善用GPT也能變高手 #ChatGPT新手 #AI工具 #GPTs #AI教學 #AI新手教學 #工作效率 #數位工具" [ref=f1e818]':
+                      - /url: /shorts/3h29-EA3g6Y
+                    - generic [ref=f1e819]: 觀看次數：18萬次
+                  - button "其他動作" [ref=f1e821] [cursor=pointer]
+                - generic [ref=f1e826]:
+                  - link [ref=f1e827] [cursor=pointer]:
+                    - /url: /shorts/pTm5mraC8tw
+                  - generic [ref=f1e831] [cursor=pointer]:
+                    - link "秒懂人工智慧【一】人工智慧與機器學習，到底是什麼？" [ref=f1e832]:
+                      - /url: /shorts/pTm5mraC8tw
+                    - generic [ref=f1e833]: 觀看次數：8.7萬次
+                  - button "其他動作" [ref=f1e835] [cursor=pointer]
+              - button "下一部" [ref=f1e841] [cursor=pointer]
+          - generic [ref=f1e846] [cursor=pointer]:
+            - link [ref=f1e847]:
+              - /url: /watch?v=QLiKmca4kzI&list=PLJV_el3uVTsNZEFAdQsDeOdzAaHTca2Gi
+              - generic [ref=f1e848]: 13 堂課
+            - generic [ref=f1e861]:
+              - generic [ref=f1e862]:
+                - heading "生成式AI時代下的機器學習(2025)" [level=3] [ref=f1e863]:
+                  - link "生成式AI時代下的機器學習(2025)" [ref=f1e864]:
+                    - /url: /watch?v=QLiKmca4kzI&list=PLJV_el3uVTsNZEFAdQsDeOdzAaHTca2Gi
+                - generic [ref=f1e866]:
+                  - group [ref=f1e867]:
+                    - link "Hung-yi Lee" [ref=f1e870]:
+                      - /url: /@HungyiLeeNTU
+                    - generic [ref=f1e871]: •
+                    - link "課程" [ref=f1e874]:
+                      - /url: /@HungyiLeeNTU
+                  - group [ref=f1e875]
+                  - group [ref=f1e876]:
+                    - link "【生成式AI時代下的機器學習(2025)】第一講：一堂課搞懂生成式人工智慧的技術突破與未來發展 · 1:24:21" [ref=f1e878]:
+                      - /url: /watch?v=QLiKmca4kzI&list=PLJV_el3uVTsNZEFAdQsDeOdzAaHTca2Gi&pp=0gcJCeYE0aJEHMZM
+                  - group [ref=f1e879]:
+                    - link "【生成式AI時代下的機器學習(2025)】第二講：一堂課搞懂 AI Agent 的原理 (AI如何透過經驗調整行為、使用工具和做計劃) · 1:42:00" [ref=f1e881]:
+                      - /url: /watch?v=M2Yg1kwPpts&list=PLJV_el3uVTsNZEFAdQsDeOdzAaHTca2Gi
+                  - group [ref=f1e882]
+                  - group [ref=f1e883]:
+                    - link "觀看完整課程" [ref=f1e886]:
+                      - /url: /playlist?list=PLJV_el3uVTsNZEFAdQsDeOdzAaHTca2Gi
+              - button "其他動作" [ref=f1e889]
+        - generic [ref=f1e899]:
+          - generic [ref=f1e900]: 实用AI，助力日常工作
+          - generic [ref=f1e907]:
+            - generic [ref=f1e908] [cursor=pointer]:
+              - generic [ref=f1e909]:
+                - link "雇主看重的AI技能 - Learn ChatGPT, AI skills for work, and practical automation. No tech background needed" [ref=f1e912]:
+                  - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwiYj-TD66eWAxVc7BYFHQDjO-oYACICCAEQDhoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qz18-C8pqhxklOWIYuBOAgttnjeqiHxbgEnv08pulUX5JA6ab85g1kaAq7TEALw_wcB&num=3&cid=CAAS0wHkaPqPyjQufssWajLDvpPOd_g4UyuxAdDzz47mrjlHCZIzfcGwjvPLrv56zMXGvDs95zjbOMb64kKcXQViRv3vHBptjnYXrCg1gBs2rdco5J1xa3bI_kNmuIUWIVU0c0bYL-nQRkyym2HVwYOXT2-GNxwkERC0cbj8E4Nu7_UQwCfa9y9SL9ypDjhy_0VctvEp418a9O4f5wR5ZL7jM2w1dyiM_mWuuqId3UMdTCGdCO7K_X0Qh-ExJVK5OJfceUArZO_dJxH2gVHEVyLBVS3qjOJi&cce=2&category=acrcp_v1_32&sig=AOD64_3edIDVU5Jhc0dY3Hc9pwusRthTyg&adurl=https://coursiv.io/zh/dynamic%3Fprc_id%3D1104%26utm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_campaign%3D24097728957%26utm_adgroupid%3D%26utm_ad%3D%26utm_type%3Dpmax%26utm_acc%3D1308143291%26utm_alen%3D1%26gad_source%3D2%26gad_campaignid%3D24103432721&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+                - generic [ref=f1e913]:
+                  - generic [ref=f1e915]:
+                    - generic [ref=f1e916]: 贊助商廣告
+                    - text: ·
+                  - generic [ref=f1e917]: https://www.coursiv.io/
+              - button "我的廣告中心" [ref=f1e921]
+            - generic [ref=f1e925]:
+              - link "Start Now" [ref=f1e926]
+              - link "Take a 1-minute quiz" [ref=f1e928]
+              - link "All Posts" [ref=f1e930]
+        - generic [ref=f1e933]:
+          - generic [ref=f1e935]:
+            - link [ref=f1e937] [cursor=pointer]:
+              - /url: /watch?v=wEjdQtaTlW0&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+            - generic [ref=f1e939] [cursor=pointer]:
+              - generic [ref=f1e940]:
+                - heading [level=3] [ref=f1e942]:
+                  - link "【保姆級】零基礎小白必看，2026年普通人必備的6 個AI使用技能 16 分鐘" [ref=f1e943]:
+                    - /url: /watch?v=wEjdQtaTlW0&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+                    - text: 【保姆級】零基礎小白必看，2026年普通人必備的6 個AI使用技能
+                - generic [ref=f1e946]:
+                  - generic [ref=f1e947]: 觀看次數：6.3萬次
+                  - generic [ref=f1e948]: •5 個月前
+              - generic [ref=f1e949]:
+                - link "前往頻道：七七行銷筆記" [ref=f1e950]:
+                  - /url: /@77MediaBook
+                - link "七七行銷筆記" [ref=f1e955]:
+                  - /url: /@77MediaBook
+              - generic [ref=f1e956]:
+                - text: 免費報名6 天AI一人公司年中大課：https://www.77mediabook.com/courseai （或加Line @77mediabook／微信mediabook77， ...
+                - tooltip "tooltip"
+              - img "字幕" [ref=f1e961]
+          - generic [ref=f1e964] [cursor=pointer]:
+            - link [ref=f1e965]:
+              - /url: /watch?v=3oAY1j5-KIg&list=PLULgBZmS3YWRXpqgJTOq9m_nU4oyEVyj4
+              - generic [ref=f1e966]: 95 部影片
+            - generic [ref=f1e979]:
+              - generic [ref=f1e980]:
+                - heading "2024公认最好的 | 吴恩达机器学习 | 教程 | Machine Learning Specialization(超爽中英!)" [level=3] [ref=f1e981]:
+                  - link "2024公认最好的 | 吴恩达机器学习 | 教程 | Machine Learning Specialization(超爽中英!)" [ref=f1e982]:
+                    - /url: /watch?v=3oAY1j5-KIg&list=PLULgBZmS3YWRXpqgJTOq9m_nU4oyEVyj4
+                - generic [ref=f1e984]:
+                  - group [ref=f1e985]:
+                    - link "江湖人家" [ref=f1e988]:
+                      - /url: /@jhrhome
+                    - generic [ref=f1e989]: •
+                    - link "播放清單" [ref=f1e992]:
+                      - /url: /@jhrhome
+                  - group [ref=f1e993]
+                  - group [ref=f1e994]:
+                    - link "P1 机器学习的应用【2024公认最好的 | 吴恩达机器学习 | 教程 | Machine Learning Specialization(超爽中英!)】 · 4:29" [ref=f1e996]:
+                      - /url: /watch?v=3oAY1j5-KIg&list=PLULgBZmS3YWRXpqgJTOq9m_nU4oyEVyj4&pp=0gcJCeYE0aJEHMZM
+                  - group [ref=f1e997]:
+                    - link "P2 什么是机器学习【2024公认最好的 | 吴恩达机器学习 | 教程 | Machine Learning Specialization(超爽中英!)】 · 5:36" [ref=f1e999]:
+                      - /url: /watch?v=ATqljKtkhm8&list=PLULgBZmS3YWRXpqgJTOq9m_nU4oyEVyj4
+                  - group [ref=f1e1000]
+                  - group [ref=f1e1001]:
+                    - link "查看完整播放清單" [ref=f1e1004]:
+                      - /url: /playlist?list=PLULgBZmS3YWRXpqgJTOq9m_nU4oyEVyj4
+              - button "其他動作" [ref=f1e1007]
+          - generic [ref=f1e1011]:
+            - generic [ref=f1e1012]:
+              - heading "Shorts" [level=2] [ref=f1e1016]
+              - button "其他動作" [ref=f1e1022] [cursor=pointer]
+            - generic [ref=f1e1025]:
+              - generic [ref=f1e1028]:
+                - generic [ref=f1e1030]:
+                  - link [ref=f1e1031] [cursor=pointer]:
+                    - /url: /shorts/5TMOoNsBZTw
+                  - generic [ref=f1e1035] [cursor=pointer]:
+                    - 'link "AI 時代還需要學 Python 嗎？！來聽聽 Google 前執行長 Eric Schmidt 的看法！#python #程式設計 #ai #程式語言 #人工智慧 #google" [ref=f1e1036]':
+                      - /url: /shorts/5TMOoNsBZTw
+                    - generic [ref=f1e1037]: 觀看次數：23萬次
+                  - button "其他動作" [ref=f1e1039] [cursor=pointer]
+                - generic [ref=f1e1044]:
+                  - link [ref=f1e1045] [cursor=pointer]:
+                    - /url: /shorts/gt3iR3wUdHw
+                  - generic [ref=f1e1049] [cursor=pointer]:
+                    - link "GPT聊天技巧｜3步驟教你下Prompt，AI也能聽話！【新手教學】#GPT#Prompt#ChatGPT#ChatGPT教學#AI教學#AI工具#AI入門#自媒體經營#新手入門" [ref=f1e1050]:
+                      - /url: /shorts/gt3iR3wUdHw
+                    - generic [ref=f1e1051]: 觀看次數：1757次
+                  - button "其他動作" [ref=f1e1053] [cursor=pointer]
+                - generic [ref=f1e1058]:
+                  - link [ref=f1e1059] [cursor=pointer]:
+                    - /url: /shorts/SJunHJ-qE7c
+                  - generic [ref=f1e1063] [cursor=pointer]:
+                    - 'link "「26個 Chat GPT 指令原則」 #蘋果99 #apple #iphone #ai #mac #ipad #教學 #教學影片 #ai應用" [ref=f1e1064]':
+                      - /url: /shorts/SJunHJ-qE7c
+                    - generic [ref=f1e1065]: 觀看次數：29萬次
+                  - button "其他動作" [ref=f1e1067] [cursor=pointer]
+                - generic [ref=f1e1072]:
+                  - link [ref=f1e1073] [cursor=pointer]:
+                    - /url: /shorts/0BSh6RDpDjY
+                  - generic [ref=f1e1077] [cursor=pointer]:
+                    - 'link "這才是自學AI大模型最正確的學習路線！ #agent #chatgpt #llm #人工智能 #ai #ai学習 #ai學習" [ref=f1e1078]':
+                      - /url: /shorts/0BSh6RDpDjY
+                    - generic [ref=f1e1079]: 觀看次數：1.3萬次
+                  - button "其他動作" [ref=f1e1081] [cursor=pointer]
+                - generic [ref=f1e1086]:
+                  - link [ref=f1e1087] [cursor=pointer]:
+                    - /url: /shorts/9lmYHyeLKks
+                  - generic [ref=f1e1091] [cursor=pointer]:
+                    - 'link "AI 是什麼？人工智慧的基本原理#shorts #ai日常" [ref=f1e1092]':
+                      - /url: /shorts/9lmYHyeLKks
+                    - generic [ref=f1e1093]: 觀看次數：247次
+                  - button "其他動作" [ref=f1e1095] [cursor=pointer]
+                - generic [ref=f1e1100]:
+                  - link [ref=f1e1101] [cursor=pointer]:
+                    - /url: /shorts/OLw_ktBTeIs
+                    - img [ref=f1e1106]:
+                      - generic [ref=f1e1107]: 新影片
+                  - generic [ref=f1e1108] [cursor=pointer]:
+                    - link "AI與Google雲端超實用入門課程" [ref=f1e1109]:
+                      - /url: /shorts/OLw_ktBTeIs
+                    - generic [ref=f1e1110]: 觀看次數：30次
+                  - button "其他動作" [ref=f1e1112] [cursor=pointer]
+              - button "下一部" [ref=f1e1118] [cursor=pointer]
+          - generic [ref=f1e1123]:
+            - link [ref=f1e1125] [cursor=pointer]:
+              - /url: /watch?v=eraWvfD_Ihg&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgNIHCQn-CwGHKiGM7w%3D%3D
+            - generic [ref=f1e1127] [cursor=pointer]:
+              - generic [ref=f1e1128]:
+                - heading [level=3] [ref=f1e1130]:
+                  - link "一小時略懂 AI｜GPT、Sora、Diffusion model、類器官智慧OI、圖靈測試、人工智慧史 55 分鐘" [ref=f1e1131]:
+                    - /url: /watch?v=eraWvfD_Ihg&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgNIHCQn-CwGHKiGM7w%3D%3D
+                    - text: 一小時略懂 AI｜GPT、Sora、Diffusion model、類器官智慧OI、圖靈測試、人工智慧史
+                - generic [ref=f1e1134]:
+                  - generic [ref=f1e1135]: 觀看次數：103萬次
+                  - generic [ref=f1e1136]: •2 年前
+              - generic [ref=f1e1137]:
+                - link "前往頻道：PanSci 泛科學" [ref=f1e1138]:
+                  - /url: /@PanScitw
+                - generic [ref=f1e1139]:
+                  - link "PanSci 泛科學" [ref=f1e1143]:
+                    - /url: /@PanScitw
+                  - img "已驗證" [ref=f1e1148]
+              - generic [ref=f1e1150]:
+                - text: 探索通信科技，鎖定數感實驗室Numeracy Lab @NumeracyLab 00:00 GPT、OpenAI 13:51 Diffusion model、DALLE 24:24 Sora ...
+                - tooltip "tooltip"
+              - img "字幕" [ref=f1e1155]
+              - generic [ref=f1e1159]:
+                - generic [ref=f1e1160]:
+                  - generic [ref=f1e1163]: 5 個章節
+                  - button "GPT、OpenAI | Diffusion model、DALLE | Sora | 類器官智慧OI | 圖靈測試、LaMDA" [ref=f1e1165]
+                - button "其他項目" [ref=f1e1170]
+          - generic [ref=f1e1175] [cursor=pointer]:
+            - link [ref=f1e1176]:
+              - /url: /watch?v=JGtqpQXfJis&list=PLzFzFY0S06WwfNhQ3ZoGFiXRtJLDsFo6d
+              - generic [ref=f1e1177]: 8 部影片
+            - generic [ref=f1e1190]:
+              - generic [ref=f1e1191]:
+                - heading "【2024 GenAI Stars】生成式AI線上培力課程" [level=3] [ref=f1e1192]:
+                  - link "【2024 GenAI Stars】生成式AI線上培力課程" [ref=f1e1193]:
+                    - /url: /watch?v=JGtqpQXfJis&list=PLzFzFY0S06WwfNhQ3ZoGFiXRtJLDsFo6d
+                - generic [ref=f1e1195]:
+                  - group [ref=f1e1196]:
+                    - link "台大智活iNSIGHT" [ref=f1e1199]:
+                      - /url: /@insight2008
+                    - generic [ref=f1e1200]: •
+                    - link "播放清單" [ref=f1e1203]:
+                      - /url: /@insight2008
+                  - group [ref=f1e1204]
+                  - group [ref=f1e1205]:
+                    - link "【生成式AI導論 2024】第1講：生成式AI是什麼？ · 29:29" [ref=f1e1207]:
+                      - /url: /watch?v=JGtqpQXfJis&list=PLzFzFY0S06WwfNhQ3ZoGFiXRtJLDsFo6d
+                  - group [ref=f1e1208]:
+                    - link "80分鐘快速了解大型語言模型 (5:30 有咒術迴戰雷) · 1:32:10" [ref=f1e1210]:
+                      - /url: /watch?v=wG8-IUtqu-s&list=PLzFzFY0S06WwfNhQ3ZoGFiXRtJLDsFo6d
+                  - group [ref=f1e1211]
+                  - group [ref=f1e1212]:
+                    - link "查看完整播放清單" [ref=f1e1215]:
+                      - /url: /playlist?list=PLzFzFY0S06WwfNhQ3ZoGFiXRtJLDsFo6d
+              - button "其他動作" [ref=f1e1218]
+        - generic [ref=f1e1236] [cursor=pointer]:
+          - generic [ref=f1e1237]:
+            - link "教你從新手到用AI寫程式" [ref=f1e1240]:
+              - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwiYj-TD66eWAxVc7BYFHQDjO-oYACICCAEQBxoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwVAk79oeCIgwHPbqfCJjILD02Xy1DF_wrcpgL0Jytn_KW8hYmoBUkaAtYsEALw_wcB&num=4&cid=CAAS0wHkaPqPyjQufssWajLDvpPOd_g4UyuxAdDzz47mrjlHCZIzfcGwjvPLrv56zMXGvDs95zjbOMb64kKcXQViRv3vHBptjnYXrCg1gBs2rdco5J1xa3bI_kNmuIUWIVU0c0bYL-nQRkyym2HVwYOXT2-GNxwkERC0cbj8E4Nu7_UQwCfa9y9SL9ypDjhy_0VctvEp418a9O4f5wR5ZL7jM2w1dyiM_mWuuqId3UMdTCGdCO7K_X0Qh-ExJVK5OJfceUArZO_dJxH2gVHEVyLBVS3qjOJi&cce=2&category=acrcp_v1_32&sig=AOD64_0w8iiakGvtE5S4R43sp2ZNd_2llQ&adurl=https://5xcampus.com/%3Fgad_source%3D2%26gad_campaignid%3D10362851905&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=0
+            - link "從網頁開發入門到 AI 一網打盡 - 面對 AI 浪潮，更需要系統化學習！五倍帶你掌握 工程師必備技能，從程式到 AI，全面提升競爭力。" [ref=f1e1243]:
+              - /url: https://www.google.com/aclk?sa=L&ai=DChsSEwiYj-TD66eWAxVc7BYFHQDjO-oYACICCAEQBxoCdGw&co=1&ase=2&gclid=Cj0KCQjw4orUBhCjARIsAIbF3qwVAk79oeCIgwHPbqfCJjILD02Xy1DF_wrcpgL0Jytn_KW8hYmoBUkaAtYsEALw_wcB&num=4&cid=CAAS0wHkaPqPyjQufssWajLDvpPOd_g4UyuxAdDzz47mrjlHCZIzfcGwjvPLrv56zMXGvDs95zjbOMb64kKcXQViRv3vHBptjnYXrCg1gBs2rdco5J1xa3bI_kNmuIUWIVU0c0bYL-nQRkyym2HVwYOXT2-GNxwkERC0cbj8E4Nu7_UQwCfa9y9SL9ypDjhy_0VctvEp418a9O4f5wR5ZL7jM2w1dyiM_mWuuqId3UMdTCGdCO7K_X0Qh-ExJVK5OJfceUArZO_dJxH2gVHEVyLBVS3qjOJi&cce=2&category=acrcp_v1_32&sig=AOD64_0w8iiakGvtE5S4R43sp2ZNd_2llQ&adurl=https://5xcampus.com/%3Fgad_source%3D2%26gad_campaignid%3D10362851905&ms=%5BCLICK_MS%5D&nx=%5BNX%5D&ny=%5BNY%5D&nb=7
+            - generic [ref=f1e1244]:
+              - generic [ref=f1e1246]:
+                - generic [ref=f1e1247]: 贊助商廣告
+                - text: ·
+              - generic [ref=f1e1248]: https://www.5xcampus.com/選擇合適職涯/提升_ai_技能
+          - button "我的廣告中心" [ref=f1e1252]
+        - generic [ref=f1e1257]:
+          - generic [ref=f1e1259] [cursor=pointer]:
+            - link [ref=f1e1260]:
+              - /url: /watch?v=d8kebIUAVgk&list=PLH3VeiMX0ckiX_bR5YJl0pWQVGXZ2BMRL
+              - generic [ref=f1e1261]: 28 部影片
+            - generic [ref=f1e1274]:
+              - generic [ref=f1e1275]:
+                - heading "Python AI 實作入門課程" [level=3] [ref=f1e1276]:
+                  - link "Python AI 實作入門課程" [ref=f1e1277]:
+                    - /url: /watch?v=d8kebIUAVgk&list=PLH3VeiMX0ckiX_bR5YJl0pWQVGXZ2BMRL
+                - generic [ref=f1e1279]:
+                  - group [ref=f1e1280]:
+                    - link "PECU TSAI" [ref=f1e1283]:
+                      - /url: /@peculab
+                    - generic [ref=f1e1284]: •
+                    - link "播放清單" [ref=f1e1287]:
+                      - /url: /@peculab
+                  - group [ref=f1e1288]
+                  - group [ref=f1e1289]:
+                    - link "01_什麼是 AI & AI 基礎概念 · 10:53" [ref=f1e1291]:
+                      - /url: /watch?v=d8kebIUAVgk&list=PLH3VeiMX0ckiX_bR5YJl0pWQVGXZ2BMRL
+                  - group [ref=f1e1292]:
+                    - link "02_線性回歸講解 · 10:01" [ref=f1e1294]:
+                      - /url: /watch?v=eq8ndpa2O2g&list=PLH3VeiMX0ckiX_bR5YJl0pWQVGXZ2BMRL
+                  - group [ref=f1e1295]
+                  - group [ref=f1e1296]:
+                    - link "查看完整播放清單" [ref=f1e1299]:
+                      - /url: /playlist?list=PLH3VeiMX0ckiX_bR5YJl0pWQVGXZ2BMRL
+              - button "其他動作" [ref=f1e1302]
+          - generic [ref=f1e1307] [cursor=pointer]:
+            - link [ref=f1e1308]:
+              - /url: /watch?v=ozmr55-fihs&list=PL5YAbMpT3Nh32QekRRMnZmSj41T7Sg2rL
+              - generic [ref=f1e1309]: 72 部影片
+            - generic [ref=f1e1322]:
+              - generic [ref=f1e1323]:
+                - heading "《Python3入门人工智能掌握机器学习+深度学习提升实战能力》" [level=3] [ref=f1e1324]:
+                  - link "《Python3入门人工智能掌握机器学习+深度学习提升实战能力》" [ref=f1e1325]:
+                    - /url: /watch?v=ozmr55-fihs&list=PL5YAbMpT3Nh32QekRRMnZmSj41T7Sg2rL
+                - generic [ref=f1e1327]:
+                  - group [ref=f1e1328]:
+                    - 'link "Winner''s Climb: Learning & Sharing" [ref=f1e1331]':
+                      - /url: /@winnersclimblearningsharin8676
+                    - generic [ref=f1e1332]: •
+                    - link "播放清單" [ref=f1e1335]:
+                      - /url: /@winnersclimblearningsharin8676
+                  - group [ref=f1e1336]
+                  - group [ref=f1e1337]:
+                    - link "《Python3入门人工智能掌握机器学习+深度学习提升实战能力》 第1章 人工智能时代，人人都应该学会利用AI这个工具 1 1 课程导学 · 19:44" [ref=f1e1339]:
+                      - /url: /watch?v=ozmr55-fihs&list=PL5YAbMpT3Nh32QekRRMnZmSj41T7Sg2rL&pp=0gcJCeYE0aJEHMZM
+                  - group [ref=f1e1340]:
+                    - link "《Python3入门人工智能掌握机器学习+深度学习提升实战能力》 第1章 人工智能时代，人人都应该学会利用AI这个工具 1 2 内容快速概览 · 21:49" [ref=f1e1342]:
+                      - /url: /watch?v=dlgkkRFx2fY&list=PL5YAbMpT3Nh32QekRRMnZmSj41T7Sg2rL
+                  - group [ref=f1e1343]
+                  - group [ref=f1e1344]:
+                    - link "查看完整播放清單" [ref=f1e1347]:
+                      - /url: /playlist?list=PL5YAbMpT3Nh32QekRRMnZmSj41T7Sg2rL
+              - button "其他動作" [ref=f1e1350]
+          - generic [ref=f1e1355] [cursor=pointer]:
+            - link [ref=f1e1356]:
+              - /url: /watch?v=HJKK44Wyz2A&list=PLeE7esiyNuTkk9SNewYrbRULt6Kjq5x1y
+              - generic [ref=f1e1357]: 15 部影片
+            - generic [ref=f1e1370]:
+              - generic [ref=f1e1371]:
+                - heading "2024 AI新手入门教程" [level=3] [ref=f1e1372]:
+                  - link "2024 AI新手入门教程" [ref=f1e1373]:
+                    - /url: /watch?v=HJKK44Wyz2A&list=PLeE7esiyNuTkk9SNewYrbRULt6Kjq5x1y
+                - generic [ref=f1e1375]:
+                  - group [ref=f1e1376]:
+                    - link "AI小白" [ref=f1e1379]:
+                      - /url: /@AI-hi1jl
+                    - generic [ref=f1e1380]: •
+                    - link "播放清單" [ref=f1e1383]:
+                      - /url: /@AI-hi1jl
+                  - group [ref=f1e1384]
+                  - group [ref=f1e1385]:
+                    - link "2024 AI新手入门教程（12） · 24:54" [ref=f1e1387]:
+                      - /url: /watch?v=HJKK44Wyz2A&list=PLeE7esiyNuTkk9SNewYrbRULt6Kjq5x1y
+                  - group [ref=f1e1388]:
+                    - link "2024 AI新手入门教程（11） · 22:02" [ref=f1e1390]:
+                      - /url: /watch?v=Puiuv7Ci9vo&list=PLeE7esiyNuTkk9SNewYrbRULt6Kjq5x1y
+                  - group [ref=f1e1391]
+                  - group [ref=f1e1392]:
+                    - link "查看完整播放清單" [ref=f1e1395]:
+                      - /url: /playlist?list=PLeE7esiyNuTkk9SNewYrbRULt6Kjq5x1y
+              - button "其他動作" [ref=f1e1398]
+          - generic [ref=f1e1403] [cursor=pointer]:
+            - link [ref=f1e1404]:
+              - /url: /watch?v=80PHlNZVs08&list=PLtCXWCBVpCZ3snYgJ2t_ZVN3L6j9Qobkl
+              - generic [ref=f1e1405]: 32 部影片
+            - generic [ref=f1e1418]:
+              - generic [ref=f1e1419]:
+                - heading "🎧【用 AI 學 AI】iPAS AI 應用規劃師初級、AI 證照與聆聽式學習清單" [level=3] [ref=f1e1420]:
+                  - link "🎧【用 AI 學 AI】iPAS AI 應用規劃師初級、AI 證照與聆聽式學習清單" [ref=f1e1421]:
+                    - /url: /watch?v=80PHlNZVs08&list=PLtCXWCBVpCZ3snYgJ2t_ZVN3L6j9Qobkl
+                - generic [ref=f1e1423]:
+                  - group [ref=f1e1424]:
+                    - link "🎧 憶筆M.S. | 陪你走過 AI 學習之路" [ref=f1e1427]:
+                      - /url: /@YibiMS
+                    - generic [ref=f1e1428]: •
+                    - link "播放清單" [ref=f1e1431]:
+                      - /url: /@YibiMS
+                    - generic [ref=f1e1432]: •
+                    - generic [ref=f1e1433]: 2 天前更新
+                  - group [ref=f1e1434]
+                  - group [ref=f1e1435]:
+                    - link "AI 證照值得考嗎？非本科AI小白考取國家級證照 iPAS 中級 AI應用規劃師的獨家攻略與心路歷程大公開！常見Q&A一次分享！ · 27:50" [ref=f1e1437]:
+                      - /url: /watch?v=80PHlNZVs08&list=PLtCXWCBVpCZ3snYgJ2t_ZVN3L6j9Qobkl
+                  - group [ref=f1e1438]:
+                    - link "iPAS AI應用規劃師單元一~單元七(合集) · 59:22" [ref=f1e1440]:
+                      - /url: /watch?v=L9I66yZXLr8&list=PLtCXWCBVpCZ3snYgJ2t_ZVN3L6j9Qobkl
+                  - group [ref=f1e1441]
+                  - group [ref=f1e1442]:
+                    - link "查看完整播放清單" [ref=f1e1445]:
+                      - /url: /playlist?list=PLtCXWCBVpCZ3snYgJ2t_ZVN3L6j9Qobkl
+              - button "其他動作" [ref=f1e1448]
+          - generic [ref=f1e1453] [cursor=pointer]:
+            - link [ref=f1e1454]:
+              - /url: /watch?v=dPZaD_yd6Jg&list=PLzeMAbHSyDz-92ROnt_-c9dQVBXJzP1mR
+              - generic [ref=f1e1455]: 81 堂課
+            - generic [ref=f1e1468]:
+              - generic [ref=f1e1469]:
+                - heading "iPAS AI應用規劃師初級｜自學重點整理" [level=3] [ref=f1e1470]:
+                  - link "iPAS AI應用規劃師初級｜自學重點整理" [ref=f1e1471]:
+                    - /url: /watch?v=dPZaD_yd6Jg&list=PLzeMAbHSyDz-92ROnt_-c9dQVBXJzP1mR
+                - generic [ref=f1e1473]:
+                  - group [ref=f1e1474]:
+                    - link "iPAS自學路" [ref=f1e1477]:
+                      - /url: /@ipasstudybuddy
+                    - generic [ref=f1e1478]: •
+                    - link "課程" [ref=f1e1481]:
+                      - /url: /@ipasstudybuddy
+                    - generic [ref=f1e1482]: •
+                    - generic [ref=f1e1483]: 4 天前更新
+                  - group [ref=f1e1484]
+                  - group [ref=f1e1485]:
+                    - link "不寫程式也能過！非本科上班族三個月考取iPAS AI雙證照備考攻略 · 7:14" [ref=f1e1487]:
+                      - /url: /watch?v=dPZaD_yd6Jg&list=PLzeMAbHSyDz-92ROnt_-c9dQVBXJzP1mR
+                  - group [ref=f1e1488]:
+                    - link "iPAS AI 應用規劃師｜零課本備考策略：資源選擇、雙重編碼與認知負荷管理 · 5:52" [ref=f1e1490]:
+                      - /url: /watch?v=P3PEp9_Y4Ww&list=PLzeMAbHSyDz-92ROnt_-c9dQVBXJzP1mR
+                  - group [ref=f1e1491]
+                  - group [ref=f1e1492]:
+                    - link "觀看完整課程" [ref=f1e1495]:
+                      - /url: /playlist?list=PLzeMAbHSyDz-92ROnt_-c9dQVBXJzP1mR
+              - button "其他動作" [ref=f1e1498]
+          - generic [ref=f1e1503]:
+            - link [ref=f1e1505] [cursor=pointer]:
+              - /url: /watch?v=LF9sd-2jCoY&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+            - generic [ref=f1e1507] [cursor=pointer]:
+              - generic [ref=f1e1508]:
+                - heading [level=3] [ref=f1e1510]:
+                  - 'link "【漫士科普】90分钟深度！一口气看明白人工智能和神经网络#人工智能 #神经网络 1 小時 28 分鐘" [ref=f1e1511]':
+                    - /url: /watch?v=LF9sd-2jCoY&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+                    - text: "【漫士科普】90分钟深度！一口气看明白人工智能和神经网络#人工智能 #神经网络"
+                - generic [ref=f1e1514]:
+                  - generic [ref=f1e1515]: 觀看次數：98萬次
+                  - generic [ref=f1e1516]: •1 年前
+              - generic [ref=f1e1517]:
+                - link "前往頻道：漫士沉思录 Meditation Math" [ref=f1e1518]:
+                  - /url: /@manshi_math
+                - link "漫士沉思录 Meditation Math" [ref=f1e1523]:
+                  - /url: /@manshi_math
+              - generic [ref=f1e1524]:
+                - generic [ref=f1e1525]: 部分素材来自@3bl@3blue1brown @artem kirsanov，使用manim引擎制作一位来自清华的人工智能博士生，日常思索和科普。
+                - tooltip "tooltip"
+              - img "字幕" [ref=f1e1530]
+          - generic [ref=f1e1533] [cursor=pointer]:
+            - link [ref=f1e1534]:
+              - /url: /watch?v=FopO8IQLX_E&list=PLIJi6OrPb1qmn7xlAt6uGTcJ70dOGeNid&pp=0gcJCfoCOCosWNin
+              - generic [ref=f1e1535]: 41 部影片
+            - generic [ref=f1e1548]:
+              - generic [ref=f1e1549]:
+                - heading "AI工具推薦/AI Tools" [level=3] [ref=f1e1550]:
+                  - link "AI工具推薦/AI Tools" [ref=f1e1551]:
+                    - /url: /watch?v=FopO8IQLX_E&list=PLIJi6OrPb1qmn7xlAt6uGTcJ70dOGeNid&pp=0gcJCfoCOCosWNin
+                - generic [ref=f1e1553]:
+                  - group [ref=f1e1554]:
+                    - link "木子AI研究所" [ref=f1e1557]:
+                      - /url: /@muziailab
+                    - generic [ref=f1e1558]: •
+                    - link "播放清單" [ref=f1e1561]:
+                      - /url: /@muziailab
+                  - group [ref=f1e1562]
+                  - group [ref=f1e1563]:
+                    - link "零基礎GitHub教學，小白也能看懂｜如何一鍵獲取資源，解鎖全球最大寶藏網站｜GitHub tutorial · 10:30" [ref=f1e1565]:
+                      - /url: /watch?v=FopO8IQLX_E&list=PLIJi6OrPb1qmn7xlAt6uGTcJ70dOGeNid
+                  - group [ref=f1e1566]:
+                    - link "【超全教程】DeepSeek 3大用法！再見ChatGPT/cursor｜最強開源模型，AI對話/AI編程/AI翻譯｜怎麼用好DeepSeek？手把手全新教程｜vs code/沉浸式翻譯 · 12:26" [ref=f1e1568]:
+                      - /url: /watch?v=iYr1UB8ZXhI&list=PLIJi6OrPb1qmn7xlAt6uGTcJ70dOGeNid
+                  - group [ref=f1e1569]
+                  - group [ref=f1e1570]:
+                    - link "查看完整播放清單" [ref=f1e1573]:
+                      - /url: /playlist?list=PLIJi6OrPb1qmn7xlAt6uGTcJ70dOGeNid
+              - button "其他動作" [ref=f1e1576]
+          - generic [ref=f1e1581]:
+            - link [ref=f1e1583] [cursor=pointer]:
+              - /url: /watch?v=vWzKHp9yl3M&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+            - generic [ref=f1e1585] [cursor=pointer]:
+              - generic [ref=f1e1586]:
+                - heading [level=3] [ref=f1e1588]:
+                  - link "現在學AI，真的還不晚：30天從小白到上手！ 17 分鐘" [ref=f1e1589]:
+                    - /url: /watch?v=vWzKHp9yl3M&pp=ygUT5Lq65bel5pm65oWnIOWFpemWgA%3D%3D
+                    - text: 現在學AI，真的還不晚：30天從小白到上手！
+                - generic [ref=f1e1592]:
+                  - generic [ref=f1e1593]: 觀看次數：14萬次
+                  - generic [ref=f1e1594]: •2 個月前
+              - generic [ref=f1e1595]:
+                - link "前往頻道：李厂长来了" [ref=f1e1596]:
+                  - /url: /@lichangzhanglaile
+                - link "李厂长来了" [ref=f1e1601]:
+                  - /url: /@lichangzhanglaile
+              - generic [ref=f1e1602]:
+                - text: Filmora，一站式AI 內容創作工具，從AI 影片生成到剪輯一次完成。 https://filmora.go.link/j9Kcv ※ 支援Veo、Seedance、GPT ...
+                - tooltip "tooltip"
+              - generic [ref=f1e1604]:
+                - img "4K" [ref=f1e1607]
+                - img "字幕" [ref=f1e1611]
+              - generic [ref=f1e1615]:
+                - generic [ref=f1e1616]:
+                  - generic [ref=f1e1619]: 7 個章節
+                  - button "开场 | 养成习惯+高效沟通 | AI当教练 | AI帮工作 | 系统化使用AI | AI基础设施 | 总结" [ref=f1e1621]
+                - button "其他項目" [ref=f1e1626]

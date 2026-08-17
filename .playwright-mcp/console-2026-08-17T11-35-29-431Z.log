@@ -1,0 +1,3 @@
+[     381ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://w6.ypu.edu.tw/yu/index_main.html:0
+[     381ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://w6.ypu.edu.tw/yu/index_main.html:0
+[     403ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://w6.ypu.edu.tw/favicon.ico:0

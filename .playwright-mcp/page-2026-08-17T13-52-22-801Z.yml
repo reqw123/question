@@ -1,0 +1,2017 @@
+- generic [active] [ref=f2e1]:
+  - generic:
+    - link "Skip to Main Content" [ref=f2e2] [cursor=pointer]:
+      - /url: "#page-body-id"
+    - link "Skip to Main Menu" [ref=f2e3] [cursor=pointer]:
+      - /url: "#mega-menu-nav"
+  - generic [ref=f2e5]:
+    - generic [ref=f2e9]:
+      - generic: 
+      - text: 
+      - banner [ref=f2e10]:
+        - generic [ref=f2e2070]:
+          - img "Advertisement" [ref=f2e13]
+          - iframe [ref=f2e2075]:
+            - link [ref=f14e2] [cursor=pointer]:
+              - /url: https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjstlP8Y_Col4H2pwQwytAlmpvSLRGlbdnXKB53sq4FX0vi9WSmb6zKkAAFroPzKMOrmHkyKM3VEsVyjdXaW5PPKAaRIoNfzS2DVbalsBKbWoPpSc0yIyAolDXFGxEb7tOfTdmrjx2euBUtkhonYQuF1Egt7djbvHFLCD0Wij05hMn8IzbPGPjt8OW6fCcvqafCqhwrjBV252MT3d8Yp41QwJN7pG2cn9xtLC5VvepVtd7WyCy8oxR9iXea53D5CWZj_Jove2Pq1EfTBh0OjK0oZ5XaGASIHY_E-2VUuXAhCU0m0Fdy8hxeFVLH2TRIwtSih44ke_t8iD2Jlgszv5dWjWZPcvj8ONtXogZQeUXz1rZcIs5pJ-0SiXSaCeTAcpgfED10g557zBRDsfMhYss4OGrEHd-O7vxxMXzvM16MntMwA&sai=AMfl-YTKpNjCc-yDMpbjS48A_mKDQn1XqxwcI95qf6SXeorhjnMNGvKWg4ib0kTL-tcobKTjOioNwz80HFm0zX3wVcR9fQ0D7BdLHYgapnWx3HUE2-ygxzk2O7JZW3ffgVdhCxcgSvrLyt4M17Yw8NOxSzEGUwkFZKul2DA4jfKJcfch9jBB3AnouzH4t6x-wvEr1YNPn-tdCWfK1b6oGZqTULexLOY9d6V-ap3doy49hYMeULZb9vPUZpX3-VGMMXKjcN7shglBYQy4HnY69XtCzKKm1xexs2GIYWBqemd7eXJITcvJYEA0V3JqQjrx2fAVXyPnPmmnmnXMcEgHR7OBiHQi7AjwG-v33rqqQZ1oXXyFEexMfPT-eug9qMgmGlcaTBe_WRJqEW0Xy_a6ycdvkFYO&sig=Cg0ArKJSzJV1zuV3RCdr&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.us.elsevierhealth.com/clinics
+              - img "ClinikcalKey_theclinics.com" [ref=f14e3]
+        - generic [ref=f2e14]:
+          - generic:
+            - link [ref=f2e18] [cursor=pointer]:
+              - /url: /
+              - 'img "Veterinary Clinics of North America: Small Animal Practice" [ref=f2e19]'
+            - list [ref=f2e23]:
+              - listitem [ref=f2e24]:
+                - button "Log in" [ref=f2e26]
+              - listitem [ref=f2e28]:
+                - link "Register" [ref=f2e29] [cursor=pointer]:
+                  - /url: https://www.vetsmall.theclinics.com/action/idLogin?type=registration&redirectUri=https%3A%2F%2Fwww.vetsmall.theclinics.com%2Farticle%2FS0195-5616%2819%2930036-1%2Fabstract
+              - text: 
+      - navigation "Main" [ref=f2e34]:
+        - generic:
+          - link "Skip menu":
+            - /url: "#searchText"
+        - generic [ref=f2e35]:
+          - text: 
+          - menubar [ref=f2e36]:
+            - button "theclinics.com" [ref=f2e37]
+            - button "Articles" [ref=f2e39]
+            - text: 
+            - button "Publish" [ref=f2e41]
+            - button "Multimedia" [ref=f2e43]
+            - button "About" [ref=f2e45]
+            - button "Contact" [ref=f2e47]
+            - menuitem "Subscribe Direct Link" [ref=f2e49] [cursor=pointer]:
+              - generic [ref=f2e50]: Subscribe
+              - generic [ref=f2e51]: Direct Link
+          - generic "Quick Search" [ref=f2e55]:
+            - generic [ref=f2e56]:
+              - textbox "Search for..." [ref=f2e57]
+              - button "Submit the search form" [ref=f2e58] [cursor=pointer]: 
+              - link "Advanced search" [ref=f2e59] [cursor=pointer]:
+                - /url: https://www.vetsmall.theclinics.com/search/advanced?SeriesKey=vsp&ISSN=0195-5616&journalCode=vsp
+            - text: 
+      - generic [ref=f2e62]:
+        - article [ref=f2e63]:
+          - generic [ref=f2e64]:
+            - generic [ref=f2e66]:
+              - generic [ref=f2e67]:
+                - generic [ref=f2e68]: Review article
+                - generic [ref=f2e70]:
+                  - text: ∙
+                  - generic [ref=f2e71]:
+                    - link "Volume 49, Issue 4" [ref=f2e72] [cursor=pointer]:
+                      - /url: /issue/S0195-5616(19)X0003-0
+                    - text: ","
+                  - generic [ref=f2e73]: p651-670,
+                  - text: July 2019
+                - button " Download Full Issue" [ref=f2e75]:
+                  - generic [ref=f2e76]: 
+                  - generic [ref=f2e77]: Download Full Issue
+              - heading "Feline Panleukopenia A Re-emergent Disease" [level=1] [ref=f2e78]: Feline PanleukopeniaA Re-emergent Disease
+              - list [ref=f2e81]:
+                - listitem [ref=f2e82]:
+                  - generic [ref=f2e83]:
+                    - button "Vanessa R. Barrs, BVSc(hons), PhD, MVetClinStud, FANZCVS" [ref=f2e84] [cursor=pointer]
+                    - text: 
+                  - link " Send email to vanessa.barrs@sydney.edu.au" [ref=f2e85] [cursor=pointer]:
+                    - /url: mailto:vanessa.barrs@sydney.edu.au
+              - generic [ref=f2e86]:
+                - group:
+                  - generic "Affiliations & Notes" [ref=f2e87] [cursor=pointer]
+                - group:
+                  - generic "Article Info" [ref=f2e88] [cursor=pointer]
+                - text: 
+            - link [ref=f2e92] [cursor=pointer]:
+              - /url: https://www.vetsmall.theclinics.com/issue/S0195-5616(19)X0003-0
+              - 'img "Cover Image - Veterinary Clinics: Small Animal Practice, Volume 49, Issue 4" [ref=f2e93]'
+          - generic [ref=f2e94]:
+            - generic:
+              - navigation "Article navigation":
+                - text:          
+                - generic [ref=f2e95]:
+                  - text: 
+                  - generic [ref=f2e96]:
+                    - generic "More menu" [ref=f2e99]:
+                      - list [ref=f2e100]:
+                        - listitem [ref=f2e101]:
+                          - button "PDF Get Access" [ref=f2e102]:
+                            - img "PDF" [ref=f2e103]
+                            - generic [ref=f2e108]: Get Access
+                        - listitem [ref=f2e109]:
+                          - link "Open Cite in new tab" [ref=f2e110] [cursor=pointer]:
+                            - /url: https://www.vetsmall.theclinics.com/action/showCitFormats?doi=10.1016%2Fj.cvsm.2019.02.006&pii=S0195-5616%2819%2930036-1
+                            - generic [ref=f2e111]: 
+                            - generic [ref=f2e112]: Cite
+                        - listitem [ref=f2e113]:
+                          - generic [ref=f2e114]:
+                            - button "Share" [ref=f2e115]:
+                              - generic [ref=f2e116]: 
+                            - text:        
+                        - listitem [ref=f2e118]:
+                          - link "Open Set Alert in new tab" [ref=f2e119] [cursor=pointer]:
+                            - /url: https://www.vetsmall.theclinics.com/action/addCitationAlert?doi=10.1016%2Fj.cvsm.2019.02.006
+                            - generic [ref=f2e120]: 
+                            - generic [ref=f2e121]: Set Alert
+                        - listitem [ref=f2e122]:
+                          - link "Open Get Rights in new tab" [ref=f2e123] [cursor=pointer]:
+                            - /url: https://s100.copyright.com/AppDispatchServlet?publisherName=ELS&contentID=S0195561619300361&orderBeanReset=true&orderSource=Phoenix
+                            - generic [ref=f2e124]: 
+                            - generic [ref=f2e125]: Get Rights
+                        - listitem [ref=f2e126]:
+                          - link "Open Reprints in new tab" [ref=f2e127] [cursor=pointer]:
+                            - /url: https://www.contentednet.com/salesforce-form/?pii=S0195561619300361&issn=01955616&source=jbs
+                            - generic [ref=f2e128]: 
+                            - generic [ref=f2e129]: Reprints
+                    - generic [ref=f2e132]:
+                      - link "Previous article" [ref=f2e133] [cursor=pointer]:
+                        - /url: /article/S0195-5616(19)30035-X/fulltext
+                        - generic [ref=f2e134]: 
+                      - link "Next article" [ref=f2e136] [cursor=pointer]:
+                        - /url: /article/S0195-5616(19)30037-3/fulltext
+                        - generic [ref=f2e138]: 
+            - generic [ref=f2e140]:
+              - button "Show Outline" [ref=f2e141]:
+                - generic [ref=f2e142]: 
+              - text: 
+            - generic [ref=f2e145]:
+              - paragraph [ref=f2e148]: Feline panleukopenia (FPL) is caused by Carnivore protoparvovirus 1. Feline parvovirus (FPV) causes 95% of cases, whereas 5% are caused by Canine parvovirus (CPV) variants, specifically CPV-2a, b, and c.
+              - generic [ref=f2e149]:
+                - heading "Keywords" [level=2] [ref=f2e150]
+                - list [ref=f2e151]:
+                  - listitem [ref=f2e152]:
+                    - link "Parvovirus" [ref=f2e153] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Parvovirus"&journalCode=vsp
+                  - listitem [ref=f2e154]:
+                    - text: ∙
+                    - link "Canine" [ref=f2e155] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Canine"&journalCode=vsp
+                  - listitem [ref=f2e156]:
+                    - text: ∙
+                    - link "Feline" [ref=f2e157] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Feline"&journalCode=vsp
+                  - listitem [ref=f2e158]:
+                    - text: ∙
+                    - link "Panleukopenia" [ref=f2e159] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Panleukopenia"&journalCode=vsp
+                  - listitem [ref=f2e160]:
+                    - text: ∙
+                    - link "Enteritis" [ref=f2e161] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Enteritis"&journalCode=vsp
+                  - listitem [ref=f2e162]:
+                    - text: ∙
+                    - link "Shelter medicine" [ref=f2e163] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Shelter+medicine"&journalCode=vsp
+                  - listitem [ref=f2e164]:
+                    - text: ∙
+                    - link "Carnivore protoparvovirus" [ref=f2e165] [cursor=pointer]:
+                      - /url: /action/doSearch?AllField="Carnivore+protoparvovirus"&journalCode=vsp
+              - region [ref=f2e169]:
+                - link [ref=f2e173] [cursor=pointer]:
+                  - /url: /action/ShowMarlinJournalHome?journalCode=vsp
+                  - 'img "Veterinary Clinics: Small Animal Practice home. Opens in new tab" [ref=f2e174]'
+                - generic [ref=f2e175]:
+                  - heading "Get full text access" [level=2] [ref=f2e176]
+                  - paragraph [ref=f2e177]: Log in, subscribe or purchase for full access.
+                  - button "PDF Get Access" [ref=f2e179]:
+                    - img "PDF" [ref=f2e180]
+                    - generic [ref=f2e185]: Get Access
+              - generic [ref=f2e188]:
+                - heading "References" [level=2] [ref=f2e189]
+                - generic [ref=f2e191]:
+                  - generic [ref=f2e194]:
+                    - generic [ref=f2e195]:
+                      - generic [ref=f2e196]: "1."
+                      - generic [ref=f2e197]: Liu, H. ∙ Fu, Y. ∙ Xie, J. ...
+                      - strong [ref=f2e199]: Widespread endogenization of densoviruses and parvoviruses in animal and human genomes
+                      - generic [ref=f2e200]:
+                        - emphasis [ref=f2e201]: J Virol.
+                        - text: 2011;
+                        - strong [ref=f2e202]: "85"
+                        - text: (19):9863-9876
+                    - link "Open Google Scholar in new tab" [ref=f2e205] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=H.LiuY.FuJ.XieWidespread+endogenization+of+densoviruses+and+parvoviruses+in+animal+and+human+genomesJ%C2%A0Virol8519201198639876
+                      - text: Google Scholar
+                  - generic [ref=f2e208]:
+                    - generic [ref=f2e209]:
+                      - generic [ref=f2e210]: "2."
+                      - generic [ref=f2e211]: Fairweather, J.
+                      - strong [ref=f2e213]: Epidemic among cats in Delhi, resembling cholera
+                      - generic [ref=f2e214]:
+                        - emphasis [ref=f2e215]: Lancet.
+                        - text: 1876;
+                        - strong [ref=f2e216]: "2"
+                        - text: :115-117
+                      - generic [ref=f2e217]: 148-150
+                    - link "Open Google Scholar in new tab" [ref=f2e220] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=J.FairweatherEpidemic+among+cats+in+Delhi%2C+resembling+choleraLancet21876115117148-150
+                      - text: Google Scholar
+                  - generic [ref=f2e223]:
+                    - generic [ref=f2e224]:
+                      - generic [ref=f2e225]: "3."
+                      - generic [ref=f2e226]: Scott, F.W.
+                      - strong [ref=f2e228]: Viral diseases - Panleukopenia
+                      - generic [ref=f2e229]:
+                        - text: W. B. Saunders, Philadelphia,
+                        - generic [ref=f2e230]: Holzworth, J. (Editor)
+                        - text: "in: Diseases of the cat. vol. 1. 1987; 182-193"
+                    - link "Open Google Scholar in new tab" [ref=f2e233] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=F.W.ScottViral+diseases+-+PanleukopeniaJ.HolzworthDiseases+of+the+catvol.+11987W.+B.+SaundersPhiladelphia182193
+                      - text: Google Scholar
+                  - generic [ref=f2e236]:
+                    - generic [ref=f2e237]:
+                      - generic [ref=f2e238]: "4."
+                      - generic [ref=f2e239]: Leasure, E.E. ∙ Lienardt, H.F. ∙ Taberner, F.R.
+                      - strong [ref=f2e241]: Feline infectious enteritis
+                      - generic [ref=f2e242]:
+                        - emphasis [ref=f2e243]: North Am Vet.
+                        - text: 1934;
+                        - strong [ref=f2e244]: "15"
+                        - text: (7):30-34
+                    - link "Open Google Scholar in new tab" [ref=f2e247] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=E.E.LeasureH.F.LienardtF.R.TabernerFeline+infectious+enteritisNorth+Am+Vet15719343034
+                      - text: Google Scholar
+                  - generic [ref=f2e250]:
+                    - generic [ref=f2e251]:
+                      - generic [ref=f2e252]: "5."
+                      - generic [ref=f2e253]: Verge, J. ∙ Cristoforoni, N.
+                      - strong [ref=f2e255]: La gastroenterite infectieuse des chats est elle due a un virus filtrable?
+                      - generic [ref=f2e256]:
+                        - emphasis [ref=f2e257]: Comptes rendus des seances de la Societe de biologie (Paris).
+                        - text: 1928;
+                        - strong [ref=f2e258]: "99"
+                        - text: :312-314
+                    - link "Open Google Scholar in new tab" [ref=f2e261] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=J.VergeN.CristoforoniLa+gastroenterite+infectieuse+des+chats+est+elle+due+a+un+virus+filtrable%3FComptes+rendus+des+seances+de+la+Societe+de+biologie+%28Paris%29991928312314
+                      - text: Google Scholar
+                  - generic [ref=f2e264]:
+                    - generic [ref=f2e265]:
+                      - generic [ref=f2e266]: "6."
+                      - generic [ref=f2e267]: Johnson, R.H.
+                      - strong [ref=f2e269]: Isolation of a virus from a condition simulating feline panleukopaenia in a leopard
+                      - generic [ref=f2e270]:
+                        - emphasis [ref=f2e271]: Vet Rec.
+                        - text: 1964;
+                        - strong [ref=f2e272]: "76"
+                        - text: :1008-1012
+                    - link "Open Google Scholar in new tab" [ref=f2e275] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=R.H.JohnsonIsolation+of+a+virus+from+a+condition+simulating+feline+panleukopaenia+in+a+leopardVet+Rec76196410081012
+                      - text: Google Scholar
+                  - generic [ref=f2e278]:
+                    - generic [ref=f2e279]:
+                      - generic [ref=f2e280]: "7."
+                      - generic [ref=f2e281]: Povey, R.C.
+                      - strong [ref=f2e283]: Feline panleukopenia – which vaccine?
+                      - generic [ref=f2e284]:
+                        - emphasis [ref=f2e285]: J Small Anim Pract.
+                        - text: 1973;
+                        - strong [ref=f2e286]: "14"
+                        - text: (7):399-406
+                    - link "Open Google Scholar in new tab" [ref=f2e289] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=R.C.PoveyFeline+panleukopenia+%E2%80%93+which+vaccine%3FJ%C2%A0Small+Anim+Pract1471973399406
+                      - text: Google Scholar
+                  - generic [ref=f2e292]:
+                    - generic [ref=f2e293]:
+                      - generic [ref=f2e294]: "8."
+                      - generic [ref=f2e295]: People’s Dispensary for Sick Animals
+                      - strong [ref=f2e297]: PDSA Animal Wellbeing Report 2017
+                      - generic [ref=f2e298]: PDSA, Telford (United Kingdom), 2017 27
+                    - link "Open Google Scholar in new tab" [ref=f2e301] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=People%E2%80%99s+Dispensary+for+Sick+AnimalsPDSA+Animal+Wellbeing+Report+20172017PDSATelford+%28United+Kingdom%2927
+                      - text: Google Scholar
+                  - generic [ref=f2e304]:
+                    - generic [ref=f2e305]:
+                      - generic [ref=f2e306]: "9."
+                      - text: Barrs VR, Brailey J, Allison AB, et al. Re-emergence of feline panleukopenia in Australia. 27th ECVIM-CA Congress. St Julian's, Malta, September 14–16. 2017:ISCAID_0_4.
+                    - link "Open Google Scholar in new tab" [ref=f2e309] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=Barrs+VR%2C+Brailey+J%2C+Allison+AB%2C+et%C2%A0al.+Re-emergence+of+feline+panleukopenia+in+Australia.+27th+ECVIM-CA+Congress.+St+Julian%27s%2C+Malta%2C+September+14%E2%80%9316.+2017%3AISCAID_0_4.
+                      - text: Google Scholar
+                  - generic [ref=f2e312]:
+                    - generic [ref=f2e313]:
+                      - generic [ref=f2e314]: "10."
+                      - generic [ref=f2e315]: Cotmore, S.F. ∙ Agbandje-McKenna, M. ∙ Chiorini, J.A. ...
+                      - strong [ref=f2e317]: The family Parvoviridae
+                      - generic [ref=f2e318]:
+                        - emphasis [ref=f2e319]: Arch Virol.
+                        - text: 2014;
+                        - strong [ref=f2e320]: "159"
+                        - text: (5):1239-1247
+                    - generic [ref=f2e321]:
+                      - link "Open Crossref in new tab" [ref=f2e323] [cursor=pointer]:
+                        - /url: https://doi.org/10.1007/s00705-013-1914-1
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e325] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_10_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84899970268
+                        - text: Scopus (546)
+                      - link "Open Google Scholar in new tab" [ref=f2e327] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1007%2Fs00705-013-1914-1
+                        - text: Google Scholar
+                  - generic [ref=f2e330]:
+                    - generic [ref=f2e331]:
+                      - generic [ref=f2e332]: "11."
+                      - generic [ref=f2e333]: Allison, A.B. ∙ Kohler, D.J. ∙ Fox, K.A. ...
+                      - strong [ref=f2e335]: Frequent cross-species transmission of parvoviruses among diverse carnivore hosts
+                      - generic [ref=f2e336]:
+                        - emphasis [ref=f2e337]: J Virol.
+                        - text: 2013;
+                        - strong [ref=f2e338]: "87"
+                        - text: (4):2342-2347
+                    - link "Open Google Scholar in new tab" [ref=f2e341] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.B.AllisonD.J.KohlerK.A.FoxFrequent+cross-species+transmission+of+parvoviruses+among+diverse+carnivore+hostsJ%C2%A0Virol874201323422347
+                      - text: Google Scholar
+                  - generic [ref=f2e344]:
+                    - generic [ref=f2e345]:
+                      - generic [ref=f2e346]: "12."
+                      - generic [ref=f2e347]: Allison, A.B. ∙ Kohler, D.J. ∙ Ortega, A. ...
+                      - strong [ref=f2e349]: Host-specific parvovirus evolution in nature is recapitulated by in vitro adaptation to different carnivore species
+                      - generic [ref=f2e350]:
+                        - emphasis [ref=f2e351]: PLoS Pathog.
+                        - text: 2014;
+                        - strong [ref=f2e352]: "10"
+                        - text: (11):e1004475
+                    - link "Open Google Scholar in new tab" [ref=f2e355] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.B.AllisonD.J.KohlerA.OrtegaHost-specific+parvovirus+evolution+in+nature+is+recapitulated+by+in%C2%A0vitro+adaptation+to+different+carnivore+speciesPLoS+Pathog10112014e1004475
+                      - text: Google Scholar
+                  - generic [ref=f2e358]:
+                    - generic [ref=f2e359]:
+                      - generic [ref=f2e360]: "13."
+                      - generic [ref=f2e361]: Truyen, U. ∙ Parrish, C.R.
+                      - strong [ref=f2e363]: "Canine and feline host ranges of canine parvovirus and feline panleukopenia virus: distinct host cell tropisms of each virus in vitro and in vivo"
+                      - generic [ref=f2e364]:
+                        - emphasis [ref=f2e365]: J Virol.
+                        - text: 1992;
+                        - strong [ref=f2e366]: "66"
+                        - text: (9):5399-5408
+                    - link "Open Google Scholar in new tab" [ref=f2e369] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=U.TruyenC.R.ParrishCanine+and+feline+host+ranges+of+canine+parvovirus+and+feline+panleukopenia+virus%3A+distinct+host+cell+tropisms+of+each+virus+in%C2%A0vitro+and+in%C2%A0vivoJ%C2%A0Virol669199253995408
+                      - text: Google Scholar
+                  - generic [ref=f2e372]:
+                    - generic [ref=f2e373]:
+                      - generic [ref=f2e374]: "14."
+                      - generic [ref=f2e375]: Hoelzer, K. ∙ Parrish, C.R.
+                      - strong [ref=f2e377]: The emergence of parvoviruses of carnivores
+                      - generic [ref=f2e378]:
+                        - emphasis [ref=f2e379]: Vet Res.
+                        - text: 2010;
+                        - strong [ref=f2e380]: "41"
+                        - text: (6):39
+                    - link "Open Google Scholar in new tab" [ref=f2e383] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.HoelzerC.R.ParrishThe+emergence+of+parvoviruses+of+carnivoresVet+Res416201039
+                      - text: Google Scholar
+                  - generic [ref=f2e386]:
+                    - generic [ref=f2e387]:
+                      - generic [ref=f2e388]: "15."
+                      - generic [ref=f2e389]: Hueffer, K. ∙ Parker, J.S. ∙ Weichert, W.S. ...
+                      - strong [ref=f2e391]: The natural host range shift and subsequent evolution of canine parvovirus resulted from virus-specific binding to the canine transferrin receptor
+                      - generic [ref=f2e392]:
+                        - emphasis [ref=f2e393]: J Virol.
+                        - text: 2003;
+                        - strong [ref=f2e394]: "77"
+                        - text: (3):1718-1726
+                    - link "Open Google Scholar in new tab" [ref=f2e397] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.HuefferJ.S.ParkerW.S.WeichertThe+natural+host+range+shift+and+subsequent+evolution+of+canine+parvovirus+resulted+from+virus-specific+binding+to+the+canine+transferrin+receptorJ%C2%A0Virol773200317181726
+                      - text: Google Scholar
+                  - generic [ref=f2e400]:
+                    - generic [ref=f2e401]:
+                      - generic [ref=f2e402]: "16."
+                      - generic [ref=f2e403]: Parrish, C.R.
+                      - strong [ref=f2e405]: Host range relationships and the evolution of canine parvovirus
+                      - generic [ref=f2e406]:
+                        - emphasis [ref=f2e407]: Vet Microbiol.
+                        - text: 1999;
+                        - strong [ref=f2e408]: "69"
+                        - text: (1–2):29-40
+                    - link "Open Google Scholar in new tab" [ref=f2e411] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.R.ParrishHost+range+relationships+and+the+evolution+of+canine+parvovirusVet+Microbiol691%E2%80%93219992940
+                      - text: Google Scholar
+                  - generic [ref=f2e414]:
+                    - generic [ref=f2e415]:
+                      - generic [ref=f2e416]: "17."
+                      - generic [ref=f2e417]: Allison, A.B. ∙ Parrish, C.R.
+                      - strong [ref=f2e419]: Parvoviruses of carnivores. Their transmission and the variation of viral host range
+                      - generic [ref=f2e420]: Johnson, N. (Editor)
+                      - strong [ref=f2e423]: The role of animals in emerging viral diseases
+                      - generic [ref=f2e424]: Elsevier Science & Technology, Oxford, UK, 2014
+                    - link "Open Google Scholar in new tab" [ref=f2e427] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.B.AllisonC.R.ParrishParvoviruses+of+carnivores.+Their+transmission+and+the+variation+of+viral+host+rangeN.JohnsonThe+role+of+animals+in+emerging+viral+diseases2014Elsevier+Science+%26+TechnologyOxford%2C+UK
+                      - text: Google Scholar
+                  - generic [ref=f2e430]:
+                    - generic [ref=f2e431]:
+                      - generic [ref=f2e432]: "18."
+                      - generic [ref=f2e433]: Truyen, U. ∙ Agbandje, M. ∙ Parrish, C.R.
+                      - strong [ref=f2e435]: Characterization of the feline host range and a specific epitope of feline panleukopenia virus
+                      - generic [ref=f2e436]:
+                        - emphasis [ref=f2e437]: Virology.
+                        - text: 1994;
+                        - strong [ref=f2e438]: "200"
+                        - text: (2):494-503
+                    - link "Open Google Scholar in new tab" [ref=f2e441] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=U.TruyenM.AgbandjeC.R.ParrishCharacterization+of+the+feline+host+range+and+a+specific+epitope+of+feline+panleukopenia+virusVirology20021994494503
+                      - text: Google Scholar
+                  - generic [ref=f2e444]:
+                    - generic [ref=f2e445]:
+                      - generic [ref=f2e446]: "19."
+                      - generic [ref=f2e447]: Truyen, U. ∙ Muller, T. ∙ Heidrich, R. ...
+                      - strong [ref=f2e449]: Survey on viral pathogens in wild red foxes (Vulpes vulpes) in Germany with emphasis on parvoviruses and analysis of a DNA sequence from a red fox parvovirus
+                      - generic [ref=f2e450]:
+                        - emphasis [ref=f2e451]: Epidemiol Infect.
+                        - text: 1998;
+                        - strong [ref=f2e452]: "121"
+                        - text: (2):433-440
+                    - link "Open Google Scholar in new tab" [ref=f2e455] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=U.TruyenT.MullerR.HeidrichSurvey+on+viral+pathogens+in+wild+red+foxes+%28Vulpes+vulpes%29+in+Germany+with+emphasis+on+parvoviruses+and+analysis+of+a+DNA+sequence+from+a+red+fox+parvovirusEpidemiol+Infect12121998433440
+                      - text: Google Scholar
+                  - generic [ref=f2e458]:
+                    - generic [ref=f2e459]:
+                      - generic [ref=f2e460]: "20."
+                      - generic [ref=f2e461]: Parrish, C.R. ∙ Have, P. ∙ Foreyt, W.J. ...
+                      - strong [ref=f2e463]: The global spread and replacement of canine parvovirus strains
+                      - generic [ref=f2e464]:
+                        - emphasis [ref=f2e465]: J Gen Virol.
+                        - text: 1988;
+                        - strong [ref=f2e466]: "69"
+                        - text: (Pt 5):1111-1116
+                    - link "Open Google Scholar in new tab" [ref=f2e469] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.R.ParrishP.HaveW.J.ForeytThe+global+spread+and+replacement+of+canine+parvovirus+strainsJ%C2%A0Gen+Virol69Pt+5198811111116
+                      - text: Google Scholar
+                  - generic [ref=f2e472]:
+                    - generic [ref=f2e473]:
+                      - generic [ref=f2e474]: "21."
+                      - generic [ref=f2e475]: Parrish, C.R. ∙ O'Connell, P.H. ∙ Evermann, J.F. ...
+                      - strong [ref=f2e477]: Natural variation of canine parvovirus
+                      - generic [ref=f2e478]:
+                        - emphasis [ref=f2e479]: Science.
+                        - text: 1985;
+                        - strong [ref=f2e480]: "230"
+                        - text: (4729):1046-1048
+                    - link "Open Google Scholar in new tab" [ref=f2e483] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.R.ParrishP.H.O%27ConnellJ.F.EvermannNatural+variation+of+canine+parvovirusScience2304729198510461048
+                      - text: Google Scholar
+                  - generic [ref=f2e486]:
+                    - generic [ref=f2e487]:
+                      - generic [ref=f2e488]: "22."
+                      - generic [ref=f2e489]: Parrish, C.R. ∙ Aquadro, C.F. ∙ Strassheim, M.L. ...
+                      - strong [ref=f2e491]: Rapid antigenic-type replacement and DNA sequence evolution of canine parvovirus
+                      - generic [ref=f2e492]:
+                        - emphasis [ref=f2e493]: J Virol.
+                        - text: 1991;
+                        - strong [ref=f2e494]: "65"
+                        - text: (12):6544-6552
+                    - link "Open Google Scholar in new tab" [ref=f2e497] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.R.ParrishC.F.AquadroM.L.StrassheimRapid+antigenic-type+replacement+and+DNA+sequence+evolution+of+canine+parvovirusJ%C2%A0Virol6512199165446552
+                      - text: Google Scholar
+                  - generic [ref=f2e500]:
+                    - generic [ref=f2e501]:
+                      - generic [ref=f2e502]: "23."
+                      - generic [ref=f2e503]: Buonavoglia, C. ∙ Martella, V. ∙ Pratelli, A. ...
+                      - strong [ref=f2e505]: Evidence for evolution of canine parvovirus type 2 in Italy
+                      - generic [ref=f2e506]:
+                        - emphasis [ref=f2e507]: J Gen Virol.
+                        - text: 2001;
+                        - strong [ref=f2e508]: "82"
+                        - text: (Pt 12):3021-3025
+                    - link "Open Google Scholar in new tab" [ref=f2e511] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.BuonavogliaV.MartellaA.PratelliEvidence+for+evolution+of+canine+parvovirus+type+2+in+ItalyJ%C2%A0Gen+Virol82Pt+12200130213025
+                      - text: Google Scholar
+                  - generic [ref=f2e514]:
+                    - generic [ref=f2e515]:
+                      - generic [ref=f2e516]: "24."
+                      - generic [ref=f2e517]: Mochizuki, M. ∙ Harasawa, R. ∙ Nakatani, H.
+                      - strong [ref=f2e519]: Antigenic and genomic variabilities among recently prevalent parvoviruses of canine and feline origin in Japan
+                      - generic [ref=f2e520]:
+                        - emphasis [ref=f2e521]: Vet Microbiol.
+                        - text: 1993;
+                        - strong [ref=f2e522]: "38"
+                        - text: (1–2):1-10
+                    - link "Open Google Scholar in new tab" [ref=f2e525] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.MochizukiR.HarasawaH.NakataniAntigenic+and+genomic+variabilities+among+recently+prevalent+parvoviruses+of+canine+and+feline+origin+in+JapanVet+Microbiol381%E2%80%9321993110
+                      - text: Google Scholar
+                  - generic [ref=f2e528]:
+                    - generic [ref=f2e529]:
+                      - generic [ref=f2e530]: "25."
+                      - generic [ref=f2e531]: Clegg, S.R. ∙ Coyne, K.P. ∙ Dawson, S. ...
+                      - strong [ref=f2e533]: Canine parvovirus in asymptomatic feline carriers
+                      - generic [ref=f2e534]:
+                        - emphasis [ref=f2e535]: Vet Microbiol.
+                        - text: 2012;
+                        - strong [ref=f2e536]: "157"
+                        - text: (1–2):78-85
+                    - link "Open Google Scholar in new tab" [ref=f2e539] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=S.R.CleggK.P.CoyneS.DawsonCanine+parvovirus+in+asymptomatic+feline+carriersVet+Microbiol1571%E2%80%93220127885
+                      - text: Google Scholar
+                  - generic [ref=f2e542]:
+                    - generic [ref=f2e543]:
+                      - generic [ref=f2e544]: "26."
+                      - generic [ref=f2e545]: Mukhopadhyay, H.K. ∙ Nookala, M. ∙ Thangamani, N.R. ...
+                      - strong [ref=f2e547]: Molecular characterisation of parvoviruses from domestic cats reveals emergence of newer variants in India
+                      - generic [ref=f2e548]:
+                        - emphasis [ref=f2e549]: J Feline Med Surg.
+                        - text: 2017;
+                        - strong [ref=f2e550]: "19"
+                        - text: (8):846-852
+                    - link "Open Google Scholar in new tab" [ref=f2e553] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=H.K.MukhopadhyayM.NookalaN.R.ThangamaniMolecular+characterisation+of+parvoviruses+from+domestic+cats+reveals+emergence+of+newer+variants+in+IndiaJ%C2%A0Feline+Med+Surg1982017846852
+                      - text: Google Scholar
+                  - generic [ref=f2e556]:
+                    - generic [ref=f2e557]:
+                      - generic [ref=f2e558]: "27."
+                      - generic [ref=f2e559]: Clegg, S.R. ∙ Coyne, K.P. ∙ Parker, J. ...
+                      - strong [ref=f2e561]: Molecular epidemiology and phylogeny reveal complex spatial dynamics in areas where canine parvovirus is endemic
+                      - generic [ref=f2e562]:
+                        - emphasis [ref=f2e563]: J Virol.
+                        - text: 2011;
+                        - strong [ref=f2e564]: "85"
+                        - text: (15):7892-7899
+                    - link "Open Google Scholar in new tab" [ref=f2e567] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=S.R.CleggK.P.CoyneJ.ParkerMolecular+epidemiology+and+phylogeny+reveal+complex+spatial+dynamics+in+areas+where+canine+parvovirus+is+endemicJ%C2%A0Virol8515201178927899
+                      - text: Google Scholar
+                  - generic [ref=f2e570]:
+                    - generic [ref=f2e571]:
+                      - generic [ref=f2e572]: "28."
+                      - generic [ref=f2e573]: Byrne, P. ∙ Beatty, J.A. ∙ Slapeta, J. ...
+                      - strong [ref=f2e575]: Shelter-housed cats show no evidence of faecal shedding of canine parvovirus DNA
+                      - generic [ref=f2e576]:
+                        - emphasis [ref=f2e577]: Vet J.
+                        - text: 2018;
+                        - strong [ref=f2e578]: "239"
+                        - text: :54-58
+                    - link "Open Google Scholar in new tab" [ref=f2e581] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=P.ByrneJ.A.BeattyJ.SlapetaShelter-housed+cats+show+no+evidence+of+faecal+shedding+of+canine+parvovirus+DNAVet+J23920185458
+                      - text: Google Scholar
+                  - generic [ref=f2e584]:
+                    - generic [ref=f2e585]:
+                      - generic [ref=f2e586]: "29."
+                      - generic [ref=f2e587]: Miranda, C. ∙ Parrish, C.R. ∙ Thompson, G.
+                      - strong [ref=f2e589]: Canine parvovirus 2c infection in a cat with severe clinical disease
+                      - generic [ref=f2e590]:
+                        - emphasis [ref=f2e591]: J Vet Diagn Invest.
+                        - text: 2014;
+                        - strong [ref=f2e592]: "26"
+                        - text: (3):462-464
+                    - generic [ref=f2e593]:
+                      - link "Open Crossref in new tab" [ref=f2e595] [cursor=pointer]:
+                        - /url: https://doi.org/10.1177/1040638714528502
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e597] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_29_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84901378256
+                        - text: Scopus (34)
+                      - link "Open PubMed in new tab" [ref=f2e599] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/24670953/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e601] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1177%2F1040638714528502&pmid=24670953
+                        - text: Google Scholar
+                  - generic [ref=f2e604]:
+                    - generic [ref=f2e605]:
+                      - generic [ref=f2e606]: "30."
+                      - generic [ref=f2e607]: Mochizuki, M. ∙ Horiuchi, M. ∙ Hiragi, H. ...
+                      - strong [ref=f2e609]: Isolation of canine parvovirus from a cat manifesting clinical signs of feline panleukopenia
+                      - generic [ref=f2e610]:
+                        - emphasis [ref=f2e611]: J Clin Microbiol.
+                        - text: 1996;
+                        - strong [ref=f2e612]: "34"
+                        - text: (9):2101-2105
+                    - link "Open Google Scholar in new tab" [ref=f2e615] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.MochizukiM.HoriuchiH.HiragiIsolation+of+canine+parvovirus+from+a+cat+manifesting+clinical+signs+of+feline+panleukopeniaJ%C2%A0Clin+Microbiol349199621012105
+                      - text: Google Scholar
+                  - generic [ref=f2e618]:
+                    - generic [ref=f2e619]:
+                      - generic [ref=f2e620]: "31."
+                      - generic [ref=f2e621]: Decaro, N. ∙ Buonavoglia, D. ∙ Desario, C. ...
+                      - strong [ref=f2e623]: Characterisation of canine parvovirus strains isolated from cats with feline panleukopenia
+                      - generic [ref=f2e624]:
+                        - emphasis [ref=f2e625]: Res Vet Sci.
+                        - text: 2010;
+                        - strong [ref=f2e626]: "89"
+                        - text: (2):275-278
+                    - link "Open Google Scholar in new tab" [ref=f2e629] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=N.DecaroD.BuonavogliaC.DesarioCharacterisation+of+canine+parvovirus+strains+isolated+from+cats+with+feline+panleukopeniaRes+Vet+Sci8922010275278
+                      - text: Google Scholar
+                  - generic [ref=f2e632]:
+                    - generic [ref=f2e633]:
+                      - generic [ref=f2e634]: "32."
+                      - generic [ref=f2e635]: Battilani, M. ∙ Balboni, A. ∙ Giunti, M. ...
+                      - strong [ref=f2e637]: Co-infection with feline and canine parvovirus in a cat
+                      - generic [ref=f2e638]:
+                        - emphasis [ref=f2e639]: Vet Ital.
+                        - text: 2013;
+                        - strong [ref=f2e640]: "49"
+                        - text: (1):127-129
+                    - link "Open Google Scholar in new tab" [ref=f2e643] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.BattilaniA.BalboniM.GiuntiCo-infection+with+feline+and+canine+parvovirus+in+a+catVet+Ital4912013127129
+                      - text: Google Scholar
+                  - generic [ref=f2e646]:
+                    - generic [ref=f2e647]:
+                      - generic [ref=f2e648]: "33."
+                      - generic [ref=f2e649]: Battilani, M. ∙ Balboni, A. ∙ Ustulin, M. ...
+                      - strong [ref=f2e651]: Genetic complexity and multiple infections with more parvovirus species in naturally infected cats
+                      - generic [ref=f2e652]:
+                        - emphasis [ref=f2e653]: Vet Res.
+                        - text: 2011;
+                        - strong [ref=f2e654]: "42"
+                        - text: :43
+                    - link "Open Google Scholar in new tab" [ref=f2e657] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.BattilaniA.BalboniM.UstulinGenetic+complexity+and+multiple+infections+with+more+parvovirus+species+in+naturally+infected+catsVet+Res42201143
+                      - text: Google Scholar
+                  - generic [ref=f2e660]:
+                    - generic [ref=f2e661]:
+                      - generic [ref=f2e662]: "34."
+                      - generic [ref=f2e663]: Nakamura, K. ∙ Sakamoto, M. ∙ Ikeda, Y. ...
+                      - strong [ref=f2e665]: Pathogenic potential of canine parvovirus types 2a and 2c in domestic cats
+                      - generic [ref=f2e666]:
+                        - emphasis [ref=f2e667]: Clin Diagn Lab Immunol.
+                        - text: 2001;
+                        - strong [ref=f2e668]: "8"
+                        - text: (3):663-668
+                    - link "Open Google Scholar in new tab" [ref=f2e671] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.NakamuraM.SakamotoY.IkedaPathogenic+potential+of+canine+parvovirus+types+2a+and+2c+in+domestic+catsClin+Diagn+Lab+Immunol832001663668
+                      - text: Google Scholar
+                  - generic [ref=f2e674]:
+                    - generic [ref=f2e675]:
+                      - generic [ref=f2e676]: "35."
+                      - generic [ref=f2e677]: Gamoh, K. ∙ Shimazaki, Y. ∙ Makie, H. ...
+                      - strong [ref=f2e679]: The pathogenicity of canine parvovirus type-2b, FP84 strain isolated from a domestic cat, in domestic cats
+                      - generic [ref=f2e680]:
+                        - emphasis [ref=f2e681]: J Vet Med Sci.
+                        - text: 2003;
+                        - strong [ref=f2e682]: "65"
+                        - text: (9):1027-1029
+                    - generic [ref=f2e683]:
+                      - link "Open Crossref in new tab" [ref=f2e685] [cursor=pointer]:
+                        - /url: https://doi.org/10.1292/jvms.65.1027
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e687] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_35_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0347118717
+                        - text: Scopus (23)
+                      - link "Open PubMed in new tab" [ref=f2e689] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/14532700/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e691] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1292%2Fjvms.65.1027&pmid=14532700
+                        - text: Google Scholar
+                  - generic [ref=f2e694]:
+                    - generic [ref=f2e695]:
+                      - generic [ref=f2e696]: "36."
+                      - generic [ref=f2e697]: Ikeda, Y. ∙ Miyazawa, T. ∙ Nakamura, K. ...
+                      - strong [ref=f2e699]: Serosurvey for selected virus infections of wild carnivores in Taiwan and Vietnam
+                      - generic [ref=f2e700]:
+                        - emphasis [ref=f2e701]: J Wildl Dis.
+                        - text: 1999;
+                        - strong [ref=f2e702]: "35"
+                        - text: (3):578-581
+                    - link "Open Google Scholar in new tab" [ref=f2e705] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=Y.IkedaT.MiyazawaK.NakamuraSerosurvey+for+selected+virus+infections+of+wild+carnivores+in+Taiwan+and+VietnamJ%C2%A0Wildl+Dis3531999578581
+                      - text: Google Scholar
+                  - generic [ref=f2e708]:
+                    - generic [ref=f2e709]:
+                      - generic [ref=f2e710]: "37."
+                      - generic [ref=f2e711]: Miyazawa, T. ∙ Ikeda, Y. ∙ Nakamura, K. ...
+                      - strong [ref=f2e713]: Isolation of feline parvovirus from peripheral blood mononuclear cells of cats in northern Vietnam
+                      - generic [ref=f2e714]:
+                        - emphasis [ref=f2e715]: Microbiol Immunol.
+                        - text: 1999;
+                        - strong [ref=f2e716]: "43"
+                        - text: (6):609-612
+                    - link "Open Google Scholar in new tab" [ref=f2e719] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=T.MiyazawaY.IkedaK.NakamuraIsolation+of+feline+parvovirus+from+peripheral+blood+mononuclear+cells+of+cats+in+northern+VietnamMicrobiol+Immunol4361999609612
+                      - text: Google Scholar
+                  - generic [ref=f2e722]:
+                    - generic [ref=f2e723]:
+                      - generic [ref=f2e724]: "38."
+                      - generic [ref=f2e725]: Nakamura, K. ∙ Ikeda, Y. ∙ Miyazawa, T. ...
+                      - strong [ref=f2e727]: Comparison of prevalence of feline herpesvirus type 1, calicivirus and parvovirus infections in domestic and leopard cats in Vietnam
+                      - generic [ref=f2e728]:
+                        - emphasis [ref=f2e729]: J Vet Med Sci.
+                        - text: 1999;
+                        - strong [ref=f2e730]: "61"
+                        - text: (12):1313-1315
+                    - link "Open Google Scholar in new tab" [ref=f2e733] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.NakamuraY.IkedaT.MiyazawaComparison+of+prevalence+of+feline+herpesvirus+type+1%2C+calicivirus+and+parvovirus+infections+in+domestic+and+leopard+cats+in+VietnamJ%C2%A0Vet+Med+Sci6112199913131315
+                      - text: Google Scholar
+                  - generic [ref=f2e736]:
+                    - generic [ref=f2e737]:
+                      - generic [ref=f2e738]: "39."
+                      - generic [ref=f2e739]: Norja, P. ∙ Hokynar, K. ∙ Aaltonen, L.M. ...
+                      - strong [ref=f2e741]: "Bioportfolio: lifelong persistence of variant and prototypic erythrovirus DNA genomes in human tissue"
+                      - generic [ref=f2e742]:
+                        - emphasis [ref=f2e743]: Proc Natl Acad Sci U S A.
+                        - text: 2006;
+                        - strong [ref=f2e744]: "103"
+                        - text: (19):7450-7453
+                    - generic [ref=f2e745]:
+                      - link "Open Crossref in new tab" [ref=f2e747] [cursor=pointer]:
+                        - /url: https://doi.org/10.1073/pnas.0602259103
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e749] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_39_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-33646574285
+                        - text: Scopus (216)
+                      - link "Open PubMed in new tab" [ref=f2e751] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/16651522/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e753] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1073%2Fpnas.0602259103&pmid=16651522
+                        - text: Google Scholar
+                  - generic [ref=f2e756]:
+                    - generic [ref=f2e757]:
+                      - generic [ref=f2e758]: "40."
+                      - generic [ref=f2e759]: Bentinck-Smith, J.
+                      - strong [ref=f2e761]: Feline panleukopenia (feline infectious enteritis) - a review of 574 cases
+                      - generic [ref=f2e762]:
+                        - emphasis [ref=f2e763]: North Am Vet.
+                        - text: 1949;
+                        - strong [ref=f2e764]: "30"
+                        - text: :379-384
+                    - link "Open Google Scholar in new tab" [ref=f2e767] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=J.Bentinck-SmithFeline+panleukopenia+%28feline+infectious+enteritis%29+-+a+review+of+574+casesNorth+Am+Vet301949379384
+                      - text: Google Scholar
+                  - generic [ref=f2e770]:
+                    - generic [ref=f2e771]:
+                      - generic [ref=f2e772]: "41."
+                      - generic [ref=f2e773]: Reif, J.S.
+                      - strong [ref=f2e775]: Seasonality, natality and herd immunity in feline panleukopenia
+                      - generic [ref=f2e776]:
+                        - emphasis [ref=f2e777]: Am J Epidemiol.
+                        - text: 1976;
+                        - strong [ref=f2e778]: "103"
+                        - text: (1):81-87
+                    - link "Open Google Scholar in new tab" [ref=f2e781] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=J.S.ReifSeasonality%2C+natality+and+herd+immunity+in+feline+panleukopeniaAm+J+Epidemiol103119768187
+                      - text: Google Scholar
+                  - generic [ref=f2e784]:
+                    - generic [ref=f2e785]:
+                      - generic [ref=f2e786]: "42."
+                      - generic [ref=f2e787]: Kruse, B.D. ∙ Unterer, S. ∙ Horlacher, K. ...
+                      - strong [ref=f2e789]: Prognostic factors in cats with feline panleukopenia
+                      - generic [ref=f2e790]:
+                        - emphasis [ref=f2e791]: J Vet Intern Med.
+                        - text: 2010;
+                        - strong [ref=f2e792]: "24"
+                        - text: (6):1271-1276
+                    - link "Open Google Scholar in new tab" [ref=f2e795] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=B.D.KruseS.UntererK.HorlacherPrognostic+factors+in+cats+with+feline+panleukopeniaJ%C2%A0Vet+Intern+Med246201012711276
+                      - text: Google Scholar
+                  - generic [ref=f2e798]:
+                    - generic [ref=f2e799]:
+                      - generic [ref=f2e800]: "43."
+                      - generic [ref=f2e801]: Litster, A. ∙ Benjanirut, C.
+                      - strong [ref=f2e803]: Case series of feline panleukopenia virus in an animal shelter
+                      - generic [ref=f2e804]:
+                        - emphasis [ref=f2e805]: J Feline Med Surg.
+                        - text: 2014;
+                        - strong [ref=f2e806]: "16"
+                        - text: (4):346-353
+                    - link "Open Google Scholar in new tab" [ref=f2e809] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.LitsterC.BenjanirutCase+series+of+feline+panleukopenia+virus+in+an+animal+shelterJ%C2%A0Feline+Med+Surg1642014346353
+                      - text: Google Scholar
+                  - generic [ref=f2e812]:
+                    - generic [ref=f2e813]:
+                      - generic [ref=f2e814]: "44."
+                      - generic [ref=f2e815]: Crawford, P.C. ∙ Hanel, R.M. ∙ Levy, J.K.
+                      - strong [ref=f2e817]: Evaluation of treatment of colostrum-deprived kittens with equine IgG
+                      - generic [ref=f2e818]:
+                        - emphasis [ref=f2e819]: Am J Vet Res.
+                        - text: 2003;
+                        - strong [ref=f2e820]: "64"
+                        - text: (8):969-975
+                    - link "Open Google Scholar in new tab" [ref=f2e823] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=P.C.CrawfordR.M.HanelJ.K.LevyEvaluation+of+treatment+of+colostrum-deprived+kittens+with+equine+IgGAm+J+Vet+Res6482003969975
+                      - text: Google Scholar
+                  - generic [ref=f2e826]:
+                    - generic [ref=f2e827]:
+                      - generic [ref=f2e828]: "45."
+                      - generic [ref=f2e829]: Day, M.J. ∙ Horzinek, M.C. ∙ Schultz, R.D. ...
+                      - strong [ref=f2e831]: WSAVA Guidelines for the vaccination of dogs and cats
+                      - generic [ref=f2e832]:
+                        - emphasis [ref=f2e833]: J Small Anim Pract.
+                        - text: 2016;
+                        - strong [ref=f2e834]: "57"
+                        - text: (1):E1-E45
+                    - generic [ref=f2e835]:
+                      - link "Open Crossref in new tab" [ref=f2e837] [cursor=pointer]:
+                        - /url: https://doi.org/10.1111/jsap.2_12431
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e839] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_45_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84956703307
+                        - text: Scopus (195)
+                      - link "Open PubMed in new tab" [ref=f2e841] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/26780857/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e843] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1111%2Fjsap.2_12431&pmid=26780857
+                        - text: Google Scholar
+                  - generic [ref=f2e846]:
+                    - generic [ref=f2e847]:
+                      - generic [ref=f2e848]: "46."
+                      - generic [ref=f2e849]: Scott, F. ∙ Csiza, C.K. ∙ Gillespie, J.H.
+                      - strong [ref=f2e851]: Maternally derived immunity to feline panleukopenia
+                      - generic [ref=f2e852]:
+                        - emphasis [ref=f2e853]: J Am Vet Med Assoc.
+                        - text: 1970;
+                        - strong [ref=f2e854]: "156"
+                        - text: :439-453
+                    - link "Open Google Scholar in new tab" [ref=f2e857] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=F.ScottC.K.CsizaJ.H.GillespieMaternally+derived+immunity+to+feline+panleukopeniaJ%C2%A0Am+Vet+Med+Assoc1561970439453
+                      - text: Google Scholar
+                  - generic [ref=f2e860]:
+                    - generic [ref=f2e861]:
+                      - generic [ref=f2e862]: "47."
+                      - generic [ref=f2e863]: Scott, F.W.
+                      - strong [ref=f2e865]: Comments on feline panleukopenia biologics
+                      - generic [ref=f2e866]:
+                        - emphasis [ref=f2e867]: J Am Vet Med Assoc.
+                        - text: 1971;
+                        - strong [ref=f2e868]: "158"
+                        - text: :910-915
+                    - link "Open Google Scholar in new tab" [ref=f2e871] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=F.W.ScottComments+on+feline+panleukopenia+biologicsJ%C2%A0Am+Vet+Med+Assoc1581971910915
+                      - text: Google Scholar
+                  - generic [ref=f2e874]:
+                    - generic [ref=f2e875]:
+                      - generic [ref=f2e876]: "48."
+                      - generic [ref=f2e877]: Digangi, B.A. ∙ Levy, J.K. ∙ Griffin, B. ...
+                      - strong [ref=f2e879]: Effects of maternally-derived antibodies on serologic responses to vaccination in kittens
+                      - generic [ref=f2e880]:
+                        - emphasis [ref=f2e881]: J Feline Med Surg.
+                        - text: 2012;
+                        - strong [ref=f2e882]: "14"
+                        - text: (2):118-123
+                    - generic [ref=f2e883]:
+                      - link "Open Crossref in new tab" [ref=f2e885] [cursor=pointer]:
+                        - /url: https://doi.org/10.1177/1098612X11432239
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e887] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_48_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84862637662
+                        - text: Scopus (34)
+                      - link "Open PubMed in new tab" [ref=f2e889] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/22314087/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e891] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1177%2F1098612X11432239&pmid=22314087
+                        - text: Google Scholar
+                  - generic [ref=f2e894]:
+                    - generic [ref=f2e895]:
+                      - generic [ref=f2e896]: "49."
+                      - generic [ref=f2e897]: DiGangi, B.A. ∙ Levy, J.K. ∙ Griffin, B. ...
+                      - strong [ref=f2e899]: Prevalence of serum antibody titers against feline panleukopenia virus, feline herpesvirus 1, and feline calicivirus in cats entering a Florida animal shelter
+                      - generic [ref=f2e900]:
+                        - emphasis [ref=f2e901]: J Am Vet Med Assoc.
+                        - text: 2012;
+                        - strong [ref=f2e902]: "241"
+                        - text: (10):1320-1325
+                    - generic [ref=f2e903]:
+                      - link "Open Crossref in new tab" [ref=f2e905] [cursor=pointer]:
+                        - /url: https://doi.org/10.2460/javma.241.10.1320
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e907] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_49_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84868521847
+                        - text: Scopus (36)
+                      - link "Open PubMed in new tab" [ref=f2e909] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/23113524/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e911] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.2460%2Fjavma.241.10.1320&pmid=23113524
+                        - text: Google Scholar
+                  - generic [ref=f2e914]:
+                    - generic [ref=f2e915]:
+                      - generic [ref=f2e916]: "50."
+                      - generic [ref=f2e917]: Nakamura, K. ∙ Ikeda, Y. ∙ Miyazawa, T. ...
+                      - strong [ref=f2e919]: Characterisation of cross-reactivity of virus neutralising antibodies induced by feline panleukopenia virus and canine parvoviruses
+                      - generic [ref=f2e920]:
+                        - emphasis [ref=f2e921]: Res Vet Sci.
+                        - text: 2001;
+                        - strong [ref=f2e922]: "71"
+                        - text: (3):219-222
+                    - generic [ref=f2e923]:
+                      - link "Open Crossref in new tab" [ref=f2e925] [cursor=pointer]:
+                        - /url: https://doi.org/10.1053/rvsc.2001.0492
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e927] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_50_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0035694951
+                        - text: Scopus (32)
+                      - link "Open PubMed in new tab" [ref=f2e929] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/11798298/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e931] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1053%2Frvsc.2001.0492&pmid=11798298
+                        - text: Google Scholar
+                  - generic [ref=f2e934]:
+                    - generic [ref=f2e935]:
+                      - generic [ref=f2e936]: "51."
+                      - generic [ref=f2e937]: Parrish, C.R. ∙ Carmichael, L.E. ∙ Antczak, D.F.
+                      - strong [ref=f2e939]: Antigenic relationships between canine parvovirus type 2, feline panleukopenia virus and mink enteritis virus using conventional antisera and monoclonal antibodies
+                      - generic [ref=f2e940]:
+                        - emphasis [ref=f2e941]: Arch Virol.
+                        - text: 1982;
+                        - strong [ref=f2e942]: "72"
+                        - text: (4):267-278
+                    - link "Open Google Scholar in new tab" [ref=f2e945] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.R.ParrishL.E.CarmichaelD.F.AntczakAntigenic+relationships+between+canine+parvovirus+type+2%2C+feline+panleukopenia+virus+and+mink+enteritis+virus+using+conventional+antisera+and+monoclonal+antibodiesArch+Virol7241982267278
+                      - text: Google Scholar
+                  - generic [ref=f2e948]:
+                    - generic [ref=f2e949]:
+                      - generic [ref=f2e950]: "52."
+                      - generic [ref=f2e951]: Parrish, C.R. ∙ Carmichael, L.E.
+                      - strong [ref=f2e953]: Antigenic structure and variation of canine parvovirus type-2, feline panleukopenia virus, and mink enteritis virus
+                      - generic [ref=f2e954]:
+                        - emphasis [ref=f2e955]: Virology.
+                        - text: 1983;
+                        - strong [ref=f2e956]: "129"
+                        - text: (2):401-414
+                    - link "Open Google Scholar in new tab" [ref=f2e959] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.R.ParrishL.E.CarmichaelAntigenic+structure+and+variation+of+canine+parvovirus+type-2%2C+feline+panleukopenia+virus%2C+and+mink+enteritis+virusVirology12921983401414
+                      - text: Google Scholar
+                  - generic [ref=f2e962]:
+                    - generic [ref=f2e963]:
+                      - generic [ref=f2e964]: "53."
+                      - generic [ref=f2e965]: Johnson, R.H.
+                      - strong [ref=f2e967]: Feline panleucopaenia virus. III. Some properties compared to a feline herpes virus
+                      - generic [ref=f2e968]:
+                        - emphasis [ref=f2e969]: Res Vet Sci.
+                        - text: 1966;
+                        - strong [ref=f2e970]: "7"
+                        - text: :112-115
+                    - link "Open Google Scholar in new tab" [ref=f2e973] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=R.H.JohnsonFeline+panleucopaenia+virus.+III.+Some+properties+compared+to+a+feline+herpes+virusRes+Vet+Sci71966112115
+                      - text: Google Scholar
+                  - generic [ref=f2e976]:
+                    - generic [ref=f2e977]:
+                      - generic [ref=f2e978]: "54."
+                      - generic [ref=f2e979]: Johnson, R.H.
+                      - strong [ref=f2e981]: Feline panleucopaenia
+                      - generic [ref=f2e982]:
+                        - emphasis [ref=f2e983]: Vet Rec.
+                        - text: 1969;
+                        - strong [ref=f2e984]: "84"
+                        - text: :338-340
+                    - link "Open Google Scholar in new tab" [ref=f2e987] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=R.H.JohnsonFeline+panleucopaeniaVet+Rec841969338340
+                      - text: Google Scholar
+                  - generic [ref=f2e990]:
+                    - generic [ref=f2e991]:
+                      - generic [ref=f2e992]: "55."
+                      - generic [ref=f2e993]: Goto, H. ∙ Yachida, S. ∙ Shirahata, T. ...
+                      - strong [ref=f2e995]: Feline panleukopenia in Japan. I. Isolation and characterization of the virus
+                      - generic [ref=f2e996]:
+                        - emphasis [ref=f2e997]: Nihon Juigaku Zasshi.
+                        - text: 1974;
+                        - strong [ref=f2e998]: "36"
+                        - text: (3):203-211
+                    - link "Open Google Scholar in new tab" [ref=f2e1001] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=H.GotoS.YachidaT.ShirahataFeline+panleukopenia+in+Japan.+I.+Isolation+and+characterization+of+the+virusNihon+Juigaku+Zasshi3631974203211
+                      - text: Google Scholar
+                  - generic [ref=f2e1004]:
+                    - generic [ref=f2e1005]:
+                      - generic [ref=f2e1006]: "56."
+                      - generic [ref=f2e1007]: Csiza, C.K. ∙ Scott, F.W. ∙ De Lahunta, A. ...
+                      - strong [ref=f2e1009]: Pathogenesis of feline panleukopenia virus in susceptible newborn kittens I. Clinical signs, hematology, serology, and virology
+                      - generic [ref=f2e1010]:
+                        - emphasis [ref=f2e1011]: Infect Immun.
+                        - text: 1971;
+                        - strong [ref=f2e1012]: "3"
+                        - text: (6):833-837
+                    - link "Open Google Scholar in new tab" [ref=f2e1015] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.K.CsizaF.W.ScottA.De+LahuntaPathogenesis+of+feline+panleukopenia+virus+in+susceptible+newborn+kittens+I.+Clinical+signs%2C+hematology%2C+serology%2C+and+virologyInfect+Immun361971833837
+                      - text: Google Scholar
+                  - generic [ref=f2e1018]:
+                    - generic [ref=f2e1019]:
+                      - generic [ref=f2e1020]: "57."
+                      - generic [ref=f2e1021]: Dalling, T.
+                      - strong [ref=f2e1023]: Distemper of the cat
+                      - generic [ref=f2e1024]:
+                        - emphasis [ref=f2e1025]: Vet Rec.
+                        - text: 1934;
+                        - strong [ref=f2e1026]: "14"
+                        - text: (38):1137-1148
+                    - link "Open Google Scholar in new tab" [ref=f2e1029] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=T.DallingDistemper+of+the+catVet+Rec1438193411371148
+                      - text: Google Scholar
+                  - generic [ref=f2e1032]:
+                    - generic [ref=f2e1033]:
+                      - generic [ref=f2e1034]: "58."
+                      - generic [ref=f2e1035]: Hueffer, K. ∙ Govindasamy, L. ∙ Agbandje-McKenna, M. ...
+                      - strong [ref=f2e1037]: Combinations of two capsid regions controlling canine host range determine canine transferrin receptor binding by canine and feline parvoviruses
+                      - generic [ref=f2e1038]:
+                        - emphasis [ref=f2e1039]: J Virol.
+                        - text: 2003;
+                        - strong [ref=f2e1040]: "77"
+                        - text: (18):10099-10105
+                    - link "Open Google Scholar in new tab" [ref=f2e1043] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.HuefferL.GovindasamyM.Agbandje-McKennaCombinations+of+two+capsid+regions+controlling+canine+host+range+determine+canine+transferrin+receptor+binding+by+canine+and+feline+parvovirusesJ%C2%A0Virol771820031009910105
+                      - text: Google Scholar
+                  - generic [ref=f2e1046]:
+                    - generic [ref=f2e1047]:
+                      - generic [ref=f2e1048]: "59."
+                      - generic [ref=f2e1049]: Parker, J.S. ∙ Murphy, W.J. ∙ Wang, D. ...
+                      - strong [ref=f2e1051]: Canine and feline parvoviruses can use human or feline transferrin receptors to bind, enter, and infect cells
+                      - generic [ref=f2e1052]:
+                        - emphasis [ref=f2e1053]: J Virol.
+                        - text: 2001;
+                        - strong [ref=f2e1054]: "75"
+                        - text: (8):3896-3902
+                    - link "Open Google Scholar in new tab" [ref=f2e1057] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=J.S.ParkerW.J.MurphyD.WangCanine+and+feline+parvoviruses+can+use+human+or+feline+transferrin+receptors+to+bind%2C+enter%2C+and+infect+cellsJ%C2%A0Virol758200138963902
+                      - text: Google Scholar
+                  - generic [ref=f2e1060]:
+                    - generic [ref=f2e1061]:
+                      - generic [ref=f2e1062]: "60."
+                      - generic [ref=f2e1063]: Hueffer, K. ∙ Palermo, L.M. ∙ Parrish, C.R.
+                      - strong [ref=f2e1065]: Parvovirus infection of cells by using variants of the feline transferrin receptor altering clathrin-mediated endocytosis, membrane domain localization, and capsid-binding domains
+                      - generic [ref=f2e1066]:
+                        - emphasis [ref=f2e1067]: J Virol.
+                        - text: 2004;
+                        - strong [ref=f2e1068]: "78"
+                        - text: (11):5601-5611
+                    - link "Open Google Scholar in new tab" [ref=f2e1071] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.HuefferL.M.PalermoC.R.ParrishParvovirus+infection+of+cells+by+using+variants+of+the+feline+transferrin+receptor+altering+clathrin-mediated+endocytosis%2C+membrane+domain+localization%2C+and+capsid-binding+domainsJ%C2%A0Virol7811200456015611
+                      - text: Google Scholar
+                  - generic [ref=f2e1074]:
+                    - generic [ref=f2e1075]:
+                      - generic [ref=f2e1076]: "61."
+                      - generic [ref=f2e1077]: Csiza, C.K. ∙ De Lahunta, A. ∙ Scott, F.W. ...
+                      - strong [ref=f2e1079]: Pathogenesis of feline panleukopenia virus in susceptible newborn kittens II. Pathology and immunofluorescence
+                      - generic [ref=f2e1080]:
+                        - emphasis [ref=f2e1081]: Infect Immun.
+                        - text: 1971;
+                        - strong [ref=f2e1082]: "3"
+                        - text: (6):838-846
+                    - link "Open Google Scholar in new tab" [ref=f2e1085] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.K.CsizaA.De+LahuntaF.W.ScottPathogenesis+of+feline+panleukopenia+virus+in+susceptible+newborn+kittens+II.+Pathology+and+immunofluorescenceInfect+Immun361971838846
+                      - text: Google Scholar
+                  - generic [ref=f2e1088]:
+                    - generic [ref=f2e1089]:
+                      - generic [ref=f2e1090]: "62."
+                      - generic [ref=f2e1091]: Csiza, C.K. ∙ Scott, F.W. ∙ de Lahunta, A. ...
+                      - strong [ref=f2e1093]: Immune carrier state of feline panleukopenia virus-infected cats
+                      - generic [ref=f2e1094]:
+                        - emphasis [ref=f2e1095]: Am J Vet Res.
+                        - text: 1971;
+                        - strong [ref=f2e1096]: "32"
+                        - text: (3):419-426
+                    - link "Open Google Scholar in new tab" [ref=f2e1099] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.K.CsizaF.W.ScottA.de+LahuntaImmune+carrier+state+of+feline+panleukopenia+virus-infected+catsAm+J+Vet+Res3231971419426
+                      - text: Google Scholar
+                  - generic [ref=f2e1102]:
+                    - generic [ref=f2e1103]:
+                      - generic [ref=f2e1104]: "63."
+                      - generic [ref=f2e1105]: Csiza, C.K. ∙ Scott, F.W. ∙ Gillespie, J.H. ...
+                      - strong [ref=f2e1107]: Feline viruses. XIV. Transplacental infections in spontaneous panleukopenia of cats
+                      - generic [ref=f2e1108]:
+                        - emphasis [ref=f2e1109]: Cornell Vet.
+                        - text: 1971;
+                        - strong [ref=f2e1110]: "61"
+                        - text: (3):423-439
+                    - link "Open Google Scholar in new tab" [ref=f2e1113] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.K.CsizaF.W.ScottJ.H.GillespieFeline+viruses.+XIV.+Transplacental+infections+in+spontaneous+panleukopenia+of+catsCornell+Vet6131971423439
+                      - text: Google Scholar
+                  - generic [ref=f2e1116]:
+                    - generic [ref=f2e1117]:
+                      - generic [ref=f2e1118]: "64."
+                      - generic [ref=f2e1119]: Moschidou, P. ∙ Martella, V. ∙ Lorusso, E. ...
+                      - strong [ref=f2e1121]: Mixed infection by feline astrovirus and feline panleukopenia virus in a domestic cat with gastroenteritis and panleukopenia
+                      - generic [ref=f2e1122]:
+                        - emphasis [ref=f2e1123]: J Vet Diagn Invest.
+                        - text: 2011;
+                        - strong [ref=f2e1124]: "23"
+                        - text: (3):581-584
+                    - link "Open Google Scholar in new tab" [ref=f2e1127] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=P.MoschidouV.MartellaE.LorussoMixed+infection+by+feline+astrovirus+and+feline+panleukopenia+virus+in+a+domestic+cat+with+gastroenteritis+and+panleukopeniaJ%C2%A0Vet+Diagn+Invest2332011581584
+                      - text: Google Scholar
+                  - generic [ref=f2e1130]:
+                    - generic [ref=f2e1131]:
+                      - generic [ref=f2e1132]: "65."
+                      - generic [ref=f2e1133]: Kruse, B.D. ∙ Unterer, S. ∙ Horlacher, K. ...
+                      - strong [ref=f2e1135]: Feline panleukopenia - different course of disease in cats younger than versus older than 6 months of age?
+                      - generic [ref=f2e1136]:
+                        - emphasis [ref=f2e1137]: Tierarztl Prax Ausg K Kleintiere Heimtiere.
+                        - text: 2011;
+                        - strong [ref=f2e1138]: "39"
+                        - text: (4):237-242
+                      - generic [ref=f2e1139]: "[in German]"
+                    - link "Open Google Scholar in new tab" [ref=f2e1142] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=B.D.KruseS.UntererK.HorlacherFeline+panleukopenia+-+different+course+of+disease+in+cats+younger+than+versus+older+than+6%C2%A0months+of+age%3FTierarztl+Prax+Ausg+K+Kleintiere+Heimtiere3942011237242%5Bin+German%5D
+                      - text: Google Scholar
+                  - generic [ref=f2e1145]:
+                    - generic [ref=f2e1146]:
+                      - generic [ref=f2e1147]: "66."
+                      - generic [ref=f2e1148]: McEndaffer, L. ∙ Molesan, A. ∙ Erb, H. ...
+                      - strong [ref=f2e1150]: Feline panleukopenia virus is not associated with myocarditis or endomyocardial restrictive cardiomyopathy in cats
+                      - generic [ref=f2e1151]:
+                        - emphasis [ref=f2e1152]: Vet Pathol.
+                        - text: 2017;
+                        - strong [ref=f2e1153]: "54"
+                        - text: (4):669-675
+                    - link "Open Google Scholar in new tab" [ref=f2e1156] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=L.McEndafferA.MolesanH.ErbFeline+panleukopenia+virus+is+not+associated+with+myocarditis+or+endomyocardial+restrictive+cardiomyopathy+in+catsVet+Pathol5442017669675
+                      - text: Google Scholar
+                  - generic [ref=f2e1159]:
+                    - generic [ref=f2e1160]:
+                      - generic [ref=f2e1161]: "67."
+                      - generic [ref=f2e1162]: Meurs, K.M. ∙ Fox, P.R. ∙ Magnon, A.L. ...
+                      - strong [ref=f2e1164]: Molecular screening by polymerase chain reaction detects panleukopenia virus DNA in formalin-fixed hearts from cats with idiopathic cardiomyopathy and myocarditis
+                      - generic [ref=f2e1165]:
+                        - emphasis [ref=f2e1166]: Cardiovasc Pathol.
+                        - text: 2000;
+                        - strong [ref=f2e1167]: "9"
+                        - text: (2):119-126
+                    - generic [ref=f2e1168]:
+                      - link "Open Crossref in new tab" [ref=f2e1170] [cursor=pointer]:
+                        - /url: https://doi.org/10.1016/S1054-8807(00)00031-4
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1172] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_67_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0034603507
+                        - text: Scopus (49)
+                      - link "Open PubMed in new tab" [ref=f2e1174] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/10867362/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1176] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1016%2FS1054-8807%2800%2900031-4&pmid=10867362
+                        - text: Google Scholar
+                  - generic [ref=f2e1179]:
+                    - generic [ref=f2e1180]:
+                      - generic [ref=f2e1181]: "68."
+                      - generic [ref=f2e1182]: Url, A. ∙ Truyen, U. ∙ Rebel-Bauder, B. ...
+                      - strong [ref=f2e1184]: Evidence of parvovirus replication in cerebral neurons of cats
+                      - generic [ref=f2e1185]:
+                        - emphasis [ref=f2e1186]: J Clin Microbiol.
+                        - text: 2003;
+                        - strong [ref=f2e1187]: "41"
+                        - text: (8):3801-3805
+                    - link "Open Google Scholar in new tab" [ref=f2e1190] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.UrlU.TruyenB.Rebel-BauderEvidence+of+parvovirus+replication+in+cerebral+neurons+of+catsJ%C2%A0Clin+Microbiol418200338013805
+                      - text: Google Scholar
+                  - generic [ref=f2e1193]:
+                    - generic [ref=f2e1194]:
+                      - generic [ref=f2e1195]: "69."
+                      - generic [ref=f2e1196]: Sharp, N.J. ∙ Davis, B.J. ∙ Guy, J.S. ...
+                      - strong [ref=f2e1198]: Hydranencephaly and cerebellar hypoplasia in two kittens attributed to intrauterine parvovirus infection
+                      - generic [ref=f2e1199]:
+                        - emphasis [ref=f2e1200]: J Comp Pathol.
+                        - text: 1999;
+                        - strong [ref=f2e1201]: "121"
+                        - text: (1):39-53
+                    - generic [ref=f2e1202]:
+                      - link "Open Crossref in new tab" [ref=f2e1204] [cursor=pointer]:
+                        - /url: https://doi.org/10.1053/jcpa.1998.0298
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1206] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_69_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0033166837
+                        - text: Scopus (59)
+                      - link "Open PubMed in new tab" [ref=f2e1208] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/10373292/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1210] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1053%2Fjcpa.1998.0298&pmid=10373292
+                        - text: Google Scholar
+                  - generic [ref=f2e1213]:
+                    - generic [ref=f2e1214]:
+                      - generic [ref=f2e1215]: "70."
+                      - generic [ref=f2e1216]: Ossent, P.
+                      - strong [ref=f2e1218]: Systemic aspergillosis and mucormycosis in 23 cats
+                      - generic [ref=f2e1219]:
+                        - emphasis [ref=f2e1220]: Vet Rec.
+                        - text: 1987;
+                        - strong [ref=f2e1221]: "120"
+                        - text: (14):330-333
+                    - generic [ref=f2e1222]:
+                      - link "Open Crossref in new tab" [ref=f2e1224] [cursor=pointer]:
+                        - /url: https://doi.org/10.1136/vr.120.14.330
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1226] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_70_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0023643725
+                        - text: Scopus (46)
+                      - link "Open PubMed in new tab" [ref=f2e1228] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/3590573/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1230] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1136%2Fvr.120.14.330&pmid=3590573
+                        - text: Google Scholar
+                  - generic [ref=f2e1233]:
+                    - generic [ref=f2e1234]:
+                      - generic [ref=f2e1235]: "71."
+                      - generic [ref=f2e1236]: Porporato, F. ∙ Horzinek, M.C. ∙ Hofmann-Lehmann, R. ...
+                      - strong [ref=f2e1238]: Survival estimates and outcome predictors for shelter cats with feline panleukopenia virus infection
+                      - generic [ref=f2e1239]:
+                        - emphasis [ref=f2e1240]: J Am Vet Med Assoc.
+                        - text: 2018;
+                        - strong [ref=f2e1241]: "253"
+                        - text: (2):188-195
+                    - link "Open Google Scholar in new tab" [ref=f2e1244] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=F.PorporatoM.C.HorzinekR.Hofmann-LehmannSurvival+estimates+and+outcome+predictors+for+shelter+cats+with+feline+panleukopenia+virus+infectionJ%C2%A0Am+Vet+Med+Assoc25322018188195
+                      - text: Google Scholar
+                  - generic [ref=f2e1247]:
+                    - generic [ref=f2e1248]:
+                      - generic [ref=f2e1249]: "72."
+                      - generic [ref=f2e1250]: Riser, W.H.
+                      - strong [ref=f2e1252]: Infectious panleukopenia of cats
+                      - generic [ref=f2e1253]:
+                        - emphasis [ref=f2e1254]: North Am Veterinarian.
+                        - text: 1943;
+                        - strong [ref=f2e1255]: "24"
+                        - text: :293-298
+                    - link "Open Google Scholar in new tab" [ref=f2e1258] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=W.H.RiserInfectious+panleukopenia+of+catsNorth+Am+Veterinarian241943293298
+                      - text: Google Scholar
+                  - generic [ref=f2e1261]:
+                    - generic [ref=f2e1262]:
+                      - generic [ref=f2e1263]: "73."
+                      - generic [ref=f2e1264]: Neuerer, F.F. ∙ Horlacher, K. ∙ Truyen, U. ...
+                      - strong [ref=f2e1266]: Comparison of different in-house test systems to detect parvovirus in faeces of cats
+                      - generic [ref=f2e1267]:
+                        - emphasis [ref=f2e1268]: J Feline Med Surg.
+                        - text: 2008;
+                        - strong [ref=f2e1269]: "10"
+                        - text: (3):247-251
+                    - link "Open Google Scholar in new tab" [ref=f2e1272] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=F.F.NeuererK.HorlacherU.TruyenComparison+of+different+in-house+test+systems+to+detect+parvovirus+in+faeces+of+catsJ%C2%A0Feline+Med+Surg1032008247251
+                      - text: Google Scholar
+                  - generic [ref=f2e1275]:
+                    - generic [ref=f2e1276]:
+                      - generic [ref=f2e1277]: "74."
+                      - generic [ref=f2e1278]: Patterson, E.V. ∙ Reese, M.J. ∙ Tucker, S.J. ...
+                      - strong [ref=f2e1280]: Effect of vaccination on parvovirus antigen testing in kittens
+                      - generic [ref=f2e1281]:
+                        - emphasis [ref=f2e1282]: J Am Vet Med Assoc.
+                        - text: 2007;
+                        - strong [ref=f2e1283]: "230"
+                        - text: (3):359-363
+                    - generic [ref=f2e1284]:
+                      - link "Open Crossref in new tab" [ref=f2e1286] [cursor=pointer]:
+                        - /url: https://doi.org/10.2460/javma.230.3.359
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1288] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_74_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-33846883733
+                        - text: Scopus (50)
+                      - link "Open PubMed in new tab" [ref=f2e1290] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/17269866/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1292] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.2460%2Fjavma.230.3.359&pmid=17269866
+                        - text: Google Scholar
+                  - generic [ref=f2e1295]:
+                    - generic [ref=f2e1296]:
+                      - generic [ref=f2e1297]: "75."
+                      - generic [ref=f2e1298]: Meason-Smith, C. ∙ Diesel, A. ∙ Patterson, A.P. ...
+                      - strong [ref=f2e1300]: Characterization of the cutaneous mycobiota in healthy and allergic cats using next generation sequencing
+                      - generic [ref=f2e1301]:
+                        - emphasis [ref=f2e1302]: Vet Dermatol.
+                        - text: 2017;
+                        - strong [ref=f2e1303]: "28"
+                        - text: (1):71-e17
+                    - generic [ref=f2e1304]:
+                      - link "Open Crossref in new tab" [ref=f2e1306] [cursor=pointer]:
+                        - /url: https://doi.org/10.1111/vde.12373
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1308] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_75_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84983284982
+                        - text: Scopus (53)
+                      - link "Open PubMed in new tab" [ref=f2e1310] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/27553477/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1312] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1111%2Fvde.12373&pmid=27553477
+                        - text: Google Scholar
+                  - generic [ref=f2e1315]:
+                    - generic [ref=f2e1316]:
+                      - generic [ref=f2e1317]: "76."
+                      - generic [ref=f2e1318]: Decaro, N. ∙ Desario, C. ∙ Campolo, M. ...
+                      - strong [ref=f2e1320]: Clinical and virological findings in pups naturally infected by canine parvovirus type 2 Glu-426 mutant
+                      - generic [ref=f2e1321]:
+                        - emphasis [ref=f2e1322]: J Vet Diagn Invest.
+                        - text: 2005;
+                        - strong [ref=f2e1323]: "17"
+                        - text: (2):133-138
+                    - link "Open Google Scholar in new tab" [ref=f2e1326] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=N.DecaroC.DesarioM.CampoloClinical+and+virological+findings+in+pups+naturally+infected+by+canine+parvovirus+type+2+Glu-426+mutantJ%C2%A0Vet+Diagn+Invest1722005133138
+                      - text: Google Scholar
+                  - generic [ref=f2e1329]:
+                    - generic [ref=f2e1330]:
+                      - generic [ref=f2e1331]: "77."
+                      - generic [ref=f2e1332]: Freisl, M. ∙ Speck, S. ∙ Truyen, U. ...
+                      - strong [ref=f2e1334]: Faecal shedding of canine parvovirus after modified-live vaccination in healthy adult dogs
+                      - generic [ref=f2e1335]:
+                        - emphasis [ref=f2e1336]: Vet J.
+                        - text: 2017;
+                        - strong [ref=f2e1337]: "219"
+                        - text: :15-21
+                    - link "Open Google Scholar in new tab" [ref=f2e1340] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.FreislS.SpeckU.TruyenFaecal+shedding+of+canine+parvovirus+after+modified-live+vaccination+in+healthy+adult+dogsVet+J21920171521
+                      - text: Google Scholar
+                  - generic [ref=f2e1343]:
+                    - generic [ref=f2e1344]:
+                      - generic [ref=f2e1345]: "78."
+                      - generic [ref=f2e1346]: Machlachlan, N. ∙ Dubovi, E.J. ∙ Barthold, S.W. ...
+                      - strong [ref=f2e1348]: Parvoviridae
+                      - generic [ref=f2e1349]: Machlachlan, N. ∙ Dubovi, E.J. (Editors)
+                      - strong [ref=f2e1352]: Fenner's Veterinary Virology
+                      - generic [ref=f2e1353]: Elsevier, London, 2016; 245-258
+                    - link "Open Google Scholar in new tab" [ref=f2e1356] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=N.MachlachlanE.J.DuboviS.W.BartholdParvoviridaeN.MachlachlanE.J.DuboviFenner%27s+Veterinary+Virology2016ElsevierLondon245258
+                      - text: Google Scholar
+                  - generic [ref=f2e1359]:
+                    - generic [ref=f2e1360]:
+                      - generic [ref=f2e1361]: "79."
+                      - generic [ref=f2e1362]: Mende, K. ∙ Stuetzer, B. ∙ Truyen, U. ...
+                      - strong [ref=f2e1364]: Evaluation of an in-house dot enzyme-linked immunosorbent assay to detect antibodies against feline panleukopenia virus
+                      - generic [ref=f2e1365]:
+                        - emphasis [ref=f2e1366]: J Feline Med Surg.
+                        - text: 2014;
+                        - strong [ref=f2e1367]: "16"
+                        - text: (10):805-811
+                    - link "Open Google Scholar in new tab" [ref=f2e1370] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.MendeB.StuetzerU.TruyenEvaluation+of+an+in-house+dot+enzyme-linked+immunosorbent+assay+to+detect+antibodies+against+feline+panleukopenia+virusJ%C2%A0Feline+Med+Surg16102014805811
+                      - text: Google Scholar
+                  - generic [ref=f2e1373]:
+                    - generic [ref=f2e1374]:
+                      - generic [ref=f2e1375]: "80."
+                      - generic [ref=f2e1376]: Stuetzer, B. ∙ Hartmann, K.
+                      - strong [ref=f2e1378]: Feline parvovirus infection and associated diseases
+                      - generic [ref=f2e1379]:
+                        - emphasis [ref=f2e1380]: Vet J.
+                        - text: 2014;
+                        - strong [ref=f2e1381]: "201"
+                        - text: (2):150-155
+                    - link "Open Google Scholar in new tab" [ref=f2e1384] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=B.StuetzerK.HartmannFeline+parvovirus+infection+and+associated+diseasesVet+J20122014150155
+                      - text: Google Scholar
+                  - generic [ref=f2e1387]:
+                    - generic [ref=f2e1388]:
+                      - generic [ref=f2e1389]: "81."
+                      - generic [ref=f2e1390]: Quimby, J.M. ∙ Lake, R.C. ∙ Hansen, R.J. ...
+                      - strong [ref=f2e1392]: Oral, subcutaneous, and intravenous pharmacokinetics of ondansetron in healthy cats
+                      - generic [ref=f2e1393]:
+                        - emphasis [ref=f2e1394]: J Vet Pharmacol Ther.
+                        - text: 2014;
+                        - strong [ref=f2e1395]: "37"
+                        - text: (4):348-353
+                    - generic [ref=f2e1396]:
+                      - link "Open Crossref in new tab" [ref=f2e1398] [cursor=pointer]:
+                        - /url: https://doi.org/10.1111/jvp.12094
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1400] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_81_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84903821142
+                        - text: Scopus (23)
+                      - link "Open PubMed in new tab" [ref=f2e1402] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/24330064/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1404] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1111%2Fjvp.12094&pmid=24330064
+                        - text: Google Scholar
+                  - generic [ref=f2e1407]:
+                    - generic [ref=f2e1408]:
+                      - generic [ref=f2e1409]: "82."
+                      - generic [ref=f2e1410]: Quimby, J.M. ∙ Lunn, K.F.
+                      - strong [ref=f2e1412]: "Mirtazapine as an appetite stimulant and anti-emetic in cats with chronic kidney disease: a masked placebo-controlled crossover clinical trial"
+                      - generic [ref=f2e1413]:
+                        - emphasis [ref=f2e1414]: Vet J.
+                        - text: 2013;
+                        - strong [ref=f2e1415]: "197"
+                        - text: (3):651-655
+                    - generic [ref=f2e1416]:
+                      - link "Open Crossref in new tab" [ref=f2e1418] [cursor=pointer]:
+                        - /url: https://doi.org/10.1016/j.tvjl.2013.05.048
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1420] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_82_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84884987542
+                        - text: Scopus (67)
+                      - link "Open PubMed in new tab" [ref=f2e1422] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/23838205/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1424] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1016%2Fj.tvjl.2013.05.048&pmid=23838205
+                        - text: Google Scholar
+                  - generic [ref=f2e1427]:
+                    - generic [ref=f2e1428]:
+                      - generic [ref=f2e1429]: "83."
+                      - generic [ref=f2e1430]: Quimby, J.M. ∙ Gustafson, D.L. ∙ Samber, B.J. ...
+                      - strong [ref=f2e1432]: Studies on the pharmacokinetics and pharmacodynamics of mirtazapine in healthy young cats
+                      - generic [ref=f2e1433]:
+                        - emphasis [ref=f2e1434]: J Vet Pharmacol Ther.
+                        - text: 2011;
+                        - strong [ref=f2e1435]: "34"
+                        - text: (4):388-396
+                    - generic [ref=f2e1436]:
+                      - link "Open Crossref in new tab" [ref=f2e1438] [cursor=pointer]:
+                        - /url: https://doi.org/10.1111/j.1365-2885.2010.01244.x
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1440] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_83_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-79960089811
+                        - text: Scopus (49)
+                      - link "Open PubMed in new tab" [ref=f2e1442] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/20969604/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1444] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1111%2Fj.1365-2885.2010.01244.x&pmid=20969604
+                        - text: Google Scholar
+                  - generic [ref=f2e1447]:
+                    - generic [ref=f2e1448]:
+                      - generic [ref=f2e1449]: "84."
+                      - generic [ref=f2e1450]: Kurtzman, G.J. ∙ Platanias, L. ∙ Lustig, L. ...
+                      - strong [ref=f2e1452]: Feline parvovirus propagates in cat bone marrow cultures and inhibits hematopoietic colony formation in vitro
+                      - generic [ref=f2e1453]:
+                        - emphasis [ref=f2e1454]: Blood.
+                        - text: 1989;
+                        - strong [ref=f2e1455]: "74"
+                        - text: (1):71-81
+                    - generic [ref=f2e1456]:
+                      - link "Open PubMed in new tab" [ref=f2e1458] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/2546625/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1460] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?pmid=2546625
+                        - text: Google Scholar
+                  - generic [ref=f2e1463]:
+                    - generic [ref=f2e1464]:
+                      - generic [ref=f2e1465]: "85."
+                      - generic [ref=f2e1466]: Kraft, W. ∙ Kuffer, M.
+                      - strong [ref=f2e1468]: Treatment of severe neutropenias in dogs and cats with filgrastim
+                      - generic [ref=f2e1469]:
+                        - emphasis [ref=f2e1470]: Tierarztl Prax.
+                        - text: 1995;
+                        - strong [ref=f2e1471]: "23"
+                        - text: (6):609-613
+                      - generic [ref=f2e1472]: "[in German]"
+                    - link "Open Google Scholar in new tab" [ref=f2e1475] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=W.KraftM.KufferTreatment+of+severe+neutropenias+in+dogs+and+cats+with+filgrastimTierarztl+Prax2361995609613%5Bin+German%5D
+                      - text: Google Scholar
+                  - generic [ref=f2e1478]:
+                    - generic [ref=f2e1479]:
+                      - generic [ref=f2e1480]: "86."
+                      - generic [ref=f2e1481]: Mischke, R. ∙ Barth, T. ∙ Wohlsein, P. ...
+                      - strong [ref=f2e1483]: Effect of recombinant human granulocyte colony-stimulating factor (rhG-CSF) on leukocyte count and survival rate of dogs with parvoviral enteritis
+                      - generic [ref=f2e1484]:
+                        - emphasis [ref=f2e1485]: Res Vet Sci.
+                        - text: 2001;
+                        - strong [ref=f2e1486]: "70"
+                        - text: (3):221-225
+                    - generic [ref=f2e1487]:
+                      - link "Open Crossref in new tab" [ref=f2e1489] [cursor=pointer]:
+                        - /url: https://doi.org/10.1053/rvsc.2001.0464
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1491] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_86_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0034870720
+                        - text: Scopus (32)
+                      - link "Open PubMed in new tab" [ref=f2e1493] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/11676617/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1495] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1053%2Frvsc.2001.0464&pmid=11676617
+                        - text: Google Scholar
+                  - generic [ref=f2e1498]:
+                    - generic [ref=f2e1499]:
+                      - generic [ref=f2e1500]: "87."
+                      - generic [ref=f2e1501]: Rewerts, J.M. ∙ McCaw, D.L. ∙ Cohn, L.A. ...
+                      - strong [ref=f2e1503]: Recombinant human granulocyte colony-stimulating factor for treatment of puppies with neutropenia secondary to canine parvovirus infection
+                      - generic [ref=f2e1504]:
+                        - emphasis [ref=f2e1505]: J Am Vet Med Assoc.
+                        - text: 1998;
+                        - strong [ref=f2e1506]: "213"
+                        - text: (7):991-992
+                    - generic [ref=f2e1507]:
+                      - link "Open Crossref in new tab" [ref=f2e1509] [cursor=pointer]:
+                        - /url: https://doi.org/10.2460/javma.1998.213.07.991
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1511] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_87_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0031785859
+                        - text: Scopus (41)
+                      - link "Open PubMed in new tab" [ref=f2e1513] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/9776994/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1515] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.2460%2Fjavma.1998.213.07.991&pmid=9776994
+                        - text: Google Scholar
+                  - generic [ref=f2e1518]:
+                    - generic [ref=f2e1519]:
+                      - generic [ref=f2e1520]: "88."
+                      - generic [ref=f2e1521]: Duffy, A. ∙ Dow, S. ∙ Ogilvie, G. ...
+                      - strong [ref=f2e1523]: Hematologic improvement in dogs with parvovirus infection treated with recombinant canine granulocyte-colony stimulating factor
+                      - generic [ref=f2e1524]:
+                        - emphasis [ref=f2e1525]: J Vet Pharmacol Ther.
+                        - text: 2010;
+                        - strong [ref=f2e1526]: "33"
+                        - text: (4):352-356
+                    - link "Open Google Scholar in new tab" [ref=f2e1529] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.DuffyS.DowG.OgilvieHematologic+improvement+in+dogs+with+parvovirus+infection+treated+with+recombinant+canine+granulocyte-colony+stimulating+factorJ%C2%A0Vet+Pharmacol+Ther3342010352356
+                      - text: Google Scholar
+                  - generic [ref=f2e1532]:
+                    - generic [ref=f2e1533]:
+                      - generic [ref=f2e1534]: "89."
+                      - generic [ref=f2e1535]: Wolfesberger, B. ∙ Tichy, A. ∙ Afenzeller, N. ...
+                      - strong [ref=f2e1537]: Clinical outcome of 73 cases with feline panleukopenia
+                      - generic [ref=f2e1538]:
+                        - emphasis [ref=f2e1539]: Wien Tierarztl Monatsschr.
+                        - text: 2012;
+                        - strong [ref=f2e1540]: "99"
+                        - text: :11-17
+                    - link "Open Google Scholar in new tab" [ref=f2e1543] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=B.WolfesbergerA.TichyN.AfenzellerClinical+outcome+of+73+cases+with+feline+panleukopeniaWien+Tierarztl+Monatsschr9920121117
+                      - text: Google Scholar
+                  - generic [ref=f2e1546]:
+                    - generic [ref=f2e1547]:
+                      - generic [ref=f2e1548]: "90."
+                      - generic [ref=f2e1549]: Gerlach, M. ∙ Proksch, A.L. ∙ Unterer, S. ...
+                      - strong [ref=f2e1551]: Efficacy of feline anti-parvovirus antibodies in the treatment of canine parvovirus infection
+                      - generic [ref=f2e1552]:
+                        - emphasis [ref=f2e1553]: J Small Anim Pract.
+                        - text: 2017;
+                        - strong [ref=f2e1554]: "58"
+                        - text: (7):408-415
+                    - link "Open Google Scholar in new tab" [ref=f2e1557] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.GerlachA.L.ProkschS.UntererEfficacy+of+feline+anti-parvovirus+antibodies+in+the+treatment+of+canine+parvovirus+infectionJ%C2%A0Small+Anim+Pract5872017408415
+                      - text: Google Scholar
+                  - generic [ref=f2e1560]:
+                    - generic [ref=f2e1561]:
+                      - generic [ref=f2e1562]: "91."
+                      - generic [ref=f2e1563]: Martin, V. ∙ Najbar, W. ∙ Gueguen, S. ...
+                      - strong [ref=f2e1565]: Treatment of canine parvoviral enteritis with interferon-omega in a placebo-controlled challenge trial
+                      - generic [ref=f2e1566]:
+                        - emphasis [ref=f2e1567]: Vet Microbiol.
+                        - text: 2002;
+                        - strong [ref=f2e1568]: "89"
+                        - text: (2–3):115-127
+                    - link "Open Google Scholar in new tab" [ref=f2e1571] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=V.MartinW.NajbarS.GueguenTreatment+of+canine+parvoviral+enteritis+with+interferon-omega+in+a+placebo-controlled+challenge+trialVet+Microbiol892%E2%80%9332002115127
+                      - text: Google Scholar
+                  - generic [ref=f2e1574]:
+                    - generic [ref=f2e1575]:
+                      - generic [ref=f2e1576]: "92."
+                      - generic [ref=f2e1577]: Mochizuki, M. ∙ Nakatani, H. ∙ Yoshida, M.
+                      - strong [ref=f2e1579]: Inhibitory effects of recombinant feline interferon on the replication of feline enteropathogenic viruses in vitro
+                      - generic [ref=f2e1580]:
+                        - emphasis [ref=f2e1581]: Vet Microbiol.
+                        - text: 1994;
+                        - strong [ref=f2e1582]: "39"
+                        - text: (1–2):145-152
+                    - generic [ref=f2e1583]:
+                      - link "Open Crossref in new tab" [ref=f2e1585] [cursor=pointer]:
+                        - /url: https://doi.org/10.1016/0378-1135(94)90095-7
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1587] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_92_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0028294515
+                        - text: Scopus (59)
+                      - link "Open PubMed in new tab" [ref=f2e1589] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/7515537/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1591] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1016%2F0378-1135%2894%2990095-7&pmid=7515537
+                        - text: Google Scholar
+                  - generic [ref=f2e1594]:
+                    - generic [ref=f2e1595]:
+                      - generic [ref=f2e1596]: "93."
+                      - generic [ref=f2e1597]: Jakel, V. ∙ Cussler, K. ∙ Hanschmann, K.M. ...
+                      - strong [ref=f2e1599]: "Vaccination against feline panleukopenia: implications from a field study in kittens"
+                      - generic [ref=f2e1600]:
+                        - emphasis [ref=f2e1601]: BMC Vet Res.
+                        - text: 2012;
+                        - strong [ref=f2e1602]: "8"
+                        - text: :62
+                    - generic [ref=f2e1603]:
+                      - link "Open Crossref in new tab" [ref=f2e1605] [cursor=pointer]:
+                        - /url: https://doi.org/10.1186/1746-6148-8-62
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1607] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_93_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84861206699
+                        - text: Scopus (55)
+                      - link "Open PubMed in new tab" [ref=f2e1609] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/22613093/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1611] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1186%2F1746-6148-8-62&pmid=22613093
+                        - text: Google Scholar
+                  - generic [ref=f2e1614]:
+                    - generic [ref=f2e1615]:
+                      - generic [ref=f2e1616]: "94."
+                      - generic [ref=f2e1617]: Scherk, M.A. ∙ Ford, R.B. ∙ Gaskell, R.M. ...
+                      - strong [ref=f2e1619]: 2013 AAFP feline vaccination advisory panel report
+                      - generic [ref=f2e1620]:
+                        - emphasis [ref=f2e1621]: J Feline Med Surg.
+                        - text: 2013;
+                        - strong [ref=f2e1622]: "15"
+                        - text: (9):785-808
+                    - generic [ref=f2e1623]:
+                      - link "Open Crossref in new tab" [ref=f2e1625] [cursor=pointer]:
+                        - /url: https://doi.org/10.1177/1098612X13500429
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1627] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_94_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84882949239
+                        - text: Scopus (119)
+                      - link "Open PubMed in new tab" [ref=f2e1629] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/23966005/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1631] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1177%2F1098612X13500429&pmid=23966005
+                        - text: Google Scholar
+                  - generic [ref=f2e1634]:
+                    - generic [ref=f2e1635]:
+                      - generic [ref=f2e1636]: "95."
+                      - generic [ref=f2e1637]: Lappin, M.R.
+                      - strong [ref=f2e1639]: Feline panleukopenia virus, feline herpesvirus-1 and feline calicivirus antibody responses in seronegative specific pathogen-free kittens after parenteral administration of an inactivated FVRCP vaccine or a modified live FVRCP vaccine
+                      - generic [ref=f2e1640]:
+                        - emphasis [ref=f2e1641]: J Feline Med Surg.
+                        - text: 2012;
+                        - strong [ref=f2e1642]: "14"
+                        - text: (2):161-164
+                    - link "Open Google Scholar in new tab" [ref=f2e1645] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=M.R.LappinFeline+panleukopenia+virus%2C+feline+herpesvirus-1+and+feline+calicivirus+antibody+responses+in+seronegative+specific+pathogen-free+kittens+after+parenteral+administration+of+an+inactivated+FVRCP+vaccine+or+a+modified+live+FVRCP+vaccineJ%C2%A0Feline+Med+Surg1422012161164
+                      - text: Google Scholar
+                  - generic [ref=f2e1648]:
+                    - generic [ref=f2e1649]:
+                      - generic [ref=f2e1650]: "96."
+                      - generic [ref=f2e1651]: Schultz, R.D.
+                      - strong [ref=f2e1653]: A commentary on parvovirus vaccination
+                      - generic [ref=f2e1654]:
+                        - emphasis [ref=f2e1655]: J Feline Med Surg.
+                        - text: 2009;
+                        - strong [ref=f2e1656]: "11"
+                        - text: (2):163-164
+                    - link "Open Google Scholar in new tab" [ref=f2e1659] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=R.D.SchultzA%C2%A0commentary+on+parvovirus+vaccinationJ%C2%A0Feline+Med+Surg1122009163164
+                      - text: Google Scholar
+                  - generic [ref=f2e1662]:
+                    - generic [ref=f2e1663]:
+                      - generic [ref=f2e1664]: "97."
+                      - generic [ref=f2e1665]: Boschetti, N. ∙ Wyss, K. ∙ Mischler, A. ...
+                      - strong [ref=f2e1667]: Stability of minute virus of mice against temperature and sodium hydroxide
+                      - generic [ref=f2e1668]:
+                        - emphasis [ref=f2e1669]: Biologicals.
+                        - text: 2003;
+                        - strong [ref=f2e1670]: "31"
+                        - text: (3):181-185
+                    - link "Open Google Scholar in new tab" [ref=f2e1673] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=N.BoschettiK.WyssA.MischlerStability+of+minute+virus+of+mice+against+temperature+and+sodium+hydroxideBiologicals3132003181185
+                      - text: Google Scholar
+                  - generic [ref=f2e1676]:
+                    - generic [ref=f2e1677]:
+                      - generic [ref=f2e1678]: "98."
+                      - generic [ref=f2e1679]: Anderson, M.E.
+                      - strong [ref=f2e1681]: Contact precautions and hand hygiene in veterinary clinics
+                      - generic [ref=f2e1682]:
+                        - emphasis [ref=f2e1683]: Vet Clin North Am Small Anim Pract.
+                        - text: 2015;
+                        - strong [ref=f2e1684]: "45"
+                        - text: (2):343-360
+                      - generic [ref=f2e1685]: vi
+                    - generic [ref=f2e1686]:
+                      - link "Full Text" [ref=f2e1688] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_98_2&dbid=4&doi=10.1016%2Fj.cvsm.2019.02.006&key=10.1016%2Fj.cvsm.2014.11.003&cf=fulltext&site=vsp-site
+                      - link "Full Text (PDF)" [ref=f2e1690] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_98_2&dbid=4&doi=10.1016%2Fj.cvsm.2019.02.006&key=10.1016%2Fj.cvsm.2014.11.003&cf=pdf&site=vsp-site
+                      - link "Open Scopus in new tab" [ref=f2e1692] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_98_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-84924617494
+                        - text: Scopus (18)
+                      - link "Open Google Scholar in new tab" [ref=f2e1694] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1016%2Fj.cvsm.2014.11.003
+                        - text: Google Scholar
+                  - generic [ref=f2e1697]:
+                    - generic [ref=f2e1698]:
+                      - generic [ref=f2e1699]: "99."
+                      - generic [ref=f2e1700]: Piskin, B. ∙ Turkun, M.
+                      - strong [ref=f2e1702]: Stability of various sodium hypochlorite solutions
+                      - generic [ref=f2e1703]:
+                        - emphasis [ref=f2e1704]: J Endod.
+                        - text: 1995;
+                        - strong [ref=f2e1705]: "21"
+                        - text: (5):253-255
+                    - generic [ref=f2e1706]:
+                      - link "Open Abstract in new tab" [ref=f2e1708] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_99_2&dbid=4&doi=10.1016%2Fj.cvsm.2019.02.006&key=10.1016%2FS0099-2399%2806%2980991-X&cf=abstract&site=joen-site
+                        - text: Abstract
+                      - link "Open Full Text (PDF) in new tab" [ref=f2e1710] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_99_2&dbid=4&doi=10.1016%2Fj.cvsm.2019.02.006&key=10.1016%2FS0099-2399%2806%2980991-X&cf=pdf&site=joen-site
+                        - text: Full Text (PDF)
+                      - link "Open Scopus in new tab" [ref=f2e1712] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_99_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0029301114
+                        - text: Scopus (50)
+                      - link "Open PubMed in new tab" [ref=f2e1714] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/7673825/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1716] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.1016%2FS0099-2399%2806%2980991-X&pmid=7673825
+                        - text: Google Scholar
+                  - generic [ref=f2e1719]:
+                    - generic [ref=f2e1720]:
+                      - generic [ref=f2e1721]: "100."
+                      - generic [ref=f2e1722]: Addie, D.D. ∙ Boucraut-Baralon, C. ∙ Egberink, H. ...
+                      - strong [ref=f2e1724]: "Disinfectant choices in veterinary practices, shelters and households: ABCD guidelines on safe and effective disinfection for feline environments"
+                      - generic [ref=f2e1725]:
+                        - emphasis [ref=f2e1726]: J Feline Med Surg.
+                        - text: 2015;
+                        - strong [ref=f2e1727]: "17"
+                        - text: (7):594-605
+                    - link "Open Google Scholar in new tab" [ref=f2e1730] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=D.D.AddieC.Boucraut-BaralonH.EgberinkDisinfectant+choices+in+veterinary+practices%2C+shelters+and+households%3A+ABCD+guidelines+on+safe+and+effective+disinfection+for+feline+environmentsJ%C2%A0Feline+Med+Surg1772015594605
+                      - text: Google Scholar
+                  - generic [ref=f2e1733]:
+                    - generic [ref=f2e1734]:
+                      - generic [ref=f2e1735]: "101."
+                      - generic [ref=f2e1736]: Levy, J.K. ∙ Crawford, P.C. ∙ Collante, W.R. ...
+                      - strong [ref=f2e1738]: Use of adult cat serum to correct failure of passive transfer in kittens
+                      - generic [ref=f2e1739]:
+                        - emphasis [ref=f2e1740]: J Am Vet Med Assoc.
+                        - text: 2001;
+                        - strong [ref=f2e1741]: "219"
+                        - text: (10):1401-1405
+                    - generic [ref=f2e1742]:
+                      - link "Open Crossref in new tab" [ref=f2e1744] [cursor=pointer]:
+                        - /url: https://doi.org/10.2460/javma.2001.219.1401
+                        - text: Crossref
+                      - link "Open Scopus in new tab" [ref=f2e1746] [cursor=pointer]:
+                        - /url: /servlet/linkout?suffix=e_1_5_1_2_101_2&dbid=137438953472&doi=10.1016%2Fj.cvsm.2019.02.006&key=2-s2.0-0035891758
+                        - text: Scopus (69)
+                      - link "Open PubMed in new tab" [ref=f2e1748] [cursor=pointer]:
+                        - /url: https://pubmed.ncbi.nlm.nih.gov/11724178/
+                        - text: PubMed
+                      - link "Open Google Scholar in new tab" [ref=f2e1750] [cursor=pointer]:
+                        - /url: https://scholar.google.com/scholar_lookup?doi=10.2460%2Fjavma.2001.219.1401&pmid=11724178
+                        - text: Google Scholar
+                  - generic [ref=f2e1753]:
+                    - generic [ref=f2e1754]:
+                      - generic [ref=f2e1755]: "102."
+                      - generic [ref=f2e1756]: Greene, C.E.
+                      - strong [ref=f2e1758]: Feline enteric viral infections
+                      - generic [ref=f2e1759]: Greene, C.E. (Editor)
+                      - strong [ref=f2e1762]: Infectious diseases of the dog and cat
+                      - generic [ref=f2e1763]: Elsevier, Philadelphia, 2011; 80-91
+                      - generic [ref=f2e1764]: "[Chapter 9]"
+                    - link "Open Google Scholar in new tab" [ref=f2e1767] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.E.GreeneFeline+enteric+viral+infectionsC.E.GreeneInfectious+diseases+of+the+dog+and+catFourth+edition2011ElsevierPhiladelphia8091%5BChapter+9%5D
+                      - text: Google Scholar
+                  - generic [ref=f2e1770]:
+                    - generic [ref=f2e1771]:
+                      - generic [ref=f2e1772]: "103."
+                      - generic [ref=f2e1773]: Truyen, U. ∙ Addie, D. ∙ Belak, S. ...
+                      - strong [ref=f2e1775]: Feline panleukopenia. ABCD guidelines on prevention and management
+                      - generic [ref=f2e1776]:
+                        - emphasis [ref=f2e1777]: J Feline Med Surg.
+                        - text: 2009;
+                        - strong [ref=f2e1778]: "11"
+                        - text: (7):538-546
+                    - link "Open Google Scholar in new tab" [ref=f2e1781] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=U.TruyenD.AddieS.BelakFeline+panleukopenia.+ABCD+guidelines+on+prevention+and+managementJ%C2%A0Feline+Med+Surg1172009538546
+                      - text: Google Scholar
+                  - generic [ref=f2e1784]:
+                    - generic [ref=f2e1785]:
+                      - generic [ref=f2e1786]: "104."
+                      - generic [ref=f2e1787]: Truyen, U. ∙ Platzer, G. ∙ Parrish, C.R.
+                      - strong [ref=f2e1789]: Antigenic type distribution among canine parvoviruses in dogs and cats in Germany
+                      - generic [ref=f2e1790]:
+                        - emphasis [ref=f2e1791]: Vet Rec.
+                        - text: 1996;
+                        - strong [ref=f2e1792]: "138"
+                        - text: (15):365-366
+                    - link "Open Google Scholar in new tab" [ref=f2e1795] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=U.TruyenG.PlatzerC.R.ParrishAntigenic+type+distribution+among+canine+parvoviruses+in+dogs+and+cats+in+GermanyVet+Rec138151996365366
+                      - text: Google Scholar
+                  - generic [ref=f2e1798]:
+                    - generic [ref=f2e1799]:
+                      - generic [ref=f2e1800]: "105."
+                      - generic [ref=f2e1801]: Decaro, N. ∙ Desario, C. ∙ Miccolupo, A. ...
+                      - strong [ref=f2e1803]: Genetic analysis of feline panleukopenia viruses from cats with gastroenteritis
+                      - generic [ref=f2e1804]:
+                        - emphasis [ref=f2e1805]: J Gen Virol.
+                        - text: 2008;
+                        - strong [ref=f2e1806]: "89"
+                        - text: (Pt 9):2290-2298
+                    - link "Open Google Scholar in new tab" [ref=f2e1809] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=N.DecaroC.DesarioA.MiccolupoGenetic+analysis+of+feline+panleukopenia+viruses+from+cats+with+gastroenteritisJ%C2%A0Gen+Virol89Pt+9200822902298
+                      - text: Google Scholar
+                  - generic [ref=f2e1812]:
+                    - generic [ref=f2e1813]:
+                      - generic [ref=f2e1814]: "106."
+                      - generic [ref=f2e1815]: Filipov, C. ∙ Desario, C. ∙ Patouchas, O. ...
+                      - strong [ref=f2e1817]: A ten-year molecular survey on parvoviruses infecting carnivores in Bulgaria
+                      - generic [ref=f2e1818]:
+                        - emphasis [ref=f2e1819]: Transbound Emerg Dis.
+                        - text: 2016;
+                        - strong [ref=f2e1820]: "63"
+                        - text: (4):460-464
+                    - link "Open Google Scholar in new tab" [ref=f2e1823] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=C.FilipovC.DesarioO.PatouchasA%C2%A0ten-year+molecular+survey+on+parvoviruses+infecting+carnivores+in+BulgariaTransbound+Emerg+Dis6342016460464
+                      - text: Google Scholar
+                  - generic [ref=f2e1826]:
+                    - generic [ref=f2e1827]:
+                      - generic [ref=f2e1828]: "107."
+                      - generic [ref=f2e1829]: Wu, J. ∙ Gao, X.T. ∙ Hou, S.H. ...
+                      - strong [ref=f2e1831]: Molecular epidemiological and phylogenetic analyses of canine parvovirus in domestic dogs and cats in Beijing, 2010-2013
+                      - generic [ref=f2e1832]:
+                        - emphasis [ref=f2e1833]: J Vet Med Sci.
+                        - text: 2015;
+                        - strong [ref=f2e1834]: "77"
+                        - text: (10):1305-1310
+                    - link "Open Google Scholar in new tab" [ref=f2e1837] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=J.WuX.T.GaoS.H.HouMolecular+epidemiological+and+phylogenetic+analyses+of+canine+parvovirus+in+domestic+dogs+and+cats+in+Beijing%2C+2010-2013J%C2%A0Vet+Med+Sci7710201513051310
+                      - text: Google Scholar
+                  - generic [ref=f2e1840]:
+                    - generic [ref=f2e1841]:
+                      - generic [ref=f2e1842]: "108."
+                      - generic [ref=f2e1843]: Fastier, L.B.
+                      - strong [ref=f2e1845]: Feline panleucopenia – a serological study
+                      - generic [ref=f2e1846]:
+                        - emphasis [ref=f2e1847]: Vet Rec.
+                        - text: 1968;
+                        - strong [ref=f2e1848]: "83"
+                        - text: (25):653-654
+                    - link "Open Google Scholar in new tab" [ref=f2e1851] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=L.B.FastierFeline+panleucopenia+%E2%80%93+a+serological+studyVet+Rec83251968653654
+                      - text: Google Scholar
+                  - generic [ref=f2e1854]:
+                    - generic [ref=f2e1855]:
+                      - generic [ref=f2e1856]: "109."
+                      - generic [ref=f2e1857]: Coman, B.J. ∙ Jones, E.H. ∙ Westbury, H.A.
+                      - strong [ref=f2e1859]: Protozoan and viral infections of feral cats
+                      - generic [ref=f2e1860]:
+                        - emphasis [ref=f2e1861]: Aust Vet J.
+                        - text: 1981;
+                        - strong [ref=f2e1862]: "57"
+                        - text: (7):319-323
+                    - link "Open Google Scholar in new tab" [ref=f2e1865] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=B.J.ComanE.H.JonesH.A.WestburyProtozoan+and+viral+infections+of+feral+catsAust+Vet+J5771981319323
+                      - text: Google Scholar
+                  - generic [ref=f2e1868]:
+                    - generic [ref=f2e1869]:
+                      - generic [ref=f2e1870]: "110."
+                      - generic [ref=f2e1871]: Ostrowski, S. ∙ Van Vuuren, M. ∙ Lenain, D.M. ...
+                      - strong [ref=f2e1873]: A serologic survey of wild felids from central west Saudi Arabia
+                      - generic [ref=f2e1874]:
+                        - emphasis [ref=f2e1875]: J Wildl Dis.
+                        - text: 2003;
+                        - strong [ref=f2e1876]: "39"
+                        - text: (3):696-701
+                    - link "Open Google Scholar in new tab" [ref=f2e1879] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=S.OstrowskiM.Van+VuurenD.M.LenainA%C2%A0serologic+survey+of+wild+felids+from+central+west+Saudi+ArabiaJ%C2%A0Wildl+Dis3932003696701
+                      - text: Google Scholar
+                  - generic [ref=f2e1882]:
+                    - generic [ref=f2e1883]:
+                      - generic [ref=f2e1884]: "111."
+                      - generic [ref=f2e1885]: Blanco, K. ∙ Prendas, J. ∙ Cortes, R. ...
+                      - strong [ref=f2e1887]: Seroprevalence of viral infections in domestic cats in Costa Rica
+                      - generic [ref=f2e1888]:
+                        - emphasis [ref=f2e1889]: J Vet Med Sci.
+                        - text: 2009;
+                        - strong [ref=f2e1890]: "71"
+                        - text: (5):661-663
+                    - link "Open Google Scholar in new tab" [ref=f2e1893] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.BlancoJ.PrendasR.CortesSeroprevalence+of+viral+infections+in+domestic+cats+in+Costa+RicaJ%C2%A0Vet+Med+Sci7152009661663
+                      - text: Google Scholar
+                  - generic [ref=f2e1896]:
+                    - generic [ref=f2e1897]:
+                      - generic [ref=f2e1898]: "112."
+                      - generic [ref=f2e1899]: Lickey, A.L. ∙ Kennedy, M. ∙ Patton, S. ...
+                      - strong [ref=f2e1901]: Serologic survey of domestic felids in the Peten region of Guatemala
+                      - generic [ref=f2e1902]:
+                        - emphasis [ref=f2e1903]: J Zoo Wildl Med.
+                        - text: 2005;
+                        - strong [ref=f2e1904]: "36"
+                        - text: (1):121-123
+                    - link "Open Google Scholar in new tab" [ref=f2e1907] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=A.L.LickeyM.KennedyS.PattonSerologic+survey+of+domestic+felids+in+the+Peten+region+of+GuatemalaJ%C2%A0Zoo+Wildl+Med3612005121123
+                      - text: Google Scholar
+                  - generic [ref=f2e1910]:
+                    - generic [ref=f2e1911]:
+                      - generic [ref=f2e1912]: "113."
+                      - generic [ref=f2e1913]: Fischer, S.M. ∙ Quest, C.M. ∙ Dubovi, E.J. ...
+                      - strong [ref=f2e1915]: Response of feral cats to vaccination at the time of neutering
+                      - generic [ref=f2e1916]:
+                        - emphasis [ref=f2e1917]: J Am Vet Med Assoc.
+                        - text: 2007;
+                        - strong [ref=f2e1918]: "230"
+                        - text: (1):52-58
+                    - link "Open Google Scholar in new tab" [ref=f2e1921] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=S.M.FischerC.M.QuestE.J.DuboviResponse+of+feral+cats+to+vaccination+at+the+time+of+neuteringJ%C2%A0Am+Vet+Med+Assoc230120075258
+                      - text: Google Scholar
+                  - generic [ref=f2e1924]:
+                    - generic [ref=f2e1925]:
+                      - generic [ref=f2e1926]: "114."
+                      - generic [ref=f2e1927]: Hellard, E. ∙ Fouchet, D. ∙ Santin-Janin, H. ...
+                      - strong [ref=f2e1929]: "When cats' ways of life interact with their viruses: a study in 15 natural populations of owned and unowned cats (Felis silvestris catus)"
+                      - generic [ref=f2e1930]:
+                        - emphasis [ref=f2e1931]: Prev Vet Med.
+                        - text: 2011;
+                        - strong [ref=f2e1932]: "101"
+                        - text: (3–4):250-264
+                    - link "Open Google Scholar in new tab" [ref=f2e1935] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=E.HellardD.FouchetH.Santin-JaninWhen+cats%27+ways+of+life+interact+with+their+viruses%3A+a+study+in+15+natural+populations+of+owned+and+unowned+cats+%28Felis+silvestris+catus%29Prev+Vet+Med1013%E2%80%9342011250264
+                      - text: Google Scholar
+                  - generic [ref=f2e1938]:
+                    - generic [ref=f2e1939]:
+                      - generic [ref=f2e1940]: "115."
+                      - generic [ref=f2e1941]: Mende, K. ∙ Stuetzer, B. ∙ Sauter-Louis, C. ...
+                      - strong [ref=f2e1943]: Prevalence of antibodies against feline panleukopenia virus in client-owned cats in Southern Germany
+                      - generic [ref=f2e1944]:
+                        - emphasis [ref=f2e1945]: Vet J.
+                        - text: 2014;
+                        - strong [ref=f2e1946]: "199"
+                        - text: (3):419-423
+                    - link "Open Google Scholar in new tab" [ref=f2e1949] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=K.MendeB.StuetzerC.Sauter-LouisPrevalence+of+antibodies+against+feline+panleukopenia+virus+in+client-owned+cats+in+Southern+GermanyVet+J19932014419423
+                      - text: Google Scholar
+                  - generic [ref=f2e1952]:
+                    - generic [ref=f2e1953]:
+                      - generic [ref=f2e1954]: "116."
+                      - generic [ref=f2e1955]: Pavlova, E.V. ∙ Kirilyuk, V.E. ∙ Naidenko, S.V.
+                      - strong [ref=f2e1957]: Patterns of seroprevalence of feline viruses among domestic cats (Felis catus) and Pallas’ cats (Otocolobus manul) in Daursky Reserve, Russia
+                      - generic [ref=f2e1958]:
+                        - emphasis [ref=f2e1959]: Can J Zool.
+                        - text: 2015;
+                        - strong [ref=f2e1960]: "93"
+                        - text: :849-855
+                    - link "Open Google Scholar in new tab" [ref=f2e1963] [cursor=pointer]:
+                      - /url: https://scholar.google.com/scholar?q=E.V.PavlovaV.E.KirilyukS.V.NaidenkoPatterns+of+seroprevalence+of+feline+viruses+among+domestic+cats+%28Felis+catus%29+and+Pallas%E2%80%99+cats+%28Otocolobus+manul%29+in+Daursky+Reserve%2C+RussiaCan+J+Zool932015849855
+                      - text: Google Scholar
+            - generic [ref=f2e1964]:
+              - generic [ref=f2e1965]:
+                - heading [level=2] [ref=f2e1966]:
+                  - text: Figures (2)
+                  - button "Figure Viewer" [ref=f2e1967]
+                - generic [ref=f2e1970]:
+                  - link "Go to Fig.&nbsp;1" [ref=f2e1971] [cursor=pointer]:
+                    - /url: "#fig1"
+                  - link "Go to Fig.&nbsp;2" [ref=f2e1973] [cursor=pointer]:
+                    - /url: "#fig2"
+              - generic [ref=f2e1975]:
+                - heading "Article metrics" [level=2] [ref=f2e1976]
+                - text: Metric data currently unavailable
+              - heading "Related Articles" [level=2] [ref=f2e1978]
+          - complementary [ref=f2e1979]
+        - link "View full text" [ref=f2e1991]:
+          - /url: /article/S0195-5616(19)30036-1/fulltext
+        - text:          
+    - generic [ref=f2e1994]:
+      - contentinfo [ref=f2e1996]:
+        - generic [ref=f2e1998]:
+          - list [ref=f2e1999]:
+            - listitem [ref=f2e2000]:
+              - link "theclinics.com" [ref=f2e2001] [cursor=pointer]:
+                - /url: http://www.theclinics.com
+            - listitem [ref=f2e2002]:
+              - link "Home" [ref=f2e2003] [cursor=pointer]:
+                - /url: /home
+            - listitem [ref=f2e2004]:
+              - link "Access for Developing Countries" [ref=f2e2005] [cursor=pointer]:
+                - /url: /developing-countries
+          - generic [ref=f2e2006]:
+            - heading "Articles & Issues" [level=2] [ref=f2e2007]
+            - list [ref=f2e2008]:
+              - listitem [ref=f2e2009]:
+                - link "Articles in Press" [ref=f2e2010] [cursor=pointer]:
+                  - /url: /inpress
+              - listitem [ref=f2e2011]:
+                - link "Buy Back Issues" [ref=f2e2012] [cursor=pointer]:
+                  - /url: http://www.us.elsevierhealth.com/product.jsp?isbn=0195-5616
+              - listitem [ref=f2e2013]:
+                - link "Current Issue" [ref=f2e2014] [cursor=pointer]:
+                  - /url: /current
+              - listitem [ref=f2e2015]:
+                - link "Future Issues" [ref=f2e2016] [cursor=pointer]:
+                  - /url: /content/FutureIssues
+              - listitem [ref=f2e2017]:
+                - link "Past Issues" [ref=f2e2018] [cursor=pointer]:
+                  - /url: /issues
+          - generic [ref=f2e2019]:
+            - heading "Series Information" [level=2] [ref=f2e2020]
+            - list [ref=f2e2021]:
+              - listitem [ref=f2e2022]:
+                - link "Abstracting/Indexing" [ref=f2e2023] [cursor=pointer]:
+                  - /url: /abstracting
+              - listitem [ref=f2e2024]:
+                - link "About" [ref=f2e2025] [cursor=pointer]:
+                  - /url: /aims
+              - listitem [ref=f2e2026]:
+                - link "Contact Information" [ref=f2e2027] [cursor=pointer]:
+                  - /url: https://www.theclinics.com/contact_us
+              - listitem [ref=f2e2028]:
+                - link "Media Information" [ref=f2e2029] [cursor=pointer]:
+                  - /url: http://theclinics.com/home/media_info
+              - listitem [ref=f2e2030]:
+                - link "Pricing Information" [ref=f2e2031] [cursor=pointer]:
+                  - /url: /pricing
+              - listitem [ref=f2e2032]:
+                - link "Subscribe" [ref=f2e2033] [cursor=pointer]:
+                  - /url: /pricing
+          - generic [ref=f2e2034]:
+            - heading "Follow Us" [level=2] [ref=f2e2035]
+            - list [ref=f2e2036]:
+              - listitem [ref=f2e2037]:
+                - link "Twitter" [ref=f2e2038] [cursor=pointer]:
+                  - /url: https://twitter.com/#!/@VetClinics
+      - generic [ref=f2e2040]:
+        - separator [ref=f2e2041]
+        - paragraph [ref=f2e2042]: The content on this site is intended for healthcare professionals.
+        - separator [ref=f2e2043]
+        - text: "All content on this site: Copyright © 2026 Elsevier Inc., its licensors, and contributors. All rights are reserved, including those for text and data mining, AI training, and similar technologies. For all open access content, the relevant licensing terms apply."
+        - paragraph [ref=f2e2044]:
+          - link "Privacy Policy" [ref=f2e2045] [cursor=pointer]:
+            - /url: https://www.elsevier.com/legal/privacy-policy
+          - button "Manage cookie consent preferences" [ref=f2e2046]: Cookie 设置
+          - link "Terms and Conditions" [ref=f2e2047] [cursor=pointer]:
+            - /url: https://www.elsevier.com/legal/elsevier-website-terms-and-conditions
+          - link "Accessibility" [ref=f2e2048] [cursor=pointer]:
+            - /url: https://www.healthadvance.com/accessibility
+          - link "Help & Contact" [ref=f2e2049] [cursor=pointer]:
+            - /url: https://service.elsevier.com/app/overview/healthadvance/
+          - link "Responsible AI" [ref=f2e2050] [cursor=pointer]:
+            - /url: https://www.elsevier.com/about/responsible-ai
+        - link [ref=f2e2051] [cursor=pointer]:
+          - /url: https://www.relx.com
+          - img "RELX" [ref=f2e2052]
+    - generic:        
+  - status [ref=f2e2053]

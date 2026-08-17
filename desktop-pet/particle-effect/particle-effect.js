@@ -224,6 +224,11 @@ let modelSwapPending = false;
 let lastFrameTime = null;
 let userInteracting = false; // 使用者正在用 OrbitControls 拖/滾的時候，暫停自動緩慢自轉
 let interactiveMode = false; // 桌寵視窗目前是不是「互動模式」，由 main.js 同步（見檔案開頭說明）
+// 3D 模型微調 debug 模式是否開啟：由 Ctrl+Alt+N（main.js 全域快捷鍵，見該檔案
+// window.toggleParticleNudgeMode 那段）切換，見 handleManualNudgeKey() 開頭的說明——
+// 原本借用 interactiveMode 當開關，但那個模式在正常使用中（開聊天輸入框打字）就會是
+// true，方向鍵反而被這裡搶走，改成獨立的開關才不會互相干擾。
+let manualNudgeModeActive = false;
 let hovering = false; // 滑鼠目前是不是停在粒子點雲上（決定要不要顯示抓取游標）
 let lastMouseMoveAt = 0; // 最後一次收到 mousemove 的時間戳，見 HOVER_STALE_MS
 
@@ -362,8 +367,10 @@ function applyIdleMotion(delta) {
 }
 
 // 手動微調 debug 工具的按鍵處理，見上面 manualOffset/manualRotationY/manualScale
-// 宣告處的說明。只有互動模式才生效（穿透模式視窗理論上收不到鍵盤焦點，這裡再擋
-// 一層，避免哪天焦點行為變了會誤吃到別的用途的按鍵）：
+// 宣告處的說明。只有 Ctrl+Alt+N 開過「微調模式」（manualNudgeModeActive）才生效——
+// 曾經借用 interactiveMode 當開關，但方向鍵這幾顆同時也是聊天輸入框打字時要用的鍵，
+// interactiveMode 開著才能打字，兩邊搶同一組鍵；改成獨立、預設關閉的開關，平常打字
+// 不會被這個 debug 工具吃掉按鍵，只有明確按過 Ctrl+Alt+N 才會生效：
 //   ← / →           position.x -/+ 步距
 //   ↑ / ↓           position.y +/- 步距
 //   [ / ]           position.z -/+ 步距（不在方向鍵上，借用中括號代表「深度」）
@@ -396,7 +403,7 @@ const MANUAL_NUDGE_KEYS = new Set([
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '[', ']', 'PageUp', 'PageDown', 'Home', 'End', 'r', 'R', 'p', 'P',
 ]);
 function handleManualNudgeKey(e) {
-  if (!interactiveMode || !fbo) return;
+  if (!manualNudgeModeActive || !fbo) return;
   if (!MANUAL_NUDGE_KEYS.has(e.key)) return;
   e.preventDefault();
 
@@ -489,6 +496,20 @@ function handleManualNudgeKey(e) {
       `  要填回 sources.js 的數字＝ position/rotationY：參考值 + 累計偏移（相加）；scale：參考值 × 累計倍率（相乘，不是相加）`
   );
 }
+
+// Ctrl+Alt+N（main.js 全域快捷鍵）呼叫的入口：切換上面 handleManualNudgeKey() 的
+// manualNudgeModeActive 開關。回傳切換後的狀態，main.js 目前沒有用到回傳值（跟
+// toggleIdleChatSound()/toggleTtsSound() 一樣單純 fire-and-forget），保留是因為
+// 之後如果想在畫面上顯示目前是否在微調模式，這裡已經有現成的值可以用。
+window.toggleParticleNudgeMode = function toggleParticleNudgeMode() {
+  manualNudgeModeActive = !manualNudgeModeActive;
+  console.log(
+    manualNudgeModeActive
+      ? '[particle-debug] 微調模式：開啟——方向鍵/[ ]/PageUp/PageDown/Home/End/R/P 現在會調整目前 3D 模型（按 Ctrl+Alt+N 再關閉）'
+      : '[particle-debug] 微調模式：關閉——方向鍵等鍵恢復原本用途（例如聊天輸入框的游標移動）'
+  );
+  return manualNudgeModeActive;
+};
 
 // 「動畫粒子化」的播放推進：currentAnimFrames 是 null 就什麼都不做（static 模型，
 // A/B 已經在 applyAnimationState() 設定成同一張，不用每幀動）。有的話，把

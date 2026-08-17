@@ -1,0 +1,379 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - button [ref=f2e4] [cursor=pointer]
+      - link "首頁" [ref=f2e6] [cursor=pointer]:
+        - /url: /schhp?hl=zh-TW&as_sdt=0,5
+      - generic [ref=f2e9]:
+        - textbox "搜尋" [ref=f2e11]: artificial intelligence
+        - button "搜尋" [ref=f2e12] [cursor=pointer]
+      - button [ref=f2e16] [cursor=pointer]:
+        - img "56" [ref=f2e17]
+    - generic [ref=f2e18]:
+      - generic [ref=f2e21]: 文章
+      - generic [ref=f2e23]: 約有 7,260,000 項結果 (0.19 秒)
+      - generic [ref=f2e25]:
+        - link "我的個人學術檔案" [ref=f2e26] [cursor=pointer]:
+          - /url: /citations?user=rfkwTHUAAAAJ&hl=zh-TW
+        - link "我的圖書館" [ref=f2e29] [cursor=pointer]:
+          - /url: /scholar?scilib=1&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+    - generic [ref=f2e32]:
+      - navigation [ref=f2e33]:
+        - generic [ref=f2e34]:
+          - list [ref=f2e36]:
+            - listitem [ref=f2e37]:
+              - link "不限時間" [ref=f2e38] [cursor=pointer]:
+                - /url: /scholar?q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e39]:
+              - link "2026 以後" [ref=f2e40] [cursor=pointer]:
+                - /url: /scholar?as_ylo=2026&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e41]:
+              - link "2025 以後" [ref=f2e42] [cursor=pointer]:
+                - /url: /scholar?as_ylo=2025&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e43]:
+              - link "2022 以後" [ref=f2e44] [cursor=pointer]:
+                - /url: /scholar?as_ylo=2022&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e45]:
+              - link "自訂範圍..." [ref=f2e46] [cursor=pointer]:
+                - /url: javascript:void(0)
+          - list [ref=f2e47]:
+            - listitem [ref=f2e48]:
+              - link "按照關聯性排序" [ref=f2e49] [cursor=pointer]:
+                - /url: /scholar?hl=zh-TW&as_sdt=0,5&q=%22artificial+intelligence%22
+            - listitem [ref=f2e50]:
+              - link "按日期排序" [ref=f2e51] [cursor=pointer]:
+                - /url: /scholar?hl=zh-TW&as_sdt=0,5&q=%22artificial+intelligence%22&scisbd=1
+          - list [ref=f2e52]:
+            - listitem [ref=f2e53]:
+              - link "不限語言" [ref=f2e54] [cursor=pointer]:
+                - /url: /scholar?lr=&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e55]:
+              - link "搜尋所有中文網頁" [ref=f2e56] [cursor=pointer]:
+                - /url: /scholar?lr=lang_zh-CN|lang_zh-TW&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e57]:
+              - link "搜尋繁體中文網頁" [ref=f2e58] [cursor=pointer]:
+                - /url: /scholar?lr=lang_zh-TW&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+          - list [ref=f2e59]:
+            - listitem [ref=f2e60]:
+              - link "不限類型" [ref=f2e61] [cursor=pointer]:
+                - /url: /scholar?q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+            - listitem [ref=f2e62]:
+              - link "評論性文章" [ref=f2e63] [cursor=pointer]:
+                - /url: /scholar?q=artificial+intelligence&hl=zh-TW&as_sdt=0,5&as_rr=1
+          - list [ref=f2e64]:
+            - listitem [ref=f2e65]:
+              - checkbox "包含專利" [ref=f2e66] [cursor=pointer]
+            - listitem [ref=f2e70]:
+              - checkbox "只包含書目/引用資料" [checked] [ref=f2e71] [cursor=pointer]
+          - link "建立快訊" [ref=f2e76] [cursor=pointer]:
+            - /url: /scholar_alerts?view_op=create_alert_options&hl=zh-TW&alert_query=%22artificial+intelligence%22&alert_params=%3Fhl%3Dzh-TW%26as_sdt%3D0,5
+      - main [ref=f2e79]:
+        - generic [ref=f2e80]:
+          - generic [ref=f2e81]:
+            - generic [ref=f2e83]:
+              - heading "[書籍] Artificial intelligence" [level=3] [ref=f2e84]:
+                - generic [ref=f2e85]: "[書籍]"
+                - link "Artificial intelligence" [ref=f2e86] [cursor=pointer]:
+                  - /url: https://dl.acm.org/doi/abs/10.5555/993568
+              - generic [ref=f2e87]: WP Henry, PH Winston - 2004 - dl.acm.org
+              - generic [ref=f2e88]: … Artificial intelligence … Machine learning … Artificial intelligence (AI) is the Science and Engineering domain concerned with the theory and practice of developing systems that …
+              - generic [ref=f2e89]:
+                - button "儲存" [ref=f2e90] [cursor=pointer]
+                - button "引用" [ref=f2e93] [cursor=pointer]
+                - link "被引用 8069 次" [ref=f2e96] [cursor=pointer]:
+                  - /url: /scholar?cites=10198877340886040129&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e97] [cursor=pointer]:
+                  - /url: /scholar?q=related:Qf5K0-ewiY0J:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                - link "全部共 9 個版本" [ref=f2e98] [cursor=pointer]:
+                  - /url: /scholar?cluster=10198877340886040129&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e99]:
+              - link "[PDF] springer.com" [ref=f2e103] [cursor=pointer]:
+                - /url: https://link.springer.com/content/pdf/10.1007/s44163-022-00022-8.pdf
+              - generic [ref=f2e104]:
+                - heading [level=3] [ref=f2e105]:
+                  - link "Quo vadis artificial intelligence?" [ref=f2e106] [cursor=pointer]:
+                    - /url: https://link.springer.com/article/10.1007/s44163-022-00022-8
+                - generic [ref=f2e107]:
+                  - link "Y Jiang" [ref=f2e108] [cursor=pointer]:
+                    - /url: /citations?user=7xxeOfcAAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "X Li" [ref=f2e109] [cursor=pointer]:
+                    - /url: /citations?user=HBxeAp8AAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "H Luo" [ref=f2e110] [cursor=pointer]:
+                    - /url: /citations?user=DNDtXD0AAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "S Yin" [ref=f2e111] [cursor=pointer]:
+                    - /url: /citations?user=v-Xddq0AAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "O Kaynak" [ref=f2e112] [cursor=pointer]:
+                    - /url: /citations?user=z6IH3aIAAAAJ&hl=zh-TW&oi=sra
+                  - text: "- Discover Artificial Intelligence, 2022 - Springer"
+                - generic [ref=f2e113]: … on Artificial Intelligence [2]. He is therefore considered to be the father of artificial intelligence. … many remarkable achievements, including machine learning, theorem proving, pattern …
+                - generic [ref=f2e114]:
+                  - button "儲存" [ref=f2e115] [cursor=pointer]
+                  - button "引用" [ref=f2e118] [cursor=pointer]
+                  - link "被引用 977 次" [ref=f2e121] [cursor=pointer]:
+                    - /url: /scholar?cites=10459154347245074313&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                  - link "相關文章" [ref=f2e122] [cursor=pointer]:
+                    - /url: /scholar?q=related:iXeGvnZhJpEJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                  - link "全部共 6 個版本" [ref=f2e123] [cursor=pointer]:
+                    - /url: /scholar?cluster=10459154347245074313&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e124]:
+              - link "[PDF] researchgate.net" [ref=f2e128] [cursor=pointer]:
+                - /url: https://www.researchgate.net/profile/Peter-Cheeseman/publication/24154867_Introduction_to_artificial_intelligence/links/56eae3ae08aec6b500166171/Introduction-to-artificial-intelligence.pdf
+              - generic [ref=f2e129]:
+                - heading "[書籍] Introduction to artificial intelligence" [level=3] [ref=f2e130]:
+                  - generic [ref=f2e131]: "[書籍]"
+                  - link "Introduction to artificial intelligence" [ref=f2e132] [cursor=pointer]:
+                    - /url: https://books.google.com/books?hl=zh-TW&lr=&id=HACaS635bYcC&oi=fnd&pg=PA1&dq=artificial+intelligence&ots=Kn7BkVXN2O&sig=tGUnHP2jIEfOkAhiXGzv1XlD_-E
+                - generic [ref=f2e133]: E Charniak - 1985 - books.google.com
+                - generic [ref=f2e134]: … from a text on Artificial Intelligence (from now on “AI”). … to this book with no idea of what Artificial Intelligence (AI) is, or what it … What would the world be like if we had intelligent machines? …
+                - generic [ref=f2e135]:
+                  - button "儲存" [ref=f2e136] [cursor=pointer]
+                  - button "引用" [ref=f2e139] [cursor=pointer]
+                  - link "被引用 3319 次" [ref=f2e142] [cursor=pointer]:
+                    - /url: /scholar?cites=4876032826441827673&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                  - link "相關文章" [ref=f2e143] [cursor=pointer]:
+                    - /url: /scholar?q=related:WYU1dQUmq0MJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                  - link "全部共 10 個版本" [ref=f2e144] [cursor=pointer]:
+                    - /url: /scholar?cluster=4876032826441827673&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e146]:
+              - heading "[書籍] The handbook of artificial intelligence" [level=3] [ref=f2e147]:
+                - generic [ref=f2e148]: "[書籍]"
+                - link "The handbook of artificial intelligence" [ref=f2e149] [cursor=pointer]:
+                  - /url: https://www.sciencedirect.com/book/9780865760905/the-handbook-of-artificial-intelligence
+              - generic [ref=f2e150]:
+                - text: A Barr, EA Feigenbaum,
+                - link "PR Cohen" [ref=f2e151] [cursor=pointer]:
+                  - /url: /citations?user=8DeZgKkAAAAJ&hl=zh-TW&oi=sra
+                - text: "- 1981 - Elsevier"
+              - generic [ref=f2e152]: … This chapter discusses how artificial intelligence (AI) techniques have been applied in research attempting to create intelligent computer-based tutors. The first instructional programs …
+              - generic [ref=f2e153]:
+                - button "儲存" [ref=f2e154] [cursor=pointer]
+                - button "引用" [ref=f2e157] [cursor=pointer]
+                - link "被引用 4024 次" [ref=f2e160] [cursor=pointer]:
+                  - /url: /scholar?cites=566016752551833602&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e161] [cursor=pointer]:
+                  - /url: /scholar?q=related:ArDF0Dzl2gcJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                - link "全部共 11 個版本" [ref=f2e162] [cursor=pointer]:
+                  - /url: /scholar?cluster=566016752551833602&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e164]:
+              - heading "相關搜尋" [level=2] [ref=f2e165]
+              - list [ref=f2e166]:
+                - listitem [ref=f2e167]:
+                  - link "explainable artificial intelligence" [ref=f2e168] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=1&q=explainable+artificial+intelligence&qst=ib
+                - listitem [ref=f2e169]:
+                  - link "artificial intelligence modern approach" [ref=f2e170] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=2&q=artificial+intelligence+modern+approach&qst=ib
+                - listitem [ref=f2e171]:
+                  - link "artificial intelligence machine learning" [ref=f2e172] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=3&q=artificial+intelligence+machine+learning&qst=ib
+                - listitem [ref=f2e173]:
+                  - link "artificial intelligence robotics" [ref=f2e174] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=4&q=artificial+intelligence+robotics&qst=ib
+                - listitem [ref=f2e175]:
+                  - link "artificial intelligence big data" [ref=f2e176] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=5&q=artificial+intelligence+big+data&qst=ib
+                - listitem [ref=f2e177]:
+                  - link "john mccarthy artificial intelligence" [ref=f2e178] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=6&q=john+mccarthy+artificial+intelligence&qst=ib
+                - listitem [ref=f2e179]:
+                  - link "artificial intelligence expert systems" [ref=f2e180] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=7&q=artificial+intelligence+expert+systems&qst=ib
+                - listitem [ref=f2e181]:
+                  - link "artificial intelligence xai" [ref=f2e182] [cursor=pointer]:
+                    - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=8&q=artificial+intelligence+xai&qst=ib
+            - generic [ref=f2e183]:
+              - link "[PDF] academia.edu" [ref=f2e187] [cursor=pointer]:
+                - /url: https://www.academia.edu/download/123629463/f7339bab5a0f930e916b603daad5fecaff2c.pdf
+              - generic [ref=f2e188]:
+                - heading "[書籍] Introduction to artificial intelligence" [level=3] [ref=f2e189]:
+                  - generic [ref=f2e190]: "[書籍]"
+                  - link "Introduction to artificial intelligence" [ref=f2e191] [cursor=pointer]:
+                    - /url: https://www.academia.edu/download/123629463/f7339bab5a0f930e916b603daad5fecaff2c.pdf
+                - generic [ref=f2e192]:
+                  - link "W Ertel" [ref=f2e193] [cursor=pointer]:
+                    - /url: /citations?user=Zplrd3EAAAAJ&hl=zh-TW&oi=sra
+                  - text: ", NT Black - 2011 - academia.edu"
+                - generic [ref=f2e194]: … or computer-controlled robot to perform tasks commonly associated with intelligent beings. … Artificial Intelligence is the study of how to make computers do things at which, at the …
+                - generic [ref=f2e195]:
+                  - button "儲存" [ref=f2e196] [cursor=pointer]
+                  - button "引用" [ref=f2e199] [cursor=pointer]
+                  - link "被引用 1544 次" [ref=f2e202] [cursor=pointer]:
+                    - /url: /scholar?cites=11304282695749907403&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                  - link "相關文章" [ref=f2e203] [cursor=pointer]:
+                    - /url: /scholar?q=related:y7PEGDjh4JwJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                  - link "全部共 24 個版本" [ref=f2e204] [cursor=pointer]:
+                    - /url: /scholar?cluster=11304282695749907403&hl=zh-TW&as_sdt=0,5
+                  - button "顯示更多服務" [ref=f2e205] [cursor=pointer]
+            - generic [ref=f2e209]:
+              - heading [level=3] [ref=f2e210]:
+                - link "What is artificial intelligence?" [ref=f2e211] [cursor=pointer]:
+                  - /url: https://link.springer.com/content/pdf/10.1007/978-94-009-1900-6_1?pdf=chapter+toc
+              - generic [ref=f2e212]: "JH Fetzer - Artificial intelligence: Its scope and limits, 1990 - Springer"
+              - generic [ref=f2e213]: One of the fascinating aspects of the field of artificial intelligence (AI) is that the precise nature of its subject matter turns out to be surprisingly difficult to define. The problem, of course, …
+              - generic [ref=f2e214]:
+                - button "儲存" [ref=f2e215] [cursor=pointer]
+                - button "引用" [ref=f2e218] [cursor=pointer]
+                - link "被引用 632 次" [ref=f2e221] [cursor=pointer]:
+                  - /url: /scholar?cites=3891062307404250267&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e222] [cursor=pointer]:
+                  - /url: /scholar?q=related:m_y9h43U_zUJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                - link "全部共 8 個版本" [ref=f2e223] [cursor=pointer]:
+                  - /url: /scholar?cluster=3891062307404250267&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e224]:
+              - link "[PDF] cam.ac.uk" [ref=f2e228] [cursor=pointer]:
+                - /url: https://www.cl.cam.ac.uk/teaching/2021/ArtInt/ai-2021-bw.pdf
+              - generic [ref=f2e229]:
+                - heading "[書籍] Artificial intelligence" [level=3] [ref=f2e230]:
+                  - generic [ref=f2e231]: "[書籍]"
+                  - link "Artificial intelligence" [ref=f2e232] [cursor=pointer]:
+                    - /url: https://books.google.com/books?hl=zh-TW&lr=&id=_ixmRlL9jcIC&oi=fnd&pg=PP1&dq=artificial+intelligence&ots=JRRKWSqDTS&sig=H-FTsLE9PV8aPvRUXKZ1Pw4Vq6U
+                - generic [ref=f2e233]: MA Boden - 1996 - books.google.com
+                - generic [ref=f2e234]: Artificial Intelligence is the study of how to build or program computers to enable them to do what minds can do. This volume discusses the ways in which computational ideas and …
+                - generic [ref=f2e235]:
+                  - button "儲存" [ref=f2e236] [cursor=pointer]
+                  - button "引用" [ref=f2e239] [cursor=pointer]
+                  - link "被引用 366 次" [ref=f2e242] [cursor=pointer]:
+                    - /url: /scholar?cites=15172364609982986992&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                  - link "相關文章" [ref=f2e243] [cursor=pointer]:
+                    - /url: /scholar?q=related:8Hq-5DkRj9IJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                  - link "全部共 8 個版本" [ref=f2e244] [cursor=pointer]:
+                    - /url: /scholar?cluster=15172364609982986992&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e246]:
+              - heading "[書籍] Introduction to artificial intelligence" [level=3] [ref=f2e247]:
+                - generic [ref=f2e248]: "[書籍]"
+                - link "Introduction to artificial intelligence" [ref=f2e249] [cursor=pointer]:
+                  - /url: https://books.google.com/books?hl=zh-TW&lr=&id=sQegDwAAQBAJ&oi=fnd&pg=PR13&dq=artificial+intelligence&ots=RIPKSCi-Tx&sig=DNMZuuMGP0fOTs3m0UFIkdAkKN0
+              - generic [ref=f2e250]:
+                - link "PC Jackson" [ref=f2e251] [cursor=pointer]:
+                  - /url: /citations?user=numVGwQAAAAJ&hl=zh-TW&oi=sra
+                - text: "- 2019 - books.google.com"
+              - generic [ref=f2e252]: … intelligent enough to understand intelligence? One approach to answering this question is “artificial intelligence… Much progress has been made in research on artificial intelligence since …
+              - generic [ref=f2e253]:
+                - button "儲存" [ref=f2e254] [cursor=pointer]
+                - button "引用" [ref=f2e257] [cursor=pointer]
+                - link "被引用 569 次" [ref=f2e260] [cursor=pointer]:
+                  - /url: /scholar?cites=2413990376951527228&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e261] [cursor=pointer]:
+                  - /url: /scholar?q=related:PDdoPXU3gCEJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                - link "全部共 9 個版本" [ref=f2e262] [cursor=pointer]:
+                  - /url: /scholar?cluster=2413990376951527228&hl=zh-TW&as_sdt=0,5
+            - generic [ref=f2e263]:
+              - link "[PDF] ubc.ca" [ref=f2e267] [cursor=pointer]:
+                - /url: https://www.cs.ubc.ca/~mack/CS322/lectures/1-Intro1.pdf
+              - generic [ref=f2e268]:
+                - heading "[書籍] Artificial intelligence" [level=3] [ref=f2e269]:
+                  - generic [ref=f2e270]: "[書籍]"
+                  - link "Artificial intelligence" [ref=f2e271] [cursor=pointer]:
+                    - /url: https://www.cs.ubc.ca/~mack/CS322/lectures/1-Intro1.pdf
+                - generic [ref=f2e272]:
+                  - link "AK Mackworth" [ref=f2e273] [cursor=pointer]:
+                    - /url: /citations?user=6Jf5GeYAAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "DL Poole" [ref=f2e274] [cursor=pointer]:
+                    - /url: /citations?user=CeWswygAAAAJ&hl=zh-TW&oi=sra
+                  - text: "- 2010 - cs.ubc.ca"
+                - generic [ref=f2e275]: … Foundations of artificial intelligence … • We would have to spend most of our effort on studying how people’s minds operate (eg IQ tests cover very narrow range of ability) • …
+                - generic [ref=f2e276]:
+                  - button "儲存" [ref=f2e277] [cursor=pointer]
+                  - button "引用" [ref=f2e280] [cursor=pointer]
+                  - link "被引用 2004 次" [ref=f2e283] [cursor=pointer]:
+                    - /url: /scholar?cites=11185924974449740483&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                  - link "相關文章" [ref=f2e284] [cursor=pointer]:
+                    - /url: /scholar?q=related:w0o_qn9jPJsJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                  - link "全部共 18 個版本" [ref=f2e285] [cursor=pointer]:
+                    - /url: /scholar?cluster=11185924974449740483&hl=zh-TW&as_sdt=0,5
+                  - button "顯示更多服務" [ref=f2e286] [cursor=pointer]
+            - generic [ref=f2e289]:
+              - link "[PDF] umn.edu" [ref=f2e293] [cursor=pointer]:
+                - /url: https://misq.umn.edu/misq/article-pdf/45/3/1433/7191/14_16274_si_introduction.pdf
+              - generic [ref=f2e294]:
+                - heading [level=3] [ref=f2e295]:
+                  - link "Managing artificial intelligence" [ref=f2e296] [cursor=pointer]:
+                    - /url: https://misq.umn.edu/misq/article/45/3/1433/1890
+                - generic [ref=f2e297]:
+                  - link "N Berente" [ref=f2e298] [cursor=pointer]:
+                    - /url: /citations?user=xKzbu4QAAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "B Gu" [ref=f2e299] [cursor=pointer]:
+                    - /url: /citations?user=mR9b_ncAAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "J Recker" [ref=f2e300] [cursor=pointer]:
+                    - /url: /citations?user=HQcik5oAAAAJ&hl=zh-TW&oi=sra
+                  - text: ","
+                  - link "R Santhanam" [ref=f2e301] [cursor=pointer]:
+                    - /url: /citations?user=O1oEZiEAAAAJ&hl=zh-TW&oi=sra
+                  - text: "- MIS quarterly, 2021 - misq.umn.edu"
+                - generic [ref=f2e302]: … that actually achieved intelligent behavior, … artificial intelligence for having borne and nurtured it. If you could see how it was done, people seemed to think, then it couldn’t be intelligence…
+                - generic [ref=f2e303]:
+                  - button "儲存" [ref=f2e304] [cursor=pointer]
+                  - button "引用" [ref=f2e307] [cursor=pointer]
+                  - link "被引用 2181 次" [ref=f2e310] [cursor=pointer]:
+                    - /url: /scholar?cites=1837951255982872303&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                  - link "相關文章" [ref=f2e311] [cursor=pointer]:
+                    - /url: /scholar?q=related:75ZX7-22gRkJ:scholar.google.com/&scioq=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                  - link "全部共 10 個版本" [ref=f2e312] [cursor=pointer]:
+                    - /url: /scholar?cluster=1837951255982872303&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e313]:
+            - generic [ref=f2e314]:
+              - generic [ref=f2e315]:
+                - paragraph [ref=f2e317]: 學術搜尋 PDF 閱讀器
+                - generic [ref=f2e318]:
+                  - link "立即體驗" [ref=f2e319] [cursor=pointer]:
+                    - /url: https://chromewebstore.google.com/detail/google-scholar-pdf-reader/dahenjhkoodjbpjheillcadbppiidmhp?hl=zh-TW&utm_medium=web&utm_source=scholar&utm_campaign=r&utm_content=rl
+                  - link "不用了，謝謝" [ref=f2e320] [cursor=pointer]:
+                    - /url: /scholar_cke?w=gsr_all_features&hl=zh-TW&ei=6_CCaubILq6W6rQPh-7hyQU&loc=results
+              - generic [ref=f2e322]:
+                - generic [ref=f2e323]: 瀏覽 AI 大綱
+                - generic [ref=f2e328]: 追蹤參考資料
+                - generic [ref=f2e333]: 引用及儲存
+            - navigation [ref=f2e339]:
+              - table [ref=f2e341]:
+                - rowgroup [ref=f2e342]:
+                  - row [ref=f2e343]:
+                    - cell [ref=f2e344]
+                    - cell "1" [ref=f2e346]
+                    - cell [ref=f2e348]:
+                      - link "2" [ref=f2e349] [cursor=pointer]:
+                        - /url: /scholar?start=10&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e351]:
+                      - link "3" [ref=f2e352] [cursor=pointer]:
+                        - /url: /scholar?start=20&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e354]:
+                      - link "4" [ref=f2e355] [cursor=pointer]:
+                        - /url: /scholar?start=30&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e357]:
+                      - link "5" [ref=f2e358] [cursor=pointer]:
+                        - /url: /scholar?start=40&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e360]:
+                      - link "6" [ref=f2e361] [cursor=pointer]:
+                        - /url: /scholar?start=50&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e363]:
+                      - link "7" [ref=f2e364] [cursor=pointer]:
+                        - /url: /scholar?start=60&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e366]:
+                      - link "8" [ref=f2e367] [cursor=pointer]:
+                        - /url: /scholar?start=70&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e369]:
+                      - link "9" [ref=f2e370] [cursor=pointer]:
+                        - /url: /scholar?start=80&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e372]:
+                      - link "10" [ref=f2e373] [cursor=pointer]:
+                        - /url: /scholar?start=90&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+                    - cell [ref=f2e375]:
+                      - link "下一頁" [ref=f2e376] [cursor=pointer]:
+                        - /url: /scholar?start=10&q=artificial+intelligence&hl=zh-TW&as_sdt=0,5
+    - contentinfo [ref=f2e379]:
+      - generic [ref=f2e380]:
+        - link "隱私權" [ref=f2e381] [cursor=pointer]:
+          - /url: //www.google.com/intl/zh-TW/policies/privacy/
+        - link "服務條款" [ref=f2e382] [cursor=pointer]:
+          - /url: //www.google.com/intl/zh-TW/policies/terms/
+        - button "說明" [ref=f2e383] [cursor=pointer]
+  - iframe [ref=f2e384]:
+    - generic [ref=f3e1]:
+      - generic [ref=f3e2]: "0"
+      - generic [ref=f3e3]: "0"

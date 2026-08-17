@@ -1,0 +1,276 @@
+- generic [ref=f3e2]:
+  - link "Skip to main content" [ref=f3e3] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=f3e4]:
+    - link [ref=f3e5] [cursor=pointer]:
+      - /url: https://arxiv.org/IgnoreMe
+    - link "archive home" [ref=f3e6] [cursor=pointer]:
+      - /url: https://arxiv.org/
+      - img "archive" [ref=f3e7]
+    - navigation "Main navigation" [ref=f3e8]:
+      - link "Search" [ref=f3e9] [cursor=pointer]:
+        - /url: https://arxiv.org/search
+      - link "Submit" [ref=f3e13] [cursor=pointer]:
+        - /url: https://arxiv.org/user/create
+      - link "Donate" [ref=f3e14] [cursor=pointer]:
+        - /url: https://info.arxiv.org/about/donate.html
+      - link "Log in" [ref=f3e16] [cursor=pointer]:
+        - /url: https://arxiv.org/login
+  - main [ref=f3e17]:
+    - generic [ref=f3e19]:
+      - generic [ref=f3e20]:
+        - heading "Computer Science > Computation and Language" [level=1] [ref=f3e22]
+        - generic [ref=f3e24]:
+          - generic [ref=f3e25]:
+            - text: "[Submitted on 9 Feb 2024 ("
+            - link "v1" [ref=f3e26] [cursor=pointer]:
+              - /url: https://arxiv.org/abs/2402.06196v1
+            - text: ), last revised 23 Mar 2025 (this version, v3)]
+          - 'heading "Large Language Models: A Survey" [level=1] [ref=f3e27]'
+          - generic [ref=f3e28]:
+            - link "Shervin Minaee" [ref=f3e29] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Minaee,+S
+            - text: ","
+            - link "Tomas Mikolov" [ref=f3e30] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Mikolov,+T
+            - text: ","
+            - link "Narjes Nikzad" [ref=f3e31] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Nikzad,+N
+            - text: ","
+            - link "Meysam Chenaghlu" [ref=f3e32] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Chenaghlu,+M
+            - text: ","
+            - link "Richard Socher" [ref=f3e33] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Socher,+R
+            - text: ","
+            - link "Xavier Amatriain" [ref=f3e34] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Amatriain,+X
+            - text: ","
+            - link "Jianfeng Gao" [ref=f3e35] [cursor=pointer]:
+              - /url: https://arxiv.org/search/cs?searchtype=author&query=Gao,+J
+          - blockquote [ref=f3e36]: "Large Language Models (LLMs) have drawn a lot of attention due to their strong performance on a wide range of natural language tasks, since the release of ChatGPT in November 2022. LLMs' ability of general-purpose language understanding and generation is acquired by training billions of model's parameters on massive amounts of text data, as predicted by scaling laws \\cite{kaplan2020scaling,hoffmann2022training}. The research area of LLMs, while very recent, is evolving rapidly in many different ways. In this paper, we review some of the most prominent LLMs, including three popular LLM families (GPT, LLaMA, PaLM), and discuss their characteristics, contributions and limitations. We also give an overview of techniques developed to build, and augment LLMs. We then survey popular datasets prepared for LLM training, fine-tuning, and evaluation, review widely used LLM evaluation metrics, and compare the performance of several popular LLMs on a set of representative benchmarks. Finally, we conclude the paper by discussing open challenges and future research directions."
+          - table "Additional metadata" [ref=f3e38]:
+            - rowgroup [ref=f3e39]:
+              - row [ref=f3e40]:
+                - cell "Subjects:" [ref=f3e41]
+                - cell "Computation and Language (cs.CL); Artificial Intelligence (cs.AI)" [ref=f3e42]
+              - row [ref=f3e43]:
+                - cell "Cite as:" [ref=f3e44]
+                - cell [ref=f3e45]:
+                  - generic [ref=f3e46]:
+                    - link "arXiv:2402.06196" [ref=f3e47] [cursor=pointer]:
+                      - /url: https://arxiv.org/abs/2402.06196
+                    - text: "[cs.CL]"
+              - row [ref=f3e48]:
+                - cell [ref=f3e49]
+                - cell [ref=f3e50]:
+                  - text: (or
+                  - generic [ref=f3e51]:
+                    - link "arXiv:2402.06196v3" [ref=f3e52] [cursor=pointer]:
+                      - /url: https://arxiv.org/abs/2402.06196v3
+                    - text: "[cs.CL]"
+                  - text: for this version)
+              - row [ref=f3e53]:
+                - cell [ref=f3e54]
+                - cell [ref=f3e55]:
+                  - link "https://doi.org/10.48550/arXiv.2402.06196" [ref=f3e56] [cursor=pointer]:
+                    - /url: https://doi.org/10.48550/arXiv.2402.06196
+                  - button "Focus to learn more" [ref=f3e58]
+        - generic [ref=f3e61]:
+          - heading "Submission history" [level=2] [ref=f3e62]
+          - text: "From: Shervin Minaee ["
+          - link "view email" [ref=f3e63] [cursor=pointer]:
+            - /url: /show-email/2481b3ea/2402.06196
+          - text: "]"
+          - strong [ref=f3e64]:
+            - link "[v1]" [ref=f3e65] [cursor=pointer]:
+              - /url: /abs/2402.06196v1
+          - text: Fri, 9 Feb 2024 05:37:09 UTC (7,242 KB)
+          - strong [ref=f3e66]:
+            - link "[v2]" [ref=f3e67] [cursor=pointer]:
+              - /url: /abs/2402.06196v2
+          - text: Tue, 20 Feb 2024 13:33:49 UTC (7,243 KB)
+          - strong [ref=f3e68]: "[v3]"
+          - text: Sun, 23 Mar 2025 14:51:01 UTC (7,243 KB)
+      - generic [ref=f3e69]:
+        - generic [ref=f3e70]:
+          - heading "Access Paper:" [level=2] [ref=f3e71]
+          - list [ref=f3e72]:
+            - listitem [ref=f3e73]:
+              - link "View PDF" [ref=f3e74] [cursor=pointer]:
+                - /url: /pdf/2402.06196
+            - listitem [ref=f3e75]:
+              - link "HTML (experimental)" [ref=f3e76] [cursor=pointer]:
+                - /url: https://arxiv.org/html/2402.06196v3
+            - listitem [ref=f3e77]:
+              - link "TeX Source" [ref=f3e78] [cursor=pointer]:
+                - /url: /src/2402.06196
+          - link "view license" [ref=f3e80] [cursor=pointer]:
+            - /url: http://creativecommons.org/licenses/by/4.0/
+        - generic [ref=f3e82]:
+          - heading "Current browse context:" [level=3] [ref=f3e83]
+          - generic [ref=f3e84]: cs.CL
+          - generic [ref=f3e85]:
+            - link "< prev" [ref=f3e87] [cursor=pointer]:
+              - /url: /prevnext?id=2402.06196&function=prev&context=cs.CL
+            - text: "|"
+            - link "next >" [ref=f3e89] [cursor=pointer]:
+              - /url: /prevnext?id=2402.06196&function=next&context=cs.CL
+          - generic [ref=f3e90]:
+            - link "new" [ref=f3e91] [cursor=pointer]:
+              - /url: /list/cs.CL/new
+            - text: "|"
+            - link "recent" [ref=f3e92] [cursor=pointer]:
+              - /url: /list/cs.CL/recent
+            - text: "|"
+            - link "2024-02" [ref=f3e93] [cursor=pointer]:
+              - /url: /list/cs.CL/2024-02
+          - generic [ref=f3e94]:
+            - text: "Change to browse by:"
+            - generic [ref=f3e95]:
+              - link "cs" [ref=f3e96] [cursor=pointer]:
+                - /url: /abs/2402.06196?context=cs
+              - link "cs.AI" [ref=f3e97] [cursor=pointer]:
+                - /url: /abs/2402.06196?context=cs.AI
+        - generic [ref=f3e98]:
+          - heading "References & Citations" [level=3] [ref=f3e99]
+          - list [ref=f3e100]:
+            - listitem [ref=f3e101]:
+              - link "NASA ADS" [ref=f3e102] [cursor=pointer]:
+                - /url: https://ui.adsabs.harvard.edu/abs/arXiv:2402.06196
+            - listitem [ref=f3e103]:
+              - link "Google Scholar" [ref=f3e104] [cursor=pointer]:
+                - /url: https://scholar.google.com/scholar_lookup?arxiv_id=2402.06196
+            - listitem [ref=f3e105]:
+              - link "Semantic Scholar" [ref=f3e106] [cursor=pointer]:
+                - /url: https://api.semanticscholar.org/arXiv:2402.06196
+        - button "export BibTeX citation" [ref=f3e108]
+        - generic [ref=f3e109]:
+          - heading "Bookmark" [level=3] [ref=f3e111]
+          - link [ref=f3e112] [cursor=pointer]:
+            - /url: "http://www.bibsonomy.org/BibtexHandler?requTask=upload&url=https://arxiv.org/abs/2402.06196&description=Large Language Models: A Survey"
+            - img "BibSonomy" [ref=f3e113]
+          - link [ref=f3e114] [cursor=pointer]:
+            - /url: "https://reddit.com/submit?url=https://arxiv.org/abs/2402.06196&title=Large Language Models: A Survey"
+            - img "Reddit" [ref=f3e115]
+      - tablist "arXivLabs tools" [ref=f3e117]:
+        - radio "Bibliographic Tools" [checked] [ref=f3e118]
+        - tab "Bibliographic Tools" [selected] [ref=f3e119] [cursor=pointer]
+        - tabpanel "Bibliographic Tools" [ref=f3e120]:
+          - heading "Bibliographic and Citation Tools" [level=1] [ref=f3e121]
+          - generic [ref=f3e122]:
+            - generic [ref=f3e123]:
+              - generic [ref=f3e125]:
+                - checkbox "Bibliographic Explorer Toggle"
+                - generic [ref=f3e126] [cursor=pointer]
+                - generic [ref=f3e127]: Bibliographic Explorer Toggle
+              - generic [ref=f3e128]:
+                - text: Bibliographic Explorer
+                - emphasis [ref=f3e129]:
+                  - text: (
+                  - link "What is the Explorer?" [ref=f3e130] [cursor=pointer]:
+                    - /url: https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-explorer
+                  - text: )
+            - generic [ref=f3e131]:
+              - generic [ref=f3e133]:
+                - checkbox "Connected Papers"
+                - generic [ref=f3e134] [cursor=pointer]
+                - generic [ref=f3e135]: Connected Papers Toggle
+              - generic [ref=f3e136]:
+                - text: Connected Papers
+                - emphasis [ref=f3e137]:
+                  - text: (
+                  - link "What is Connected Papers?" [ref=f3e138] [cursor=pointer]:
+                    - /url: https://www.connectedpapers.com/about
+                  - text: )
+            - generic [ref=f3e139]:
+              - generic [ref=f3e141]:
+                - checkbox "Litmaps"
+                - generic [ref=f3e142] [cursor=pointer]
+                - generic [ref=f3e143]: Litmaps Toggle
+              - generic [ref=f3e144]:
+                - text: Litmaps
+                - emphasis [ref=f3e145]:
+                  - text: (
+                  - link "What is Litmaps?" [ref=f3e146] [cursor=pointer]:
+                    - /url: https://www.litmaps.co/
+                  - text: )
+            - generic [ref=f3e147]:
+              - generic [ref=f3e149]:
+                - checkbox "scite Smart Citations"
+                - generic [ref=f3e150] [cursor=pointer]
+                - generic [ref=f3e151]: scite.ai Toggle
+              - generic [ref=f3e152]:
+                - text: scite Smart Citations
+                - emphasis [ref=f3e153]:
+                  - text: (
+                  - link "What are Smart Citations?" [ref=f3e154] [cursor=pointer]:
+                    - /url: https://www.scite.ai/
+                  - text: )
+        - radio "Code, Data, Media" [ref=f3e158]
+        - tab "Code, Data, Media" [ref=f3e159] [cursor=pointer]
+        - radio "Demos" [ref=f3e160]
+        - tab "Demos" [ref=f3e161] [cursor=pointer]
+        - radio "Related Papers" [ref=f3e162]
+        - tab "Related Papers" [ref=f3e163] [cursor=pointer]
+        - radio "About arXivLabs" [ref=f3e164]
+        - tab "About arXivLabs" [ref=f3e165] [cursor=pointer]
+      - generic [ref=f3e166]:
+        - link "Which authors of this paper are endorsers?" [ref=f3e167] [cursor=pointer]:
+          - /url: /auth/show-endorsers/2402.06196
+        - text: "|"
+        - link "Disable MathJax" [ref=f3e168] [cursor=pointer]:
+          - /url: javascript:setMathjaxCookie()
+        - text: (
+        - link "What is MathJax?" [ref=f3e169] [cursor=pointer]:
+          - /url: https://info.arxiv.org/help/mathjax.html
+        - text: )
+  - contentinfo [ref=f3e170]:
+    - generic [ref=f3e171]:
+      - generic [ref=f3e172]:
+        - generic [ref=f3e173]:
+          - text: We gratefully acknowledge support from our
+          - strong [ref=f3e174]: major funders
+          - text: ","
+          - link [ref=f3e175] [cursor=pointer]:
+            - /url: https://info.arxiv.org/about/ourmembers.html
+            - strong [ref=f3e176]: member institutions
+          - text: ", and all contributors."
+        - navigation "Site navigation" [ref=f3e177]:
+          - link "About" [ref=f3e178] [cursor=pointer]:
+            - /url: https://info.arxiv.org/about
+          - generic [ref=f3e179]: ·
+          - link "Help" [ref=f3e180] [cursor=pointer]:
+            - /url: https://info.arxiv.org/help
+          - generic [ref=f3e181]: ·
+          - link "Contact" [ref=f3e182] [cursor=pointer]:
+            - /url: https://info.arxiv.org/help/contact.html
+          - generic [ref=f3e183]: ·
+          - link "Subscribe" [ref=f3e184] [cursor=pointer]:
+            - /url: https://info.arxiv.org/help/subscribe
+          - generic [ref=f3e185]: ·
+          - link "Copyright" [ref=f3e186] [cursor=pointer]:
+            - /url: https://info.arxiv.org/help/license/index.html
+          - generic [ref=f3e187]: ·
+          - link "Privacy" [ref=f3e188] [cursor=pointer]:
+            - /url: https://info.arxiv.org/help/policies/privacy_policy.html
+          - generic [ref=f3e189]: ·
+          - link "Accessibility" [ref=f3e190] [cursor=pointer]:
+            - /url: https://info.arxiv.org/help/web_accessibility.html
+          - generic [ref=f3e191]: ·
+          - link "Operational Status (opens in new tab)" [ref=f3e192] [cursor=pointer]:
+            - /url: https://status.arxiv.org
+            - text: Operational Status
+            - generic [ref=f3e193]: (opens in new tab)
+      - generic "Major funders" [ref=f3e194]:
+        - generic [ref=f3e195]: Major funding support from
+        - generic [ref=f3e196]:
+          - link [ref=f3e197] [cursor=pointer]:
+            - /url: https://www.simonsfoundation.org/
+            - img "Simons Foundation" [ref=f3e198]
+          - link [ref=f3e199] [cursor=pointer]:
+            - /url: https://www.sfi.org.bm/
+            - img "Simons Foundation International" [ref=f3e200]
+          - link [ref=f3e201] [cursor=pointer]:
+            - /url: https://www.schmidtsciences.org/
+            - img "Schmidt Sciences" [ref=f3e202]

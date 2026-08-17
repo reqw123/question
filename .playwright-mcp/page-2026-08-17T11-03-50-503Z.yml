@@ -1,0 +1,282 @@
+- generic [ref=f1e2]:
+  - banner [ref=f1e3]:
+    - button [ref=f1e4] [cursor=pointer]
+    - link "首頁" [ref=f1e6] [cursor=pointer]:
+      - /url: /schhp?hl=zh-TW&as_sdt=0,5
+    - generic [ref=f1e9]:
+      - textbox "搜尋" [ref=f1e11]: 人工智慧
+      - button "搜尋" [ref=f1e12] [cursor=pointer]
+    - button [ref=f1e16] [cursor=pointer]:
+      - img "56" [ref=f1e17]
+  - generic [ref=f1e18]:
+    - generic [ref=f1e21]: 文章
+    - generic [ref=f1e23]: 約有 339,000 項結果 (0.05 秒)
+    - generic [ref=f1e25]:
+      - link "我的個人學術檔案" [ref=f1e26] [cursor=pointer]:
+        - /url: /citations?user=rfkwTHUAAAAJ&hl=zh-TW
+      - link "我的圖書館" [ref=f1e29] [cursor=pointer]:
+        - /url: /scholar?scilib=1&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+  - generic [ref=f1e32]:
+    - navigation [ref=f1e33]:
+      - generic [ref=f1e34]:
+        - list [ref=f1e36]:
+          - listitem [ref=f1e37]:
+            - link "不限時間" [ref=f1e38] [cursor=pointer]:
+              - /url: /scholar?q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e39]:
+            - link "2026 以後" [ref=f1e40] [cursor=pointer]:
+              - /url: /scholar?as_ylo=2026&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e41]:
+            - link "2025 以後" [ref=f1e42] [cursor=pointer]:
+              - /url: /scholar?as_ylo=2025&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e43]:
+            - link "2022 以後" [ref=f1e44] [cursor=pointer]:
+              - /url: /scholar?as_ylo=2022&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e45]:
+            - link "自訂範圍..." [ref=f1e46] [cursor=pointer]:
+              - /url: javascript:void(0)
+        - list [ref=f1e47]:
+          - listitem [ref=f1e48]:
+            - link "按照關聯性排序" [ref=f1e49] [cursor=pointer]:
+              - /url: /scholar?hl=zh-TW&as_sdt=0,5&q=%22%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%22
+          - listitem [ref=f1e50]:
+            - link "按日期排序" [ref=f1e51] [cursor=pointer]:
+              - /url: /scholar?hl=zh-TW&as_sdt=0,5&q=%22%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%22&scisbd=1
+        - list [ref=f1e52]:
+          - listitem [ref=f1e53]:
+            - link "不限語言" [ref=f1e54] [cursor=pointer]:
+              - /url: /scholar?lr=&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e55]:
+            - link "搜尋所有中文網頁" [ref=f1e56] [cursor=pointer]:
+              - /url: /scholar?lr=lang_zh-CN|lang_zh-TW&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e57]:
+            - link "搜尋繁體中文網頁" [ref=f1e58] [cursor=pointer]:
+              - /url: /scholar?lr=lang_zh-TW&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+        - list [ref=f1e59]:
+          - listitem [ref=f1e60]:
+            - link "不限類型" [ref=f1e61] [cursor=pointer]:
+              - /url: /scholar?q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f1e62]:
+            - link "評論性文章" [ref=f1e63] [cursor=pointer]:
+              - /url: /scholar?q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5&as_rr=1
+        - list [ref=f1e64]:
+          - listitem [ref=f1e65]:
+            - checkbox "包含專利" [ref=f1e66] [cursor=pointer]
+          - listitem [ref=f1e70]:
+            - checkbox "只包含書目/引用資料" [checked] [ref=f1e71] [cursor=pointer]
+        - link "建立快訊" [ref=f1e76] [cursor=pointer]:
+          - /url: /scholar_alerts?view_op=create_alert_options&hl=zh-TW&alert_query=%22%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%22&alert_params=%3Fhl%3Dzh-TW%26as_sdt%3D0,5
+    - main [ref=f1e79]:
+      - generic [ref=f1e80]:
+        - generic [ref=f1e81]:
+          - generic [ref=f1e83]:
+            - heading "[書籍] 人工智慧來了" [level=3] [ref=f1e84]:
+              - generic [ref=f1e85]: "[書籍]"
+              - link "人工智慧來了" [ref=f1e86] [cursor=pointer]:
+                - /url: https://books.google.com/books?hl=zh-TW&lr=&id=rg4oDwAAQBAJ&oi=fnd&pg=PA8&dq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&ots=fLZv2YY4rK&sig=0EPSm89rDXbtvz87ZrR4kjNzXA8
+            - generic [ref=f1e87]: 李開復， 王詠剛 - 2017 - books.google.com
+            - generic [ref=f1e88]: … 人工智慧 142 德州撲克:開啟新世界的大門? 147 AI 小百科:弱人工智慧,強人工智慧和超人工智慧 … 我們先來看一看,在已經變成每個人日常生活一部分 的智慧手機裡,到底隱藏著多少人工智慧的…
+            - generic [ref=f1e89]:
+              - button "儲存" [ref=f1e90] [cursor=pointer]
+              - button "引用" [ref=f1e93] [cursor=pointer]
+              - link "被引用 28 次" [ref=f1e96] [cursor=pointer]:
+                - /url: /scholar?cites=8955030643222070381&as_sdt=2005&sciodt=0,5&hl=zh-TW
+              - link "相關文章" [ref=f1e97] [cursor=pointer]:
+                - /url: /scholar?q=related:bUT9meyoRnwJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f1e99]:
+            - 'heading "[書籍] 人工智慧在台灣: 產業轉型的契機與挑戰" [level=3] [ref=f1e100]':
+              - generic [ref=f1e101]: "[書籍]"
+              - 'link "人工智慧在台灣: 產業轉型的契機與挑戰" [ref=f1e102] [cursor=pointer]':
+                - /url: https://books.google.com/books?hl=zh-TW&lr=&id=5yWqDwAAQBAJ&oi=fnd&pg=PT22&dq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&ots=wkjELWN3ag&sig=TEB8rdInIE7pL7NF7JQv7PrTAjM
+            - generic [ref=f1e103]: 陳昇瑋， 溫怡玲 - 2019 - books.google.com
+            - generic [ref=f1e104]: … 台灣應該儘速推動人工智慧的呼 籲,旋即提出台灣的人工智慧[小國大戰略]宣言,並於當年7月 獲行 政院核定通過台灣人工智慧科研戰略,快速的帶起國內一波波加速迎接 人工智慧的浪潮.面對…
+            - generic [ref=f1e105]:
+              - button "儲存" [ref=f1e106] [cursor=pointer]
+              - button "引用" [ref=f1e109] [cursor=pointer]
+              - link "被引用 9 次" [ref=f1e112] [cursor=pointer]:
+                - /url: /scholar?cites=16327599369581809694&as_sdt=2005&sciodt=0,5&hl=zh-TW
+              - link "相關文章" [ref=f1e113] [cursor=pointer]:
+                - /url: /scholar?q=related:HtDQih5Jl-IJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+              - link "全部共 3 個版本" [ref=f1e114] [cursor=pointer]:
+                - /url: /scholar?cluster=16327599369581809694&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f1e116]:
+            - heading "[書籍] 人工智慧導論" [level=3] [ref=f1e117]:
+              - generic [ref=f1e118]: "[書籍]"
+              - link "人工智慧導論" [ref=f1e119] [cursor=pointer]:
+                - /url: https://books.google.com/books?hl=zh-TW&lr=&id=xvsCEAAAQBAJ&oi=fnd&pg=PT9&dq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&ots=LNw9Bi2PGl&sig=hYWhAyFK6OjlxQ9LyMohiMNXqSE
+            - generic [ref=f1e120]: 謝邦昌， 蘇志雄 - 2020 - books.google.com
+            - generic [ref=f1e121]: "本書命名為[人工智慧導論], 希望讓有意願學習人工智慧(AI) 的人, 認識AI 的發展, AI 的基本學習 三元素: 影像視覺, 語音辨識與自然語言處理. 本書共分六個單元: 1. 人工智慧簡介: 從1950 年代…"
+            - generic [ref=f1e122]:
+              - button "儲存" [ref=f1e123] [cursor=pointer]
+              - button "引用" [ref=f1e126] [cursor=pointer]
+              - link "被引用 2 次" [ref=f1e129] [cursor=pointer]:
+                - /url: /scholar?cites=14044565936818595445&as_sdt=2005&sciodt=0,5&hl=zh-TW
+              - link "相關文章" [ref=f1e130] [cursor=pointer]:
+                - /url: /scholar?q=related:daaf6E5S6MIJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f1e131]:
+            - link "[PDF] nccu.edu.tw" [ref=f1e135] [cursor=pointer]:
+              - /url: https://mcr.nccu.edu.tw/web/backissues/download_file.jsp?pp_no=PP1714455608523
+            - generic [ref=f1e136]:
+              - heading "[PDF] 人工智慧哲學與人文教育" [level=3] [ref=f1e137]:
+                - generic [ref=f1e138]: "[PDF]"
+                - link "人工智慧哲學與人文教育" [ref=f1e139] [cursor=pointer]:
+                  - /url: https://mcr.nccu.edu.tw/web/backissues/download_file.jsp?pp_no=PP1714455608523
+              - generic [ref=f1e140]: 鄭會穎 - 新聞學研究, 2024 - mcr.nccu.edu.tw
+              - generic [ref=f1e141]: … 人工智慧是資訊跟電腦科學的範疇,跟哲學到底有什麼關係?就算 跟哲學有關,這跟人文教育有… 人工智慧哲學的理論與實踐 人工智慧哲學大致可以分為兩大區塊,其一是理論,其二是實踐. 理論的…
+              - generic [ref=f1e142]:
+                - button "儲存" [ref=f1e143] [cursor=pointer]
+                - button "引用" [ref=f1e146] [cursor=pointer]
+                - link "被引用 2 次" [ref=f1e149] [cursor=pointer]:
+                  - /url: /scholar?cites=8009047600363635933&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f1e150] [cursor=pointer]:
+                  - /url: /scholar?q=related:3YTe2FvaJW8J:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - link "全部共 3 個版本" [ref=f1e151] [cursor=pointer]:
+                  - /url: /scholar?cluster=8009047600363635933&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f1e152] [cursor=pointer]
+          - generic [ref=f1e155]:
+            - link "[PDF] ater.org.tw" [ref=f1e159] [cursor=pointer]:
+              - /url: https://ater.org.tw/wordpress/wp-content/uploads/2026/05/13-12_free_02.pdf
+            - generic [ref=f1e160]:
+              - 'heading "[PDF] 人工智慧對教育領域的影響: 機會與挑戰" [level=3] [ref=f1e161]':
+                - generic [ref=f1e162]: "[PDF]"
+                - 'link "人工智慧對教育領域的影響: 機會與挑戰" [ref=f1e163] [cursor=pointer]':
+                  - /url: https://ater.org.tw/wordpress/wp-content/uploads/2026/05/13-12_free_02.pdf
+              - generic [ref=f1e164]: 王慧婷 - 臺灣教育評論月刊, 2024 - ater.org.tw
+              - generic [ref=f1e165]: … 在全球數位化轉型的浪潮中,人工智慧(Artificial Intelligence,簡稱AI)作 為… 人工智慧 演算法來 分析學習數據,針對不同學生量身訂做學習方案,還能提升教學和學習 成效.從自動化學習者到智慧…
+              - generic [ref=f1e166]:
+                - button "儲存" [ref=f1e167] [cursor=pointer]
+                - button "引用" [ref=f1e170] [cursor=pointer]
+                - link "被引用 2 次" [ref=f1e173] [cursor=pointer]:
+                  - /url: /scholar?cites=1799755382774376328&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f1e174] [cursor=pointer]:
+                  - /url: /scholar?q=related:iCfdMPwD-hgJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - link "全部共 2 個版本" [ref=f1e175] [cursor=pointer]:
+                  - /url: /scholar?cluster=1799755382774376328&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f1e176] [cursor=pointer]
+          - generic [ref=f1e179]:
+            - link "[PDF] niar.org.tw" [ref=f1e183] [cursor=pointer]:
+              - /url: https://www.ncir.niar.org.tw/Files/Doc/Publication/InstTdy/221/02210192.pdf
+            - generic [ref=f1e184]:
+              - 'heading "[PDF] 工業4.0 與智慧製造的關鍵技術: 工業物聯網與人工智慧" [level=3] [ref=f1e185]':
+                - generic [ref=f1e186]: "[PDF]"
+                - 'link "工業4.0 與智慧製造的關鍵技術: 工業物聯網與人工智慧" [ref=f1e187] [cursor=pointer]':
+                  - /url: https://www.ncir.niar.org.tw/Files/Doc/Publication/InstTdy/221/02210192.pdf
+              - generic [ref=f1e188]:
+                - text: 洪哲倫，
+                - link "張志宏" [ref=f1e189] [cursor=pointer]:
+                  - /url: /citations?user=n5yL4KwAAAAJ&hl=zh-TW&oi=sra
+                - text: ， 林宛儒 - 科儀新知,(221), 2019 - ncir.niar.org.tw
+              - generic [ref=f1e190]: … 隨著人工智慧技術越來越成熟, 工業物聯網結合人工智慧後所帶來的效益,將造成爆發性的成長 .無論是工業4.0 或是智慧 製造,都強調人工智慧與物聯網為主體的人機協作場域與智慧生產模式.…
+              - generic [ref=f1e191]:
+                - button "儲存" [ref=f1e192] [cursor=pointer]
+                - button "引用" [ref=f1e195] [cursor=pointer]
+                - link "被引用 5 次" [ref=f1e198] [cursor=pointer]:
+                  - /url: /scholar?cites=14806959538538143932&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f1e199] [cursor=pointer]:
+                  - /url: /scholar?q=related:vOAl6j_jfM0J:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - link "全部共 2 個版本" [ref=f1e200] [cursor=pointer]:
+                  - /url: /scholar?cluster=14806959538538143932&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f1e201] [cursor=pointer]
+          - generic [ref=f1e205]:
+            - heading [level=3] [ref=f1e206]:
+              - 'link "人工智慧驅動學校行政變革: 決策支援與領導轉型之探討." [ref=f1e207] [cursor=pointer]':
+                - /url: https://openurl.ebsco.com/contentitem/gcd:192494030?sid=ebsco:plink:crawler-gcd&id=ebsco:gcd:192494030&crl=c&jrnl=16068300
+            - generic [ref=f1e208]: 陳信助， 陳寶山 - School Administrators, 2026 - openurl.ebsco.com
+            - generic [ref=f1e209]: … 摘 要 隨著人工智慧(Artificial Intelligence, AI)技術的迅速成熟,… -12校園的智慧管理,延伸至高等 教育階段的校務研究與智慧治 理,並… 本文 據此提出[學校行政者應從資訊化管理者轉型為智慧教育…
+            - generic [ref=f1e210]:
+              - button "儲存" [ref=f1e211] [cursor=pointer]
+              - button "引用" [ref=f1e214] [cursor=pointer]
+              - link "相關文章" [ref=f1e217] [cursor=pointer]:
+                - /url: /scholar?q=related:GcFUaPHWphAJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+              - link "全部共 2 個版本" [ref=f1e218] [cursor=pointer]:
+                - /url: /scholar?cluster=1199882683066663193&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f1e220]:
+            - heading [level=3] [ref=f1e221]:
+              - link "人工智慧提升政府公共治理的應用潛力探討" [ref=f1e222] [cursor=pointer]:
+                - /url: https://www.airitilibrary.com/Article/Detail/P20190408001-202012-202101140011-202101140011-24-41
+            - generic [ref=f1e223]: 丁玉珍， 林子倫 - 檔案半年刊, 2020 - airitilibrary.com
+            - generic [ref=f1e224]: 人工智慧(Artificial Intelligence, AI)是第4代工業革命的關鍵推力,它正全面性的重塑當代社會.本文 透過梳理政府運用AI提升公共治理的相關文獻及勞動部的個案討論,探討AI於提升政府公共治理…
+            - generic [ref=f1e225]:
+              - button "儲存" [ref=f1e226] [cursor=pointer]
+              - button "引用" [ref=f1e229] [cursor=pointer]
+              - link "被引用 7 次" [ref=f1e232] [cursor=pointer]:
+                - /url: /scholar?cites=17534131009309681120&as_sdt=2005&sciodt=0,5&hl=zh-TW
+              - link "相關文章" [ref=f1e233] [cursor=pointer]:
+                - /url: /scholar?q=related:4KUQz0C_VfMJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f1e234]:
+            - link "[PDF] nccu.edu.tw" [ref=f1e238] [cursor=pointer]:
+              - /url: https://mcr.nccu.edu.tw/web/backissues/download_file.jsp?pp_no=PP1714455561525
+            - generic [ref=f1e239]:
+              - heading "[PDF] 人工智慧的演化與跨域學習" [level=3] [ref=f1e240]:
+                - generic [ref=f1e241]: "[PDF]"
+                - link "人工智慧的演化與跨域學習" [ref=f1e242] [cursor=pointer]:
+                  - /url: https://mcr.nccu.edu.tw/web/backissues/download_file.jsp?pp_no=PP1714455561525
+              - generic [ref=f1e243]: 劉吉軒 - 新聞學研究, 2024 - mcr.nccu.edu.tw
+              - generic [ref=f1e244]: … 大家一起共同解讀,我自己對人工智慧的一個認識,作為大家跨 域討論的基礎. 人類智慧與機器 的演化 我先從人工智慧開始談起,今天可能大家更聚焦在人工智慧生成內 容(Artificial Intelligence …
+              - generic [ref=f1e245]:
+                - button "儲存" [ref=f1e246] [cursor=pointer]
+                - button "引用" [ref=f1e249] [cursor=pointer]
+                - link "被引用 2 次" [ref=f1e252] [cursor=pointer]:
+                  - /url: /scholar?cites=13241596425003706321&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f1e253] [cursor=pointer]:
+                  - /url: /scholar?q=related:0adto8qZw7cJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - link "全部共 3 個版本" [ref=f1e254] [cursor=pointer]:
+                  - /url: /scholar?cluster=13241596425003706321&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f1e255] [cursor=pointer]
+          - generic [ref=f1e259]:
+            - 'heading "[書籍] Life 3.0: 人工智慧時代, 人類的蛻變與重生" [level=3] [ref=f1e260]':
+              - generic [ref=f1e261]: "[書籍]"
+              - 'link "Life 3.0: 人工智慧時代, 人類的蛻變與重生" [ref=f1e262] [cursor=pointer]':
+                - /url: https://books.google.com/books?hl=zh-TW&lr=&id=1OBiDwAAQBAJ&oi=fnd&pg=PA2&dq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&ots=3xS_yuIYZb&sig=31m-V3Hwm3KrW-V9Ff2u_ikywTM
+            - generic [ref=f1e263]: 鐵馬克 - 2018 - books.google.com
+            - generic [ref=f1e264]: … 過避險基金高薪禮聘去開發人工智慧的職務,而避險基金 會在人工智慧領域大手筆投資,背後的 想法是怎樣,記性好的讀者 不妨回想一下電影[全面進化]中的人工智慧是怎樣開始致富的. 但是政府…
+            - generic [ref=f1e265]:
+              - button "儲存" [ref=f1e266] [cursor=pointer]
+              - button "引用" [ref=f1e269] [cursor=pointer]
+              - link "被引用 4 次" [ref=f1e272] [cursor=pointer]:
+                - /url: /scholar?cites=11163821846840069483&as_sdt=2005&sciodt=0,5&hl=zh-TW
+              - link "相關文章" [ref=f1e273] [cursor=pointer]:
+                - /url: /scholar?q=related:a82lPNLc7ZoJ:scholar.google.com/&scioq=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+        - navigation [ref=f1e275]:
+          - table [ref=f1e277]:
+            - rowgroup [ref=f1e278]:
+              - row [ref=f1e279]:
+                - cell [ref=f1e280]
+                - cell "1" [ref=f1e282]
+                - cell [ref=f1e284]:
+                  - link "2" [ref=f1e285] [cursor=pointer]:
+                    - /url: /scholar?start=10&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e287]:
+                  - link "3" [ref=f1e288] [cursor=pointer]:
+                    - /url: /scholar?start=20&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e290]:
+                  - link "4" [ref=f1e291] [cursor=pointer]:
+                    - /url: /scholar?start=30&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e293]:
+                  - link "5" [ref=f1e294] [cursor=pointer]:
+                    - /url: /scholar?start=40&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e296]:
+                  - link "6" [ref=f1e297] [cursor=pointer]:
+                    - /url: /scholar?start=50&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e299]:
+                  - link "7" [ref=f1e300] [cursor=pointer]:
+                    - /url: /scholar?start=60&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e302]:
+                  - link "8" [ref=f1e303] [cursor=pointer]:
+                    - /url: /scholar?start=70&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e305]:
+                  - link "9" [ref=f1e306] [cursor=pointer]:
+                    - /url: /scholar?start=80&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e308]:
+                  - link "10" [ref=f1e309] [cursor=pointer]:
+                    - /url: /scholar?start=90&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+                - cell [ref=f1e311]:
+                  - link "下一頁" [ref=f1e312] [cursor=pointer]:
+                    - /url: /scholar?start=10&q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7&hl=zh-TW&as_sdt=0,5
+  - contentinfo [ref=f1e315]:
+    - generic [ref=f1e316]:
+      - link "隱私權" [ref=f1e317] [cursor=pointer]:
+        - /url: //www.google.com/intl/zh-TW/policies/privacy/
+      - link "服務條款" [ref=f1e318] [cursor=pointer]:
+        - /url: //www.google.com/intl/zh-TW/policies/terms/
+      - button "說明" [ref=f1e319] [cursor=pointer]

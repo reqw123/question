@@ -24,15 +24,19 @@ class PageDigestError extends Error {
   }
 }
 
-async function fetchPageText({ url, fetchImpl = fetch }) {
+async function fetchPageText({ url, fetchImpl = fetch, signal }) {
   if (!url || !/^https?:\/\//i.test(url.trim())) {
     throw new PageDigestError('invalid url', 'INVALID_INPUT');
   }
 
   let response;
   try {
-    response = await fetchImpl(url);
+    response = await fetchImpl(url, { signal });
   } catch (err) {
+    // 使用者主動取消（AbortController.abort()）——不包裝成 PageDigestError，見呼叫端
+    // main.js 的說明：取消時要整個跳過「當作讀取失敗、照樣送去問 AI」那條路，不是
+    // 顯示成一般的網址讀取失敗訊息。
+    if (err.name === 'AbortError') throw err;
     throw new PageDigestError(`network error: ${err.message}`, 'NETWORK_ERROR');
   }
   if (!response.ok) {

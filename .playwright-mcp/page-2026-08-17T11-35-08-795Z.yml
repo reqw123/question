@@ -1,0 +1,277 @@
+- generic [active] [ref=f5e1]:
+  - generic:
+    - generic:
+      - link "跳至主內容" [ref=f5e2] [cursor=pointer]
+      - link "無障礙說明" [ref=f5e3] [cursor=pointer]:
+        - /url: https://support.google.com/websearch/answer/181196?hl=zh-TW
+  - generic [ref=f5e8]:
+    - search [ref=f5e9]:
+      - generic [ref=f5e11]:
+        - link "Google 首頁" [ref=f5e13] [cursor=pointer]:
+          - /url: https://www.google.com/webhp?hl=zh-TW&sa=X&ved=0ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQPAgI
+        - generic [ref=f5e21]:
+          - generic [ref=f5e22]:
+            - combobox "搜尋" [ref=f5e25]: 元培科技大學 校務系統 登入 元培科技大學 校務系統 登入
+            - generic [ref=f5e26]:
+              - button "清除" [ref=f5e28] [cursor=pointer]
+              - generic [ref=f5e33]:
+                - button "語音搜尋" [ref=f5e34] [cursor=pointer]
+                - button "以圖搜尋" [ref=f5e37] [cursor=pointer]
+          - button "搜尋" [ref=f5e40] [cursor=pointer]
+    - generic [ref=f5e45]:
+      - button "分享" [ref=f5e46] [cursor=pointer]
+      - generic [ref=f5e52]:
+        - button "Google 應用程式" [ref=f5e54] [cursor=pointer]
+        - button "Google 帳戶： 56 1 (reqw123abc@gmail.com)" [ref=f5e59] [cursor=pointer]
+  - generic [ref=f5e62]:
+    - navigation [ref=f5e68]:
+      - generic [ref=f5e74]:
+        - list [ref=f5e75]:
+          - listitem [ref=f5e76]:
+            - link "AI 模式" [ref=f5e79] [cursor=pointer]:
+              - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&udm=50&fbs=ABfTbFUhNGvvPEUFOvrsPMHwBXgOf1BDPCnJA7T66GFBo7wwhM5svZTbwL96qcNqo9o8OSTlwDDz03HqKBByAFcPNTrjEATHhXY25K-mUt0iMEcnVEmmLxoNFA13wc0YFrswIHGRdg-QA8SyoHn378_0qzn18-fLQGJ4SdUGwn0YR7KLbRGw6xMmRUrjBHIB4tkKf4tWqh5Y&aep=1&ntc=1&cs=0&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ2J8OegQIEBAD
+          - listitem [ref=f5e83]:
+            - link "全部" [disabled] [ref=f5e84]
+          - listitem [ref=f5e87]:
+            - link "圖片" [ref=f5e88] [cursor=pointer]:
+              - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&udm=2&fbs=ABfTbFUhNGvvPEUFOvrsPMHwBXgOf1BDPCnJA7T66GFBo7wwhM5svZTbwL96qcNqo9o8OSTlwDDz03HqKBByAFcPNTrjEATHhXY25K-mUt0iMEcnVEmmLxoNFA13wc0YFrswIHGRdg-QA8SyoHn378_0qzn18-fLQGJ4SdUGwn0YR7KLbRGw6xMmRUrjBHIB4tkKf4tWqh5Y&q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQtKgLegQIFRAB
+          - listitem [ref=f5e91]:
+            - link "購物" [ref=f5e92] [cursor=pointer]:
+              - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&udm=28&fbs=ABfTbFUhNGvvPEUFOvrsPMHwBXgOf1BDPCnJA7T66GFBo7wwhM5svZTbwL96qcNqo9o8OSTlwDDz03HqKBByAFcPNTrjEATHhXY25K-mUt0iMEcnVEmmLxoNFA13wc0YFrswIHGRdg-QA8SyoHn378_0qzn18-fLQGJ4SdUGwn0YR7KLbRGw6xMmRUrjBHIB4tkKf4tWqh5Y&q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&ved=1t:220175&ictx=111
+          - listitem [ref=f5e95]:
+            - link "影片" [ref=f5e96] [cursor=pointer]:
+              - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&udm=7&fbs=ABfTbFUhNGvvPEUFOvrsPMHwBXgOf1BDPCnJA7T66GFBo7wwhM5svZTbwL96qcNqo9o8OSTlwDDz03HqKBByAFcPNTrjEATHhXY25K-mUt0iMEcnVEmmLxoNFA13wc0YFrswIHGRdg-QA8SyoHn378_0qzn18-fLQGJ4SdUGwn0YR7KLbRGw6xMmRUrjBHIB4tkKf4tWqh5Y&q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQtKgLegQIEhAB
+          - listitem [ref=f5e99]:
+            - link "短片" [ref=f5e100] [cursor=pointer]:
+              - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&udm=39&fbs=ABfTbFUhNGvvPEUFOvrsPMHwBXgOf1BDPCnJA7T66GFBo7wwhM5svZTbwL96qcNqo9o8OSTlwDDz03HqKBByAFcPNTrjEATHhXY25K-mUt0iMEcnVEmmLxoNFA13wc0YFrswIHGRdg-QA8SyoHn378_0qzn18-fLQGJ4SdUGwn0YR7KLbRGw6xMmRUrjBHIB4tkKf4tWqh5Y&q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQs6gLegQIExAB
+          - listitem [ref=f5e103]:
+            - link "新聞" [ref=f5e104] [cursor=pointer]:
+              - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&tbm=nws&source=lnms&fbs=ABfTbFUhNGvvPEUFOvrsPMHwBXgOf1BDPCnJA7T66GFBo7wwhM5svZTbwL96qcNqo9o8OSTlwDDz03HqKBByAFcPNTrjEATHhXY25K-mUt0iMEcnVEmmLxoNFA13wc0YFrswIHGRdg-QA8SyoHn378_0qzn18-fLQGJ4SdUGwn0YR7KLbRGw6xMmRUrjBHIB4tkKf4tWqh5Y&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ0pQJegQIFBAB
+          - listitem [ref=f5e107]:
+            - button [ref=f5e108] [cursor=pointer]:
+              - generic "更多篩選條件" [ref=f5e109]: 更多
+        - button "工具" [ref=f5e116] [cursor=pointer]
+    - heading "搜尋結果" [level=1] [ref=f5e123]
+    - main [ref=f5e129]:
+      - generic [ref=f5e133]:
+        - generic [ref=f5e136]:
+          - heading "網頁搜尋結果" [level=2] [ref=f5e137]
+          - generic [ref=f5e138]:
+            - generic [ref=f5e141]:
+              - link "元培醫事科技大學校務系統 元培醫事科技大學 https://w6.ypu.edu.tw › ..." [ref=f5e143] [cursor=pointer]:
+                - /url: https://w6.ypu.edu.tw/yu/index.html
+                - heading "元培醫事科技大學校務系統" [level=3] [ref=f5e144]
+                - generic [ref=f5e153]:
+                  - generic [ref=f5e154]: 元培醫事科技大學
+                  - generic [ref=f5e156]: https://w6.ypu.edu.tw › ...
+              - button "進一步瞭解這項結果" [ref=f5e160] [cursor=pointer]
+            - generic [ref=f5e167]:
+              - text: 學生帳號為學號，新生初次
+              - emphasis [ref=f5e168]: 登入
+              - text: 密碼為身分證號後八碼 ，新生可
+              - emphasis [ref=f5e169]: 登入
+              - text: 。 · 忘記密碼 請按此說明。 · 查學號請按此 ...
+        - generic [ref=f5e173]:
+          - generic [ref=f5e176]:
+            - link "系統入口網 元培醫事科技大學 https://is.ypu.edu.tw" [ref=f5e178] [cursor=pointer]:
+              - /url: https://is.ypu.edu.tw/
+              - heading "系統入口網" [level=3] [ref=f5e179]
+              - generic [ref=f5e185]:
+                - generic [ref=f5e186]: 元培醫事科技大學
+                - generic [ref=f5e188]: https://is.ypu.edu.tw
+            - button "進一步瞭解這項結果" [ref=f5e192] [cursor=pointer]
+          - generic [ref=f5e199]:
+            - emphasis [ref=f5e200]: 系統入口網
+            - text: . captcha. 登入. 忘記密碼 · 職號查詢. 請用Google瀏覽器-圖資處. 元培&智新 使用總人數：562784 (更新頻率：10分鐘)
+        - generic [ref=f5e211]:
+          - heading "搜尋中 再仔細想想" [level=2] [ref=f5e215]:
+            - generic [ref=f5e216]:
+              - generic [ref=f5e217]: 搜尋中
+              - generic [ref=f5e227]: 再仔細想想
+          - progressbar "產生中" [ref=f5e230]
+        - generic [ref=f5e283]:
+          - heading "網頁搜尋結果" [level=2] [ref=f5e284]
+          - generic [ref=f5e285]:
+            - generic [ref=f5e288]:
+              - link "在校生 元培醫事科技大學 https://www.ypu.edu.tw › ..." [ref=f5e290] [cursor=pointer]:
+                - /url: https://www.ypu.edu.tw/p/426-1000-6.php?Lang=zh-tw
+                - heading "在校生" [level=3] [ref=f5e291]
+                - generic [ref=f5e300]:
+                  - generic [ref=f5e301]: 元培醫事科技大學
+                  - generic [ref=f5e303]: https://www.ypu.edu.tw › ...
+              - button "進一步瞭解這項結果" [ref=f5e307] [cursor=pointer]
+            - generic [ref=f5e314]:
+              - emphasis [ref=f5e315]: 校務系統入口網
+              - text: · 校外生校際選課身份申請作業 · 付款記錄查詢(109.8.15以後) · 元培軟體雲 · TronClass (創課)行動學習平台 · 學生電子郵件(Web Mail) · 學生校內授權軟體 ...
+        - generic [ref=f5e319]:
+          - generic [ref=f5e322]:
+            - link "校務系統 元培醫事科技大學 https://w9.ypu.edu.tw › easerver" [ref=f5e324] [cursor=pointer]:
+              - /url: https://w9.ypu.edu.tw/easerver/
+              - heading "校務系統" [level=3] [ref=f5e325]
+              - generic [ref=f5e331]:
+                - generic [ref=f5e332]: 元培醫事科技大學
+                - generic [ref=f5e334]: https://w9.ypu.edu.tw › easerver
+            - button "進一步瞭解這項結果" [ref=f5e338] [cursor=pointer]
+          - generic [ref=f5e345]:
+            - text: 請依身份別，按以下連結
+            - emphasis [ref=f5e346]: 登入校務系統
+            - text: .
+            - emphasis [ref=f5e347]: 校務系統
+            - text: (學生專用) ·
+            - emphasis [ref=f5e348]: 校務系統
+            - text: (教職員 及訪客專用).
+            - emphasis [ref=f5e349]: 校務系統
+            - text: 公告.
+            - emphasis [ref=f5e350]: 校務系統
+            - text: "- 使用問題Q&A."
+        - generic [ref=f5e354]:
+          - generic [ref=f5e357]:
+            - link "元培醫事科技大學學生校務系統登入 元培醫事科技大學 https://w6.ypu.edu.tw › index_main2019" [ref=f5e359] [cursor=pointer]:
+              - /url: https://w6.ypu.edu.tw/yu/index_main2019.html
+              - heading "元培醫事科技大學學生校務系統登入" [level=3] [ref=f5e360]
+              - generic [ref=f5e369]:
+                - generic [ref=f5e370]: 元培醫事科技大學
+                - generic [ref=f5e372]: https://w6.ypu.edu.tw › index_main2019
+            - button "進一步瞭解這項結果" [ref=f5e376] [cursor=pointer]
+          - generic [ref=f5e381]: 訪客帳號-密碼皆為:yist. 學號(student ID)：. 密碼(password)： 忘記密碼? 新生密碼為身分證後8碼. 校際選課. 訪客帳號-密碼皆為:yist. 請使用Google瀏覽器-圖資處2019.
+        - generic [ref=f5e386]:
+          - generic [ref=f5e389]:
+            - link "元培醫事科技大學學生校務系統登入 元培醫事科技大學 https://w2.ypu.edu.tw › index_head2019" [ref=f5e391] [cursor=pointer]:
+              - /url: https://w2.ypu.edu.tw/yu/index_head2019.html
+              - heading "元培醫事科技大學學生校務系統登入" [level=3] [ref=f5e392]
+              - generic [ref=f5e401]:
+                - generic [ref=f5e402]: 元培醫事科技大學
+                - generic [ref=f5e404]: https://w2.ypu.edu.tw › index_head2019
+            - button "進一步瞭解這項結果" [ref=f5e408] [cursor=pointer]
+          - generic [ref=f5e415]:
+            - emphasis [ref=f5e416]: 元培
+            - text: 醫事
+            - emphasis [ref=f5e417]: 科技大學校務系統
+            - text: 、
+            - emphasis [ref=f5e418]: 校務系統
+            - text: .
+        - generic [ref=f5e422]:
+          - generic [ref=f5e425]:
+            - link "元培醫事科技大學– 單一入口網 智新資通 https://www.steps.com.tw › 元培醫事科技大學-單一入口..." [ref=f5e427] [cursor=pointer]:
+              - /url: https://www.steps.com.tw/%E5%85%83%E5%9F%B9%E9%86%AB%E4%BA%8B%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8-%E5%96%AE%E4%B8%80%E5%85%A5%E5%8F%A3%E7%B6%B2/
+              - heading "元培醫事科技大學– 單一入口網" [level=3] [ref=f5e428]
+              - generic [ref=f5e434]:
+                - generic [ref=f5e435]: 智新資通
+                - generic [ref=f5e437]: https://www.steps.com.tw › 元培醫事科技大學-單一入口...
+            - button "進一步瞭解這項結果" [ref=f5e441] [cursor=pointer]
+          - generic [ref=f5e448]:
+            - text: 單一
+            - emphasis [ref=f5e449]: 登入
+            - text: 帳號的整合運用與各應用
+            - emphasis [ref=f5e450]: 系統
+            - text: 溝通是整個核心的架構，使用者僅需經由單一入口網站即可快速進行帳號密碼及授權等身分確認相關資訊，即時連結各項應用
+            - emphasis [ref=f5e451]: 系統
+            - text: ，提昇 ...
+        - generic [ref=f5e455]:
+          - generic [ref=f5e458]:
+            - link "友善列印- 元培校務系統登入口 元培醫事科技大學 https://www.ypu.edu.tw › ..." [ref=f5e460] [cursor=pointer]:
+              - /url: https://www.ypu.edu.tw/p/16-1000-58084.php?Lang=zh-tw
+              - heading "友善列印- 元培校務系統登入口" [level=3] [ref=f5e461]
+              - generic [ref=f5e470]:
+                - generic [ref=f5e471]: 元培醫事科技大學
+                - generic [ref=f5e473]: https://www.ypu.edu.tw › ...
+            - button "進一步瞭解這項結果" [ref=f5e477] [cursor=pointer]
+          - generic [ref=f5e484]:
+            - emphasis [ref=f5e485]: 元培校務系統登入
+            - text: 口.
+        - generic [ref=f5e489]:
+          - generic [ref=f5e492]:
+            - link "校務系統入口網 元培醫事科技大學 https://www.ypu.edu.tw › ..." [ref=f5e494] [cursor=pointer]:
+              - /url: https://www.ypu.edu.tw/p/404-1000-86667.php?Lang=zh-tw
+              - heading "校務系統入口網" [level=3] [ref=f5e495]
+              - generic [ref=f5e504]:
+                - generic [ref=f5e505]: 元培醫事科技大學
+                - generic [ref=f5e507]: https://www.ypu.edu.tw › ...
+            - button "進一步瞭解這項結果" [ref=f5e511] [cursor=pointer]
+          - generic [ref=f5e518]:
+            - text: 【校務系統入口網】. 瀏覽數:368. 友善列印. 分享. Line Facebook twitter. 本 ...
+            - emphasis [ref=f5e519]: 登入
+            - text: . 忘記密碼. 登入成功. OK Cancel. Close (Esc) Share Toggle fullscreen. Zoom in ...
+      - generic [ref=f5e521]:
+        - generic [ref=f5e526]:
+          - heading "其他人也搜尋了以下項目" [level=2] [ref=f5e528]
+          - generic [ref=f5e530]:
+            - generic [ref=f5e531]:
+              - link "元培校務系統" [ref=f5e535] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAggEAE
+              - link "元培系統入口網" [ref=f5e549] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E7%B3%BB%E7%B5%B1%E5%85%A5%E5%8F%A3%E7%B6%B2&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAghEAE
+              - link "元培醫事科技大學" [ref=f5e563] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E9%86%AB%E4%BA%8B%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAgfEAE
+              - link "元培在校生" [ref=f5e577] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E5%9C%A8%E6%A0%A1%E7%94%9F&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAgtEAE
+            - generic [ref=f5e588]:
+              - link "元培行事曆" [ref=f5e592] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E8%A1%8C%E4%BA%8B%E6%9B%86&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAgsEAE
+              - link "元培請假系統" [ref=f5e606] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E8%AB%8B%E5%81%87%E7%B3%BB%E7%B5%B1&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAgqEAE
+              - link "元培創課系統" [ref=f5e620] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E5%89%B5%E8%AA%B2%E7%B3%BB%E7%B5%B1&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAgjEAE
+              - link "元培選課系統" [ref=f5e634] [cursor=pointer]:
+                - /url: /search?sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&q=%E5%85%83%E5%9F%B9%E9%81%B8%E8%AA%B2%E7%B3%BB%E7%B5%B1&sa=X&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ1QJ6BAgiEAE
+        - navigation [ref=f5e645]:
+          - heading "頁面導覽" [level=1] [ref=f5e646]
+          - text: "1"
+          - link "Page 2" [ref=f5e649] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=10&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAE
+            - text: "2"
+          - link "Page 3" [ref=f5e651] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=20&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAG
+            - text: "3"
+          - link "Page 4" [ref=f5e653] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=30&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAI
+            - text: "4"
+          - link "Page 5" [ref=f5e655] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=40&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAK
+            - text: "5"
+          - link "Page 6" [ref=f5e657] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=50&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAM
+            - text: "6"
+          - link "Page 7" [ref=f5e659] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=60&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAO
+            - text: "7"
+          - link "Page 8" [ref=f5e661] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=70&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAQ
+            - text: "8"
+          - link "Page 9" [ref=f5e663] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=80&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAS
+            - text: "9"
+          - link "Page 10" [ref=f5e665] [cursor=pointer]:
+            - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=90&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8tMDegQIHRAU
+            - text: "10"
+          - heading [level=2] [ref=f5e667]:
+            - link "下一頁" [ref=f5e668] [cursor=pointer]:
+              - /url: /search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&sca_esv=4d3708b09b4ec27c&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249&ei=6_GCarfrDofR1e8P4OrawAU&start=10&sa=N&sstk=AS6-VmK4cyzfeX8ulsXhqr8cdJATr2hFkVrkp05CosLj2GZETQ0HmIwxeip5wUIjPrNFCbrNtQzM_buJyfiPiqvCIod4TdXNJ4_-Hw&ved=2ahUKEwj3jI__yKeWAxWHaPUHHWC1FlgQ8NMDegQIHRAW
+      - navigation
+    - contentinfo [ref=f5e671]:
+      - heading "頁尾連結" [level=1] [ref=f5e672]
+      - generic [ref=f5e676]:
+        - generic [ref=f5e679]:
+          - generic [ref=f5e680]: 個人化搜尋結果
+          - generic [ref=f5e681]: "-"
+          - link "嘗試不使用個人化功能" [ref=f5e683] [cursor=pointer]:
+            - /url: https://www.google.com/search?q=%E5%85%83%E5%9F%B9%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8+%E6%A0%A1%E5%8B%99%E7%B3%BB%E7%B5%B1+%E7%99%BB%E5%85%A5&peek_pws=0&sxsrf=APpeQnuDJcWy14qnDmq15C4IhAI0A4OL5A:1786966507249
+        - generic [ref=f5e686]:
+          - text: 台灣
+          - generic [ref=f5e688]:
+            - button "南港里 新竹市香山區 - 根據你的 IP 位址" [ref=f5e690] [cursor=pointer]:
+              - generic [ref=f5e691]: 南港里 新竹市香山區
+              - generic [ref=f5e693]:
+                - text: "-"
+                - generic [ref=f5e694]: 根據你的 IP 位址
+            - text: "-"
+            - button "更新位置" [ref=f5e696] [cursor=pointer]
+        - generic [ref=f5e699]:
+          - link "說明" [ref=f5e700] [cursor=pointer]:
+            - /url: https://support.google.com/websearch/?p=ws_results_help&hl=zh-TW&fg=1
+          - link "提供意見" [ref=f5e701] [cursor=pointer]:
+            - /url: "#"
+          - link "隱私權" [ref=f5e702] [cursor=pointer]:
+            - /url: https://policies.google.com/privacy?hl=zh-TW&fg=1
+          - link "服務條款" [ref=f5e703] [cursor=pointer]:
+            - /url: https://policies.google.com/terms?hl=zh-TW&fg=1

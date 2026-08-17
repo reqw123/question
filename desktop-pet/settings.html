@@ -53,6 +53,14 @@
   /* provider 切換鈕（OpenAI／Ollama）：沒選中是普通樣式，選中變成跟 .btn-primary 一樣的
      青色實心——用「選中=主色」表達「這是目前生效的選項」，跟其他按鈕的力道語意分開。 */
   .btn-toggle.active { background: var(--cyan); color: #06222b; border-color: var(--cyan); font-weight: 700; }
+  /* 跟 clear-cache-confirm.html 同一套「顯示檔案路徑」樣式：user-select:text 讓使用者能
+     直接反白複製路徑去檔案總管貼上，不用自己手動拼 %APPDATA% 底下的路徑。 */
+  .path-label { font-size: .8em; color: var(--text2); margin-top: 2px; }
+  .path-box {
+    font-size: .8em; color: var(--text2); background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+    word-break: break-all; user-select: text; margin-top: 6px;
+  }
   #actions { display: flex; padding: 10px 14px; border-top: 1px solid var(--border); }
   #actions button { flex: none; padding: 8px 18px; margin-left: auto; }
 </style>
@@ -99,6 +107,8 @@
     </section>
     <section id="memorySection">
       <label class="section-title">對話記憶（角色一/二各自獨立）</label>
+      <div class="path-label">存檔位置（角色一/二共用同一個檔案，內部分開存）：</div>
+      <div id="memoryPathBox" class="path-box">讀取中...</div>
       <div class="btn-row" style="margin-top:8px;">
         <button id="btn-clear-c1" class="btn-danger">清空角色一記憶</button>
         <button id="btn-clear-c2" class="btn-danger">清空角色二記憶</button>
@@ -184,11 +194,16 @@
   const particleOffBtn = document.getElementById('btn-particle-off');
   const particleOnBtn = document.getElementById('btn-particle-on');
   const startupDisplayMsgEl = document.getElementById('startupDisplayMsg');
+  const memoryPathBoxEl = document.getElementById('memoryPathBox');
 
   // 只顯示「有沒有設定過」，不把已存的 key 本身送回這個視窗顯示——
   // 避免沒必要地把密鑰暴露在畫面/DOM 裡（見 docs/specs/0001-desktop-pet-tts-playback.md）。
-  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings, cliFreePermissionMode, showLive2DOnStartup, showParticleModelOnStartup }) => {
+  window.settings.onInit(({ hasKey, micSettings, chatProviderSettings, cliFreePermissionMode, showLive2DOnStartup, showParticleModelOnStartup, memoryFilePath }) => {
     statusEl.textContent = hasKey ? '目前已設定過 API key（輸入新的並儲存即可覆蓋）' : '目前尚未設定 API key';
+    // user-select:text 讓使用者能直接反白複製這個路徑（跟「清除本機快取」視窗顯示
+    // userDataPath 同一套做法，見 clear-cache-confirm.html），不用自己手動拼
+    // %APPDATA% 底下的路徑去檔案總管找。
+    memoryPathBoxEl.textContent = memoryFilePath || '（讀取失敗）';
     if (micSettings) {
       micRmsInputEl.value = micSettings.rmsThreshold;
       micDurationInputEl.value = micSettings.minSpeechDurationMs;

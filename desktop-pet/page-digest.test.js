@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchPageText, PageDigestError } from './page-digest.js';
+import { fetchPageText } from './page-digest.js';
 
 describe('fetchPageText', () => {
   it('strips HTML tags and returns plain text when the fetch succeeds', async () => {
@@ -41,6 +41,19 @@ describe('fetchPageText', () => {
     await expect(
       fetchPageText({ url: 'https://example.com/', fetchImpl })
     ).rejects.toMatchObject({ name: 'PageDigestError', code: 'NETWORK_ERROR' });
+  });
+
+  it('passes the abort signal through to fetch and rethrows AbortError as-is (not wrapped in PageDigestError)', async () => {
+    const abortError = new Error('The operation was aborted');
+    abortError.name = 'AbortError';
+    const fetchImpl = vi.fn().mockRejectedValue(abortError);
+    const controller = new AbortController();
+
+    await expect(
+      fetchPageText({ url: 'https://example.com/', fetchImpl, signal: controller.signal })
+    ).rejects.toBe(abortError);
+
+    expect(fetchImpl.mock.calls[0][1].signal).toBe(controller.signal);
   });
 
   it('truncates very long page text to a bounded length', async () => {

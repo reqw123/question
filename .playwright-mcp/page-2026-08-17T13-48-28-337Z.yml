@@ -1,0 +1,508 @@
+- generic [ref=f2e2]:
+  - banner [ref=f2e3]:
+    - button [ref=f2e4] [cursor=pointer]
+    - link "首頁" [ref=f2e6] [cursor=pointer]:
+      - /url: /schhp?hl=zh-TW&as_sdt=0,5
+    - generic [ref=f2e9]:
+      - textbox "搜尋" [ref=f2e11]: large language model
+      - button "搜尋" [ref=f2e12] [cursor=pointer]
+    - button [ref=f2e16] [cursor=pointer]:
+      - img "56" [ref=f2e17]
+  - generic [ref=f2e18]:
+    - generic [ref=f2e21]: 文章
+    - generic [ref=f2e23]: 約有 5,830,000 項結果 (0.09 秒)
+    - generic [ref=f2e25]:
+      - link "我的個人學術檔案" [ref=f2e26] [cursor=pointer]:
+        - /url: /citations?user=rfkwTHUAAAAJ&hl=zh-TW
+      - link "我的圖書館" [ref=f2e29] [cursor=pointer]:
+        - /url: /scholar?scilib=1&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+  - generic [ref=f2e32]:
+    - navigation [ref=f2e33]:
+      - generic [ref=f2e34]:
+        - list [ref=f2e36]:
+          - listitem [ref=f2e37]:
+            - link "不限時間" [ref=f2e38] [cursor=pointer]:
+              - /url: /scholar?q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e39]:
+            - link "2026 以後" [ref=f2e40] [cursor=pointer]:
+              - /url: /scholar?as_ylo=2026&q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e41]:
+            - link "2025 以後" [ref=f2e42] [cursor=pointer]:
+              - /url: /scholar?as_ylo=2025&q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e43]:
+            - link "2022 以後" [ref=f2e44] [cursor=pointer]:
+              - /url: /scholar?as_ylo=2022&q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e45]:
+            - link "自訂範圍..." [ref=f2e46] [cursor=pointer]:
+              - /url: javascript:void(0)
+        - list [ref=f2e47]:
+          - listitem [ref=f2e48]:
+            - link "按照關聯性排序" [ref=f2e49] [cursor=pointer]:
+              - /url: /scholar?hl=zh-TW&as_sdt=0,5&q=%22large+language%22++model
+          - listitem [ref=f2e50]:
+            - link "按日期排序" [ref=f2e51] [cursor=pointer]:
+              - /url: /scholar?hl=zh-TW&as_sdt=0,5&q=%22large+language%22++model&scisbd=1
+        - list [ref=f2e52]:
+          - listitem [ref=f2e53]:
+            - link "不限語言" [ref=f2e54] [cursor=pointer]:
+              - /url: /scholar?lr=&q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e55]:
+            - link "搜尋所有中文網頁" [ref=f2e56] [cursor=pointer]:
+              - /url: /scholar?lr=lang_zh-CN|lang_zh-TW&q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e57]:
+            - link "搜尋繁體中文網頁" [ref=f2e58] [cursor=pointer]:
+              - /url: /scholar?lr=lang_zh-TW&q=large+language+model&hl=zh-TW&as_sdt=0,5
+        - list [ref=f2e59]:
+          - listitem [ref=f2e60]:
+            - link "不限類型" [ref=f2e61] [cursor=pointer]:
+              - /url: /scholar?q=large+language+model&hl=zh-TW&as_sdt=0,5
+          - listitem [ref=f2e62]:
+            - link "評論性文章" [ref=f2e63] [cursor=pointer]:
+              - /url: /scholar?q=large+language+model&hl=zh-TW&as_sdt=0,5&as_rr=1
+        - list [ref=f2e64]:
+          - listitem [ref=f2e65]:
+            - checkbox "包含專利" [ref=f2e66] [cursor=pointer]
+          - listitem [ref=f2e70]:
+            - checkbox "只包含書目/引用資料" [checked] [ref=f2e71] [cursor=pointer]
+        - link "建立快訊" [ref=f2e76] [cursor=pointer]:
+          - /url: /scholar_alerts?view_op=create_alert_options&hl=zh-TW&alert_query=%22large+language+model%22&alert_params=%3Fhl%3Dzh-TW%26as_sdt%3D0,5
+    - main [ref=f2e79]:
+      - generic [ref=f2e80]:
+        - generic [ref=f2e81]:
+          - generic [ref=f2e82]:
+            - generic [ref=f2e85]:
+              - link "[PDF] acm.org" [ref=f2e86] [cursor=pointer]:
+                - /url: https://dl.acm.org/doi/pdf/10.1145/3744746
+              - link "Full View" [ref=f2e87] [cursor=pointer]:
+                - /url: /scholar?output=instlink&q=info:GWi_IEWnRVoJ:scholar.google.com/&hl=zh-TW&as_sdt=0,5&scillfp=10032611532550919286&oi=lle
+            - generic [ref=f2e88]:
+              - heading [level=3] [ref=f2e89]:
+                - link "A comprehensive overview of large language models" [ref=f2e90] [cursor=pointer]:
+                  - /url: https://dl.acm.org/doi/abs/10.1145/3744746
+              - generic [ref=f2e91]:
+                - link "H Naveed" [ref=f2e92] [cursor=pointer]:
+                  - /url: /citations?user=k5dpooQAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "AU Khan" [ref=f2e93] [cursor=pointer]:
+                  - /url: /citations?user=sbOhz2UAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "S Qiu" [ref=f2e94] [cursor=pointer]:
+                  - /url: /citations?user=OPNVthUAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "M Saqib" [ref=f2e95] [cursor=pointer]:
+                  - /url: /citations?user=KvbLR3gAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "S Anwar" [ref=f2e96] [cursor=pointer]:
+                  - /url: /citations?user=vPJIHywAAAAJ&hl=zh-TW&oi=sra
+                - text: … - ACM Transactions on …, 2025 - dl.acm.org
+              - generic [ref=f2e97]: … Large Language Models (LLMs) have recently demonstrated remarkable capabilities in natural language processing tasks and beyond. This success of LLMs has led to a large influx of …
+              - generic [ref=f2e98]:
+                - button "儲存" [ref=f2e99] [cursor=pointer]
+                - button "引用" [ref=f2e102] [cursor=pointer]
+                - link "被引用 3503 次" [ref=f2e105] [cursor=pointer]:
+                  - /url: /scholar?cites=6504789152150546457&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e106] [cursor=pointer]:
+                  - /url: /scholar?q=related:GWi_IEWnRVoJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 10 個版本" [ref=f2e107] [cursor=pointer]:
+                  - /url: /scholar?cluster=6504789152150546457&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e108]:
+            - link "[PDF] arxiv.org" [ref=f2e112] [cursor=pointer]:
+              - /url: https://arxiv.org/pdf/2402.06196
+            - generic [ref=f2e113]:
+              - heading [level=3] [ref=f2e114]:
+                - 'link "Large language models: A survey" [ref=f2e115] [cursor=pointer]':
+                  - /url: https://arxiv.org/abs/2402.06196
+              - generic [ref=f2e116]:
+                - link "S Minaee" [ref=f2e117] [cursor=pointer]:
+                  - /url: /citations?user=x0TMrMIAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "T Mikolov" [ref=f2e118] [cursor=pointer]:
+                  - /url: /citations?user=oBu8kMMAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "N Nikzad" [ref=f2e119] [cursor=pointer]:
+                  - /url: /citations?user=cj2wcTAAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "M Chenaghlu" [ref=f2e120] [cursor=pointer]:
+                  - /url: /citations?user=dEwOhQoAAAAJ&hl=zh-TW&oi=sra
+                - text: … - arXiv preprint arXiv …, 2024 - arxiv.org
+              - generic [ref=f2e121]: "… large language models with our #parameters threshold, we included a few representative works, which pushed the limits of language models… as some small language models. ♣ shows …"
+              - generic [ref=f2e122]:
+                - button "儲存" [ref=f2e123] [cursor=pointer]
+                - button "引用" [ref=f2e126] [cursor=pointer]
+                - link "被引用 3322 次" [ref=f2e129] [cursor=pointer]:
+                  - /url: /scholar?cites=2735466021227840922&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e130] [cursor=pointer]:
+                  - /url: /scholar?q=related:msVvatpT9iUJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 7 個版本" [ref=f2e131] [cursor=pointer]:
+                  - /url: /scholar?cluster=2735466021227840922&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f2e132] [cursor=pointer]
+          - generic [ref=f2e135]:
+            - generic [ref=f2e138]:
+              - link "[PDF] acm.org" [ref=f2e139] [cursor=pointer]:
+                - /url: https://dl.acm.org/doi/pdf/10.1145/3641289
+              - link "Full View" [ref=f2e140] [cursor=pointer]:
+                - /url: /scholar?output=instlink&q=info:o93zfHYlUTIJ:scholar.google.com/&hl=zh-TW&as_sdt=0,5&scillfp=1210221417152237435&oi=lle
+            - generic [ref=f2e141]:
+              - heading [level=3] [ref=f2e142]:
+                - link "A survey on evaluation of large language models" [ref=f2e143] [cursor=pointer]:
+                  - /url: https://dl.acm.org/doi/abs/10.1145/3641289
+              - generic [ref=f2e144]:
+                - link "Y Chang" [ref=f2e145] [cursor=pointer]:
+                  - /url: /citations?user=Hw-lrpAAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "X Wang" [ref=f2e146] [cursor=pointer]:
+                  - /url: /citations?user=Q7Ieos8AAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "J Wang" [ref=f2e147] [cursor=pointer]:
+                  - /url: /citations?user=hBZ_tKsAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "Y Wu" [ref=f2e148] [cursor=pointer]:
+                  - /url: /citations?user=KVeRu2QAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "L Yang" [ref=f2e149] [cursor=pointer]:
+                  - /url: /citations?user=go3sFxcAAAAJ&hl=zh-TW&oi=sra
+                - text: … - ACM transactions on …, 2024 - dl.acm.org
+              - generic [ref=f2e150]: … 3.1 Natural Language Processing Tasks … the development of language models, particularly large language models, was to enhance performance on natural language processing tasks, …
+              - generic [ref=f2e151]:
+                - button "儲存" [ref=f2e152] [cursor=pointer]
+                - button "引用" [ref=f2e155] [cursor=pointer]
+                - link "被引用 6549 次" [ref=f2e158] [cursor=pointer]:
+                  - /url: /scholar?cites=3625720365842685347&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e159] [cursor=pointer]:
+                  - /url: /scholar?q=related:o93zfHYlUTIJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 11 個版本" [ref=f2e160] [cursor=pointer]:
+                  - /url: /scholar?cluster=3625720365842685347&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e161]:
+            - link "[PDF] springer.com" [ref=f2e165] [cursor=pointer]:
+              - /url: https://link.springer.com/content/pdf/10.1007/s11704-026-60308-3.pdf
+            - generic [ref=f2e166]:
+              - heading [level=3] [ref=f2e167]:
+                - link "A survey of large language models" [ref=f2e168] [cursor=pointer]:
+                  - /url: https://link.springer.com/article/10.1007/s11704-026-60308-3
+              - generic [ref=f2e169]:
+                - link "WX Zhao" [ref=f2e170] [cursor=pointer]:
+                  - /url: /citations?user=JNhNacoAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "K Zhou" [ref=f2e171] [cursor=pointer]:
+                  - /url: /citations?user=bmRJVjwAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "J Li" [ref=f2e172] [cursor=pointer]:
+                  - /url: /citations?user=zeWrn-4AAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "T Tang" [ref=f2e173] [cursor=pointer]:
+                  - /url: /citations?user=t1mRUvQAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "Z Dong" [ref=f2e174] [cursor=pointer]:
+                  - /url: /citations?user=gnQfRVMAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "Y Hou" [ref=f2e175] [cursor=pointer]:
+                  - /url: /citations?user=447sLrkAAAAJ&hl=zh-TW&oi=sra
+                - text: … - Frontiers of Computer …, 2026 - Springer
+              - generic [ref=f2e176]: … “large language models” [17,18], distinguishing them from conventional pre-trained language models… , an advanced dialogue-oriented model that sparked global interest in generative AI…
+              - generic [ref=f2e177]:
+                - button "儲存" [ref=f2e178] [cursor=pointer]
+                - button "引用" [ref=f2e181] [cursor=pointer]
+                - link "被引用 1464 次" [ref=f2e184] [cursor=pointer]:
+                  - /url: /scholar?cites=12225272406622762283&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e185] [cursor=pointer]:
+                  - /url: /scholar?q=related:K3UiR3vkqKkJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 9 個版本" [ref=f2e186] [cursor=pointer]:
+                  - /url: /scholar?cluster=12225272406622762283&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e188]:
+            - heading "在學術搜尋實驗室深入搜尋" [level=2] [ref=f2e189]
+            - generic [ref=f2e190]:
+              - link "What are the significant computational challenges in training large language models?" [ref=f2e191] [cursor=pointer]:
+                - /url: /scholar_labs/search?hl=zh-TW&pq=What+are+the+significant+computational+challenges+in+training+large+language+models%3F&xsrf=AOcXxEUAAAAAaoRiq6nsLw9lYK-waBY5ud-BNO0&oi=rq&rqp=0&rqn=5
+              - link "What are the main ethical concerns surrounding the deployment of large language models?" [ref=f2e196] [cursor=pointer]:
+                - /url: /scholar_labs/search?hl=zh-TW&pq=What+are+the+main+ethical+concerns+surrounding+the+deployment+of+large+language+models%3F&xsrf=AOcXxEUAAAAAaoRiq6nsLw9lYK-waBY5ud-BNO0&oi=rq&rqp=1&rqn=5
+              - link "What are the transformer architecture foundational principles for large language models?" [ref=f2e201] [cursor=pointer]:
+                - /url: /scholar_labs/search?hl=zh-TW&pq=What+are+the+transformer+architecture+foundational+principles+for+large+language+models%3F&xsrf=AOcXxEUAAAAAaoRiq6nsLw9lYK-waBY5ud-BNO0&oi=rq&rqp=2&rqn=5
+              - link "How are large language models fine-tuned and adapted for downstream tasks?" [ref=f2e206] [cursor=pointer]:
+                - /url: /scholar_labs/search?hl=zh-TW&pq=How+are+large+language+models+fine-tuned+and+adapted+for+downstream+tasks%3F&xsrf=AOcXxEUAAAAAaoRiq6nsLw9lYK-waBY5ud-BNO0&oi=rq&rqp=3&rqn=5
+              - link "What are the performance evaluation metrics for large language models?" [ref=f2e211] [cursor=pointer]:
+                - /url: /scholar_labs/search?hl=zh-TW&pq=What+are+the+performance+evaluation+metrics+for+large+language+models%3F&xsrf=AOcXxEUAAAAAaoRiq6nsLw9lYK-waBY5ud-BNO0&oi=rq&rqp=4&rqn=5
+              - link [ref=f2e216] [cursor=pointer]:
+                - /url: /scholar_labs/search?hl=zh-TW&oi=rqa&rqn=5
+          - generic [ref=f2e219]:
+            - link "[PDF] arxiv.org" [ref=f2e223] [cursor=pointer]:
+              - /url: https://arxiv.org/pdf/2309.15025
+            - generic [ref=f2e224]:
+              - heading [level=3] [ref=f2e225]:
+                - 'link "Large language model alignment: A survey" [ref=f2e226] [cursor=pointer]':
+                  - /url: https://arxiv.org/abs/2309.15025
+              - generic [ref=f2e227]:
+                - link "T Shen" [ref=f2e228] [cursor=pointer]:
+                  - /url: /citations?user=0iT8lqoAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "R Jin" [ref=f2e229] [cursor=pointer]:
+                  - /url: /citations?user=qW3oQDUAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "Y Huang" [ref=f2e230] [cursor=pointer]:
+                  - /url: /citations?user=2uzwJV0AAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "C Liu" [ref=f2e231] [cursor=pointer]:
+                  - /url: /citations?user=O97yLGgAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "W Dong" [ref=f2e232] [cursor=pointer]:
+                  - /url: /citations?user=aAdn5-AAAAAJ&hl=zh-TW&oi=sra
+                - text: ", Z Guo… - arXiv preprint arXiv …, 2023 - arxiv.org"
+              - generic [ref=f2e233]: … Recent years have witnessed remarkable progress made in large language models (LLMs). Such advancements, while garnering significant attention, have concurrently elicited various …
+              - generic [ref=f2e234]:
+                - button "儲存" [ref=f2e235] [cursor=pointer]
+                - button "引用" [ref=f2e238] [cursor=pointer]
+                - link "被引用 425 次" [ref=f2e241] [cursor=pointer]:
+                  - /url: /scholar?cites=12166333814159585377&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e242] [cursor=pointer]:
+                  - /url: /scholar?q=related:YTDO2ySA16gJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 3 個版本" [ref=f2e243] [cursor=pointer]:
+                  - /url: /scholar?cluster=12166333814159585377&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f2e244] [cursor=pointer]
+          - generic [ref=f2e247]:
+            - link "[PDF] google.com" [ref=f2e251] [cursor=pointer]:
+              - /url: https://drive.google.com/file/d/1FKEGsSZ9GYOeToeKpxB4m3atGRbC-TSm/view
+            - generic [ref=f2e252]:
+              - heading [level=3] [ref=f2e253]:
+                - link "Large language models in medicine" [ref=f2e254] [cursor=pointer]:
+                  - /url: https://www.nature.com/articles/s41591-023-02448-8
+              - generic [ref=f2e255]:
+                - link "AJ Thirunavukarasu" [ref=f2e256] [cursor=pointer]:
+                  - /url: /citations?user=3qb1AYwAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "DSJ Ting" [ref=f2e257] [cursor=pointer]:
+                  - /url: /citations?user=KbrpC8cAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "K Elangovan" [ref=f2e258] [cursor=pointer]:
+                  - /url: /citations?user=BE_lVTQAAAAJ&hl=zh-TW&oi=sra
+                - text: … - Nature medicine, 2023 - nature.com
+              - generic [ref=f2e259]: "… Large language model: a type of AI model using deep neural networks to learn the … natural language, using large datasets of text to train. Machine learning: a field of AI featuring models …"
+              - generic [ref=f2e260]:
+                - button "儲存" [ref=f2e261] [cursor=pointer]
+                - button "引用" [ref=f2e264] [cursor=pointer]
+                - link "被引用 5653 次" [ref=f2e267] [cursor=pointer]:
+                  - /url: /scholar?cites=3497017024792502078&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e268] [cursor=pointer]:
+                  - /url: /scholar?q=related:Ph9AwHTmhzAJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 8 個版本" [ref=f2e269] [cursor=pointer]:
+                  - /url: /scholar?cluster=3497017024792502078&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e270]:
+            - link "[PDF] sciengine.com" [ref=f2e274] [cursor=pointer]:
+              - /url: https://www.sciengine.com/doi/pdf/67334476C720401093C1F33BB7528B43
+            - generic [ref=f2e275]:
+              - heading [level=3] [ref=f2e276]:
+                - 'link "The rise and potential of large language model based agents: A survey" [ref=f2e277] [cursor=pointer]':
+                  - /url: https://link.springer.com/article/10.1007/s11432-024-4222-0
+              - generic [ref=f2e278]:
+                - link "Z Xi" [ref=f2e279] [cursor=pointer]:
+                  - /url: /citations?user=zSVLkqAAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "W Chen" [ref=f2e280] [cursor=pointer]:
+                  - /url: /citations?user=IhrlxrYAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "X Guo" [ref=f2e281] [cursor=pointer]:
+                  - /url: /citations?user=TwzyqksAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "W He" [ref=f2e282] [cursor=pointer]:
+                  - /url: /citations?user=pVjaal0AAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "Y Ding" [ref=f2e283] [cursor=pointer]:
+                  - /url: /citations?user=_HAn3qIAAAAJ&hl=zh-TW&oi=sra
+                - text: ", B Hong… - Science China …, 2025 - Springer"
+              - generic [ref=f2e284]: … agent-communication languages [111]. Large language models exhibit strong natural language … Compared to structured languages or other communication protocols, such capability …
+              - generic [ref=f2e285]:
+                - button "儲存" [ref=f2e286] [cursor=pointer]
+                - button "引用" [ref=f2e289] [cursor=pointer]
+                - link "被引用 3147 次" [ref=f2e292] [cursor=pointer]:
+                  - /url: /scholar?cites=431348774074097910&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e293] [cursor=pointer]:
+                  - /url: /scholar?q=related:9qD8tGx1_AUJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 14 個版本" [ref=f2e294] [cursor=pointer]:
+                  - /url: /scholar?cluster=431348774074097910&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e295]:
+            - link "[PDF] arxiv.org" [ref=f2e299] [cursor=pointer]:
+              - /url: https://arxiv.org/pdf/2402.01680
+            - generic [ref=f2e300]:
+              - heading [level=3] [ref=f2e301]:
+                - 'link "Large language model based multi-agents: A survey of progress and challenges" [ref=f2e302] [cursor=pointer]':
+                  - /url: https://arxiv.org/abs/2402.01680
+              - generic [ref=f2e303]:
+                - link "T Guo" [ref=f2e304] [cursor=pointer]:
+                  - /url: /citations?user=OA_UdcIAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "X Chen" [ref=f2e305] [cursor=pointer]:
+                  - /url: /citations?user=COUnAF4AAAAJ&hl=zh-TW&oi=sra
+                - text: ", Y Wang,"
+                - link "R Chang" [ref=f2e306] [cursor=pointer]:
+                  - /url: /citations?user=gquBcSkAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "S Pei" [ref=f2e307] [cursor=pointer]:
+                  - /url: /citations?user=wCklBBIAAAAJ&hl=zh-TW&oi=sra
+                - text: … - arXiv preprint arXiv …, 2024 - arxiv.org
+              - generic [ref=f2e308]: Large Language Models (LLMs) have achieved remarkable success across a wide array of tasks. Due to the impressive planning and reasoning abilities of LLMs, they have been used …
+              - generic [ref=f2e309]:
+                - button "儲存" [ref=f2e310] [cursor=pointer]
+                - button "引用" [ref=f2e313] [cursor=pointer]
+                - link "被引用 2247 次" [ref=f2e316] [cursor=pointer]:
+                  - /url: /scholar?cites=14923148813615145696&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e317] [cursor=pointer]:
+                  - /url: /scholar?q=related:4KLSncesGc8J:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 8 個版本" [ref=f2e318] [cursor=pointer]:
+                  - /url: /scholar?cluster=14923148813615145696&hl=zh-TW&as_sdt=0,5
+                - button "顯示更多服務" [ref=f2e319] [cursor=pointer]
+          - generic [ref=f2e322]:
+            - link "[PDF] springer.com" [ref=f2e326] [cursor=pointer]:
+              - /url: https://link.springer.com/content/pdf/10.1007/s11704-024-40231-1.pdf
+            - generic [ref=f2e327]:
+              - heading [level=3] [ref=f2e328]:
+                - link "A survey on large language model based autonomous agents" [ref=f2e329] [cursor=pointer]:
+                  - /url: https://link.springer.com/article/10.1007/s11704-024-40231-1
+              - generic [ref=f2e330]:
+                - link "L Wang" [ref=f2e331] [cursor=pointer]:
+                  - /url: /citations?user=E6NenUwAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "C Ma" [ref=f2e332] [cursor=pointer]:
+                  - /url: /citations?user=oeve8d4AAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "X Feng" [ref=f2e333] [cursor=pointer]:
+                  - /url: /citations?user=8_CNviAAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "Z Zhang" [ref=f2e334] [cursor=pointer]:
+                  - /url: /citations?user=AuLB6mUAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "H Yang" [ref=f2e335] [cursor=pointer]:
+                  - /url: /citations?user=-pI7HEAAAAAJ&hl=zh-TW&oi=sra
+                - text: … - Frontiers of computer …, 2024 - Springer
+              - generic [ref=f2e336]: … Recently, through the acquisition of vast amounts of Web knowledge, large language models (LLMs) have shown potential in human-level intelligence, leading to a surge in research on …
+              - generic [ref=f2e337]:
+                - button "儲存" [ref=f2e338] [cursor=pointer]
+                - button "引用" [ref=f2e341] [cursor=pointer]
+                - link "被引用 4823 次" [ref=f2e344] [cursor=pointer]:
+                  - /url: /scholar?cites=14371622504724745017&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e345] [cursor=pointer]:
+                  - /url: /scholar?q=related:OcsgIIZCcscJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 12 個版本" [ref=f2e346] [cursor=pointer]:
+                  - /url: /scholar?cluster=14371622504724745017&hl=zh-TW&as_sdt=0,5
+          - generic [ref=f2e347]:
+            - link "[PDF] nature.com" [ref=f2e351] [cursor=pointer]:
+              - /url: https://www.nature.com/articles/s41746-023-00958-w.pdf
+            - generic [ref=f2e352]:
+              - heading [level=3] [ref=f2e353]:
+                - link "A study of generative large language model for medical research and healthcare" [ref=f2e354] [cursor=pointer]:
+                  - /url: https://www.nature.com/articles/s41746-023-00958-w
+              - generic [ref=f2e355]:
+                - link "C Peng" [ref=f2e356] [cursor=pointer]:
+                  - /url: /citations?user=wq39Rt4AAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "X Yang" [ref=f2e357] [cursor=pointer]:
+                  - /url: /citations?user=iN01XqIAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "A Chen" [ref=f2e358] [cursor=pointer]:
+                  - /url: /citations?user=r5d5y_oAAAAJ&hl=zh-TW&oi=sra
+                - text: ","
+                - link "KE Smith" [ref=f2e359] [cursor=pointer]:
+                  - /url: /citations?user=pO0jk84AAAAJ&hl=zh-TW&oi=sra
+                - text: … - NPJ digital …, 2023 - nature.com
+              - generic [ref=f2e360]: … There are enormous enthusiasm and concerns in applying large language models (LLMs) to healthcare. Yet current assumptions are based on general-purpose LLMs such as ChatGPT…
+              - generic [ref=f2e361]:
+                - button "儲存" [ref=f2e362] [cursor=pointer]
+                - button "引用" [ref=f2e365] [cursor=pointer]
+                - link "被引用 587 次" [ref=f2e368] [cursor=pointer]:
+                  - /url: /scholar?cites=8231097742180371723&as_sdt=2005&sciodt=0,5&hl=zh-TW
+                - link "相關文章" [ref=f2e369] [cursor=pointer]:
+                  - /url: /scholar?q=related:C00uSsm7OnIJ:scholar.google.com/&scioq=large+language+model&hl=zh-TW&as_sdt=0,5
+                - link "全部共 11 個版本" [ref=f2e370] [cursor=pointer]:
+                  - /url: /scholar?cluster=8231097742180371723&hl=zh-TW&as_sdt=0,5
+        - generic [ref=f2e371]:
+          - generic [ref=f2e373]:
+            - heading "相關搜尋" [level=2] [ref=f2e374]
+            - list [ref=f2e375]:
+              - listitem [ref=f2e376]:
+                - link "large language model prompt" [ref=f2e377] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=1&q=large+language+model+prompt&qst=bb
+              - listitem [ref=f2e378]:
+                - link "large language model knowledge graph" [ref=f2e379] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=2&q=large+language+model+knowledge+graph&qst=bb
+              - listitem [ref=f2e380]:
+                - link "large language model fine tuning" [ref=f2e381] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=3&q=large+language+model+fine+tuning&qst=bb
+              - listitem [ref=f2e382]:
+                - link "large language model generative pretrained transformer" [ref=f2e383] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=4&q=large+language+model+generative+pretrained+transformer&qst=bb
+              - listitem [ref=f2e384]:
+                - link "large language model hallucination" [ref=f2e385] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=5&q=large+language+model+hallucination&qst=bb
+              - listitem [ref=f2e386]:
+                - link "chatgpt large language model" [ref=f2e387] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=6&q=chatgpt+large+language+model&qst=bb
+              - listitem [ref=f2e388]:
+                - link "large language model code generation" [ref=f2e389] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=7&q=large+language+model+code+generation&qst=bb
+              - listitem [ref=f2e390]:
+                - link "large language model few shot" [ref=f2e391] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=8&q=large+language+model+few+shot&qst=bb
+              - listitem [ref=f2e392]:
+                - link "large language model summarization" [ref=f2e393] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=9&q=large+language+model+summarization&qst=bb
+              - listitem [ref=f2e394]:
+                - link "large language model question answering" [ref=f2e395] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=10&q=large+language+model+question+answering&qst=bb
+              - listitem [ref=f2e396]:
+                - link "large language model zero shot" [ref=f2e397] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=11&q=large+language+model+zero+shot&qst=bb
+              - listitem [ref=f2e398]:
+                - link "llama large language model" [ref=f2e399] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=12&q=llama+large+language+model&qst=bb
+              - listitem [ref=f2e400]:
+                - link "large language model information extraction" [ref=f2e401] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=13&q=large+language+model+information+extraction&qst=bb
+              - listitem [ref=f2e402]:
+                - link "large language model explainability" [ref=f2e403] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=14&q=large+language+model+explainability&qst=bb
+              - listitem [ref=f2e404]:
+                - link "large language model training data" [ref=f2e405] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=15&q=large+language+model+training+data&qst=bb
+              - listitem [ref=f2e406]:
+                - link "large language model finetune" [ref=f2e407] [cursor=pointer]:
+                  - /url: /scholar?hl=zh-TW&as_sdt=0,5&qsp=16&q=large+language+model+finetune&qst=bb
+          - navigation [ref=f2e408]:
+            - table [ref=f2e410]:
+              - rowgroup [ref=f2e411]:
+                - row [ref=f2e412]:
+                  - cell [ref=f2e413]
+                  - cell "1" [ref=f2e415]
+                  - cell [ref=f2e417]:
+                    - link "2" [ref=f2e418] [cursor=pointer]:
+                      - /url: /scholar?start=10&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e420]:
+                    - link "3" [ref=f2e421] [cursor=pointer]:
+                      - /url: /scholar?start=20&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e423]:
+                    - link "4" [ref=f2e424] [cursor=pointer]:
+                      - /url: /scholar?start=30&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e426]:
+                    - link "5" [ref=f2e427] [cursor=pointer]:
+                      - /url: /scholar?start=40&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e429]:
+                    - link "6" [ref=f2e430] [cursor=pointer]:
+                      - /url: /scholar?start=50&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e432]:
+                    - link "7" [ref=f2e433] [cursor=pointer]:
+                      - /url: /scholar?start=60&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e435]:
+                    - link "8" [ref=f2e436] [cursor=pointer]:
+                      - /url: /scholar?start=70&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e438]:
+                    - link "9" [ref=f2e439] [cursor=pointer]:
+                      - /url: /scholar?start=80&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e441]:
+                    - link "10" [ref=f2e442] [cursor=pointer]:
+                      - /url: /scholar?start=90&q=large+language+model&hl=zh-TW&as_sdt=0,5
+                  - cell [ref=f2e444]:
+                    - link "下一頁" [ref=f2e445] [cursor=pointer]:
+                      - /url: /scholar?start=10&q=large+language+model&hl=zh-TW&as_sdt=0,5
+  - contentinfo [ref=f2e448]:
+    - generic [ref=f2e449]:
+      - link "隱私權" [ref=f2e450] [cursor=pointer]:
+        - /url: //www.google.com/intl/zh-TW/policies/privacy/
+      - link "服務條款" [ref=f2e451] [cursor=pointer]:
+        - /url: //www.google.com/intl/zh-TW/policies/terms/
+      - button "說明" [ref=f2e452] [cursor=pointer]
