@@ -26,6 +26,15 @@ function readSettings() {
   }
 }
 
+// 根目錄的 control-center（question 專案的中樞控制台，跨桌寵/App/網頁三種模式，見
+// ../control-center/settings-bridge.js）需要知道「這個 key 使用者是不是真的存過」（用來
+// 標示設定來源是「使用者設定」還是「預設值」）跟「settings.json 實際路徑」（診斷面板用），
+// 但不該把整份 readSettings() 的原始內容（含 openaiApiKey 明文）整包露出去給外部呼叫端。
+// 這兩個是刻意narrow scope 的唯讀 export，不回傳任何實際設定值本身。
+function hasSettingKey(key) {
+  return Object.prototype.hasOwnProperty.call(readSettings(), key);
+}
+
 function getApiKey() {
   const { openaiApiKey } = readSettings();
   return typeof openaiApiKey === 'string' ? openaiApiKey : '';
@@ -236,4 +245,6 @@ module.exports = {
   getCliFreePermissionMode, setCliFreePermissionMode,
   getShowLive2DOnStartup, setShowLive2DOnStartup,
   getShowParticleModelOnStartup, setShowParticleModelOnStartup,
+  // 給根目錄 control-center 用的唯讀 export，見 hasSettingKey()/settingsPath() 的說明。
+  hasSettingKey, settingsPath,
 };

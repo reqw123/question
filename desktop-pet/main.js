@@ -2095,6 +2095,14 @@ function getControlStatus() {
   };
 }
 
+// preload 腳本載入失敗（例如踩到 sandbox 模式限制 require 本地檔案、或路徑打錯）預設
+// 只會在該視窗自己的 DevTools console 印一行，main process 這邊的終端機完全看不到、
+// 很容易誤以為是別的原因——這裡把它轉印出來，任何視窗的 preload 出這種問題都能在
+// 啟動桌寵的終端機直接看到，不用一個一個開 DevTools 找。
+app.on('preload-error', (_event, preloadPath, error) => {
+  console.error('[desktop-pet] preload 腳本載入失敗：', preloadPath, '\n', error);
+});
+
 app.whenReady().then(async () => {
   loadMyLikeManifest();
   // 開 tray 選單前先把光粒子模型清單讀好，避免「光粒子特效」子選單第一次打開

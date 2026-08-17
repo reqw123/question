@@ -53,6 +53,11 @@ export function Aatrox3DShowcase() {
   // 「回到展示姿勢」：退出操控模式時呼叫，把角色位置/鏡頭都歸位，實作同樣在掛載
   // effect 裡（需要存取 modelRoot／camera／controls 的初始值）。
   const resetPoseRef = useRef<() => void>(() => {})
+  // 空白鍵現在播的是「下拉選單目前選定的動作」，不再寫死揮劍——用 ref 而不是 state，
+  // 理由跟 pressedKeysRef 一樣：keydown handler 在掛載 effect 的閉包裡，每次按空白鍵
+  // 都要讀到最新選的值，用 state 會因為非同步更新拿到舊值。預設值是 ATTACK_CLIP_NAME，
+  // 使用者完全沒動過下拉選單時，行為跟改版之前一模一樣（空白鍵＝揮劍）。
+  const selectedActionRef = useRef<string>(ATTACK_CLIP_NAME)
   // 選單（下拉選單切動畫）算一種「使用者互動」，要重置閒置計時器——下拉選單的
   // onChange 是 React 事件、跑在元件層級，跟鍵盤事件（掛載 effect 裡的
   // window.addEventListener）不是同一個地方，一樣用 ref 轉手給掛載 effect 裡的實作。
@@ -110,7 +115,7 @@ export function Aatrox3DShowcase() {
     // 被調整影響。從掛載那一刻開始算，模型還沒載完之前 desiredAnim 不會是
     // DEFAULT_ANIMATION，checkIdleFlavor() 自然不會觸發，不用另外處理「還沒載完」的情況。
     let lastInteractionAt = performance.now()
-    // triggerAttack() 用 setTimeout 提前截斷揮劍動畫（見 ATTACK_ACTIVE_MS 說明），
+    // triggerSelectedAction() 用 setTimeout 提前截斷揮劍動畫（見 ATTACK_ACTIVE_MS 說明），
     // attackToken 是每次揮劍就遞增的序號，避免上一次揮劍的 timeout 在新一次揮劍已經
     // 開始之後才觸發、把新的攻擊又蓋成收劍動畫（正常情況下 isAttacking guard 就會擋掉
     // 重複觸發，這裡是防禦性的第二層保護，尤其是 resetPoseRef 清空 isAttacking 之後）。
@@ -135,7 +140,7 @@ export function Aatrox3DShowcase() {
     // **回到「揹劍待機」只定格在姿勢上，不要一直重播動作**：Idle_in_sheath 本身是一段
     // 1.13 秒的循環動畫，用 playAnimation() 的預設 LoopRepeat 播放時，實測會不斷重複
     // 同一段小動作，看起來很像卡頓／機械式重播，使用者回報「一直重複待機動作很奇怪」。
-    // 這裡改成跟 triggerAttack()／收劍動畫同一種播法（LoopOnce + clampWhenFinished）：
+    // 這裡改成跟 triggerSelectedAction()／收劍動畫同一種播法（LoopOnce + clampWhenFinished）：
     // 播一次到最後一幀就定格，維持「劍揹在背後」的姿勢，但不會無限循環那段小動作。
     // 只用在「回到待機」這幾個地方（載入完成、攻擊/收劍結束、停止移動、退出操控模式
     // 歸位）——下拉選單手動選動畫時（playAnimationRef／playAnimation）刻意不套用這個，
@@ -207,7 +212,7 @@ export function Aatrox3DShowcase() {
       triggerIdleFlavor()
     }
 
-    // 收劍過場的 'finished' handler 存成外層變數，讓 triggerAttack() 在連續攻擊、中途
+    // 收劍過場的 'finished' handler 存成外層變數，讓 triggerSelectedAction() 在連續攻擊、中途
     // 打斷收劍動畫時可以主動移除，不會累積用不到的 listener（正常情況下播完會自己
     // remove，這裡只是連段時提早打斷的防禦性清理）。
     let sheathFinishedHandler: ((event: THREE.AnimationMixerEventMap['finished']) => void) | null = null
@@ -248,25 +253,31 @@ export function Aatrox3DShowcase() {
       mixer.addEventListener('finished', onSheathFinished)
     }
 
-    // 揮劍：固定播 Attack2，只播 ATTACK_ACTIVE_MS（0.5 秒）這段真正在動的揮擊本身
-    // （見上面 ATTACK_ACTIVE_MS 的說明），時間到了不管動畫本身播到哪裡，直接淡出換播
-    // 收劍過場動畫（playSheathThenIdle），不等 Attack2 自然播完那長達近 2 秒的靜止收尾。
+    // 空白鍵：播「下拉選單目前選定的動作」（selectedActionRef.current），不再寫死揮劍。
+    // 名稱是 Attack 開頭（Attack1/2/3，選單裡三招揮劍動作都是這個命名規則）才套用揮劍
+    // 專屬的處理——只播 ATTACK_ACTIVE_MS（0.5 秒）這段真正在動的揮擊本身（見上面
+    // ATTACK_ACTIVE_MS 的說明，這是逐幀截圖比對 Attack2 量出來的時間，Attack1/3 是同一
+    // 個角色的同類型招式，沿用同一個數字），時間到了不管動畫本身播到哪裡，直接淡出換播
+    // 收劍過場動畫（playSheathThenIdle），不等自然播完那長達近 2 秒的靜止收尾。選了其他
+    // 非揮劍類動作（Dance_Loop、Taunt_loop…）不套用這段揮劍專屬的截斷+收劍過場——那些
+    // 動作沒有「劍還沒收好」的問題，跟 triggerIdleFlavor() 播閒置演出動畫同一種「播一次、
+    // 自然播完再接回待機」處理，不強制打斷。
     //
-    // **連續攻擊（連段）**：不像上一版用 isAttacking 擋住重複觸發、要等整套「揮劍＋收劍」
-    // 播完才能再打一次，這裡改成不管目前是還在揮劍中還是已經進入收劍動畫，只要再按一次
-    // 空白鍵，就打斷目前播放的東西、重新從頭播 Attack2——實現「按幾下就連續揮幾刀」的
-    // 連續攻擊手感，不用等前一刀的收劍過場播完。isAttacking 仍然全程維持 true（從第一刀
-    // 開始到最後一次收劍真正播完為止），理由不變：擋住移動迴圈把這整段過場蓋成 Run_Base。
-    function triggerAttack() {
+    // **連續觸發**：不管目前是還在播動作中還是已經進入收劍過場，只要再按一次空白鍵，就
+    // 打斷目前播放的東西、重新從頭播新選的動作——揮劍時就是「按幾下連續揮幾刀」的連段
+    // 手感，不用等前一刀的收劍過場播完。isAttacking 全程維持 true（從動作開始播到真正
+    // 結束回到待機為止，不只限於揮劍），理由不變：擋住移動迴圈把這整段過場蓋成 Run_Base。
+    function triggerSelectedAction() {
       if (!mixer) return
-      const clip = clips.find((c) => c.name === ATTACK_CLIP_NAME)
+      const name = selectedActionRef.current || ATTACK_CLIP_NAME
+      const clip = clips.find((c) => c.name === name)
       if (!clip) return
       if (sheathFinishedHandler) {
         mixer.removeEventListener('finished', sheathFinishedHandler)
         sheathFinishedHandler = null
       }
       isAttacking = true
-      desiredAnim = ATTACK_CLIP_NAME
+      desiredAnim = name
       const next = mixer.clipAction(clip)
       next.reset()
       next.setLoop(THREE.LoopOnce, 1)
@@ -274,14 +285,35 @@ export function Aatrox3DShowcase() {
       if (currentAction && currentAction !== next) currentAction.fadeOut(0.1)
       next.fadeIn(0.08).play()
       currentAction = next
-      setCurrentAnim(ATTACK_CLIP_NAME)
+      setCurrentAnim(name)
 
       const token = ++attackToken
       window.clearTimeout(attackTimeoutId)
-      attackTimeoutId = window.setTimeout(() => {
+
+      if (name.startsWith('Attack')) {
+        attackTimeoutId = window.setTimeout(() => {
+          if (token !== attackToken) return
+          playSheathThenIdle(next)
+        }, ATTACK_ACTIVE_MS)
+        return
+      }
+
+      // 非揮劍類動作：不強制截斷，讓它自然播完（LoopOnce + clampWhenFinished 已經確保
+      // 只播一次不會無限循環），播完接回待機——跟 triggerIdleFlavor() 的 'finished'
+      // handler 同一種模式，token 比對避免上一次觸發的舊 callback 在新一次觸發後才誤觸發。
+      const onFinished = (event: THREE.AnimationMixerEventMap['finished']) => {
+        if (event.action !== next) return
+        mixer!.removeEventListener('finished', onFinished)
         if (token !== attackToken) return
-        playSheathThenIdle(next)
-      }, ATTACK_ACTIVE_MS)
+        isAttacking = false
+        if (desiredAnim === name) {
+          desiredAnim = ''
+          if (!(pressedKeysRef.current.size > 0 && controlModeRef.current)) {
+            playIdlePose()
+          }
+        }
+      }
+      mixer.addEventListener('finished', onFinished)
     }
 
     // 固定世界座標軸移動（跟 glb-viewer 已經用 Playwright 驗證過的版本一致）：W 永遠是
@@ -332,11 +364,11 @@ export function Aatrox3DShowcase() {
       } else if (e.key === ATTACK_KEY) {
         e.preventDefault()
         // e.repeat 是瀏覽器按住不放時自動觸發的 keydown（通常延遲後每秒重複十幾二十次），
-        // 現在 triggerAttack() 不再有 isAttacking guard 擋重複觸發（連續攻擊就是要讓
+        // 現在 triggerSelectedAction() 不再有 isAttacking guard 擋重複觸發（連續攻擊就是要讓
         // 按第二下能打斷第一下），如果不濾掉 repeat，按住空白鍵不放會變成瘋狂連續打斷、
         // 動畫閃爍，不是使用者想要的「按幾下連續攻擊幾次」。只擋自動重複，放開再按下去
         // 的每一次真正按鍵都還是會觸發。
-        if (!e.repeat) triggerAttack()
+        if (!e.repeat) triggerSelectedAction()
       }
     }
     function handleKeyUp(e: KeyboardEvent) {
@@ -553,7 +585,7 @@ export function Aatrox3DShowcase() {
           高精度 3D 模型展示
         </h2>
         <p className="mt-3 text-stone-500 dark:text-stone-400">
-          拖曳滑鼠環繞視角，右側下拉選單直接切換她內建的動作，或進入操控模式親自走兩步、揮把劍。
+          拖曳滑鼠環繞視角，右側下拉選單直接切換她內建的動作，或進入操控模式親自走兩步，空白鍵播放下拉選單選定的動作（預設揮劍）。
         </p>
       </div>
 
@@ -583,7 +615,7 @@ export function Aatrox3DShowcase() {
                 'bg-stone-900/70 text-xs font-medium text-white backdrop-blur-sm',
               )}
             >
-              W/A/S/D 移動・空白鍵揮劍
+              W/A/S/D 移動・空白鍵播放選定動作
             </div>
           )}
         </div>
@@ -616,6 +648,7 @@ export function Aatrox3DShowcase() {
               value={currentAnim}
               onChange={(e) => {
                 bumpIdleTimerRef.current()
+                selectedActionRef.current = e.target.value
                 playAnimationRef.current(e.target.value)
               }}
               disabled={status !== 'ready' || controlMode}
@@ -636,7 +669,7 @@ export function Aatrox3DShowcase() {
 
           <p className="text-xs text-stone-400 dark:text-stone-500">
             {controlMode
-              ? '操控模式中：W/A/S/D 走動、空白鍵揮劍，鏡頭視角不影響移動方向。再按一次上面的按鈕退出。'
+              ? '操控模式中：W/A/S/D 走動、空白鍵播放下拉選單選定的動作（預設是揮劍），鏡頭視角不影響移動方向。再按一次上面的按鈕退出。'
               : `這份模型是遊戲真正拆出來的高精度資產，內建 ${animations.length || 97} 個具名動作，這裡完整保留，不像卡片輪播只挑幾個技能展示。`}
           </p>
         </div>

@@ -6,7 +6,7 @@
 |---|---|---|
 | 多人搶答 - 網頁遊戲.lnk | `啟動-網頁遊戲.bat` | 自動偵測 `caddy.exe` 存不存在，決定用哪套伺服器，開瀏覽器到 `host.html`（見下方「網頁遊戲：Caddy 有無自動切換」） |
 | 多人搶答 - 桌寵.lnk | `啟動-桌寵.bat` | 啟動 `desktop-pet`（保留終端機視窗顯示穿透/互動狀態） |
-| 多人搶答 - 主持人App.lnk | `啟動-主持人App.bat` | 啟動 `host-app`，會先檢查 Live Server (5500) 是否已開 |
+| 多人搶答 - 主持人App.lnk | `啟動-主持人App.bat` | 啟動 `host-app`，會先檢查 5500 埠有沒有東西在聽；沒有的話自動改用內建 Node 靜態伺服器頂上（不用再手動去 VS Code 按 Go Live，見下方第二步表格） |
 
 ## 為什麼 .bat 內容全用英文，檔名卻是中文
 
@@ -58,7 +58,7 @@
 |---|---|
 | 多人搶答 - 網頁遊戲.lnk | 裝好 [Node.js](https://nodejs.org/) 就能跑（純區網用途）。**只有想額外支援 ngrok 對外公開**才需要另外下載 `caddy.exe`（[caddyserver.com](https://caddyserver.com/download) 下載 Windows 版，放到專案根目錄跟 `Caddyfile` 同一層——這個檔案不在 git 版本控制裡，`Caddyfile` 本身有進版本控制不用另外處理），沒有的話 `.bat` 會自動改用內建的區網版伺服器，見上方「網頁遊戲：Caddy 有無自動切換」。另外要有 MQTT broker（Mosquitto）在跑，細節見 `multi/多人搶答系統技術文件.md` |
 | 多人搶答 - 桌寵.lnk | 裝好 [Node.js](https://nodejs.org/)，然後 `cd desktop-pet && npm install`（詳見 `desktop-pet/桌面寵物說明.md` 的「為什麼 node_modules 沒有進版本控制」） |
-| 多人搶答 - 主持人App.lnk | 同樣要 Node.js + `cd host-app && npm install`；另外要裝 VS Code 的 **Live Server** 擴充套件，執行前對 `multi/host.html` 按「Go Live」（`.bat` 本身會檢查 5500 port 有沒有開，沒開會跳警告但還是會繼續開視窗，畫面可能因此空白） |
+| 多人搶答 - 主持人App.lnk | 要 Node.js + `cd host-app && npm install`。5500 埠要有東西在服務 `multi/host.html`——`.bat` 會自動偵測：偵測到 VS Code **Live Server** 擴充套件（或任何其他方式）已經在 5500 就直接沿用；沒偵測到的話自動改用內建的 `launchers/serve-lan.js`（跟「網頁遊戲」那個捷徑背後同一支，只是換成 5500 埠），完全不用另外裝 Live Server 或手動按 Go Live |
 
 三個捷徑互相獨立，只用得到哪個就只設定哪個對應的前置需求，不用三個都裝齊。
 
