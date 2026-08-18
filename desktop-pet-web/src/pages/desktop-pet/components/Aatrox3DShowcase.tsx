@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { Gamepad2 } from 'lucide-react'
+import { Gamepad2, ScanFace, Swords } from 'lucide-react'
 import { cn } from '../../../lib/utils'
+import { AatroxGestureTrigger } from './aatrox-gesture/AatroxGestureTrigger'
 
 // 真正的 3D 模型（glTF/.glb），跟 HeroLive2DStage 的 Live2D／Spine 角色是完全不同的
 // 呈現方式，這裡刻意不塞進那個卡片輪播（角色太大、應該有自己的大版面＋完整動作清單可以
@@ -41,7 +42,7 @@ const IDLE_TIMEOUT_MS = 10000
 type LoadState = 'loading' | 'ready' | 'error'
 type AnimationEntry = { name: string; duration: number }
 
-export function Aatrox3DShowcase() {
+export function Aatrox3DShowcase({ onEnterPkArena }: { onEnterPkArena: () => void }) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<LoadState>('loading')
   const [animations, setAnimations] = useState<AnimationEntry[]>([])
@@ -58,6 +59,13 @@ export function Aatrox3DShowcase() {
   // 都要讀到最新選的值，用 state 會因為非同步更新拿到舊值。預設值是 ATTACK_CLIP_NAME，
   // 使用者完全沒動過下拉選單時，行為跟改版之前一模一樣（空白鍵＝揮劍）。
   const selectedActionRef = useRef<string>(ATTACK_CLIP_NAME)
+  // 手勢模式（見 aatrox-gesture/AatroxGestureTrigger.tsx、docs/specs/0012、
+  // docs/adr/0013）：比 👍 觸發的也是 triggerSelectedAction()，但那個函式定義在下面
+  // 掛載 effect 的閉包裡，手勢元件是平行掛載的獨立元件、不在同一個閉包裡，所以需要
+  // 一個 ref 轉手——跟 playAnimationRef／resetPoseRef 是同一種橋接模式。
+  const triggerSelectedActionRef = useRef<() => void>(() => {})
+  const [gestureMode, setGestureMode] = useState(false)
+  const [gestureError, setGestureError] = useState<string | null>(null)
   // 選單（下拉選單切動畫）算一種「使用者互動」，要重置閒置計時器——下拉選單的
   // onChange 是 React 事件、跑在元件層級，跟鍵盤事件（掛載 effect 裡的
   // window.addEventListener）不是同一個地方，一樣用 ref 轉手給掛載 effect 裡的實作。
@@ -120,7 +128,10 @@ export function Aatrox3DShowcase() {
     // 開始之後才觸發、把新的攻擊又蓋成收劍動畫（正常情況下 isAttacking guard 就會擋掉
     // 重複觸發，這裡是防禦性的第二層保護，尤其是 resetPoseRef 清空 isAttacking 之後）。
     let attackToken = 0
-    let attackTimeoutId: ReturnType<typeof window.setTimeout> | undefined
+    // 型別故意寫死 number（不是 ReturnType<typeof window.setTimeout>）：新增 mqtt 依賴
+    // 後它間接拉進 @types/node 全域宣告，導致 ReturnType<typeof window.setTimeout>
+    // 誤判成 NodeJS.Timeout，見 HeroLive2DStage.tsx 同樣的說明。
+    let attackTimeoutId: number | undefined
 
     function playAnimation(name: string) {
       if (!mixer || name === desiredAnim) return
@@ -315,6 +326,7 @@ export function Aatrox3DShowcase() {
       }
       mixer.addEventListener('finished', onFinished)
     }
+    triggerSelectedActionRef.current = triggerSelectedAction
 
     // 固定世界座標軸移動（跟 glb-viewer 已經用 Playwright 驗證過的版本一致）：W 永遠是
     // -Z、D 永遠是 +X，不管滑鼠把 OrbitControls 的視角轉到哪都一樣。
@@ -535,6 +547,10 @@ export function Aatrox3DShowcase() {
           startRenderLoop()
         } else {
           stopRenderLoop()
+          // 捲出可視範圍時一併關掉手勢模式——鏡頭沒必要在使用者看不到這張卡片時繼續開著
+          // （見 docs/specs/0012 Edge Cases）。setGestureMode 是 useState 的 setter，
+          // identity 穩定，掛載時閉包捕捉到的這一份直接呼叫即可，不需要另外用 ref 轉手。
+          setGestureMode(false)
         }
       },
       { threshold: 0.01 },
@@ -585,7 +601,7 @@ export function Aatrox3DShowcase() {
           高精度 3D 模型展示
         </h2>
         <p className="mt-3 text-stone-500 dark:text-stone-400">
-          拖曳滑鼠環繞視角，右側下拉選單直接切換她內建的動作，或進入操控模式親自走兩步，空白鍵播放下拉選單選定的動作（預設揮劍）。
+          拖曳滑鼠環繞視角，右側下拉選單直接切換她內建的動作，或進入操控模式親自走兩步，空白鍵播放下拉選單選定的動作（預設揮劍）——也可以開手勢模式，開鏡頭比個 👍 隔空觸發。
         </p>
       </div>
 
@@ -618,26 +634,83 @@ export function Aatrox3DShowcase() {
               W/A/S/D 移動・空白鍵播放選定動作
             </div>
           )}
+          {gestureMode && (
+            <AatroxGestureTrigger
+              onTrigger={() => triggerSelectedActionRef.current()}
+              onError={(message) => {
+                setGestureMode(false)
+                setGestureError(message)
+              }}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
-          <button
-            type="button"
-            onClick={() => setControlMode((v) => !v)}
-            disabled={status !== 'ready'}
-            aria-pressed={controlMode}
-            className={cn(
-              'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-              controlMode
-                ? 'bg-stone-900 text-white hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white'
-                : 'bg-linear-to-r from-violet-500 to-pink-500 text-white shadow-lg shadow-violet-500/30',
-            )}
-          >
-            <Gamepad2 className="size-4" aria-hidden="true" />
-            {controlMode ? '退出操控模式' : '進入操控模式'}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setControlMode((v) => !v)}
+              disabled={status !== 'ready' || gestureMode}
+              aria-pressed={controlMode}
+              className={cn(
+                'inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                controlMode
+                  ? 'bg-stone-900 text-white hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white'
+                  : 'bg-linear-to-r from-violet-500 to-pink-500 text-white shadow-lg shadow-violet-500/30',
+              )}
+            >
+              <Gamepad2 className="size-4" aria-hidden="true" />
+              {controlMode ? '退出操控模式' : '進入操控模式'}
+            </button>
+
+            {/* 手勢模式：開鏡頭比 👍 觸發下拉選單選定的動作，等同「鏡頭版的空白鍵」。跟
+                操控模式互斥（見 docs/adr/0013）——一次只能開一種輸入方式，避免操控模式下
+                打字/按 WASD 的手部動作被鏡頭誤判成手勢。 */}
+            <button
+              type="button"
+              onClick={() => {
+                setGestureError(null)
+                setGestureMode((v) => !v)
+              }}
+              disabled={status !== 'ready' || controlMode}
+              aria-pressed={gestureMode}
+              className={cn(
+                'inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                gestureMode
+                  ? 'bg-stone-900 text-white hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white'
+                  : 'border border-violet-300 bg-white text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:bg-stone-950 dark:text-violet-300 dark:hover:bg-stone-800',
+              )}
+            >
+              <ScanFace className="size-4" aria-hidden="true" />
+              {gestureMode ? '關閉手勢模式' : '手勢模式'}
+            </button>
+
+            {/* PK 對戰模式：離開這張卡片、進全螢幕、需要另一位玩家拿手機加入，是完全不同
+                於上面兩個「原地切換」按鈕的體驗（見 docs/adr/0014）。點下去交給
+                DesktopPetPage 把整個 <main> 換成 PkArenaView。 */}
+            <button
+              type="button"
+              onClick={onEnterPkArena}
+              disabled={status !== 'ready'}
+              className={cn(
+                'inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                'bg-linear-to-r from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/30 hover:brightness-105',
+              )}
+            >
+              <Swords className="size-4" aria-hidden="true" />
+              PK 對戰模式
+            </button>
+          </div>
+
+          {gestureError && (
+            <p className="text-xs text-rose-600 dark:text-rose-400">{gestureError}</p>
+          )}
 
           <div>
             <label htmlFor="aatrox-anim-select" className="text-xs font-medium text-stone-500 dark:text-stone-400">
@@ -651,7 +724,7 @@ export function Aatrox3DShowcase() {
                 selectedActionRef.current = e.target.value
                 playAnimationRef.current(e.target.value)
               }}
-              disabled={status !== 'ready' || controlMode}
+              disabled={status !== 'ready' || controlMode || gestureMode}
               className={cn(
                 'mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500',
@@ -668,9 +741,11 @@ export function Aatrox3DShowcase() {
           </div>
 
           <p className="text-xs text-stone-400 dark:text-stone-500">
-            {controlMode
-              ? '操控模式中：W/A/S/D 走動、空白鍵播放下拉選單選定的動作（預設是揮劍），鏡頭視角不影響移動方向。再按一次上面的按鈕退出。'
-              : `這份模型是遊戲真正拆出來的高精度資產，內建 ${animations.length || 97} 個具名動作，這裡完整保留，不像卡片輪播只挑幾個技能展示。`}
+            {gestureMode
+              ? '手勢模式中：卡片右上角是鏡頭畫面，比 👍 播放下拉選單選定的動作，跟空白鍵效果一樣。再按一次上面的按鈕退出。'
+              : controlMode
+                ? '操控模式中：W/A/S/D 走動、空白鍵播放下拉選單選定的動作（預設是揮劍），鏡頭視角不影響移動方向。再按一次上面的按鈕退出。'
+                : `這份模型是遊戲真正拆出來的高精度資產，內建 ${animations.length || 97} 個具名動作，這裡完整保留，不像卡片輪播只挑幾個技能展示。`}
           </p>
         </div>
       </div>

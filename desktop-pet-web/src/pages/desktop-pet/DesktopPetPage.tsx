@@ -10,6 +10,7 @@ import { HowItWorks } from './components/HowItWorks'
 import { FAQ } from './components/FAQ'
 import { CTA } from './components/CTA'
 import type { HeroLive2DStageHandle } from './components/HeroLive2DStage'
+import { PkArenaView } from './pk-mode/PkArenaView'
 
 export function DesktopPetPage() {
   // 「叫大家飛出來」：按鈕在下面「閒置動作＋語音閒聊」Spotlight 卡片的視覺面板右下角
@@ -19,6 +20,29 @@ export function DesktopPetPage() {
   const stageRef = useRef<HeroLive2DStageHandle>(null)
   const flyTargetRef = useRef<HTMLDivElement>(null)
   const [flying, setFlying] = useState(false)
+
+  // 手勢 PK 對戰模式：true 時整個 <main> 提早 return PkArenaView，Hero／ControlPanel／
+  // Aatrox3DShowcase 等其餘內容全部隨之 unmount，各自既有的 cleanup（PIXI/WebGL
+  // renderer.dispose()、鏡頭 stream.stop()……）自動觸發——這就是訪談時提到的「進入 PK
+  // 模式期間釋放其他無關資源」，不需要另外寫一份手動清理清單。見 docs/specs/0013
+  // 「資源釋放」、docs/adr/0014。這個 state 要放在上面兩組 useRef/useState 之後
+  // 才能提早 return——hooks 呼叫順序不能因為條件式提早結束而跳過，所有 hook 都要在
+  // 任何 return 之前呼叫完。
+  const [pkArenaActive, setPkArenaActive] = useState(false)
+  // requestFullscreen() 要在使用者手勢的同一個呼叫堆疊裡同步呼叫才穩定有效——
+  // PkArenaView 掛載後才在自己的 useEffect 裡呼叫的話，經過 React 排程/commit 那段
+  // 非同步空檔，部分瀏覽器不會再認定這還算「使用者觸發」，可能直接被拒絕、全螢幕
+  // 靜靜失敗。所以這裡直接在按鈕的 click handler 裡同步呼叫，PkArenaView 只負責監聽
+  // fullscreenchange（見 docs/specs/0013「全螢幕與 ESC」）。
+  function enterPkArena() {
+    document.documentElement.requestFullscreen().catch((err) => {
+      console.error('[DesktopPetPage] 進入全螢幕失敗（已忽略，PK 模式畫面仍會正常顯示）：', err)
+    })
+    setPkArenaActive(true)
+  }
+  if (pkArenaActive) {
+    return <PkArenaView onExit={() => setPkArenaActive(false)} />
+  }
 
   return (
     <main className="min-h-svh bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
@@ -94,7 +118,7 @@ export function DesktopPetPage() {
         accessorySub="再點一次收工"
       />
 
-      <Aatrox3DShowcase />
+      <Aatrox3DShowcase onEnterPkArena={enterPkArena} />
       <HowItWorks />
       <FAQ />
       <CTA />

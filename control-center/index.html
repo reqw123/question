@@ -57,6 +57,7 @@
   .badge-applies { background: rgba(255,180,84,0.15); color: var(--warn); }
   .badge-running { background: rgba(85,214,122,0.18); color: var(--success); }
   .badge-stopped { background: var(--badge-default-bg); color: var(--badge-default-fg); }
+  .badge-pending { background: rgba(255,180,84,0.15); color: var(--warn); }
   .field-desc { font-size: .85em; color: var(--text2); margin: 6px 0 10px; line-height: 1.55; }
   .field-control input[type=text], .field-control input[type=password], .field-control input[type=number], .field-control select {
     background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
@@ -236,6 +237,22 @@
     { id: 'host-app', label: '🖥️ App 模式（host-app）', desc: '多人搶答「主持人畫面」的桌面殼層，載入 5500 埠的 multi/host.html（有現成伺服器就沿用，沒有就自動用內建 Node 靜態伺服器頂上）。' },
     { id: 'web', label: '🌐 網頁模式（multi/，8080 埠）', desc: '多人搶答的網頁版靜態伺服器——有 caddy.exe 就用它（支援 ngrok 對外開放），沒有就用內建的 launchers/serve-lan.js（純區網）。', browserUrl: 'http://localhost:8080/multi/host.html' },
   ];
+  // 啟動/停止都是要真的等行程開起來/關掉才會 resolve 的非同步操作（見 process-manager.js
+  // 的 spawnAndTrack()／stop()——停止尤其可能要等到 3 秒的溫和關閉逾時才轉強制關閉），
+  // 中間這段時間按鈕要能反映「正在處理中」，不能維持原本可以按的樣子，否則使用者會在
+  // 還沒處理完時又點一次（例如啟動中又按停止、或連點兩次啟動）。pendingModes 記錄目前
+  // 「哪些模式正在做啟動/停止動作」，這段期間：(1) 兩顆按鈕都先停用，避免競態；
+  // (2) 下面的 2 秒輪詢（refreshProcessStatus）跳過這個模式，不要把「處理中」的徽章蓋掉
+  // ——輪詢跟按鈕點擊各自非同步、沒有先後保證，不跳過的話「處理中」畫面可能一閃即逝。
+  const pendingModes = new Set();
+  function setProcPending(id, label) {
+    const badge = document.getElementById(`proc-status-${id}`);
+    const startBtn = document.getElementById(`proc-start-${id}`);
+    const stopBtn = document.getElementById(`proc-stop-${id}`);
+    if (badge) { badge.className = 'badge badge-pending'; badge.textContent = label; }
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn) stopBtn.disabled = true;
+  }
   const procLogOutput = () => document.getElementById('procLogOutput');
   function procLog(modeId, text) {
     const el = procLogOutput();
@@ -279,21 +296,35 @@
       startBtn.className = 'btn-primary'; startBtn.textContent = '▶ 啟動';
       startBtn.id = `proc-start-${id}`;
       startBtn.addEventListener('click', async () => {
+        if (pendingModes.has(id)) return; // 已經在處理中，忽略重複點擊
+        pendingModes.add(id);
+        setProcPending(id, '啟動中…');
         procLog(id, '— 啟動中... —');
-        const result = await cc.startProcess(id);
-        if (!result.ok) { procLog(id, `啟動失敗：${result.error}`); }
-        else { procLog(id, `已啟動（PID ${result.pid}）`); }
-        await refreshProcessStatus();
+        try {
+          const result = await cc.startProcess(id);
+          if (!result.ok) { procLog(id, `啟動失敗：${result.error}`); }
+          else { procLog(id, `已啟動（PID ${result.pid}）`); }
+        } finally {
+          pendingModes.delete(id);
+          await refreshProcessStatus();
+        }
       });
       const stopBtn = document.createElement('button');
       stopBtn.className = 'btn-danger'; stopBtn.textContent = '⏹ 停止';
       stopBtn.id = `proc-stop-${id}`;
       stopBtn.addEventListener('click', async () => {
+        if (pendingModes.has(id)) return; // 已經在處理中，忽略重複點擊
+        pendingModes.add(id);
+        setProcPending(id, '停止中…');
         procLog(id, '— 停止中... —');
-        const result = await cc.stopProcess(id);
-        if (!result.ok) { procLog(id, `停止失敗或本來就沒在跑：${result.error || ''}`); }
-        else { procLog(id, result.forced ? '已強制停止' : '已停止'); }
-        await refreshProcessStatus();
+        try {
+          const result = await cc.stopProcess(id);
+          if (!result.ok) { procLog(id, `停止失敗或本來就沒在跑：${result.error || ''}`); }
+          else { procLog(id, result.forced ? '已強制停止' : '已停止'); }
+        } finally {
+          pendingModes.delete(id);
+          await refreshProcessStatus();
+        }
       });
       row.appendChild(startBtn); row.appendChild(stopBtn);
       if (browserUrl) {
@@ -331,6 +362,7 @@
     try {
       const status = await cc.getProcessStatus();
       Object.entries(status).forEach(([id, info]) => {
+        if (pendingModes.has(id)) return; // 正在啟動/停止中，維持「處理中」畫面，不被輪詢蓋掉
         const badge = document.getElementById(`proc-status-${id}`);
         const startBtn = document.getElementById(`proc-start-${id}`);
         const stopBtn = document.getElementById(`proc-stop-${id}`);

@@ -503,7 +503,12 @@ export const HeroLive2DStage = forwardRef<
     // flyIn() 停留階段（見下面 flyInImpl）用 setTimeout 排程「停留夠久了、開始飛出去」，
     // 卸載時如果還在停留階段要記得清掉，不然元件都銷毀了 callback 還會摸已經 destroy
     // 掉的 model。
-    let flyInHoldTimeoutId: ReturnType<typeof window.setTimeout> | undefined
+    // 型別故意寫死 number（不是 ReturnType<typeof window.setTimeout>）：這個專案新增
+    // mqtt 依賴後，它間接拉進 @types/node 的全域宣告，會讓 ReturnType<typeof
+    // window.setTimeout> 因為 setTimeout 多載合併誤判成 NodeJS.Timeout，跟瀏覽器
+    // window.setTimeout() 呼叫端實際回傳的 number 對不上（TS2322）。瀏覽器環境下
+    // window.setTimeout() 一定回傳 number，直接寫死型別避免這個誤判，不是行為變更。
+    let flyInHoldTimeoutId: number | undefined
     // Spine 角色的逐幀 update（見下面 loadModel()）——掛在 localApp.ticker 上、卸載時
     // 要記得 remove 的 per-model callback，統一在這個清單裡收集，effect cleanup 時清掉。
     const perModelTickers: (() => void)[] = []

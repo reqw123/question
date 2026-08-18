@@ -41,13 +41,28 @@ function buildRecognizerOptions(delegate: 'GPU' | 'CPU') {
   }
 }
 
+// 2026-08-18：補上實際錯誤名稱/訊息＋多分幾種常見情境，理由跟
+// aatrox-gesture/AatroxGestureTrigger.tsx 的 describeError() 一樣（PK 對戰模式開發時
+// 實測發現外接 USB 攝影機常見失敗方式不是「權限被拒絕」，是 NotReadableError/
+// OverconstrainedError，只給單一句籠統文案會誤導使用者去檢查錯的地方）。
 function describeError(err: unknown): string {
-  // 刻意不特別偵測瀏覽器版本/能力，只挑「使用者拒絕權限」這個最常見、訊息最有意義的
-  // 情境給專屬文字，其餘（WASM/getUserMedia 在極舊瀏覽器丟例外等）一律走同一句話。
-  if (err instanceof DOMException && err.name === 'NotAllowedError') {
-    return '手勢功能目前無法使用：鏡頭權限被拒絕'
+  // navigator.mediaDevices 整個不存在：這台裝置沒問題，是這個頁面不是 secure context。
+  // 這個功能通常在跟 dev server 同一台機器上使用，最直接的解法是改用
+  // http://localhost:<port>（不要用區網 IP）開啟這個頁面。
+  if (err instanceof Error && err.message === 'insecure-context') {
+    return '手勢拖曳目前無法使用：這個網址不是安全來源（secure context），請改用 http://localhost:<port>（不要用區網 IP）重新開啟這個頁面再試一次'
   }
-  return '手勢功能目前無法使用，請確認瀏覽器支援鏡頭存取後再試一次'
+  const detail = err instanceof DOMException ? `${err.name}${err.message ? `：${err.message}` : ''}` : String(err)
+  if (err instanceof DOMException && err.name === 'NotAllowedError') {
+    return `手勢功能目前無法使用：鏡頭權限被拒絕（${detail}）`
+  }
+  if (err instanceof DOMException && (err.name === 'NotReadableError' || err.name === 'TrackStartError')) {
+    return `手勢功能目前無法使用：鏡頭被另一個程式占用中（${detail}），關掉其他正在用鏡頭的程式後再試一次`
+  }
+  if (err instanceof DOMException && (err.name === 'NotFoundError' || err.name === 'OverconstrainedError')) {
+    return `手勢功能目前無法使用：找不到符合條件的鏡頭（${detail}）`
+  }
+  return `手勢功能目前無法使用（${detail}），請確認瀏覽器支援鏡頭存取後再試一次`
 }
 
 // 獨立於 HeroLive2DStage 之外的平行元件：拿到目前顯示中模型的 handle 之後直接讀寫
@@ -79,7 +94,10 @@ export function GestureDragControl({
   const handleRef = useRef<ActiveModelHandle | null>(handle)
   const holdRef = useRef<HoldState>(INITIAL_HOLD_STATE)
   const selectionRef = useRef<Selection | null>(null)
-  const capMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 型別故意寫死 number（不是 ReturnType<typeof setTimeout>）：這個專案新增 mqtt 依賴
+  // 後它間接拉進 @types/node 全域宣告，會讓 ReturnType<typeof setTimeout> 誤判成
+  // NodeJS.Timeout，見 Aatrox3DShowcase.tsx／HeroLive2DStage.tsx 同樣的說明。
+  const capMessageTimerRef = useRef<number | null>(null)
 
   // 切換輪播卡片時 HeroLive2DStage 會呼叫 onActiveModelChange(null)，這裡跟著清掉選定/
   // hold 狀態——這就是「切卡片自動清空手勢拖曳狀態」的完整實作，不需要監聽卡片切換事件。
@@ -94,14 +112,17 @@ export function GestureDragControl({
 
   useEffect(() => {
     return () => {
-      if (capMessageTimerRef.current) clearTimeout(capMessageTimerRef.current)
+      if (capMessageTimerRef.current) window.clearTimeout(capMessageTimerRef.current)
     }
   }, [])
 
   function showCapMessage() {
     setCapMessage('已達同時可拖出的角色上限，請先把其中一個放回背景')
-    if (capMessageTimerRef.current) clearTimeout(capMessageTimerRef.current)
-    capMessageTimerRef.current = setTimeout(() => setCapMessage(null), CAP_MESSAGE_DURATION_MS)
+    if (capMessageTimerRef.current) window.clearTimeout(capMessageTimerRef.current)
+    // window.setTimeout()（不是裸的 setTimeout()）：新增 mqtt 依賴後裸的全域 setTimeout
+    // 呼叫點解析會誤判成 NodeJS.Timeout（跟上面 capMessageTimerRef 型別寫死 number
+    // 同一個成因），透過 window. 明確指定瀏覽器版本就會回到正確的 number。
+    capMessageTimerRef.current = window.setTimeout(() => setCapMessage(null), CAP_MESSAGE_DURATION_MS)
   }
 
   useEffect(() => {
@@ -434,6 +455,13 @@ export function GestureDragControl({
       setStatus('requesting')
       setErrorMessage(null)
 
+      // navigator.mediaDevices 整個是 undefined（不是 getUserMedia 呼叫失敗）代表這個
+      // 頁面不是 secure context（不是 https:// 也不是 localhost）——PK 對戰模式
+      // （pk-mode/）開發時實測踩過這個坑，見 docs/specs/0013「已知風險」。這裡先擋
+      // 一次丟出好懂的訊息，不要讓後面 .getUserMedia() 直接對 undefined 取屬性炸出
+      // 一句看不懂的 TypeError。
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('insecure-context')
+
       // 只在啟用當下才動態載入這個套件，不啟用就完全不下載、不初始化，不拖慢首頁載入。
       const { FilesetResolver, GestureRecognizer } = await import('@mediapipe/tasks-vision')
       const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL)
@@ -450,7 +478,9 @@ export function GestureDragControl({
         return
       }
 
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      // 不加 facingMode:'user'——外接 USB 攝影機沒有「朝向」概念，部分廠牌驅動在
+      // 瀏覽器要求這個約束時會直接判定不滿足而失敗，見上面 describeError() 的說明。
+      stream = await navigator.mediaDevices.getUserMedia({ video: true })
       if (destroyed) {
         stream.getTracks().forEach((t) => t.stop())
         return
