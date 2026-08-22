@@ -14,7 +14,8 @@ const fs = require('fs');
 const path = require('path');
 const net = require('net');
 
-const REPO_ROOT = path.join(__dirname, '..');
+// REPO_ROOT 的算法（開發模式 vs 打包成 portable .exe 之後的差異）見 repo-root.js 開頭註解。
+const { REPO_ROOT } = require('./repo-root.js');
 const DESKTOP_PET_DIR = path.join(REPO_ROOT, 'desktop-pet');
 const DESKTOP_PET_WEB_DIR = path.join(REPO_ROOT, 'desktop-pet-web');
 const HOST_APP_DIR = path.join(REPO_ROOT, 'host-app');

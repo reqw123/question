@@ -99,9 +99,9 @@ Write-Step "建立桌面捷徑"
 $desktop = [Environment]::GetFolderPath('Desktop')
 $shell = New-Object -ComObject WScript.Shell
 $targets = @(
-  @{ Name = '多人搶答 - 網頁遊戲.lnk';   Bat = '啟動-網頁遊戲.bat' },
-  @{ Name = '多人搶答 - 桌寵.lnk';       Bat = '啟動-桌寵.bat' },
-  @{ Name = '多人搶答 - 主持人App.lnk'; Bat = '啟動-主持人App.bat' }
+  @{ Name = '多人搶答 - 網頁遊戲.lnk';   Bat = '啟動-網頁遊戲.bat';   Icon = '圖示\網頁遊戲.ico' },
+  @{ Name = '多人搶答 - 桌寵.lnk';       Bat = '啟動-桌寵.bat';       Icon = '圖示\桌寵.ico' },
+  @{ Name = '多人搶答 - 主持人App.lnk'; Bat = '啟動-主持人App.bat'; Icon = '圖示\主持人App.ico' }
 )
 foreach ($t in $targets) {
   $target = Join-Path $PSScriptRoot $t.Bat
@@ -113,6 +113,12 @@ foreach ($t in $targets) {
     $sc = $shell.CreateShortcut((Join-Path $desktop $t.Name))
     $sc.TargetPath = $target
     $sc.WorkingDirectory = $PSScriptRoot
+    $iconPath = Join-Path $PSScriptRoot $t.Icon
+    if (Test-Path $iconPath) {
+      $sc.IconLocation = "$iconPath,0"
+    } else {
+      Write-Warn "找不到圖示 launchers\$($t.Icon)，「$($t.Name)」改用預設圖示。"
+    }
     $sc.Save()
     Write-Ok "已建立捷徑：$($t.Name)"
   } catch {

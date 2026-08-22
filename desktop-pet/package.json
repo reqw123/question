@@ -4,13 +4,16 @@
   "private": true,
   "description": "Live2D 桌面透明背景掛件（獨立模組，讀取專案 lib/ 與 live2d_my_like/ 既有資源；原則上不修改既有檔案，唯一例外見 docs/adr/0009——lib/live2d.js 的文字泡泡排版 bug 修正）",
   "main": "main.js",
+  "author": "reqw123",
   "scripts": {
     "start": "electron .",
     "test": "vitest run",
-    "inspect-model": "node particle-effect/tools/inspect-model.mjs"
+    "inspect-model": "node particle-effect/tools/inspect-model.mjs",
+    "dist": "node scripts/prepare-live2d-assets.js && electron-builder --win portable"
   },
   "devDependencies": {
     "electron": "^43.0.0",
+    "electron-builder": "^26.0.12",
     "vitest": "^4.1.10"
   },
   "dependencies": {

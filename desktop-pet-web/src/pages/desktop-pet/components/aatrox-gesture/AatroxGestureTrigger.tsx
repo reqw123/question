@@ -240,8 +240,15 @@ export function AatroxGestureTrigger({
           等待鏡頭權限…
         </div>
       )}
+      {/* 這裡原本不是 absolute，會撐開外層 div 的高度（video 本身的高度之外多一截文字
+          列的高度），但上面 overlayRef 的 <canvas> 是 absolute inset-0 h-full w-full——
+          會被拉伸去填滿「video 高度 + 這行文字」的總高度，不是只對齊 video 自己的高度，
+          導致骨架疊圖跟實際鏡頭畫面垂直方向對不準（愈往下愈明顯）。同一個 bug、同一個
+          成因也出現在 pk-mode/PkControllerView.tsx、pk-mode/PkArenaView.tsx 的鏡頭 PIP，
+          這裡是同一份骨架複製出來的獨立第三處，修法照搬：改成絕對定位疊在 video 底部，
+          外層 div 高度只由 video 自己決定，疊圖才會準。 */}
       {status === 'active' && (
-        <p className="bg-black/70 px-2 py-1 text-center text-[11px] font-medium text-white">{gestureLabel}</p>
+        <p className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-center text-[11px] font-medium text-white">{gestureLabel}</p>
       )}
     </div>
   )

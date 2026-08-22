@@ -1,6 +1,14 @@
 # 相依套件（可用 npm install 重新產生，不進版本控制）
 node_modules/
 
+# electron-builder 打包輸出（可用 npm run dist 重新產生，不進版本控制）
+control-center/dist/
+desktop-pet/dist/
+
+# desktop-pet 打包成 .exe 前，從 live2d_my_like/ 篩選複製出來的角色子集（可用
+# npm run dist 或 node scripts/prepare-live2d-assets.js 重新產生，不進版本控制）
+desktop-pet/pack-assets/
+
 # 大型素材資料庫（私人收集的遊戲資源截取，體積過大不適合進版本控制）
 Live2d-model-master/
 live2d-master/

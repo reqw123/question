@@ -17,7 +17,14 @@
 // 檔案，不是各自為政的兩份設定。
 const fs = require('fs');
 const path = require('path');
-const desktopPetSettingsStore = require('../desktop-pet/settings-store.js');
+// 用計算出來的絕對路徑 require，而不是寫死的 '../desktop-pet/settings-store.js'——
+// 打包成 electron-builder 的 portable .exe 之後，main 行程程式碼跑在 app.asar 裡面，
+// 相對路徑往上疊資料夾已經不再指向真正的專案根目錄，見 repo-root.js 開頭註解。
+// require() 本身不在乎路徑是字面寫死還是執行期算出來的絕對路徑，兩者對 Node 模組
+// 解析來說完全等價，所以這裡仍然是 require 同一份 desktop-pet 真正在用的原始檔案，
+// 不是打包時複製進來的副本，跟本檔案開頭那段「重用既有邏輯、不重寫一份」的說明一致。
+const { REPO_ROOT } = require('./repo-root.js');
+const desktopPetSettingsStore = require(path.join(REPO_ROOT, 'desktop-pet', 'settings-store.js'));
 const schema = require('./settings-schema.js');
 
 // 這三個是薄包裝，直接呼叫 desktop-pet/settings-store.js 對應的函式——**不**在這裡處理

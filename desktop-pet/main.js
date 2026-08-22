@@ -36,6 +36,13 @@ let myLikeNames    = {};
 let currentChar1 = '', currentChar2 = '';
 let pendingChar1 = '', pendingChar2 = '';
 
+// 角色一/二「顯示中/已隱藏」——即時生效，不用像上面 pending/套用那組要整頁 reload
+// （見 index.html 的 window.setCharVisible()）。純粹是這次開機期間的狀態，不寫進
+// settings.json：跟 clickThrough、particleEffectOn 開機後的即時切換一樣，只管「現在
+// 這一次執行期間」，不是「開機預設值」那種要跨重啟記住的設定。
+let charVisible = { c1: true, c2: true };
+const CHAR_MENU_KEY_TO_STATE_KEY = { char1: 'c1', char2: 'c2' };
+
 // 額外寵物（自由遊走，見 desktop-pet/index.html 的 loadExtraPet）：跟 char1/char2 那組
 // 「單選＋pending/套用」是同一種模式——勾選只是暫存，按「確定套用」才會真的新增/銷毀，
 // 差別只在套用方式：char1/char2 用整頁 reload，額外寵物用即時新增/銷毀（不用 reload，
@@ -345,6 +352,18 @@ function setPendingChar(key, val) {
   if (tray) tray.setContextMenu(buildTrayMenu());
 }
 
+// 角色一/二個別顯示切換：即時生效（不用像 pending/套用那組要整頁 reload），呼叫
+// index.html 的 window.setCharVisible()——那邊會直接卸載/重新載入該角色的 Live2D
+// 模型並連帶擋掉它的閒話泡泡，不影響另一個角色。
+function setCharVisible(menuKey, visible) {
+  const stateKey = CHAR_MENU_KEY_TO_STATE_KEY[menuKey];
+  charVisible[stateKey] = visible;
+  win.webContents
+    .executeJavaScript(`window.setCharVisible(${JSON.stringify(stateKey)}, ${visible})`)
+    .catch((err) => console.error(`[desktop-pet] 切換${CHAR_LABEL[stateKey]}顯示狀態失敗：`, err));
+  if (tray) tray.setContextMenu(buildTrayMenu());
+}
+
 // 按「確定套用」時才真的寫回 localStorage + 重新整理，選單上點選只是暫存
 function applyMyLikeSelection() {
   const c1 = pendingChar1, c2 = pendingChar2;
@@ -369,7 +388,15 @@ function applyMyLikeSelection() {
 
 function buildCharSubmenu(key) {
   const pending = key === 'char1' ? pendingChar1 : pendingChar2;
+  const stateKey = CHAR_MENU_KEY_TO_STATE_KEY[key];
   return [
+    {
+      label: charVisible[stateKey] ? '顯示中（點擊隱藏）' : '已隱藏（點擊顯示）',
+      type: 'checkbox',
+      checked: charVisible[stateKey],
+      click: () => setCharVisible(key, !charVisible[stateKey]),
+    },
+    { type: 'separator' },
     {
       label: '（預設，不覆蓋）',
       type: 'radio',
@@ -1270,8 +1297,9 @@ const CLI_MODE_ENTER_PHRASES = new Set(['進入CLI模式', 'enter cli mode'].map
 const CLI_MODE_EXIT_PHRASES = new Set(['退出CLI模式', '離開CLI模式', 'exit cli mode'].map(normalizeTriggerPhrase));
 // CLI 模式預設在整個 repo 根目錄（跟這台機器上跑 Claude Code 的目錄一致），不是
 // desktop-pet 自己那個子資料夾——見 spec 的使用者決定。目前沒有開放設定畫面調整
-// （Out of Scope，見 spec）。
-const CLAUDE_CLI_CWD = path.join(__dirname, '..');
+// （Out of Scope，見 spec）。開發模式 vs 打包成 portable .exe 之後這裡算出來的路徑
+// 不一樣，見 cli-cwd.js 開頭註解。
+const { CLAUDE_CLI_CWD } = require('./cli-cwd.js');
 const cliModeActive = new Set(); // 目前處於 CLI 模式的 charKey
 const claudeCliSessions = new Map(); // charKey -> ClaudeCliSession，退出 CLI 模式就整個丟掉
 
@@ -2121,6 +2149,7 @@ app.whenReady().then(async () => {
     '[desktop-pet]   Ctrl+Alt+E 切換閒置閒聊音效',
     '[desktop-pet]   Ctrl+Alt+V 切換對話語音回覆',
     '[desktop-pet]   Ctrl+Alt+N 切換 3D 模型微調 debug 模式（開啟後方向鍵/[ ]/PageUp/PageDown/Home/End/R/P 才會生效）',
+    '[desktop-pet]   Ctrl+Alt+S 切換模型序列播放（sources.js 設定的多個 3D 模型間連續變形，跟系統匣「光粒子特效」子選單是同一個開關）',
     '[desktop-pet]   Ctrl+Alt+Z 直接開始語音輸入（等同點🎤，穿透模式下也按得到）',
     '[desktop-pet]   Ctrl+Alt+[ / ] 調降/調升閒置閒聊音效音量',
     '[desktop-pet]   Ctrl+Alt+- / = 調降/調升對話語音回覆音量',

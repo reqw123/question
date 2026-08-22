@@ -551,6 +551,13 @@ export function Aatrox3DShowcase({ onEnterPkArena }: { onEnterPkArena: () => voi
           // （見 docs/specs/0012 Edge Cases）。setGestureMode 是 useState 的 setter，
           // identity 穩定，掛載時閉包捕捉到的這一份直接呼叫即可，不需要另外用 ref 轉手。
           setGestureMode(false)
+          // 同理也要關掉操控模式——不關的話，全域的 keydown/keyup 監聽（見下面
+          // handleKeyDown）只認 controlModeRef，跟這張卡片有沒有捲出畫面無關，使用者
+          // 捲走之後 W/A/S/D/Space 還是會被攔截並 preventDefault()，而且操控模式又
+          // 沒有 Escape 鍵可以離開，只能捲回來找退出按鈕——是真的會卡住鍵盤輸入的 bug，
+          // 不只是「鏡頭沒必要開著」那種效能考量。setControlMode(false) 會觸發上面
+          // controlMode 變化的 effect，順便清掉還按著的鍵、把角色/鏡頭歸位。
+          setControlMode(false)
         }
       },
       { threshold: 0.01 },

@@ -318,9 +318,15 @@
   // 所以在這裡包一層薄薄的守門就能一次擋掉所有來源，不用個別攔截每個呼叫點，
   // 也不用改動那份共用檔案本身（跟上面「只碰 CSS」同一個不動 lib/live2d.js 的原則）。
   window._live2dVisible = true;
+  // 角色一/角色二各自的顯示狀態（跟上面 _live2dVisible「全部一起藏」是不同層級——這裡
+  // 是「只藏其中一個角色」，給系統匣選單「顯示角色一/二」勾選項用，見 main.js 的
+  // setCharVisible()）。一樣包進同一個 speakFor 守門，理由跟上面相同：speak()/speak2()
+  // 都經由這個入口，一次擋掉閒話/情境台詞/CLI 模式所有來源，不用個別攔截每個呼叫點。
+  window._charHidden = { c1: false, c2: false };
   const _origSpeakFor = L2D.speakFor.bind(L2D);
   L2D.speakFor = function (key, text, opts) {
     if (window._live2dVisible === false) return;
+    if (window._charHidden[key]) return;
     return _origSpeakFor(key, text, opts);
   };
   window.setLive2DVisible = function setLive2DVisible(visible) {
@@ -398,6 +404,26 @@
     window.setLive2DVisible(true);
     L2D.startIdleChat(PET_CFG.idleMotionMs);
     L2D.startIdleMotion(PET_CFG.idleMotionMs);
+    return true;
+  };
+
+  // 角色一/二「個別」顯示切換（main.js 系統匣選單「顯示角色一/二」用）——直接重用
+  // 上面 _unloadCharForHide/_reloadCharForShow 這兩個本來就是「單一 key」的函式，跟
+  // unloadLive2DForHide/reloadLive2DForShow（一次處理 _activeSlotKeys 全部）是不同層級，
+  // 不用另外寫一套卸載/重載邏輯。動作/表情（lib/live2d.js 的 playRandom/playRandomExpr/
+  // _go）跟手勢（multi/L2DGesturePlayer.js 的 _cm()）本身已經對 model 是 null 的情況
+  // 做了防呆（會直接跳過、不會丟例外），這裡只需要額外補上面 speakFor 的守門就夠了，
+  // 不用碰 lib/live2d.js 或 L2DGesturePlayer.js 一行——跟 index.html 開頭「唯讀引用共用
+  // 檔案」的既有原則一致。
+  window.setCharVisible = async function setCharVisible(key, visible) {
+    if (!window._l2dReady || !L2D.app) return false;
+    if (!visible) {
+      window._charHidden[key] = true;
+      _unloadCharForHide(key);
+    } else {
+      window._charHidden[key] = false;
+      await _reloadCharForShow(key);
+    }
     return true;
   };
 

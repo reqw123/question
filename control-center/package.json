@@ -4,12 +4,15 @@
   "private": true,
   "description": "question 專案的中樞控制台——集中管理桌寵模式（desktop-pet）、App 模式（host-app）、網頁模式（multi/，透過 launchers/serve-lan.js 或 caddy.exe）的行程啟動/關閉與設定。額外、可選的管理層：這個 app 沒裝、沒開，三個模式各自照原本的方式（launchers/*.bat）一樣能正常使用，不依賴這裡才能啟動。",
   "main": "main.js",
+  "author": "reqw123",
   "scripts": {
     "start": "electron .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dist": "electron-builder --win portable"
   },
   "devDependencies": {
     "electron": "^43.0.0",
+    "electron-builder": "^26.0.12",
     "vitest": "^4.1.10"
   }
 }

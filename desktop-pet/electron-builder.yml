@@ -1,0 +1,46 @@
+# electron-builder 打包設定（跟 package.json 分開放，避免 build 區塊把套件本身的
+# name/scripts/dependencies 淹沒）。跑 `npm run dist` 時 electron-builder 會自動找
+# 這個檔案，不用額外指定路徑——放在跟 package.json 同一層就會被讀到。
+#
+# files/extraResources 各自在管什麼、為什麼需要 asar:false，見對話紀錄／
+# desktop-pet/scripts/prepare-live2d-assets.js 開頭的說明；這裡只搬設定本身過來，
+# 內容跟原本 package.json 的 build 區塊一模一樣，沒有改邏輯。
+appId: com.reqw123.desktop-pet
+productName: desktop-pet
+
+directories:
+  output: dist
+
+files:
+  - "**/*"
+  - "!*.test.js"
+  - "!pack-assets/**"
+  - "!particle-effect/models/**"
+  - "particle-effect/models/至臻_腥红之月_亚托克斯.glb"
+  - "particle-effect/models/殺五社異音_維爾戈.glb"
+  - "particle-effect/models/闇夜使者_犽宿.glb"
+  - "particle-effect/models/死灰墓騎_魔鬥凱薩.glb"
+  - "particle-effect/models/遠古霸者_厄薩斯.glb"
+  - "particle-effect/models/kaido_dragon_form.glb"
+  - "particle-effect/models/going_merry_one_piece.glb"
+  - "particle-effect/models/4.glb"
+  - "particle-effect/models/5.glb"
+  - "particle-effect/models/尊爵不凡_雙相古龍_弗力貝爾.glb"
+
+asar: false
+
+extraResources:
+  - from: "../lib"
+    to: "lib"
+  - from: "pack-assets/live2d_my_like"
+    to: "live2d_my_like"
+  - from: "../multi/L2DGesturePlayer.js"
+    to: "multi/L2DGesturePlayer.js"
+  - from: "node_modules/three/examples"
+    to: "app/node_modules/three/examples"
+
+win:
+  target: portable
+
+portable:
+  artifactName: "${productName}.exe"

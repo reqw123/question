@@ -1,0 +1,17 @@
+# electron-builder 打包設定（跟 package.json 分開放，理由跟 desktop-pet/electron-builder.yml
+# 一樣）。跑 `npm run dist` 時 electron-builder 會自動找這個檔案。
+appId: com.reqw123.question-control-center
+productName: question-control-center
+
+directories:
+  output: dist
+
+files:
+  - "**/*"
+  - "!*.test.js"
+
+win:
+  target: portable
+
+portable:
+  artifactName: "${productName}.exe"
