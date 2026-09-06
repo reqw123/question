@@ -1,0 +1,4 @@
+# Shell 腳本一律用 LF 換行，避免在 Windows 上 checkout 成 CRLF 後
+# 在 Raspberry Pi / Linux 上 shebang 失效、腳本無法執行。
+*.sh              text eol=lf
+launchers/rpi/*.conf   text eol=lf
