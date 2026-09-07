@@ -577,6 +577,15 @@
     <div id="bank-upload-wrap" class="bank-upload-wrap">
       <label>選擇本機 JSON 題庫檔案（格式需含 question / options / answer / explanation）</label>
       <input id="bank-upload" type="file" accept=".json">
+      <div id="bank-save-row" style="margin-top:8px;display:none;flex-wrap:wrap;gap:8px 8px">
+        <div style="flex-basis:100%;font-size:.72em;color:var(--text2)">上傳後會自動存進專案 <code>questions/</code>，之後重整仍會出現在下拉選單。改名稱可按右側按鈕重存一次。</div>
+        <input id="bank-save-name" type="text" maxlength="40" autocomplete="off"
+               placeholder="下拉選單顯示名稱（例：📚 我的題庫）"
+               style="flex:1;min-width:150px;padding:5px 7px;font-size:.85em;background:#0d1a2b;
+                      color:var(--text);border:1px solid var(--border);border-radius:6px;box-sizing:border-box">
+        <button id="btn-bank-save" class="btn-ctrl" style="font-size:.78em;padding:4px 14px;border-color:rgba(0,212,255,.45);color:var(--cyan)">💾 用此名稱重存</button>
+        <span id="bank-save-msg" style="flex-basis:100%;font-size:.72em;color:var(--text2)"></span>
+      </div>
       <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button onclick="downloadExampleBank()" class="btn-ctrl yellow" style="font-size:.78em;padding:4px 14px">⬇ 下載題庫範例</button>
         <span style="font-size:.7em;color:var(--text2)">下載後可將範例貼給 AI，請 AI 依相同格式生成更多題目再上傳</span>
@@ -2224,6 +2233,184 @@ async function loadBankIndex() {
   }
 }
 
+// ── 上傳題庫寫入專案 ─────────────────────────────────────────────────────
+// 把 host 上傳的 JSON 題庫真的寫進專案的 questions/ 目錄，並在 questions/index.json
+// 登記一筆，之後重整 host.html，loadBankIndex() 就會從 index.json 讀到它、出現在下拉選單。
+//
+// 主要走「後端寫檔 API」：POST /api/save-bank —— 不用選資料夾、全自動。
+//   · Caddy 模式：Caddyfile 的 `reverse_proxy /api/* localhost:8081` 轉給 serve-lan.js
+//     （啟動-網頁遊戲.bat 會一併把它用 8081 埠拉起來）。
+//   · 純區網 Node 模式：serve-lan.js 自己就處理 /api/save-bank。
+// 後端不存在時（例如手動只開了 Caddy、沒裝 Node）退回「檔案系統存取 API」：需 Chrome/Edge
+// ＋ secure context，會要求選一次 questions/ 資料夾（handle 存 IndexedDB，下次免重選）。
+// 兩者都不行才退回原本「只載入記憶體、重整即失效」。
+let _pendingUploadBank = null;   // 目前上傳、待寫入的題庫 { data, file }
+let _savedBankFile     = null;   // 上次存檔用的檔名，重存時帶回讓「改名」不另開新檔
+
+// 寫入成功後：把新題庫塞進下拉選單並選中、記到 quiz_cfg，讓重整後仍在（且被選中）。
+// 題目資料在上傳當下已經進 HS.allQ 了，這裡不再 fetch；上傳區保持顯示，方便看到 ✓ 訊息
+// 跟「用此名稱重存」按鈕。
+function _applySavedBank(path, displayName) {
+  const sel = el('bank-select');
+  let opt = [...sel.options].find(o => o.value === path);
+  if (!opt) {
+    opt = document.createElement('option');
+    opt.value = path;
+    sel.insertBefore(opt, sel.querySelector('option[value="__editor__"]'));
+  }
+  opt.textContent = displayName;
+  sel.value = path;
+  el('bank-label').textContent = displayName;   // 用顯示名稱，跟其他題庫呈現一致
+  try {
+    const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
+    s.bankPath = path;
+    localStorage.setItem('quiz_cfg', JSON.stringify(s));
+  } catch {}
+  pubState();  // 廣播最新 bankLabel（沿用既有 STATE retained 機制）
+}
+
+const _FS_DB = 'quiz_fs', _FS_STORE = 'handles', _FS_KEY = 'questions_dir';
+
+function _fsIdb() {
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open(_FS_DB, 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore(_FS_STORE);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror   = () => rej(rq.error);
+  });
+}
+async function _fsIdbGet(key) {
+  const db = await _fsIdb();
+  return new Promise((res, rej) => {
+    const rq = db.transaction(_FS_STORE, 'readonly').objectStore(_FS_STORE).get(key);
+    rq.onsuccess = () => res(rq.result || null);
+    rq.onerror   = () => rej(rq.error);
+  });
+}
+async function _fsIdbSet(key, val) {
+  const db = await _fsIdb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(_FS_STORE, 'readwrite');
+    tx.objectStore(_FS_STORE).put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
+}
+async function _fsEnsurePerm(handle) {
+  const opts = { mode: 'readwrite' };
+  if ((await handle.queryPermission(opts))   === 'granted') return true;
+  if ((await handle.requestPermission(opts)) === 'granted') return true;
+  return false;
+}
+// 取得 questions/ 目錄 handle：先試 IndexedDB 記住的，失敗才彈資料夾選擇器
+async function _getQuestionsDir() {
+  let handle = await _fsIdbGet(_FS_KEY).catch(() => null);
+  if (handle && await _fsEnsurePerm(handle)) return handle;
+
+  handle = await window.showDirectoryPicker({ id: 'quiz-questions', mode: 'readwrite' });
+  if (handle.name !== 'questions') {
+    // 使用者選了上層目錄 → 往下找 questions 子資料夾
+    try { handle = await handle.getDirectoryHandle('questions'); }
+    catch { throw new Error('請選擇專案的 questions 資料夾（或其上層目錄）'); }
+  }
+  if (!await _fsEnsurePerm(handle)) throw new Error('未取得資料夾寫入權限');
+  await _fsIdbSet(_FS_KEY, handle).catch(() => {});
+  return handle;
+}
+async function _fsReadJson(dir, name) {
+  try {
+    const fh = await dir.getFileHandle(name);
+    return JSON.parse(await (await fh.getFile()).text());
+  } catch { return null; }
+}
+async function _fsWriteJson(dir, name, obj) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w  = await fh.createWritable();
+  await w.write(JSON.stringify(obj, null, 2) + '\n');
+  await w.close();
+}
+function _slugifyBankFile(displayName, fallback) {
+  let base = (displayName || '').trim()
+    .replace(/[^\w一-鿿-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+  if (!base) base = (fallback || 'custom').replace(/\.json$/i, '');
+  return base + '.json';
+}
+const _RESERVED_BANKS = ['index.json', 'player.json'];
+
+async function saveBankToProject() {
+  if (!_pendingUploadBank) return;
+  const btn = el('btn-bank-save'), msg = el('bank-save-msg');
+  const setMsg = (t, err) => { msg.textContent = t; msg.style.color = err ? 'var(--red)' : 'var(--text2)'; };
+  const displayName = (el('bank-save-name').value || '').trim()
+    || _pendingUploadBank.file.name.replace(/\.json$/i, '');
+
+  btn.disabled = true;
+  setMsg('存入專案中…');
+
+  // 1) 後端寫檔 API（全自動、不用選資料夾）
+  try {
+    const r = await fetch('/api/save-bank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: displayName,
+        questions: _pendingUploadBank.data,
+        file: _savedBankFile || undefined,   // 重存時沿用同一檔名（只改顯示名稱）
+      }),
+    });
+    if (r.ok) {
+      const j = await r.json();
+      _savedBankFile = j.file;
+      _applySavedBank(j.path, j.name || displayName);
+      // 不清 _pendingUploadBank：改名稱後可按「💾 用此名稱重存」再存一次
+      setMsg(`✓ 已存入 questions/${j.file}（${j.count} 題），重整後仍在下拉選單`);
+      btn.disabled = false;
+      return;
+    }
+    // 400/413/500 = 後端有收到但拒絕/失敗 → 顯示錯誤，不再退備援
+    if (r.status === 400 || r.status === 413 || r.status === 500) {
+      const j = await r.json().catch(() => ({}));
+      setMsg('✗ ' + (j.error || `後端回應 ${r.status}`), true);
+      btn.disabled = false;
+      return;
+    }
+    // 其他（404 沒這個路由、502/503 後端沒起來…）→ 往下試檔案系統存取 API
+  } catch { /* 連不到後端 → 往下試檔案系統存取 API */ }
+
+  // 2) 備援：檔案系統存取 API（需 Chrome/Edge + secure context，會要求選一次資料夾）
+  if (!('showDirectoryPicker' in window)) {
+    setMsg('✗ 沒有寫檔後端、瀏覽器也不支援檔案系統存取 API。請確認啟動器有把題庫 API（埠 8081）拉起來，或改用 Chrome/Edge。', true);
+    btn.disabled = false;
+    return;
+  }
+  try {
+    const dir   = await _getQuestionsDir();
+    const path0 = _savedBankFile || _slugifyBankFile(displayName, _pendingUploadBank.file.name);
+    const file  = _RESERVED_BANKS.includes(path0) ? 'custom_' + path0 : path0;
+
+    if (!_savedBankFile && await _fsReadJson(dir, file)) {
+      if (!confirm(`questions/${file} 已存在，要覆寫嗎？`)) { setMsg('已取消', true); return; }
+    }
+    await _fsWriteJson(dir, file, _pendingUploadBank.data);
+
+    let index = await _fsReadJson(dir, 'index.json');
+    if (!Array.isArray(index)) index = [];
+    const entry = { file, name: displayName };
+    const i = index.findIndex(b => b && b.file === file);
+    if (i >= 0) index[i] = entry; else index.push(entry);
+    await _fsWriteJson(dir, 'index.json', index);
+
+    _savedBankFile = file;
+    _applySavedBank(`../questions/${file}`, displayName);
+    setMsg(`✓ 已寫入 questions/${file} 並登記到 index.json`);
+  } catch (e) {
+    if (e && e.name === 'AbortError') setMsg('已取消選擇資料夾', true);
+    else setMsg('✗ ' + ((e && e.message) || '寫入失敗'), true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ── UI 渲染 ───────────────────────────────────────────────────────────────
 function renderScoreboard() {
   const ranked = mpRankPlayers(HS.players);
@@ -2580,6 +2767,10 @@ el('bank-select').addEventListener('change', async () => {
 
   if (val === '__custom__') {
     el('bank-upload-wrap').style.display = 'block';
+    el('bank-save-row').style.display = 'none';
+    el('bank-save-msg').textContent = '';
+    _pendingUploadBank = null;
+    _savedBankFile = null;
     el('bank-label').textContent = '等待上傳…';
     el('pool-count').textContent = '0';
     HS.allQ = [];
@@ -2612,6 +2803,10 @@ el('bank-select').addEventListener('change', async () => {
 el('bank-upload').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
+  el('bank-save-row').style.display = 'none';
+  el('bank-save-msg').textContent   = '';
+  _pendingUploadBank = null;
+  _savedBankFile = null;
   try {
     const text = await file.text();
     const data = JSON.parse(text);
@@ -2621,6 +2816,13 @@ el('bank-upload').addEventListener('change', async (e) => {
       el('pool-count').textContent = data.length;
       updateStartBtn();
       pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
+
+      // 自動存入專案的 questions/：填好名稱欄、顯示狀態列，並立即呼叫 saveBankToProject()
+      // （後端 API 優先、免選資料夾；改名後可按按鈕重存一次）
+      _pendingUploadBank = { data, file };
+      el('bank-save-name').value = file.name.replace(/\.json$/i, '');
+      el('bank-save-row').style.display = 'flex';
+      saveBankToProject();
     } else {
       alert('題庫格式錯誤：需為 JSON 陣列，且至少含一題');
     }
@@ -2628,6 +2830,8 @@ el('bank-upload').addEventListener('change', async (e) => {
     alert('無法解析 JSON，請確認檔案格式正確');
   }
 });
+
+el('btn-bank-save').addEventListener('click', () => saveBankToProject());
 
 // ── 玩家加入網址 ──────────────────────────────────────────────────────────
 function buildPlayerUrl(ip, port) {

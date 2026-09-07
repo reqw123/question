@@ -20,7 +20,7 @@
 
 `啟動-網頁遊戲.bat` 執行時會先檢查專案根目錄有沒有 `caddy.exe`：
 
-- **有 `caddy.exe`** → 照原本方式啟動 Caddy（`caddy.exe run`），走 `Caddyfile` 設定的公網模式，支援之後接 ngrok 讓區網外的玩家連進來（見 `multi/多人搶答系統技術文件.md` 的「公網對外開放」章節）。
+- **有 `caddy.exe`** → 照原本方式啟動 Caddy（`caddy.exe run`），走 `Caddyfile` 設定的公網模式，支援之後接 ngrok 讓區網外的玩家連進來（見 `multi/多人搶答系統技術文件.md` 的「公網對外開放」章節）。另外若有裝 Node.js，`.bat` 會一併把 `serve-lan.js` 用 **8081 埠**拉起來當「題庫寫檔後端」：`host.html` 上傳自訂題庫時會 `POST /api/save-bank`，由 `Caddyfile` 的 `reverse_proxy /api/* localhost:8081` 轉給它，把題庫寫進 `questions/` 並更新 `index.json`（Caddy 本身不能寫檔）。沒裝 Node.js 就沒有這個後端，上傳的題庫改走瀏覽器的檔案系統存取 API 備援或只留在記憶體，其餘功能不受影響。
 - **沒有 `caddy.exe`** → 自動改用 [`serve-lan.js`](serve-lan.js)——一支零套件相依、只需要 Node.js 就能跑的靜態檔案伺服器，一樣把整個專案目錄用 `http://localhost:8080/` 服務起來，`multi/host.html` 照樣能開、QR code 照樣能掃、區網內搶答完全正常。差別只有一個：**不支援 `/mqtt` 反向代理**，所以沒辦法透過 ngrok 開放給區網外的玩家（純區網用途完全用不到這條——`multi/multiplay.js` 的 `mpMqttUrl()` 在 `http:` 協定下本來就是直連 `ws://IP:9001`，不經過任何反代，只有 `https:` 協定才會走 `/mqtt` 反代）。
 
 兩種模式最後都會開瀏覽器連到同一個網址 `http://localhost:8080/multi/host.html`，使用上完全一樣，差別只在背後開的是哪個伺服器、要不要真的去下載 `caddy.exe`。如果連 Node.js 都沒裝（兩種伺服器都起不來），`.bat` 會印出清楚的錯誤訊息並停在原地，不會像之前那樣直接開出一個空白/連不上的瀏覽器分頁。

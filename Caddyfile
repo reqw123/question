@@ -17,4 +17,9 @@
             versions 1.1
         }
     }
+    # /api/* 轉給本機的 serve-lan.js（埠 8081）處理——Caddy 本身沒有寫檔能力，
+    # host.html「上傳自訂題庫」要把 JSON 存進 questions/ 並更新 index.json 就靠這個小後端
+    # （見 launchers/serve-lan.js 的 /api/save-bank）。啟動-網頁遊戲.bat 在 Caddy 模式下
+    # 會一併把 serve-lan.js 用 8081 埠拉起來當這個後端。
+    reverse_proxy /api/* localhost:8081
 }
