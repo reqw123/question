@@ -10,10 +10,12 @@
 #
 # 會做的事（對應 launchers/README.md「換到新電腦：完整設定流程」手動步驟）：
 #   1. 檢查 Node.js 有沒有裝
-#   2. desktop-pet/、host-app/ 各自 npm install
+#   2. 自動掃描整個專案裡所有 package.json（略過 node_modules/、single/、以及沒有宣告
+#      相依套件的標記檔），逐一 npm install——目前涵蓋 desktop-pet/、host-app/、
+#      control-center/、desktop-pet-web/、glb-viewer/，之後新增子專案也不用再改這裡
 #   3. 產生 live2d_my_like/config/manifest.json 等設定檔（模型檔案本身沒有跟著專案
 #      發布，沒有的話這一步會友善跳過，不會讓整支腳本失敗）
-#   4. 建立三個桌面捷徑（不寫死路徑，自動抓這支腳本所在的專案根目錄）
+#   4. 建立桌面捷徑（不寫死路徑，自動抓這支腳本所在的專案根目錄）
 #
 # 不會做、需要使用者自己另外處理的事（見腳本最後印出的提醒）：
 #   - 安裝 Node.js 本身（沒裝會直接停下來，附下載連結）
@@ -48,29 +50,53 @@ if (-not $nodeCmd) {
 }
 Write-Ok "已偵測到 Node.js $(node --version)"
 
-# ── 2. npm install（desktop-pet / host-app）──────────────────────────────
-function Install-NpmProject([string]$folderName) {
-  $dir = Join-Path $root $folderName
-  $pkg = Join-Path $dir 'package.json'
-  if (-not (Test-Path $pkg)) {
-    Write-Warn "找不到 $folderName\package.json，跳過。"
+# ── 2. npm install（自動掃描整個專案的 package.json，逐一安裝）────────────
+# 不再寫死清單——避免以後新增子專案（像 desktop-pet-web、glb-viewer）被漏掉。
+# 規則：
+#   · 略過 node_modules\ 底下的、single\ 底下的（single/ 暫不維護，見 CLAUDE.md）
+#   · 沒有 dependencies 也沒有 devDependencies 的 package.json 跳過（例如
+#     desktop-pet\particle-effect\ 那份只是給 Node 當 ESM 解析用的標記檔）
+function Install-NpmProject([System.IO.FileInfo]$pkgFile) {
+  $dir = $pkgFile.DirectoryName
+  $rel = $dir.Substring($root.Length).TrimStart('\')
+  # 不用 ConvertFrom-Json：package.json 的 description 有中文，Windows PowerShell 5.1
+  # 讀 UTF-8（無 BOM）會亂碼導致解析失敗。改用純 ASCII 的鍵名做正則判斷即可，
+  # 內容是不是亂碼都不影響（"dependencies" / "devDependencies" 這兩個鍵是 ASCII）。
+  $raw = ''
+  try { $raw = [System.IO.File]::ReadAllText($pkgFile.FullName) } catch {
+    Write-Warn "$rel\package.json 讀取失敗（$_），跳過。"
     return
   }
-  Write-Step "安裝 $folderName 的相依套件（npm install，第一次會花一點時間，請耐心等待）"
+  if ($raw -notmatch '"(dependencies|devDependencies)"\s*:\s*\{\s*"') {
+    Write-Warn "$rel 沒有宣告任何相依套件，跳過。"
+    return
+  }
+  Write-Step "安裝 $rel 的相依套件（npm install，第一次會花一點時間，請耐心等待）"
   Push-Location $dir
   try {
     npm install --no-fund --no-audit
     if ($LASTEXITCODE -ne 0) { throw "npm install 結束碼 $LASTEXITCODE" }
-    Write-Ok "$folderName 安裝完成"
+    Write-Ok "$rel 安裝完成"
   } catch {
-    Write-Fail "$folderName 安裝失敗：$_"
+    Write-Fail "$rel 安裝失敗：$_"
     Write-Warn "可以先看看上面 npm 印出的錯誤訊息，或稍後重新執行這支腳本再試一次。"
   } finally {
     Pop-Location
   }
 }
-Install-NpmProject 'desktop-pet'
-Install-NpmProject 'host-app'
+
+# -Depth 3 夠涵蓋所有子專案（最深的是 desktop-pet\particle-effect），又能避免真的鑽進
+# node_modules 那種好幾層深的相依樹（那些的 package.json 一律被下面的 -notmatch 濾掉）。
+$pkgFiles = Get-ChildItem -Path $root -Recurse -Depth 3 -Filter 'package.json' -File -ErrorAction SilentlyContinue |
+  Where-Object { $_.FullName -notmatch '\\node_modules\\' -and $_.FullName -notmatch '\\single\\' } |
+  Sort-Object FullName
+if (-not $pkgFiles) {
+  Write-Warn "整個專案裡找不到任何 package.json，這一步跳過。"
+} else {
+  Write-Host "  找到 $($pkgFiles.Count) 個 package.json：" -ForegroundColor DarkGray
+  $pkgFiles | ForEach-Object { Write-Host "    · $($_.DirectoryName.Substring($root.Length).TrimStart('\'))" -ForegroundColor DarkGray }
+  foreach ($f in $pkgFiles) { Install-NpmProject $f }
+}
 
 # ── 3. 產生 Live2D 角色清單設定（manifest.json / names.json）────────────
 Write-Step "產生 Live2D 角色清單設定"
@@ -101,7 +127,8 @@ $shell = New-Object -ComObject WScript.Shell
 $targets = @(
   @{ Name = '多人搶答 - 網頁遊戲.lnk';   Bat = '啟動-網頁遊戲.bat';   Icon = '圖示\網頁遊戲.ico' },
   @{ Name = '多人搶答 - 桌寵.lnk';       Bat = '啟動-桌寵.bat';       Icon = '圖示\桌寵.ico' },
-  @{ Name = '多人搶答 - 主持人App.lnk'; Bat = '啟動-主持人App.bat'; Icon = '圖示\主持人App.ico' }
+  @{ Name = '多人搶答 - 主持人App.lnk'; Bat = '啟動-主持人App.bat'; Icon = '圖示\主持人App.ico' },
+  @{ Name = '多人搶答 - 主控制中心.lnk'; Bat = '啟動-主控制中心.bat'; Icon = '圖示\主控制中心.ico' }
 )
 foreach ($t in $targets) {
   $target = Join-Path $PSScriptRoot $t.Bat
@@ -129,7 +156,7 @@ foreach ($t in $targets) {
 # ── 完成，總結還需要使用者自己做的事 ──────────────────────────────────────
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Magenta
-Write-Host "安裝流程跑完了！桌面上應該已經看得到三個捷徑。" -ForegroundColor Magenta
+Write-Host "安裝流程跑完了！桌面上應該已經看得到四個捷徑。" -ForegroundColor Magenta
 Write-Host "============================================================" -ForegroundColor Magenta
 Write-Host ""
 Write-Host "以下這些不是這支腳本能自動處理的，要用到對應功能時記得自己準備：" -ForegroundColor Yellow

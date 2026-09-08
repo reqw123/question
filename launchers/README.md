@@ -1,12 +1,13 @@
 # launchers
 
-給一般使用者的雙擊啟動捷徑，桌面上對應的三個捷徑已經建好，指到這裡的 `.bat`：
+給一般使用者的雙擊啟動捷徑，桌面上對應的四個捷徑已經建好，指到這裡的 `.bat`：
 
 | 桌面捷徑 | 對應檔案 | 功能 |
 |---|---|---|
 | 多人搶答 - 網頁遊戲.lnk | `啟動-網頁遊戲.bat` | 自動偵測 `caddy.exe` 存不存在，決定用哪套伺服器，開瀏覽器到 `host.html`（見下方「網頁遊戲：Caddy 有無自動切換」） |
 | 多人搶答 - 桌寵.lnk | `啟動-桌寵.bat` | 啟動 `desktop-pet`（保留終端機視窗顯示穿透/互動狀態） |
 | 多人搶答 - 主持人App.lnk | `啟動-主持人App.bat` | 啟動 `host-app`，會先檢查 5500 埠有沒有東西在聽；沒有的話自動改用內建 Node 靜態伺服器頂上（不用再手動去 VS Code 按 Go Live，見下方第二步表格） |
+| 多人搶答 - 主控制中心.lnk | `啟動-主控制中心.bat` | 啟動 `control-center`（Electron 中樞控制台，集中管理桌寵／主持人 App／網頁三種模式的行程啟動關閉與設定）。可選的管理層，不裝也不影響其他三個捷徑 |
 
 ## 為什麼 .bat 內容全用英文，檔名卻是中文
 
@@ -27,7 +28,7 @@
 
 ## 換到新電腦：一鍵安裝（推薦）
 
-專案根目錄的 `一鍵安裝.bat` 把下面整套手動流程自動化了：**雙擊這一個檔案**就會依序完成 `desktop-pet`／`host-app` 的 `npm install`、產生 Live2D 角色清單設定（`manifest.json`／`names.json`）、建立桌面上的三個捷徑——不用照文件手動一步一步打指令，也不用像舊版腳本那樣自己去改寫死的路徑（自動抓專案實際所在位置）。
+專案根目錄的 `一鍵安裝.bat` 把下面整套手動流程自動化了：**雙擊這一個檔案**就會依序完成**專案裡每一個子專案**的 `npm install`（自動掃描所有 `package.json`，略過 `node_modules/`、`single/`、以及沒宣告相依套件的標記檔——目前涵蓋 `desktop-pet`／`host-app`／`control-center`／`desktop-pet-web`／`glb-viewer`，之後新增子專案不用再改腳本）、產生 Live2D 角色清單設定（`manifest.json`／`names.json`）、建立桌面上的四個捷徑——不用照文件手動一步一步打指令，也不用像舊版腳本那樣自己去改寫死的路徑（自動抓專案實際所在位置）。
 
 > [!IMPORTANT]
 > **執行前只需要先裝好一樣東西：[Node.js](https://nodejs.org/)（選左邊的 LTS 版本）。**
@@ -52,15 +53,19 @@
 
 這份 `launchers/README.md`、下面的 PowerShell 腳本，都假設專案在 `C:\question`。如果新電腦上路徑不一樣，**腳本裡的 `$launchers` 那一行要先手動改成實際路徑**，否則捷徑會指到不存在的地方。
 
-### 第二步：安裝三個捷徑各自需要的東西
+### 第二步：安裝各個捷徑需要的東西
 
 | 捷徑 | 需要先準備 |
 |---|---|
 | 多人搶答 - 網頁遊戲.lnk | 裝好 [Node.js](https://nodejs.org/) 就能跑（純區網用途）。**只有想額外支援 ngrok 對外公開**才需要另外下載 `caddy.exe`（[caddyserver.com](https://caddyserver.com/download) 下載 Windows 版，放到專案根目錄跟 `Caddyfile` 同一層——這個檔案不在 git 版本控制裡，`Caddyfile` 本身有進版本控制不用另外處理），沒有的話 `.bat` 會自動改用內建的區網版伺服器，見上方「網頁遊戲：Caddy 有無自動切換」。另外要有 MQTT broker（Mosquitto）在跑，細節見 `multi/多人搶答系統技術文件.md` |
 | 多人搶答 - 桌寵.lnk | 裝好 [Node.js](https://nodejs.org/)，然後 `cd desktop-pet && npm install`（詳見 `desktop-pet/桌面寵物說明.md` 的「為什麼 node_modules 沒有進版本控制」） |
 | 多人搶答 - 主持人App.lnk | 要 Node.js + `cd host-app && npm install`。5500 埠要有東西在服務 `multi/host.html`——`.bat` 會自動偵測：偵測到 VS Code **Live Server** 擴充套件（或任何其他方式）已經在 5500 就直接沿用；沒偵測到的話自動改用內建的 `launchers/serve-lan.js`（跟「網頁遊戲」那個捷徑背後同一支，只是換成 5500 埠），完全不用另外裝 Live Server 或手動按 Go Live |
+| 多人搶答 - 主控制中心.lnk | 要 Node.js + `cd control-center && npm install`（會一併下載 Electron 執行檔，第一次約 100+ MB，請耐心等）。這是可選的管理層，不裝也不影響上面三個捷徑各自照原本方式使用 |
 
-三個捷徑互相獨立，只用得到哪個就只設定哪個對應的前置需求，不用三個都裝齊。
+各捷徑互相獨立，只用得到哪個就只設定哪個對應的前置需求，不用全部裝齊。
+
+> [!NOTE]
+> 另外還有兩個沒有桌面捷徑、只在開發時用得到的子專案：`desktop-pet-web`（桌寵介紹網頁）和 `glb-viewer`（`.glb` 模型載入測試）。它們也各自需要 `cd <資料夾> && npm install`——`一鍵安裝.bat` 會一併處理，手動設定時記得別漏。
 
 ### 第三步：重新建立桌面捷徑
 
@@ -73,7 +78,8 @@ $shell = New-Object -ComObject WScript.Shell
 $targets = @(
   @{ Name = "多人搶答 - 網頁遊戲.lnk"; Bat = "啟動-網頁遊戲.bat" },
   @{ Name = "多人搶答 - 桌寵.lnk"; Bat = "啟動-桌寵.bat" },
-  @{ Name = "多人搶答 - 主持人App.lnk"; Bat = "啟動-主持人App.bat" }
+  @{ Name = "多人搶答 - 主持人App.lnk"; Bat = "啟動-主持人App.bat" },
+  @{ Name = "多人搶答 - 主控制中心.lnk"; Bat = "啟動-主控制中心.bat" }
 )
 foreach ($t in $targets) {
   $sc = $shell.CreateShortcut((Join-Path $desktop $t.Name))
@@ -83,4 +89,4 @@ foreach ($t in $targets) {
 }
 ```
 
-**怎麼執行**：開始選單搜尋「PowerShell」開啟（不用系統管理員權限），把上面整段貼上去按 Enter，桌面就會出現三個捷徑。只是單純捷徑遺失、專案路徑沒變的情況（不是換電腦），也是跑這段就好，`$launchers` 不用改。
+**怎麼執行**：開始選單搜尋「PowerShell」開啟（不用系統管理員權限），把上面整段貼上去按 Enter，桌面就會出現四個捷徑。只是單純捷徑遺失、專案路徑沒變的情況（不是換電腦），也是跑這段就好，`$launchers` 不用改。
