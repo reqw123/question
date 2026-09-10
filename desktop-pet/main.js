@@ -18,6 +18,14 @@ process.on('uncaughtException', (err) => {
   console.error('[desktop-pet] 未預期錯誤，程式可能已停止運作：', err);
 });
 
+// Windows 的原生視窗遮擋偵測（CalculateNativeWinOcclusion）會在桌寵這個全螢幕透明視窗
+// 被別的全螢幕視窗（例如「桌面便利貼牆」Shift+X 展開時）整片蓋住時，把桌寵 renderer
+// 判定為「完全被遮住」→ 合成器停止產生畫格、requestAnimationFrame / PIXI Ticker 幾乎
+// 停擺，Live2D 模型就凍住不動；把蓋在上面的視窗收掉才恢復。這個偵測不看上層視窗是不是
+// 透明的，所以透明的牆一樣會觸發。關掉它，桌寵被任何視窗蓋住時都繼續算圖。
+// 必須在 app ready 之前呼叫才有效。
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+
 // 16x16 純色圖示（跟專案 --cyan 配色一致），內嵌成 data URL，不依賴外部圖片檔案，避免格式問題導致系統匣建立失敗
 const TRAY_ICON_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFUlEQVR4nGNguPKfNDSqYVTD8NUAAEXm0xCHDYjgAAAAAElFTkSuQmCC';
@@ -1848,6 +1856,10 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
+      // 視窗真的被最小化／隱藏，或（即使關了原生遮擋偵測）仍被判定為背景時，
+      // 不要把 renderer 的計時器與 rAF 降頻——桌寵要一直動。搭配上面的
+      // CalculateNativeWinOcclusion switch 一起，確保被便利貼牆蓋住也不會凍。
+      backgroundThrottling: false,
     },
   });
   // 建構子的 alwaysOnTop:true 只給預設置頂等級，跟 raiseAboveDesktopPets() 那幾個小視窗
@@ -1855,10 +1867,31 @@ function createWindow() {
   // 其他一般視窗（瀏覽器、IDE...）上面——使用者切去做別的事、點別的視窗時，桌寵
   // （含文字泡泡）容易被蓋住、視覺上像是「消失了」。用 raiseAboveDesktopPets() 同一個
   // 'screen-saver' 最高置頂等級，確保不管使用者點哪個視窗，桌寵都留在最上層可見。
-  // 只在建立時設一次，不像小視窗那樣每次開啟都重打 moveTop()+focus()——桌寵主視窗
-  // 全程都開著，不需要重複搶置頂，focus() 更是完全不能加，不然會變成每次都搶走
-  // 使用者剛點的其他視窗的焦點，反而干擾他去做別的事。
+  // focus() 完全不能加，不然會變成每次都搶走使用者剛點的其他視窗的焦點，反而干擾他
+  // 去做別的事；moveTop() 只動 z-order、不搶焦點，可以安全地重複呼叫（見下面的自我置頂迴圈）。
   win.setAlwaysOnTop(true, 'screen-saver');
+
+  // ── 讓桌寵穩定疊在「桌面便利貼牆」(C:\Tools\file_search\wallpaper-app) 之上 ──────
+  // 便利貼牆跟桌寵一樣把自己釘在 'screen-saver'——Windows 上這是最高置頂帶，沒有更高
+  // 一階可用，同帶內誰在上面完全看誰「最後一個」呼叫 SetWindowPos。便利貼牆會在切換
+  // 即時模式、螢幕解析度變動、Shift+X 顯示、按「結束程式」鈕取得焦點時重新 setAlwaysOnTop，
+  // 一旦觸發就蓋到桌寵上面；桌寵這邊只在建視窗時設一次鬥不過。低頻率地把自己重新頂回
+  // 最上層來解決。這些事件都是零星觸發，1 秒一次即可，使用者幾乎不會察覺曾被蓋住。
+  const petOwnChildWindows = () =>
+    [extraPetsPickerWin, nameManagerWin, settingsWin, sceneEditorWin, clearCacheWin];
+  const keepPetOnTopTimer = setInterval(() => {
+    if (!win || win.isDestroyed() || !win.isVisible()) return;
+    // CLI 模式跑瀏覽器工具時桌寵是「刻意」降級的（見 setBrowserToolActive），那段期間
+    // 不要把 Chrome 又蓋回去。
+    if (browserLoweredChars.size > 0) return;
+    // 桌寵自己的設定／改名／場景編輯…小視窗開著時暫停自我置頂：那些視窗本來就該在
+    // 桌寵之上（raiseAboveDesktopPets），而且它們開著時使用者不會同時在點便利貼牆，
+    // 沒有「被牆蓋住」的急迫性；小視窗一關，下一個 tick 就恢復自我置頂。
+    if (petOwnChildWindows().some((w) => w && !w.isDestroyed() && w.isVisible())) return;
+    win.setAlwaysOnTop(true, 'screen-saver');
+    win.moveTop();
+  }, 1000);
+  win.on('closed', () => clearInterval(keepPetOnTopTimer));
 
   // 把 renderer 端「手動微調 debug 工具」（particle-effect.js 的
   // handleManualNudgeKey()）印的 [particle-debug] 開頭訊息轉印到這個終端機——
