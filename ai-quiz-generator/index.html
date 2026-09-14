@@ -254,6 +254,10 @@
       background: rgba(0,255,136,.1); border-color: rgba(0,255,136,.4); color: var(--green);
     }
     .btn-export.import:hover { background: rgba(0,255,136,.22); box-shadow: 0 0 16px rgba(0,255,136,.2); }
+    .btn-export.permanent {
+      background: rgba(0,212,255,.1); border-color: rgba(0,212,255,.4); color: var(--cyan);
+    }
+    .btn-export.permanent:hover { background: rgba(0,212,255,.22); box-shadow: 0 0 16px rgba(0,212,255,.2); }
     .import-hint {
       width: 100%; font-size: .72em; color: var(--text2);
       padding: 8px 12px; border-radius: 7px;
@@ -378,7 +382,12 @@
         <b>跨 IP 存取（從區網其他裝置連線）</b>，需同時設定兩個環境變數後重新執行 <code>ollama serve</code>：<br>
         <code>OLLAMA_HOST=0.0.0.0:11434</code>&nbsp;&nbsp;←&nbsp;允許所有網卡監聽<br>
         <code>OLLAMA_ORIGINS=*</code>&nbsp;&nbsp;←&nbsp;允許所有瀏覽器來源（解決 405 CORS 錯誤）<br>
-        若在同一台電腦使用，改用 <code>http://localhost:11434</code> 即可避開 CORS 問題。
+        若在同一台電腦使用，改用 <code>http://localhost:11434</code> 即可避開 CORS 問題。<br>
+        <b>走 ngrok 公網連線時</b>，直連 11434 不可能成功（ngrok 只轉發 8080）。這台機器有裝
+        <code>caddy.exe</code> 的話，Base URL 改填
+        <code>{ngrok網址}/ollama-proxy</code>（跟頁面本身同一個網址、路徑後面加
+        <code>/ollama-proxy</code>）即可，這種走法**不用**設定上面的 <code>OLLAMA_HOST</code>／
+        <code>OLLAMA_ORIGINS</code>（Caddy 用本機位址連 Ollama，不算跨機、也不算跨來源）。
       </div>
     </div>
   </div>
@@ -479,6 +488,8 @@
     <div id="export-buttons" class="export-section">
       <button id="btn-download" class="btn-export json">💾 下載 JSON</button>
       <button id="btn-import"   class="btn-export import">🎮 直接匯入遊戲系統</button>
+      <button id="btn-save-permanent" class="btn-export permanent">💾 存入題庫（永久）</button>
+      <div id="save-permanent-msg" style="width:100%;font-size:.75em;color:var(--text2);margin-top:2px"></div>
       <div class="import-hint" id="import-hint" style="display:none">
         ✓ 題庫已儲存！請在
         <a href="../multi/host.html" id="hint-back-to-host">主持人頁面</a>
@@ -657,7 +668,9 @@ const SYSTEM_PROMPT = `你是一位專業的教育測驗設計師。
 2. 四個選項互相排斥，只有一個正確答案
 3. 錯誤選項具有合理誘答性，不可一目了然
 4. 解說（explanation）需說明正確選項的理由，以及其他選項的錯誤原因
-5. 領域標籤（domain）簡短，如：資訊安全、機器學習、網路概論
+5. 領域標籤（domain）為必填欄位，每一題都要填，不可省略、不可留空。簡短描述這題屬於教材裡
+   的哪個子主題（同一份教材裡不同題目應視內容細分成不同 domain，不要整份教材都填同一個籠統
+   標籤，例如「資訊安全」底下可以再細分「密碼學」「網路攻擊」「風險管理」等不同 domain）
 請以繁體中文回答。`;
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -737,13 +750,22 @@ async function callOpenAI(apiKey, model, userPrompt) {
 /* ─────────────────────────────────────────────────────────────────────
    Ollama API
 ───────────────────────────────────────────────────────────────────── */
-// 自動補上 http:// 並取 origin（去掉多餘路徑）
-// 例：'192.168.0.171:11434' → 'http://192.168.0.171:11434'
-//     'http://host:11434/api' → 'http://host:11434'
+// 自動補上 http://，並清掉使用者常見手滑多打的 /api 尾巴（Ollama 官方文件範例常寫
+// http://host:11434/api，但這支程式後面組 URL 會自己補 /api/chat，多這段會變成
+// .../api/api/chat）。其餘路徑一律保留，不能整個砍掉——走 Caddy 反代連公網 Ollama 時
+// base URL 會是 <origin>/ollama-proxy 這種帶路徑前綴的形式（見 initOllamaUrlDefault()），
+// 這段前綴是路由用的必要資訊，砍掉就打不到正確的反代路徑。
+// 例：'192.168.0.171:11434'         → 'http://192.168.0.171:11434'
+//     'http://host:11434/api'       → 'http://host:11434'
+//     'https://xxx.ngrok.dev/ollama-proxy' → 'https://xxx.ngrok.dev/ollama-proxy'（保留）
 function _normalizeOllamaUrl(raw) {
   let s = raw.trim().replace(/\/+$/, '');
   if (s && !/^https?:\/\//i.test(s)) s = 'http://' + s;
-  try { return new URL(s).origin; } catch { return s; }
+  let url;
+  try { url = new URL(s); } catch { return s; }
+  let path = url.pathname.replace(/\/+$/, '');
+  if (/\/api$/i.test(path)) path = path.slice(0, -4);
+  return url.origin + path;
 }
 
 async function callOllama(baseUrl, model, userPrompt, targetCount = 0) {
@@ -935,12 +957,19 @@ async function testOllamaConnection() {
   } catch (err) {
     const hint = err.name === 'TimeoutError' ? '連線逾時' : err.message;
     const normalizedUrl = _normalizeOllamaUrl(baseUrl);
+    // 走 Caddy /ollama-proxy 反代的話，OLLAMA_HOST/OLLAMA_ORIGINS 那組提示是錯的（那是
+    // 「瀏覽器直連 Ollama」才需要的設定，反代情境下 Caddy 是用 localhost 連 Ollama，
+    // 不需要這兩個），照樣印出來只會誤導人往錯的方向排查，所以兩種情境的提示分開寫。
+    const isProxied = normalizedUrl.startsWith(window.location.origin) && /\/ollama-proxy$/i.test(normalizedUrl);
+    const tips = isProxied
+      ? `• 確認 Caddyfile 有 /ollama-proxy/* 的 handle_path 區塊，且 caddy.exe 正在跑\n` +
+        `• 確認本機 Ollama 服務有在跑（http://127.0.0.1:11434 用瀏覽器打得開）\n` +
+        `• 這是走反代，不需要設定 OLLAMA_HOST／OLLAMA_ORIGINS`
+      : `• OLLAMA_HOST=0.0.0.0:11434（跨 IP 直連時必須設定）\n` +
+        `• OLLAMA_ORIGINS=*（解決 CORS 405）\n` +
+        `• URL 需含 http://，例：http://192.168.0.171:11434`;
     setStatus('ollama-status',
-      `× 無法連線（${hint}）\n` +
-      `位址：${normalizedUrl}/api/tags\n\n` +
-      `• OLLAMA_HOST=0.0.0.0:11434（跨 IP 時必須設定）\n` +
-      `• OLLAMA_ORIGINS=*（解決 CORS 405）\n` +
-      `• URL 需含 http://，例：http://192.168.0.171:11434`,
+      `× 無法連線（${hint}）\n位址：${normalizedUrl}/api/tags\n\n${tips}`,
       'error');
   } finally {
     btn.disabled = false;
@@ -1136,6 +1165,23 @@ function escHtml(str) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
+   Domain 補漏：OpenAI 走 strict:true 的 json_schema（structured outputs），domain 幾乎
+   保證會填；Ollama 只有 format:'json'（保證合法 JSON，不保證欄位齊全），本機模型能力
+   較弱時就算 SYSTEM_PROMPT 已經明講必填，還是可能漏掉某幾題的 domain——這幾題進了遊戲
+   的學習報告會被歸進「(未分類)」，沒辦法做「常錯範圍」分析。這裡在驗證之前先補一層：
+   漏填的題目退回使用者填的「題庫名稱」當 domain（至少還跟這份教材主題有關，比完全沒有
+   domain 好；使用者沒填題庫名稱就維持留空，遊戲端本來就有 (未分類) 的顯示邏輯接住）。
+───────────────────────────────────────────────────────────────────── */
+function normalizeQuestionDomains(questions) {
+  const fallback = el('bank-name').value.trim();
+  if (!fallback) return questions;
+  return questions.map(q => {
+    const domain = typeof q.domain === 'string' ? q.domain.trim() : '';
+    return domain ? q : { ...q, domain: fallback };
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────────────
    Generation Flow
 ───────────────────────────────────────────────────────────────────── */
 async function generate() {
@@ -1200,7 +1246,7 @@ async function generate() {
   const onProgress = (msg) => { el('gen-progress-label').textContent = msg; };
 
   try {
-    const questions = await callAI(prompt, targetCount, onProgress);
+    const questions = normalizeQuestionDomains(await callAI(prompt, targetCount, onProgress));
 
     /* AJV Validation */
     try {
@@ -1273,6 +1319,50 @@ function importToGame() {
   }
 }
 
+// 「自己是不是被放在 multi/host.html 的彈窗裡」判斷式，從 initEmbeddedMode() 抽成具名
+// 函式（純抽取、行為不變），讓 savePermanentToProject() 也能重用同一份判斷邏輯。
+function isEmbeddedInHost() {
+  return window.top !== window && typeof window.parent?.closeAIGenModal === 'function';
+}
+
+// 把生成的題庫直接存進專案（跟 multi/host.html 上傳題庫用的是同一個後端 API），
+// 跟 importToGame() 的差別：那個只寫進 localStorage，重整/換瀏覽器就消失；這個是
+// 真的落地到 questions/ 並登記 index.json，之後開 host.html 都看得到，不用手動
+// 下載 JSON 再重新上傳一次。
+async function savePermanentToProject() {
+  if (!AI.generatedQuestions.length) return;
+  const name = el('bank-name').value.trim() || 'AI 生成題庫';
+  const btn = el('btn-save-permanent');
+  const msgEl = el('save-permanent-msg');
+  const setMsg = (t, err) => { msgEl.textContent = t; msgEl.style.color = err ? 'var(--red)' : 'var(--text2)'; };
+
+  btn.disabled = true;
+  setMsg('存入專案中…');
+  try {
+    const r = await fetch('/api/save-bank', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, questions: AI.generatedQuestions }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || `後端回應 ${r.status}`);
+
+    btn.textContent = '✓ 已儲存！';
+    setTimeout(() => { btn.textContent = '💾 存入題庫（永久）'; }, 2500);
+
+    if (isEmbeddedInHost() && typeof window.parent.loadBankIndex === 'function') {
+      window.parent.loadBankIndex();
+      setMsg(`✓ 已存入 questions/${j.file}（${j.count} 題），主持人頁面題庫選單已自動刷新`);
+    } else {
+      setMsg(`✓ 已存入 questions/${j.file}（${j.count} 題）。開啟主持人頁面即可在題庫選單看到「${j.name}」`);
+    }
+  } catch (e) {
+    setMsg('✗ ' + ((e && e.message) || '存入失敗'), true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Event Bindings
 ───────────────────────────────────────────────────────────────────── */
@@ -1309,6 +1399,7 @@ el('fi-clear').addEventListener('click', clearFile);
 el('btn-generate').addEventListener('click', generate);
 el('btn-download').addEventListener('click', downloadJSON);
 el('btn-import').addEventListener('click', importToGame);
+el('btn-save-permanent').addEventListener('click', savePermanentToProject);
 
 /* ─────────────────────────────────────────────────────────────────────
    內嵌模式（被 multi/host.html 用 iframe 內嵌時）：「返回遊戲主控台」這兩個連結
@@ -1321,7 +1412,7 @@ el('btn-import').addEventListener('click', importToGame);
    分頁開啟）就維持原本 href 導覽，不影響單獨使用這個工具的既有用法。
 ───────────────────────────────────────────────────────────────────── */
 (function initEmbeddedMode() {
-  const isEmbedded = window.top !== window && typeof window.parent?.closeAIGenModal === 'function';
+  const isEmbedded = isEmbeddedInHost();
   if (!isEmbedded) return;
   for (const id of ['btn-back-to-host', 'hint-back-to-host']) {
     const link = document.getElementById(id);
@@ -1336,6 +1427,29 @@ el('btn-import').addEventListener('click', importToGame);
 /* ─────────────────────────────────────────────────────────────────────
    Init
 ───────────────────────────────────────────────────────────────────── */
+// Ollama Base URL 預設值：HTML 寫死 127.0.0.1，只有「瀏覽器跟 Ollama 同一台機器」時才對。
+// 這支頁面常常是遠端連過來用的（host 在另一台機器開瀏覽器連過來，或是內嵌在 host.html
+// 裡從別的裝置打開）——這種情況下 127.0.0.1 永遠指向瀏覽器自己那台機器，不會是真正跑
+// Ollama 的主機，連線一定失敗，卻很容易被誤會成 Ollama 沒開或防火牆問題。跟 multiplay.js
+// 的 MP_CFG.brokerIP 用同一招：用開這個頁面當下的 window.location 當預設值，依連線方式
+// 分兩種情況：
+//   · 區網 IP（192.168.x.x／10.x.x.x／172.16-31.x.x）：假設 Ollama 跟網站伺服器同一台
+//     機器，直連 11434（需要 Ollama 開 OLLAMA_HOST=0.0.0.0 才收得到跨機連線）。
+//   · 其他情況（ngrok 網域等公網位址）：不可能直連裸埠 11434（ngrok 只轉發它被要求
+//     轉發的那個埠，這裡是 8080），改用 Caddyfile 新增的 /ollama-proxy 反代路徑，
+//     跟頁面本身同一個 origin——這條路徑只有 Caddy 模式才有，純 serve-lan.js 退路
+//     沒有反代能力，本來就沒有公網功能，這裡沒得挑。
+// 純本機開（localhost/127.0.0.1）維持 HTML 原本寫死的值，不變動。
+function _isPrivateLanHost(host) {
+  return /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+}
+(function initOllamaUrlDefault() {
+  const host = window.location.hostname;
+  if (!host || host === 'localhost' || host === '127.0.0.1') return;
+  el('ollama-url').value = _isPrivateLanHost(host)
+    ? `http://${host}:11434`
+    : `${window.location.origin}/ollama-proxy`;
+})();
 loadConfig();
 updateCharCount();
 updateGenerateBtn();

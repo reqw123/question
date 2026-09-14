@@ -480,9 +480,17 @@ function openExtraPetsPicker() {
   extraPetsPickerWin.on('closed', () => { extraPetsPickerWin = null; });
 }
 
-ipcMain.on('extra-pets-apply', (_event, ids) => {
+// 套用邏輯本體抽成獨立函式，讓桌寵自己的挑選視窗（IPC）跟 control-center 的
+// HTTP 控制端點（見 control-server.js）共用同一份邏輯；「關閉挑選視窗」是 UI 專屬的
+// 副作用，留在這裡，不要進到共用函式裡（HTTP 呼叫端沒有這個視窗、也不該去關它）。
+function applyExtraPetIds(ids) {
   pendingExtraPetIds = Array.isArray(ids) ? ids.filter((id) => Number.isInteger(id)) : [];
   applyExtraPetSelection();
+  return pendingExtraPetIds;
+}
+
+ipcMain.on('extra-pets-apply', (_event, ids) => {
+  applyExtraPetIds(ids);
   if (extraPetsPickerWin) extraPetsPickerWin.close();
 });
 
@@ -561,20 +569,27 @@ function openNameManager() {
   nameManagerWin.on('closed', () => { nameManagerWin = null; });
 }
 
-ipcMain.on('name-manager-save', (_event, names) => {
+// 存檔邏輯本體抽成獨立函式，讓桌寵自己的命名管理視窗（IPC）跟 control-center 的
+// HTTP 控制端點（見 control-server.js）共用同一份邏輯。
+function saveModelNames(names) {
   const dir = path.join(__dirname, '..', 'live2d_my_like', 'config');
   try {
     fs.writeFileSync(path.join(dir, 'names.json'), JSON.stringify(names, null, 2));
     const history = appendNameHistory(names);
-    if (nameManagerWin) nameManagerWin.webContents.send('saved', { ok: true, history });
     // names.json 存檔之後，桌寵自己選單上顯示的名字（角色一/二、額外寵物候選清單）
     // 也要跟著更新，不用整個重啟桌寵，重新指到這份最新的 names 物件、重建選單即可。
     myLikeNames = names;
     if (tray) tray.setContextMenu(buildTrayMenu());
+    if (nameManagerWin) nameManagerWin.webContents.send('saved', { ok: true, history });
+    return { ok: true, history };
   } catch (err) {
-    if (nameManagerWin) nameManagerWin.webContents.send('saved', { ok: false, error: err.message });
+    const result = { ok: false, error: err.message };
+    if (nameManagerWin) nameManagerWin.webContents.send('saved', result);
+    return result;
   }
-});
+}
+
+ipcMain.on('name-manager-save', (_event, names) => { saveModelNames(names); });
 
 ipcMain.on('name-manager-close', () => {
   if (nameManagerWin) nameManagerWin.close();
@@ -2213,6 +2228,12 @@ app.whenReady().then(async () => {
     toggleInteractive: toggleInteractiveFromWeb,
     randomMotion,
     resetPosition,
+    // 給 control-center「角色與寵物」分頁用（見 control-server.js 新增的路由）。
+    getExtraPetCandidates,
+    getPendingExtraPetIds: () => pendingExtraPetIds,
+    setExtraPets: applyExtraPetIds,
+    getModelConfig: readModelConfig,
+    saveModelNames,
   });
 });
 app.on('window-all-closed', () => app.quit());

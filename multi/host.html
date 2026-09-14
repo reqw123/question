@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>多人搶答 — 主持人</title>
   <link rel="stylesheet" href="../lib/style.css">
+  <link rel="stylesheet" href="stats-report.css">
   <style>
     /* ── 確保畫面層級在 Live2D canvas(5) 及 speech bubble(100) 之上，角色透過透明背景在側邊顯示 */
     .screen { z-index: 110; }
@@ -130,6 +131,73 @@
     }
     #ai-gen-modal .ai-gen-modal-close:hover { border-color:var(--cyan); color:var(--cyan); }
     #ai-gen-frame { flex:1; width:100%; border:0; background:#fff; }
+
+    /* ── 題庫管理彈窗：跟 #ai-gen-modal 同款真彈窗，各自獨立一份 CSS（不重構共用類別，
+       避免動到已經在正常運作的 #ai-gen-modal） ── */
+    #bank-mgr-modal {
+      position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.82);
+      display:flex; align-items:center; justify-content:center;
+    }
+    #bank-mgr-modal.hidden { display:none; }
+    #bank-mgr-modal .ai-gen-box {
+      width:min(640px, 94vw); max-height:min(80vh, 640px);
+      background:#0d1a2b; border:1px solid rgba(0,212,255,.35); border-radius:16px;
+      overflow:hidden; display:flex; flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
+    }
+    #bank-mgr-modal .ai-gen-modal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.1); flex:none;
+    }
+    #bank-mgr-modal .ai-gen-modal-close {
+      cursor:pointer; background:transparent; border:1px solid rgba(255,255,255,.25);
+      color:var(--text); border-radius:8px; padding:4px 12px; font-size:.85em; font-family:inherit;
+    }
+    #bank-mgr-modal .ai-gen-modal-close:hover { border-color:var(--cyan); color:var(--cyan); }
+    .bank-mgr-row {
+      display:flex; align-items:center; gap:8px; padding:9px 4px;
+      border-bottom:1px solid rgba(255,255,255,.06); font-size:.85em; flex-wrap:wrap;
+    }
+    .bank-mgr-row:last-child { border-bottom:none; }
+    .bank-mgr-name-input, .bank-mgr-cat-input {
+      padding:6px 9px; background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:7px; color:var(--text); font-size:.92em; outline:none; font-family:inherit;
+    }
+    .bank-mgr-name-input { flex:2; min-width:120px; }
+    .bank-mgr-cat-input  { flex:1; min-width:90px; }
+    .bank-mgr-badge-builtin {
+      font-size:.7em; color:var(--text2); border:1px solid var(--border);
+      border-radius:10px; padding:1px 8px; white-space:nowrap;
+    }
+    .bank-mgr-btn-save {
+      padding:6px 12px; border-radius:7px; cursor:pointer; font-size:.82em; font-family:inherit;
+      background:rgba(0,212,255,.14); border:1px solid rgba(0,212,255,.4); color:var(--cyan);
+    }
+    .bank-mgr-btn-save:hover { background:rgba(0,212,255,.28); }
+    .bank-mgr-btn-del {
+      padding:6px 10px; border-radius:7px; cursor:pointer; font-size:.82em; font-family:inherit;
+      background:rgba(255,51,85,.12); border:1px solid rgba(255,51,85,.4); color:var(--red);
+    }
+    .bank-mgr-btn-del:hover:not(:disabled) { background:rgba(255,51,85,.28); }
+    .bank-mgr-btn-del:disabled { opacity:.35; cursor:not-allowed; }
+    .bank-mgr-open-btn {
+      font-size:.72em; font-weight:400; color:var(--text2); padding:2px 10px;
+      border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,.04);
+      white-space:nowrap; cursor:pointer; font-family:inherit;
+    }
+    .bank-mgr-open-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+
+    /* ── 學習報告彈窗：共用樣式已搬到 multi/stats-report.css（見該檔開頭說明，原本這裡
+       跟 player.html 各自維護一份幾乎一樣的複製貼上）。這裡只留 .stats-open-btn ——
+       開啟學習報告彈窗的小按鈕本身，host.html 跟 player.html 放置的位置/情境不同
+       （這邊只在大廳一處），字級/留白是真的不同，不勉強共用。 */
+    .stats-open-btn {
+      font-size:.72em; font-weight:400; color:var(--text2); padding:2px 10px;
+      border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,.04);
+      white-space:nowrap; cursor:pointer; font-family:inherit;
+    }
+    .stats-open-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+
     .bank-upload-wrap {
       display:none; margin-top:8px; padding:10px 12px;
       border:1px dashed var(--border); border-radius:8px;
@@ -267,6 +335,28 @@
       60% { opacity:1; transform:translate(-50%,-90%) scale(1.1); }
       100%{ opacity:0; transform:translate(-50%,-140%) scale(.9); }
     }
+
+    /* ── 題庫推薦提示：跟 .score-toast 分開一套，不能共用同一個 class，但**外觀刻意做成
+       同一種「發光文字飄字」風格**（無背景框、粗體、色彩光暈），只解決 .score-toast 原本
+       「固定畫在畫面正中央同一個座標」在多個玩家幾乎同時推薦題庫時會疊字看不清楚的問題——
+       疊進一個 flex 直排容器（#bank-recommend-stack），每則通知是容器裡的一般文件流
+       子元素，新的自然排在下面，不會互相蓋住；純粹解決版面疊字，不改變原本喜歡的文字樣式。 */
+    #bank-recommend-stack {
+      position:fixed; top:64px; left:50%; transform:translateX(-50%);
+      z-index:600; display:flex; flex-direction:column; align-items:center; gap:6px;
+      pointer-events:none;
+    }
+    /* 整體畫面偏藍，這則提醒改用跟 .score-toast.pos 同一種綠色發光（不是青色），
+       在藍色系底下才夠跳出來、一眼認得出是「新事件」。 */
+    .bank-recommend-toast {
+      font-size:1.5em; font-weight:900; color:var(--green);
+      text-shadow:0 0 24px rgba(0,255,136,.8);
+      white-space:nowrap;
+      animation:bankToastIn .25s ease;
+    }
+    .bank-recommend-toast.leaving { animation:bankToastOut .25s ease forwards; }
+    @keyframes bankToastIn  { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes bankToastOut { to   { opacity:0; transform:translateY(-8px); } }
 
     /* ── 結果畫面：每位玩家答題狀況 ──────────────────────────────── */
     /* position:fixed 讓它脫離 overlay 的 stacking context，
@@ -460,6 +550,48 @@
   </div>
 </div>
 
+<!-- 題庫管理彈窗：跟 #ai-gen-modal 同款真彈窗（非 inline-toggle），同樣放在 <body> 最外層
+     （理由同上面 #ai-gen-modal 的註解：.screen 沒有 .active 時 display:none，巢狀彈窗
+     會變成 0x0 看不到也點不到）。只做「改名 / 分類 / 刪除」中繼資料管理，不編輯題目
+     內容本身——題目內容編輯是 #bank-editor-wrap（自建題庫表單）的職責。 -->
+<div id="bank-mgr-modal" class="hidden">
+  <div class="ai-gen-box">
+    <div class="ai-gen-modal-header">
+      <strong style="font-size:.95em">🗂️ 題庫管理</strong>
+      <button type="button" class="ai-gen-modal-close" onclick="closeBankMgrModal()">✕ 關閉</button>
+    </div>
+    <div id="bank-mgr-body" style="flex:1;overflow-y:auto;padding:14px 16px">
+      <div id="bank-mgr-status" style="font-size:.78em;color:var(--text2);min-height:1.2em;margin-bottom:8px"></div>
+      <div id="bank-mgr-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 學習報告彈窗：跟 #ai-gen-modal 同款真彈窗，同樣放在 <body> 最外層（理由同上）。
+     依暱稱查詢跨場次的答題紀錄（launchers/serve-lan.js 的 /api/stats、/api/stats-list），
+     顯示常錯範圍、常錯題目、歷次表現，不做即時計分——那是遊戲進行中畫面的職責。 -->
+<div id="stats-modal" class="hidden">
+  <div class="ai-gen-box">
+    <div class="ai-gen-modal-header">
+      <strong>📊 學習報告</strong>
+      <button type="button" class="ai-gen-modal-close" onclick="closeStatsModal()">✕ 關閉</button>
+    </div>
+    <div class="stats-picker-row">
+      <select id="stats-name-select" style="min-width:160px"></select>
+      <input id="stats-name-input" type="text" maxlength="20" placeholder="或直接輸入暱稱查詢" autocomplete="off">
+      <button type="button" class="stats-query-btn" id="btn-stats-query">🔍 查詢</button>
+      <select id="stats-category-select" style="min-width:150px"
+              title="依題庫分類篩選（分類在「🗂️ 管理題庫」設定）">
+        <option value="">全部分類</option>
+      </select>
+    </div>
+    <div id="stats-body" class="stats-scroll-body">
+      <div id="stats-status"></div>
+      <div id="stats-report"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 大廳畫面 ===== -->
 <div id="screen-lobby" class="screen active">
   <div class="card lobby-card">
@@ -475,7 +607,7 @@
              maxlength="12" placeholder="輸入你的名稱..." autocomplete="off" spellcheck="false">
     </div>
 
-    <h3 class="section-label">玩家加入網址</h3>
+    <h3 class="section-label">玩家加入網址 <span id="public-url-badge" style="display:none;font-size:.7em;color:var(--green);font-weight:normal">🌐 已偵測到公網網址（ngrok）</span></h3>
     <div class="url-join-row">
       <div class="url-join-left">
         <div class="url-box" id="player-url">—</div>
@@ -505,7 +637,7 @@
 
     <div class="lobby-settings">
       <label>每局題數
-        <input id="q-count-input" class="q-count-input" type="number" min="3" max="50" value="10">
+        <input id="q-count-input" class="q-count-input" type="number" min="1" max="50" value="10">
       </label>
       <label>遊戲模式
         <select id="game-mode-select" class="q-count-input" style="width:auto;padding:5px 7px;font-size:.95em">
@@ -556,7 +688,11 @@
 
     <!-- 題庫選擇 -->
     <h3 class="section-label" style="display:flex;align-items:center;justify-content:space-between">
-      題庫選擇
+      <span style="flex:1">題庫選擇</span>
+      <button type="button" class="bank-mgr-open-btn" onclick="openBankMgrModal()"
+              title="編輯題庫名稱／分類／刪除自訂題庫">🗂️ 管理題庫</button>
+      <button type="button" class="stats-open-btn" onclick="openStatsModal()"
+              title="依暱稱查詢跨場次的常錯範圍與進步狀況">📊 學習報告</button>
       <span class="ai-gen-hint">
         <span class="ai-gen-hint-text">題目你來做</span>
         <span class="ai-gen-hint-arrow">↓</span>
@@ -864,6 +1000,13 @@ const HS = {
   answeredIds:   new Set(), // gameMode 'all'：已作答玩家集合
   reactionTimes: {},      // id → [elapsed_sec, ...]  每次作答的反應秒數
   correctCounts: {},      // id → 本局累計答對題數
+  domainStats:   {},      // id → { [題目 domain]: {correct, wrong} }，見 onAnswer()
+  wrongLog:      {},      // id → [{question, domain, yourAnswer, correctAnswer}, ...]，供學習報告列出常錯題目
+  // 目前題庫來源對應的真實專案檔名（給 sendStatsReports() 回報用）。只有「選了 questions/
+  // 底下的實體檔案」或「剛存檔成功的自訂上傳題庫」才有值，自建題庫（__editor__）、尚未存檔的
+  // AI 生成／上傳題庫都沒有對應檔案，維持空字串——每個會改變 HS.allQ 來源的地方都要同步更新
+  // 這個欄位，見 loadBank()／loadAIBank()／_applySavedBank()／bank-select 的 change 監聽。
+  currentBankFile: '',
 };
 
 // ── 題庫編輯器狀態（需在 init() 之前宣告）────────────────────────────────
@@ -919,7 +1062,6 @@ function mqttInit() {
         qos: 1,
         // retain:true——這樣崩潰/斷線時 broker 自動發出的這則 will 也會覆蓋掉 retained
         // 的 STATE，之後任何才連上的人（包含哨兵連線的搶佔檢查）都能立刻看到「主持人已離線」。
-        // resetToLobby() 手動發的那次 host_left（retain:false）不受影響，是刻意的重置訊號。
         retain: true,
       },
     });
@@ -929,7 +1071,7 @@ function mqttInit() {
       HS.ok = true;
       mqttSts('esp32', '伺服器已連線');
       HS.client.subscribe([MP_TOPICS.JOIN, MP_TOPICS.ANSWER], { qos: 1 });
-      HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING, MP_TOPICS.LOBBY_MSG], { qos: 0 });
+      HS.client.subscribe([MP_TOPICS.SOUND, MP_TOPICS.HEARTBEAT, MP_TOPICS.PROFILE, MP_TOPICS.CHAT, MP_TOPICS.DANMAKU, MP_TOPICS.TYPING, MP_TOPICS.LOBBY_MSG, MP_TOPICS.BANK_RECOMMEND], { qos: 0 });
       pubState();
       console.log('[主持人偵測] pubState() 已發布（retained），myId =', HS.myId, 'phase =', HS.phase);
       updateStartBtn();
@@ -970,6 +1112,16 @@ function mqttInit() {
       if (topic === MP_TOPICS.TYPING && typeof PlayerBubbleChat !== 'undefined') {
         if (data.typing) PlayerBubbleChat.showTyping(data.playerId);
         else             PlayerBubbleChat.hideTyping(data.playerId);
+        return;
+      }
+      // 玩家在「有哪些題庫可選？」點了某個題庫，推薦給主持人——純提示，不會自動切換
+      // 題庫，主持人仍要自己去「題庫選擇」下拉選單手動換。用 showBankRecommendToast()
+      // 而不是 showToast()：好幾個玩家可能在差不多時間各自推薦，showToast() 的
+      // .score-toast 全部畫在畫面正中央同一個座標，會直接疊字看不清楚。
+      if (topic === MP_TOPICS.BANK_RECOMMEND) {
+        const who = String(data.name || '玩家').trim().slice(0, 20) || '玩家';
+        const what = String(data.bankName || data.bankFile || '').trim().slice(0, 40);
+        if (what) showBankRecommendToast(`💡 ${who} 推薦「${what}」`);
         return;
       }
       if (topic === MP_TOPICS.JOIN)      onJoin(data);
@@ -1115,6 +1267,12 @@ function onAnswer({ id, name, letter }) {
   if (HS.phase !== 'answering') return;
   if (HS.wrongIds.has(id)) return;
   if (!HS.players[id]) return;
+  // 去重要放在任何統計（reactionTimes/correctCounts/domainStats/wrongLog）被寫入之前：
+  // MQTT qos:1 是至少送達一次，同一則 ANSWER 可能被重送，若只在下面「模式1」分支裡
+  // （原本 answeredIds 檢查的位置）去重，分數不會重複加（那裡確實有擋），但這裡上面的學習
+  // 報告統計已經先跑過一次了，重送就會讓同一題被算兩次。answeredIds 只有模式1會寫入，
+  // 模式2（搶答制）永遠是空集合，擋在這裡對模式2完全沒有副作用。
+  if (HS.answeredIds.has(id)) return;
 
   const elapsed  = (Date.now() - HS.startedAt) / 1000;
   const timeLeft = Math.max(0, MP_CFG.ANSWER_TIME - elapsed);
@@ -1136,14 +1294,36 @@ function onAnswer({ id, name, letter }) {
     el('opt-' + letter)?.classList.add('selected');
   }
 
-  // 記錄反應時間與答對數（僅記錄有效作答）
+  // 記錄反應時間與答對數（僅記錄有效作答）——用 id 而不是 name 當 key，跟其他所有
+  // per-player 資料（HS.players[id]、HS.domainStats[id]、HS.wrongLog[id]）同一套規則；
+  // 之前這裡誤用 name（跟宣告處 correctCounts 自己的註解「id → 本局累計答對題數」不符），
+  // 兩個玩家剛好取一樣的暱稱時，答對數會被加在同一個 key 底下、互相污染。
   if (!HS.reactionTimes[id]) HS.reactionTimes[id] = [];
   HS.reactionTimes[id].push(parseFloat(elapsed.toFixed(2)));
-  if (correct) HS.correctCounts[name] = (HS.correctCounts[name] || 0) + 1;
+  if (correct) HS.correctCounts[id] = (HS.correctCounts[id] || 0) + 1;
+
+  // 學習報告用：依題目 domain 累計對錯，並記下具體錯題（見 endGame() 場末上傳）
+  const statsDomain = q.domain || '(未分類)';
+  if (!HS.domainStats[id]) HS.domainStats[id] = {};
+  if (!HS.domainStats[id][statsDomain]) HS.domainStats[id][statsDomain] = { correct: 0, wrong: 0 };
+  if (correct) {
+    HS.domainStats[id][statsDomain].correct++;
+  } else {
+    HS.domainStats[id][statsDomain].wrong++;
+    if (!HS.wrongLog[id]) HS.wrongLog[id] = [];
+    // correctAnswerText/explanation 讓學習報告能直接教玩家「正解是什麼、為什麼」，
+    // 不用再等下一次被考到同一題才知道；q.options 就是題庫本身的 A/B/C/D 選項文字。
+    HS.wrongLog[id].push({
+      question: q.question, domain: statsDomain, yourAnswer: letter, correctAnswer: q.answer,
+      yourAnswerText: (q.options && q.options[letter]) || '',
+      correctAnswerText: (q.options && q.options[q.answer]) || '',
+      explanation: q.explanation || '',
+    });
+  }
 
   if (HS.gameMode === 'all') {
     // ── 模式1：全員作答制 — 所有人答完後才公布答案 ─────────────────────────
-    if (HS.answeredIds.has(id)) return;   // 去重：先檢查再計分，防止重複計算
+    // 去重檢查已提前到函式最上方（在統計寫入之前），這裡只需要標記已作答。
     HS.answeredIds.add(id);
     HS.playerAnswers[id] = letter;
     HS.playerDeltas[id]  = delta;
@@ -1319,6 +1499,12 @@ const HB_HOST = (() => {
 async function init() {
   HS.players[HS.myId] = { name: HS.myName || '主持人', score: 0, color: mpPlayerColor(HS.myId) };
   setPlayerUrl();
+
+  // 自動偵測公網（ngrok）網址：不管開頁面當下有沒有查到，都持續每 5 秒問一次——
+  // ngrok 常常比 host.html 晚啟動（開啟順序沒有保證），第一次查不到不代表永遠查不到；
+  // detectPublicUrl() 內部有比對是否真的改變，沒變化就不會動到 QR/連結顯示。
+  detectPublicUrl();
+  setInterval(detectPublicUrl, 5000);
 
   // 同步題庫選擇與設定面板
   loadSettings();
@@ -1554,6 +1740,8 @@ function startGame() {
   HS.noScoreStreak = 0;
   HS.reactionTimes = {};
   HS.correctCounts = {};
+  HS.domainStats   = {};
+  HS.wrongLog      = {};
   Object.values(HS.players).forEach(p => { p.score = 0; });
   el('q-total').textContent = HS.questions.length;
 
@@ -1871,6 +2059,71 @@ function nextQ() {
   HS.tid2 = setTimeout(() => startQ(HS.qIdx), 320);
 }
 
+// ── 學習報告：場末把每個玩家這場的答對/答錯範圍與具體錯題，寫進伺服器端的
+// stats/<暱稱>.json（見 launchers/serve-lan.js 的 POST /api/record-session）。best-effort：
+// 送不出去（後端沒開、非 Node 靜態伺服器模式等）也不影響遊戲本身的結算流程，但改成同時
+// 用 showToast() 顯示一則警告（不只是 console.warn）——伺服器端 readJsonBody 對這個 API
+// 有 16KB 總大小上限（見 handleRecordSession），長題目/長解說的遊戲場次很容易整包被 413
+// 拒絕，之前只印在 console 裡主持人完全不會發現這場資料沒存到。
+function sendStatsReports() {
+  Object.entries(HS.players).forEach(([id, p]) => {
+    if (!HS.reactionTimes[id]) return;   // 這場沒作答過，不用回報
+    const { kept: wrongQuestions, truncated, totalCount } =
+      _capWrongQuestionsForUpload(HS.wrongLog[id] || []);
+    const payload = {
+      name: p.name,
+      bankFile: HS.currentBankFile || '',
+      bankName: el('bank-label')?.textContent || '',
+      totalAnswered: HS.reactionTimes[id].length,
+      totalCorrect: HS.correctCounts[id] || 0,
+      domains: HS.domainStats[id] || {},
+      wrongQuestions,
+    };
+    fetch('/api/record-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).then((r) => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (truncated) {
+        console.warn(`[學習報告] ${p.name} 錯題紀錄過多（共 ${totalCount} 題），僅上傳最近 ${wrongQuestions.length} 題`);
+        showToast(`⚠️ ${p.name} 的錯題紀錄過多，僅保留最近 ${wrongQuestions.length} 題`, false);
+      }
+    }).catch((e) => {
+      console.warn('[學習報告] 上傳失敗（不影響本場遊戲結算）：', e);
+      showToast(`⚠️ ${p.name} 的學習報告上傳失敗`, false);
+    });
+  });
+}
+
+// wrongQuestions 上傳前的 client 端裁切：先比照伺服器端同樣的欄位長度上限做截斷（降低
+// 單筆佔用量），再依估算位元組數，從最近的錯題（陣列尾端）開始往前保留到接近安全上限——
+// 優先保留最近做錯的題目，比整批平均截斷更有參考價值。BUDGET_BYTES 抓 12KB 是刻意小於
+// 伺服器端 16KB 總上限，留空間給 name/bankFile/bankName/domains 等其他欄位。
+function _capWrongQuestionsForUpload(list) {
+  const trunc = (s, n) => String(s || '').slice(0, n);
+  const normalized = (list || []).map(w => ({
+    question:          trunc(w.question, 200),
+    domain:            trunc(w.domain, 40),
+    yourAnswer:        trunc(w.yourAnswer, 10),
+    correctAnswer:     trunc(w.correctAnswer, 10),
+    yourAnswerText:    trunc(w.yourAnswerText, 120),
+    correctAnswerText: trunc(w.correctAnswerText, 120),
+    explanation:       trunc(w.explanation, 400),
+  }));
+  const BUDGET_BYTES = 12 * 1024;
+  const byteLen = (obj) => new TextEncoder().encode(JSON.stringify(obj)).length;
+  const kept = [];
+  let used = 2; // '[' + ']'
+  for (let i = normalized.length - 1; i >= 0; i--) {
+    const entryBytes = byteLen(normalized[i]) + 1; // +1 逗號分隔
+    if (used + entryBytes > BUDGET_BYTES) break;
+    kept.unshift(normalized[i]);
+    used += entryBytes;
+  }
+  return { kept, truncated: kept.length < normalized.length, totalCount: normalized.length };
+}
+
 function endGame() {
   HS.phase = 'end';
   stopBGM();
@@ -1900,11 +2153,12 @@ function endGame() {
   pubL2D({ cmd:'emotion', type:'celebrate' });
   if (typeof L2D !== 'undefined') L2D.playEmotion('celebrate');
 
-  const winnerCorrect = winner ? (HS.correctCounts[winner.name] || 0) : 0;
+  const winnerCorrect = winner ? (HS.correctCounts[winner.id] || 0) : 0;
   const endSound = (winnerCorrect / HS.questions.length >= 0.6) ? 'TRACK_5' : 'TRACK_6';
 
   // ── 儲存歷史成績並顯示分析 ─────────────────────────────────────────────
   const hist = saveHistory(HS.players, ranked);
+  sendStatsReports();
 
   pub(MP_TOPICS.STATE, {
     phase:      'end',
@@ -1928,7 +2182,10 @@ function resetToLobby() {
   HS.noScoreStreak = 0;
   HS.reactionTimes = {};
   Object.values(HS.players).forEach(p => { p.score = 0; });
-  pub(MP_TOPICS.STATE, { phase: 'host_left' }, false, 1);
+  // 只發 lobby，不再夾帶假的 host_left——玩家端 case 'lobby' 本身就會把剛結束那局
+  // （localPhase === 'end'）或還沒加入的玩家重置回加入畫面，不需要借用 host_left 的
+  // 「主持人已離開」訊號來硬達成，那個訊號會讓仍停留在加入畫面／結算畫面的玩家被
+  // 誤導成「主持人斷線了」，畫面也會被多重置一次。
   pub(MP_TOPICS.STATE, {
     phase:   'lobby',
     players: Object.entries(HS.players).map(([id, p]) => ({ id, name: p.name })),
@@ -2046,6 +2303,7 @@ async function loadBank(path) {
   } catch { HS.allQ = FALLBACK_Q; }
   el('pool-count').textContent = HS.allQ.length;
   MP_CFG.QUESTION_BANK = path;
+  HS.currentBankFile = path.split('/').pop() || '';
   updateStartBtn();
   pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
 }
@@ -2062,6 +2320,9 @@ function _refreshAILabel() {
 }
 
 function loadAIBank() {
+  // AI 生成題庫走 localStorage（見檔頭註解），除非另外按過「存入題庫（永久）」寫成真的
+  // 專案檔案，否則沒有對應的 questions/ 檔名——固定清空，避免沿用切換前選到的實體題庫檔名。
+  HS.currentBankFile = '';
   try {
     const raw       = JSON.parse(localStorage.getItem('quiz_ai_bank') || 'null');
     const questions = Array.isArray(raw) ? raw : (raw?.questions || []);
@@ -2196,6 +2457,7 @@ async function loadBankIndex() {
     const opt = document.createElement('option');
     opt.value = `../questions/${file}`;
     opt.textContent = name;
+    opt.dataset.dynamic = '1'; // 標記動態插入的題庫選項，見下面 refreshBankSelectAfterMgrChange()
     sel.insertBefore(opt, anchor);
   });
 
@@ -2219,12 +2481,14 @@ async function loadBankIndex() {
     HS.allQ = [...edQuestions];
     el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
     el('pool-count').textContent = HS.allQ.length;
+    HS.currentBankFile = '';
     updateStartBtn();
   } else if (val === '__custom__') {
     el('bank-upload-wrap').style.display = 'block';
     HS.allQ = [];
     el('bank-label').textContent = '等待上傳…';
     el('pool-count').textContent = 0;
+    HS.currentBankFile = '';
     updateStartBtn();
   } else if (val === '__ai__') {
     loadAIBank();
@@ -2232,6 +2496,173 @@ async function loadBankIndex() {
     await loadBank(val);
   }
 }
+
+// ── 題庫管理彈窗 ─────────────────────────────────────────────────────────
+// 只做「改名稱／分類」中繼資料編輯 + 刪除，不編輯題目內容本身。呼叫
+// launchers/serve-lan.js 新增的 /api/banks、/api/update-bank-meta、/api/delete-bank。
+function openBankMgrModal() {
+  show('bank-mgr-modal');
+  renderBankManagerList();
+}
+function closeBankMgrModal() {
+  hide('bank-mgr-modal');
+}
+
+// 用 DOM API（createElement/.value/.textContent）組列，不用 innerHTML 樣板字串——
+// host.html 目前沒有任何 escapeHtml 輔助函式，題庫名稱/分類來自使用者上傳的檔案或
+// AI 生成，不像其他既有的 innerHTML 用法（例如玩家名稱）那樣算「本機打字、信任來源」，
+// 用 DOM API 組值可以避免注入風險，也不用額外造一個轉義函式。
+function _bankMgrRow(b) {
+  const row = document.createElement('div');
+  row.className = 'bank-mgr-row';
+
+  const nameInp = document.createElement('input');
+  nameInp.className = 'bank-mgr-name-input'; nameInp.type = 'text'; nameInp.maxLength = 40;
+  nameInp.value = b.name || '';
+
+  const catInp = document.createElement('input');
+  catInp.className = 'bank-mgr-cat-input'; catInp.type = 'text'; catInp.maxLength = 40;
+  catInp.placeholder = '分類'; catInp.value = b.category || '';
+
+  row.append(nameInp, catInp);
+
+  if (b.builtin) {
+    const badge = document.createElement('span');
+    badge.className = 'bank-mgr-badge-builtin'; badge.title = '內建題庫'; badge.textContent = '內建';
+    row.appendChild(badge);
+  }
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button'; saveBtn.className = 'bank-mgr-btn-save'; saveBtn.textContent = '💾 儲存';
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button'; delBtn.className = 'bank-mgr-btn-del'; delBtn.textContent = '🗑 刪除';
+  if (b.builtin) { delBtn.disabled = true; delBtn.title = '內建題庫不可刪除'; }
+  else delBtn.title = '刪除此題庫';
+
+  const msgEl = document.createElement('span');
+  msgEl.style.cssText = 'font-size:.75em;color:var(--text2);flex-basis:100%';
+
+  row.append(saveBtn, delBtn, msgEl);
+
+  saveBtn.addEventListener('click', () => saveBankMeta(b.file, nameInp, catInp, msgEl));
+  if (!b.builtin) delBtn.addEventListener('click', () => deleteBank(b.file, nameInp.value || b.name, row, msgEl));
+
+  return row;
+}
+
+async function renderBankManagerList() {
+  const listEl = el('bank-mgr-list'), statusEl = el('bank-mgr-status');
+  statusEl.textContent = '載入中…'; statusEl.style.color = 'var(--text2)';
+  listEl.innerHTML = '';
+  let banks;
+  try {
+    const r = await fetch('/api/banks');
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || `後端回應 ${r.status}`);
+    banks = j.banks || [];
+  } catch (e) {
+    statusEl.textContent = '✗ 無法載入題庫清單（' + ((e && e.message) || '連線失敗') +
+      '）。題庫管理需要後端 API（埠 8081）才能使用。';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  statusEl.textContent = banks.length ? '' : '目前沒有任何題庫';
+  banks.forEach((b) => listEl.appendChild(_bankMgrRow(b)));
+}
+
+async function saveBankMeta(file, nameInp, catInp, msgEl) {
+  const name = nameInp.value.trim(), category = catInp.value.trim();
+  if (!name) { msgEl.textContent = '✗ 名稱不可為空'; msgEl.style.color = 'var(--red)'; return; }
+  msgEl.textContent = '儲存中…'; msgEl.style.color = 'var(--text2)';
+  try {
+    const r = await fetch('/api/update-bank-meta', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file, name, category }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || `後端回應 ${r.status}`);
+    msgEl.textContent = '✓ 已儲存'; msgEl.style.color = 'var(--text2)';
+    await refreshBankSelectAfterMgrChange();
+  } catch (e) {
+    msgEl.textContent = '✗ ' + ((e && e.message) || '儲存失敗'); msgEl.style.color = 'var(--red)';
+  }
+}
+
+async function deleteBank(file, name, rowEl, msgEl) {
+  if (!confirm(`確定要刪除題庫「${name}」嗎？此動作無法復原（會刪除 questions/${file}）。`)) return;
+  msgEl.textContent = '刪除中…'; msgEl.style.color = 'var(--text2)';
+  try {
+    const r = await fetch('/api/delete-bank', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || `後端回應 ${r.status}`);
+    rowEl.remove();
+    await refreshBankSelectAfterMgrChange();
+  } catch (e) {
+    msgEl.textContent = '✗ ' + ((e && e.message) || '刪除失敗'); msgEl.style.color = 'var(--red)';
+  }
+}
+
+// 題庫管理彈窗改名/刪除後呼叫——只重刷 <select> 的選項清單，刻意不整個重跑
+// loadBankIndex()：那個函式從來不會移除/去重已插入的選項，重複呼叫會留下重複或過期的
+// <option>；而且它尾端還會依選中值呼叫 loadBank()/pubState()，單純改名時題庫檔案內容
+// 根本沒變，沒必要重新 fetch 同一份題目、也沒必要重新廣播 STATE 給已經在玩的玩家。
+// 只有「目前選中的題庫剛好被刪除」才需要真的換一個題庫、觸發既有 change 監聽器重新載入。
+async function refreshBankSelectAfterMgrChange() {
+  let banks = [];
+  try {
+    const r = await fetch('../questions/index.json', { cache: 'no-store' });
+    if (r.ok) banks = await r.json();
+  } catch {}
+
+  const sel = el('bank-select');
+  const prevValue = sel.value;
+  [...sel.querySelectorAll('option[data-dynamic="1"]')].forEach((o) => o.remove());
+  const anchor = sel.querySelector('option[value="__editor__"]');
+  banks.forEach(({ file, name }) => {
+    const opt = document.createElement('option');
+    opt.value = `../questions/${file}`;
+    opt.textContent = name;
+    opt.dataset.dynamic = '1';
+    sel.insertBefore(opt, anchor);
+  });
+
+  if ([...sel.options].some((o) => o.value === prevValue)) {
+    sel.value = prevValue; // 改名情境：值沒變，只是顯示文字被重刷，這裡把顯示名稱同步到大廳標籤
+    if (prevValue.startsWith('../questions/')) {
+      el('bank-label').textContent = sel.selectedOptions[0].textContent;
+    }
+  } else {
+    // 刪除情境：選中的題庫沒了——退回第一個題庫，交給既有的 change 監聽器做真正的重新載入
+    sel.value = banks.length > 0 ? `../questions/${banks[0].file}` : '__editor__';
+    sel.dispatchEvent(new Event('change'));
+  }
+}
+
+// ── 學習報告彈窗 ─────────────────────────────────────────────────────────
+// 實際的查詢/渲染邏輯（queryStatsReport/renderStatsReport/openStatsModal 等）已搬到
+// multi/multiplay.js 共用（原本 host.html/player.html 各自維護一份幾乎一樣的複製貼上，
+// 見 multiplay.js 該區塊開頭的說明）。這裡只留兩塊「必須留在各自檔案」的東西：
+//   1) _statsDefaultName()：開學習報告視窗時要預填的暱稱，host.html 用自己的 HS.myName。
+//   2) 下面幾行 addEventListener：multiplay.js 載入當下 el() 可能還沒被賦值（el 是這支
+//      檔案稍後才定義的全域變數），這種「立即執行」的頂層敘述不能搬過去，只有函式定義
+//      本體可以（函式要等使用者點擊才會真的呼叫，那時候 el 早就定義好了）。
+function _statsDefaultName() {
+  return HS.myName || '';
+}
+
+el('stats-name-select')?.addEventListener('change', () => {
+  const name = el('stats-name-select').value;
+  if (name) { el('stats-name-input').value = name; queryStatsReport(name); }
+});
+el('btn-stats-query')?.addEventListener('click', () => {
+  const name = el('stats-name-input').value.trim();
+  if (name) queryStatsReport(name);
+});
+el('stats-category-select')?.addEventListener('change', renderStatsReport);
 
 // ── 上傳題庫寫入專案 ─────────────────────────────────────────────────────
 // 把 host 上傳的 JSON 題庫真的寫進專案的 questions/ 目錄，並在 questions/index.json
@@ -2261,6 +2692,7 @@ function _applySavedBank(path, displayName) {
   opt.textContent = displayName;
   sel.value = path;
   el('bank-label').textContent = displayName;   // 用顯示名稱，跟其他題庫呈現一致
+  HS.currentBankFile = path.split('/').pop() || '';  // 存檔成功，這裡開始才有對應的真實專案檔名
   try {
     const s = JSON.parse(localStorage.getItem('quiz_cfg') || '{}');
     s.bankPath = path;
@@ -2543,6 +2975,32 @@ function showToast(text, positive) {
   setTimeout(() => d.remove(), MP_CFG.TOAST_MS);
 }
 
+// 題庫推薦通知：疊進 #bank-recommend-stack（一般文件流、flex 直排），跟 showToast()
+// 的「固定貼在畫面正中央同一個座標」不同——好幾個玩家幾乎同時推薦題庫時，each 一則
+// 都是新的 flex 子元素，自然往下排開，不會疊字看不清楚。容器懶建立（第一次呼叫才
+// 生出來），最多同時留 7 則（畫面高度估計裝得下 7 列這個字級），超過就把最舊的（最上面
+// 那列）直接丟掉、新的補在最下面，等於「從第一列開始覆蓋」，避免極端情況（很多人連續
+// 猛點）把畫面塞滿。
+const BANK_RECOMMEND_MAX_VISIBLE = 7;
+const BANK_RECOMMEND_MS = 3500;
+function showBankRecommendToast(text) {
+  let stack = el('bank-recommend-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'bank-recommend-stack';
+    document.body.appendChild(stack);
+  }
+  while (stack.children.length >= BANK_RECOMMEND_MAX_VISIBLE) stack.firstElementChild.remove();
+  const d = document.createElement('div');
+  d.className = 'bank-recommend-toast';
+  d.textContent = text;
+  stack.appendChild(d);
+  setTimeout(() => {
+    d.classList.add('leaving');
+    d.addEventListener('animationend', () => d.remove(), { once: true });
+  }, BANK_RECOMMEND_MS);
+}
+
 // ── 題庫表單編輯器 ────────────────────────────────────────────────────────
 let edAnswer = null;
 
@@ -2774,6 +3232,7 @@ el('bank-select').addEventListener('change', async () => {
     el('bank-label').textContent = '等待上傳…';
     el('pool-count').textContent = '0';
     HS.allQ = [];
+    HS.currentBankFile = '';  // 切換題庫來源，先清掉舊選擇殘留的檔名，避免學習報告誤報
     updateStartBtn();
     pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
   } else if (val === '__editor__') {
@@ -2781,6 +3240,7 @@ el('bank-select').addEventListener('change', async () => {
     HS.allQ = [...edQuestions];
     el('bank-label').textContent = `自建題庫 (${HS.allQ.length} 題)`;
     el('pool-count').textContent = HS.allQ.length;
+    HS.currentBankFile = '';  // 自建題庫沒有對應的 questions/ 檔案
     updateStartBtn();
     pubState();  // 題庫已切換，立即廣播最新 bankLabel（沿用既有 STATE retained 機制）
     try {
@@ -2834,15 +3294,49 @@ el('bank-upload').addEventListener('change', async (e) => {
 el('btn-bank-save').addEventListener('click', () => saveBankToProject());
 
 // ── 玩家加入網址 ──────────────────────────────────────────────────────────
+// _publicUrl：detectPublicUrl() 從 /api/public-url 問到的 ngrok 公網網址（沒偵測到時是
+// null）。host.html 常常是用 http://localhost:8080 開的（主持人在自己機器上開瀏覽器），
+// 這時候 location 本身完全不知道外面還套了一層 ngrok，protocol/port 都對不上（ngrok 走
+// 預設 443/https，不是本機這裡的 8080/http），所以公網模式下不能沿用「只換 hostname」
+// 那套區網邏輯，直接整個網址用 ngrok 回報的 public_url 蓋過去。
+let _publicUrl = null;
+
 function buildPlayerUrl(ip, port) {
   ip   = (typeof ip   === 'string' ? ip.trim()  : '') || MP_CFG.brokerIP;
   port = (typeof port === 'string' ? port.trim() : '') || MP_CFG.wsPort;
   if (location.protocol === 'file:') return null;
+  if (_publicUrl) {
+    try {
+      const hostname = new URL(_publicUrl).hostname;
+      const base = `${_publicUrl.replace(/\/+$/, '')}/multi/player.html`;
+      return `${base}?${new URLSearchParams({ ip: hostname, port })}`;
+    } catch { /* 網址格式異常就退回下面的區網邏輯 */ }
+  }
   let host      = location.hostname;
   const srvPort = location.port ? `:${location.port}` : '';
   if (host === 'localhost' || host === '127.0.0.1') host = ip;
   const base = `${location.protocol}//${host}${srvPort}/multi/player.html`;
   return `${base}?${new URLSearchParams({ ip, port })}`;
+}
+
+// 問 /api/public-url（Caddy 模式下轉給 launchers/serve-lan.js，由它去查 ngrok 本機的
+// 127.0.0.1:4040 API）目前有沒有指向 8080 的 ngrok 通道。非 Caddy 模式（例如純用
+// VS Code Live Server 開）沒有這條路由會直接 404，fetch 失敗就當作沒有公網網址，
+// 静默 fallback 到區網邏輯，不影響原本可用的功能。
+async function detectPublicUrl() {
+  let publicUrl = null;
+  try {
+    const res = await fetch('/api/public-url', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      publicUrl = data?.publicUrl || null;
+    }
+  } catch { /* 忽略：沒有這條 API 或查詢失敗都當作沒有公網網址 */ }
+  if (publicUrl === _publicUrl) return;
+  _publicUrl = publicUrl;
+  const badge = el('public-url-badge');
+  if (badge) badge.style.display = publicUrl ? '' : 'none';
+  setPlayerUrl();
 }
 
 let _currentQrUrl  = '';

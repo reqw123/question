@@ -22,4 +22,28 @@
     # （見 launchers/serve-lan.js 的 /api/save-bank）。啟動-網頁遊戲.bat 在 Caddy 模式下
     # 會一併把 serve-lan.js 用 8081 埠拉起來當這個後端。
     reverse_proxy /api/* localhost:8081
+    # /ollama-proxy/* 轉給本機 Ollama（埠 11434），讓 ai-quiz-generator/index.html 走同一個
+    # 對外 8080 埠就能用 Ollama，不用另外開一個 ngrok tunnel（免費版通常一次只能跑一個）。
+    # handle_path 會把 /ollama-proxy 這段前綴砍掉才轉發，Ollama 收到的會是 /api/chat 這種
+    # 它自己認得的路徑，不是 /ollama-proxy/api/chat（Ollama 沒有這個路徑，會 404）。
+    # 因為 Caddy 本身跟 Ollama 是同一台機器互連（localhost:11434），Ollama 端不用改
+    # OLLAMA_HOST（不是跨機連線，Caddy 打的是自己的 loopback）；下面兩個 header_up 是
+    # 實測才補的，Ollama 自己會檢查這兩個 header，光靠「同一台機器連線」還是會被擋：
+    #   · Host：reverse_proxy 預設會把「client 原本打的 Host」原封不動轉給後端（這裡是
+    #     ngrok 網域），較新版 Ollama 會檢查收到的 Host header 是不是合法本機位址，不是
+    #     就直接回 403（防 DNS rebinding 攻擊的機制）——不是「跨機連線」被擋，是 Host
+    #     header 對不上被擋。換成 Ollama 自己認得的 localhost:11434 就過了。
+    #   · Origin：瀏覽器對「非簡單請求」（POST 帶 application/json 這種）會夾帶 Origin
+    #     header，即使頁面跟目標網址同源也一樣會送——GET /api/tags 不會夾帶所以之前測
+    #     試連線沒事，換成 POST /api/chat（真正生成題目那步）才踩到：Ollama 的
+    #     OLLAMA_ORIGINS 允許清單預設只認 localhost 那幾種，ngrok 網域對不上，一樣回
+    #     403。這裡直接把 Origin 這個 header 砍掉再轉發，Ollama 收到的請求跟根本沒有
+    #     Origin 的請求一樣（跟 GET /api/tags 那條能過的請求同等待遇），不用另外去猜
+    #     OLLAMA_ORIGINS 要填什麼值。
+    handle_path /ollama-proxy/* {
+        reverse_proxy localhost:11434 {
+            header_up Host localhost:11434
+            header_up -Origin
+        }
+    }
 }

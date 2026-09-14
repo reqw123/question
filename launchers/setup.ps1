@@ -56,6 +56,37 @@ Write-Ok "已偵測到 Node.js $(node --version)"
 #   · 略過 node_modules\ 底下的、single\ 底下的（single/ 暫不維護，見 CLAUDE.md）
 #   · 沒有 dependencies 也沒有 devDependencies 的 package.json 跳過（例如
 #     desktop-pet\particle-effect\ 那份只是給 Node 當 ESM 解析用的標記檔）
+# electron 套件的安裝分兩階段：先裝 npm 套件本身，再由套件自己的 install.js 去下載真正
+# 的執行檔（寫進 node_modules\electron\dist\、並產生 path.txt 指出執行檔檔名）。實測遇過
+# 這個下載階段沒有跑完（網路中斷、防毒軟體攔截等），但 node_modules\electron 資料夾本身
+# 已經存在——npm 看到版本跟 package-lock.json 對得上就認為「已經裝過」，之後不管重跑
+# npm install 幾次都不會主動重新觸發下載，導致 desktop-pet／host-app／control-center
+# 在 control-center 裡怎麼點「啟動」都無聲無息失敗（electronBinFor() 讀不到 path.txt）。
+# 這裡在 npm install 跑完後多一層驗證：這個專案如果有裝 electron，就確認 path.txt 真的
+# 存在，沒有的話直接呼叫 electron 自己的 install.js 補跑一次下載，不用使用者自己動手。
+function Repair-ElectronBinaryIfNeeded([string]$dir, [string]$rel) {
+  $electronDir = Join-Path $dir 'node_modules\electron'
+  if (-not (Test-Path $electronDir)) { return } # 這個專案沒有依賴 electron，不適用
+  $pathTxt = Join-Path $electronDir 'path.txt'
+  if (Test-Path $pathTxt) { return } # 已經有執行檔，不用補
+  Write-Warn "$rel 的 electron 執行檔似乎沒有下載完整（找不到 path.txt），嘗試自動補跑安裝腳本..."
+  Push-Location $dir
+  try {
+    node (Join-Path $electronDir 'install.js')
+    if ($LASTEXITCODE -ne 0) { throw "install.js 結束碼 $LASTEXITCODE" }
+    if (Test-Path $pathTxt) {
+      Write-Ok "$rel 的 electron 執行檔已補齊"
+    } else {
+      throw '補跑完成但 path.txt 仍然不存在'
+    }
+  } catch {
+    Write-Fail "$rel 的 electron 執行檔補齊失敗：$_"
+    Write-Warn "可以稍後重新執行這支腳本再試一次，或手動到 $rel 資料夾執行：node node_modules\electron\install.js"
+  } finally {
+    Pop-Location
+  }
+}
+
 function Install-NpmProject([System.IO.FileInfo]$pkgFile) {
   $dir = $pkgFile.DirectoryName
   $rel = $dir.Substring($root.Length).TrimStart('\')
@@ -83,6 +114,7 @@ function Install-NpmProject([System.IO.FileInfo]$pkgFile) {
   } finally {
     Pop-Location
   }
+  Repair-ElectronBinaryIfNeeded $dir $rel
 }
 
 # -Depth 3 夠涵蓋所有子專案（最深的是 desktop-pet\particle-effect），又能避免真的鑽進

@@ -26,6 +26,43 @@
 
 兩種模式最後都會開瀏覽器連到同一個網址 `http://localhost:8080/multi/host.html`，使用上完全一樣，差別只在背後開的是哪個伺服器、要不要真的去下載 `caddy.exe`。如果連 Node.js 都沒裝（兩種伺服器都起不來），`.bat` 會印出清楚的錯誤訊息並停在原地，不會像之前那樣直接開出一個空白/連不上的瀏覽器分頁。
 
+## 公網（ngrok）開放時，AI 題庫生成器連不到 Ollama
+
+`ai-quiz-generator/index.html` 的 Ollama Base URL 欄位原本寫死 `http://127.0.0.1:11434`，只有
+「瀏覽器跟 Ollama 同一台機器」時才對。**症狀**：host 在別的裝置開瀏覽器連過來（不管是區網
+還是走 ngrok 的公網網址），Ollama 完全連不上——`127.0.0.1` 這時候指的是瀏覽器自己那台機器，
+不是真正跑 Ollama 的主機，跟 Ollama 有沒有開、防火牆設定都無關，卻很容易被誤會成那個方向
+去排查。
+
+**現在的修法分兩層**：
+
+1. **預設值改成跟著開頁面的網址走**（`initOllamaUrlDefault()`），依連線方式分兩種：
+   - 區網 IP（`192.168.x.x` 之類）：直連同一台機器的 `11434` 埠（需要 Ollama 開
+     `OLLAMA_HOST=0.0.0.0` 才收得到跨機連線）。
+   - 其他情況（ngrok 網域等公網位址）：直連裸埠不可能成功——ngrok 只轉發它被要求轉發的
+     那一個埠（這裡是 8080），改用 `Caddyfile` 新增的 `/ollama-proxy` 反代路徑，讓 Ollama
+     流量搭同一個 8080、同一條 ngrok tunnel 的順風車出去，不用另外開一條 tunnel 專門給
+     Ollama（免費版 ngrok 通常一次只能掛一個）。
+
+2. **反代路徑本身踩過兩個真的會擋住連線的坑**，都是實測跑出來才發現、不是預先想到的：
+   - Caddy 預設會把訪客原本打的 Host（ngrok 網域）原封不動轉給 Ollama，較新版 Ollama
+     會檢查 Host header 合不合法，兜不上直接回 403（防 DNS rebinding 的機制）。
+   - 瀏覽器送出 `POST /api/chat`（真正生成題目那個請求）時會夾帶 `Origin` header，
+     即使跟頁面同源也一樣會送；Ollama 的 `OLLAMA_ORIGINS` 允許清單預設只認
+     `localhost` 那幾種，ngrok 網域對不上一樣 403。**這個特別容易誤判**：`GET
+     /api/tags`（「測試連線」按鈕用的）不會夾帶 Origin，所以會看到「測試連線成功、
+     列得出模型」，只有真正按下生成鈕才踩到，很容易以為是別的原因。
+
+   兩個都在 `Caddyfile` 的 `/ollama-proxy` 反代區塊用 `header_up` 處理掉（把 Host 換成
+   Ollama 自己認得的值、把 Origin 直接砍掉），Ollama 那邊完全不用改任何設定
+   （`OLLAMA_HOST`／`OLLAMA_ORIGINS` 都不需要）。完整原因、實際測試方式見
+   `multi/多人搶答系統技術文件.md` 的「讓公網（ngrok）也能連到 Ollama」那節。
+
+> [!IMPORTANT]
+> **改完 `Caddyfile` 要讓已經在跑的 Caddy 重新載入才會生效**：`caddy.exe run` 不會自動
+> 偵測檔案變動，改完要嘛重開那個視窗，要嘛在專案根目錄下執行 `caddy.exe reload`（熱
+> 重載，ngrok 通道不受影響）。
+
 ## 換到新電腦：一鍵安裝（推薦）
 
 專案根目錄的 `一鍵安裝.bat` 把下面整套手動流程自動化了：**雙擊這一個檔案**就會依序完成**專案裡每一個子專案**的 `npm install`（自動掃描所有 `package.json`，略過 `node_modules/`、`single/`、以及沒宣告相依套件的標記檔——目前涵蓋 `desktop-pet`／`host-app`／`control-center`／`desktop-pet-web`／`glb-viewer`，之後新增子專案不用再改腳本）、產生 Live2D 角色清單設定（`manifest.json`／`names.json`）、建立桌面上的四個捷徑——不用照文件手動一步一步打指令，也不用像舊版腳本那樣自己去改寫死的路徑（自動抓專案實際所在位置）。

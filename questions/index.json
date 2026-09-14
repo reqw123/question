@@ -1,26 +1,95 @@
 [
   {
     "file": "business.json",
-    "name": "📊 商業管理"
+    "name": "📊 商業管理",
+    "category": "商業管理"
   },
   {
     "file": "security.json",
-    "name": "🔒 資訊安全"
+    "name": "🔒 資訊安全",
+    "category": "資訊安全"
   },
   {
     "file": "ai.json",
-    "name": "🤖 AI 概念"
+    "name": "🤖 AI 概念",
+    "category": "人工智慧"
   },
   {
     "file": "english.json",
-    "name": "🔤 英文"
+    "name": "🔤 英文",
+    "category": "英文"
   },
   {
     "file": "questions.json",
-    "name": "🔌 ESP32 硬體"
+    "name": "🔌 ESP32 硬體",
+    "category": "ESP32 硬體"
   },
   {
-    "file": "豐之優露營區_50題.json",
-    "name": "豐之優露營區_50題"
+    "file": "資產負債.json",
+    "name": "💰 資產負債",
+    "category": "會計學"
+  },
+  {
+    "file": "綜合損益.json",
+    "name": "📈 綜合損益",
+    "category": "會計學"
+  },
+  {
+    "file": "機會成本.json",
+    "name": "🎯 機會成本",
+    "category": "會計學"
+  },
+  {
+    "file": "test_lang_1.json",
+    "name": "🧪 測試題庫｜語文-字彙",
+    "category": "測試．語文"
+  },
+  {
+    "file": "test_lang_2.json",
+    "name": "🧪 測試題庫｜語文-文法",
+    "category": "測試．語文"
+  },
+  {
+    "file": "test_lang_3.json",
+    "name": "🧪 測試題庫｜語文-閱讀",
+    "category": "測試．語文"
+  },
+  {
+    "file": "test_math_1.json",
+    "name": "🧪 測試題庫｜數學-代數",
+    "category": "測試．數理"
+  },
+  {
+    "file": "test_math_2.json",
+    "name": "🧪 測試題庫｜數學-幾何",
+    "category": "測試．數理"
+  },
+  {
+    "file": "test_math_3.json",
+    "name": "🧪 測試題庫｜理化",
+    "category": "測試．數理"
+  },
+  {
+    "file": "test_soc_1.json",
+    "name": "🧪 測試題庫｜歷史",
+    "category": "測試．社會"
+  },
+  {
+    "file": "test_soc_2.json",
+    "name": "🧪 測試題庫｜地理",
+    "category": "測試．社會"
+  },
+  {
+    "file": "test_soc_3.json",
+    "name": "🧪 測試題庫｜公民",
+    "category": "測試．社會"
+  },
+  {
+    "file": "AI_生成題庫.json",
+    "name": "AI 生成題庫"
+  },
+  {
+    "file": "自行車調度系統.json",
+    "name": "自行車調度系統"
   }
 ]

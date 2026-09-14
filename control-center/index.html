@@ -64,6 +64,15 @@
     border-radius: 6px; padding: 8px 10px; font-size: .92em; width: 100%; max-width: 420px;
     font-family: inherit;
   }
+  /* <select> 展開的選項清單是瀏覽器原生彈出視窗，不會自動繼承頁面的深色背景/文字顏色，
+     Chromium（Electron 底層也是）需要額外對 <option> 本身設 background/color 才會套用到
+     展開清單，不然選單會用系統預設的白底黑字，在這個深色主題裡幾乎看不清楚——跟
+     desktop-pet/name-manager.html 是同一個修法，這裡的「角色與寵物」分頁也有 <select>
+     （歷史名字挑選），一併套用，不用每個用到 <select> 的地方各自補一次。 */
+  select option {
+    background: var(--panel-bg);
+    color: var(--text);
+  }
   .field-range-hint { font-size: .78em; color: var(--text2); margin-top: 4px; }
   .field-error { font-size: .8em; color: var(--danger); margin-top: 6px; display: none; }
   .field-card.has-error { border-color: var(--danger); }
@@ -173,6 +182,7 @@
     { id: 'chat', label: TABS.chat },
     { id: 'voice', label: TABS.voice },
     { id: 'display', label: TABS.display },
+    { id: 'pets', label: '角色與寵物' },
     { id: 'cli', label: TABS.cli },
     { id: 'manage', label: '設定檔管理' },
     { id: 'diagnostics', label: '診斷與日誌' },
@@ -219,6 +229,7 @@
 
     buildProcessTab();
     buildDataTabs();
+    buildPetsTab();
     buildCliTab();
     buildManageTab();
     buildDiagnosticsTab();
@@ -334,7 +345,29 @@
         row.appendChild(openBtn);
       }
 
-      card.appendChild(head); card.appendChild(d); card.appendChild(row);
+      // 開機自動啟動：獨立於啟動/停止之外的開關，狀態由 loadAutostartStatus() 載入一次
+      // （不放進 2 秒輪詢，這個狀態不會在使用者開著視窗時被外部改動）。
+      const autoLabel = document.createElement('label');
+      autoLabel.style.cssText = 'display:flex;align-items:center;gap:6px;margin-top:10px;font-size:.85em;color:var(--text2);';
+      const autoCheckbox = document.createElement('input');
+      autoCheckbox.type = 'checkbox';
+      autoCheckbox.id = `proc-autostart-${id}`;
+      autoCheckbox.addEventListener('change', async () => {
+        const desired = autoCheckbox.checked;
+        autoCheckbox.disabled = true;
+        const result = await cc.setAutostart(id, desired);
+        autoCheckbox.disabled = false;
+        if (!result.ok) {
+          autoCheckbox.checked = !desired;
+          log(`設定「${label}」開機自動啟動失敗：${result.error}`, 'err');
+        } else {
+          log(`「${label}」開機自動啟動：已${desired ? '開啟' : '關閉'}`, 'ok');
+        }
+      });
+      autoLabel.appendChild(autoCheckbox);
+      autoLabel.appendChild(document.createTextNode(' 開機自動啟動這個模式（不需先打開控制中心）'));
+
+      card.appendChild(head); card.appendChild(d); card.appendChild(row); card.appendChild(autoLabel);
       panel.appendChild(card);
     });
 
@@ -532,6 +565,147 @@
       msg.className = 'msg'; msg.id = `save-msg-${tabId}`;
       panel.appendChild(saveRow); saveRow.appendChild(saveBtn); panel.appendChild(msg);
     });
+  }
+
+  // 角色與寵物分頁：透過桌寵的本機控制伺服器（127.0.0.1:47821）遙控正在跑的桌寵，把
+  // 原本只能從桌寵系統匣選單開的「額外寵物」「模型命名管理」搬到這裡。桌寵沒開著的話
+  // 這裡的請求會失敗，統一顯示成「偵測不到桌寵」並停用所有控制項——跟 desktop-pet-web
+  // 「本機控制面板」同一套優雅降級邏輯，不會讓 control-center 當掉或卡住。
+  function buildPetsTab() {
+    const panel = document.getElementById('panel-pets');
+
+    const statusBox = document.createElement('div');
+    statusBox.className = 'field-card';
+    const statusMsg = document.createElement('div');
+    statusMsg.className = 'msg'; statusMsg.textContent = '讀取中...';
+    const reloadBtn = document.createElement('button');
+    reloadBtn.className = 'btn-secondary'; reloadBtn.textContent = '重新讀取';
+    reloadBtn.addEventListener('click', () => refreshPetsTab());
+    statusBox.appendChild(statusMsg); statusBox.appendChild(reloadBtn);
+    panel.appendChild(statusBox);
+
+    const petsBox = document.createElement('div');
+    petsBox.className = 'field-card';
+    const petsLabel = document.createElement('div');
+    petsLabel.className = 'field-label'; petsLabel.style.marginBottom = '8px';
+    petsLabel.textContent = '額外寵物（勾選要在桌寵畫面上額外顯示的模型）';
+    const petsList = document.createElement('div');
+    petsList.id = 'pets-candidates-list';
+    const petsApplyRow = document.createElement('div');
+    petsApplyRow.className = 'btn-row'; petsApplyRow.style.marginTop = '10px';
+    const petsApplyBtn = document.createElement('button');
+    petsApplyBtn.className = 'btn-primary'; petsApplyBtn.textContent = '套用';
+    const petsMsg = document.createElement('div');
+    petsMsg.className = 'msg';
+    petsApplyBtn.addEventListener('click', async () => {
+      const ids = [...petsList.querySelectorAll('input[type=checkbox]:checked')].map((el) => Number(el.value));
+      petsMsg.className = 'msg'; petsMsg.textContent = '套用中...';
+      const result = await cc.setExtraPets(ids);
+      if (result.ok) { petsMsg.className = 'msg ok'; petsMsg.textContent = '✅ 已套用'; log('額外寵物選擇已套用', 'ok'); }
+      else { petsMsg.className = 'msg error'; petsMsg.textContent = '❌ ' + result.error; log('套用額外寵物失敗：' + result.error, 'err'); }
+    });
+    petsApplyRow.appendChild(petsApplyBtn);
+    petsBox.appendChild(petsLabel); petsBox.appendChild(petsList); petsBox.appendChild(petsApplyRow); petsBox.appendChild(petsMsg);
+    panel.appendChild(petsBox);
+
+    const namesBox = document.createElement('div');
+    namesBox.className = 'field-card';
+    const namesLabel = document.createElement('div');
+    namesLabel.className = 'field-label'; namesLabel.style.marginBottom = '8px';
+    namesLabel.textContent = '模型命名管理';
+    const namesList = document.createElement('div');
+    namesList.id = 'pets-names-list';
+    const namesSaveRow = document.createElement('div');
+    namesSaveRow.className = 'btn-row'; namesSaveRow.style.marginTop = '10px';
+    const namesSaveBtn = document.createElement('button');
+    namesSaveBtn.className = 'btn-primary'; namesSaveBtn.textContent = '儲存名字';
+    const namesMsg = document.createElement('div');
+    namesMsg.className = 'msg';
+    namesSaveBtn.addEventListener('click', async () => {
+      const names = {};
+      namesList.querySelectorAll('input[type=text]').forEach((el) => {
+        const trimmed = el.value.trim();
+        if (trimmed) names[el.dataset.path] = trimmed;
+      });
+      namesMsg.className = 'msg'; namesMsg.textContent = '儲存中...';
+      const result = await cc.saveModelNames(names);
+      if (result.ok) { namesMsg.className = 'msg ok'; namesMsg.textContent = '✅ 已儲存'; log('模型名字已儲存', 'ok'); refreshPetsTab(); }
+      else { namesMsg.className = 'msg error'; namesMsg.textContent = '❌ ' + result.error; log('儲存模型名字失敗：' + result.error, 'err'); }
+    });
+    namesSaveRow.appendChild(namesSaveBtn);
+    namesBox.appendChild(namesLabel); namesBox.appendChild(namesList); namesBox.appendChild(namesSaveRow); namesBox.appendChild(namesMsg);
+    panel.appendChild(namesBox);
+
+    function setPetsControlsDisabled(disabled) {
+      petsBox.querySelectorAll('input, button').forEach((el) => { el.disabled = disabled; });
+      namesBox.querySelectorAll('input, select, button').forEach((el) => { el.disabled = disabled; });
+    }
+
+    async function refreshPetsTab() {
+      statusMsg.className = 'msg'; statusMsg.textContent = '讀取中...';
+      const [extraResult, configResult] = await Promise.all([cc.getExtraPets(), cc.getModelConfig()]);
+      if (!extraResult.ok || !configResult.ok) {
+        const error = (!extraResult.ok ? extraResult.error : configResult.error);
+        statusMsg.className = 'msg error'; statusMsg.textContent = '❌ ' + error;
+        petsList.innerHTML = ''; namesList.innerHTML = '';
+        setPetsControlsDisabled(true);
+        return;
+      }
+      statusMsg.className = 'msg ok'; statusMsg.textContent = '✅ 已連線';
+      setPetsControlsDisabled(false);
+
+      petsList.innerHTML = '';
+      extraResult.candidates.forEach(({ id, label: candLabel }) => {
+        const row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:4px 0;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = id;
+        cb.checked = extraResult.checked.includes(id);
+        row.appendChild(cb);
+        row.appendChild(document.createTextNode(candLabel));
+        petsList.appendChild(row);
+      });
+      if (!extraResult.candidates.length) {
+        petsList.innerHTML = '<div class="empty-hint">目前沒有可選的額外寵物候選（manifest 裡除了角色一/二以外沒有其他模型）</div>';
+      }
+
+      namesList.innerHTML = '';
+      configResult.manifest.forEach((entry) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:6px 0;';
+        const idLabel = document.createElement('span');
+        idLabel.style.cssText = 'color:var(--text2);min-width:70px;flex:none;';
+        idLabel.textContent = `#${entry.id}`;
+        const input = document.createElement('input');
+        input.type = 'text'; input.dataset.path = entry.path;
+        input.placeholder = entry.character;
+        input.value = configResult.names[entry.path] || '';
+        input.style.maxWidth = '260px';
+        row.appendChild(idLabel); row.appendChild(input);
+        if (configResult.history && configResult.history.length) {
+          const select = document.createElement('select');
+          select.style.maxWidth = '200px';
+          const blank = document.createElement('option');
+          blank.value = ''; blank.textContent = '（從歷史名字挑選）';
+          select.appendChild(blank);
+          configResult.history.forEach((name) => {
+            const opt = document.createElement('option');
+            opt.value = name; opt.textContent = name;
+            select.appendChild(opt);
+          });
+          select.addEventListener('change', () => { if (select.value) input.value = select.value; });
+          row.appendChild(select);
+        }
+        namesList.appendChild(row);
+      });
+      if (!configResult.manifest.length) {
+        namesList.innerHTML = '<div class="empty-hint">manifest.json 是空的，沒有可命名的模型</div>';
+      }
+    }
+
+    setPetsControlsDisabled(true);
+    refreshPetsTab();
+    panel._refreshPetsTab = refreshPetsTab;
   }
 
   // CLI 分頁只有 cliFreePermissionMode 這一個欄位，而且 requiresNativeConfirm——不走
@@ -852,9 +1026,21 @@
     }
   }
 
+  // 開機自動啟動的初始勾選狀態：載入一次即可，不用像行程狀態那樣輪詢。
+  async function loadAutostartStatus() {
+    try {
+      const status = await cc.getAutostartStatus();
+      Object.entries(status).forEach(([id, enabled]) => {
+        const cb = document.getElementById(`proc-autostart-${id}`);
+        if (cb) cb.checked = enabled;
+      });
+    } catch { /* 忽略，維持未勾選 */ }
+  }
+
   buildChrome();
   loadAllSettings();
   refreshProcessStatus();
+  loadAutostartStatus();
   setInterval(refreshProcessStatus, 2000);
 })();
 </script>

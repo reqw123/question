@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>多人搶答 — 玩家</title>
   <link rel="stylesheet" href="../lib/style.css">
+  <link rel="stylesheet" href="stats-report.css">
   <style>
     /* ── 確保畫面層級在 Live2D canvas(5) 及 speech bubble(100) 之上 */
     .screen { z-index: 110; }
@@ -411,9 +412,101 @@
       body.l2d-ready #screen-game,
       body.l2d-ready #screen-end { padding-left: 0; padding-right: 0; }
     }
+
+    /* ── 學習報告彈窗：共用樣式已搬到 multi/stats-report.css（見該檔開頭說明，原本這裡
+       跟 host.html 各自維護一份幾乎一樣的複製貼上）。這裡只留 .stats-open-btn ——
+       開啟學習報告彈窗的小按鈕本身，這邊同時出現在加入畫面跟結算畫面，字級/留白比
+       host.html 那顆需要大一點，是真的不同，不勉強共用。 */
+    .stats-open-btn {
+      font-size:.82em; font-weight:400; color:var(--text2); padding:6px 14px;
+      border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.03);
+      white-space:nowrap; cursor:pointer; font-family:inherit; margin-top:10px;
+    }
+    .stats-open-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+    /* ── 可選題庫彈窗：純唯讀清單，讓玩家知道「主持人可以選哪些題庫」，不是只看得到
+       目前選了哪一個。跟 #stats-modal 同一套「全螢幕暗幕 + 置中卡片」疊層邏輯、同樣
+       z-index:999999（見 #stats-modal 那邊的說明，這裡不重複），各自獨立一份 CSS。── */
+    #bank-list-modal {
+      position:fixed; inset:0; z-index:999999; background:rgba(0,0,0,.82);
+      display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;
+    }
+    #bank-list-modal.hidden { display:none; }
+    #bank-list-modal .ai-gen-box {
+      width:min(600px, 94vw); max-height:min(80vh, 640px);
+      background:linear-gradient(180deg, #0e1c2e, #0a1420);
+      border:1px solid rgba(0,212,255,.35); border-radius:20px;
+      overflow:hidden; display:flex; flex-direction:column;
+      box-shadow:0 24px 70px rgba(0,0,0,.55);
+    }
+    #bank-list-modal .ai-gen-modal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 22px; border-bottom:1px solid rgba(255,255,255,.1); flex:none;
+      background:rgba(0,212,255,.06);
+    }
+    #bank-list-modal .ai-gen-modal-header strong { font-size:1.15em; font-weight:900; letter-spacing:.5px; }
+    #bank-list-modal .ai-gen-modal-close {
+      cursor:pointer; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.3);
+      color:var(--text); border-radius:9px; padding:6px 14px; font-size:.88em; font-weight:700; font-family:inherit;
+      transition:all .18s;
+    }
+    #bank-list-modal .ai-gen-modal-close:hover { border-color:var(--cyan); color:var(--cyan); background:rgba(0,212,255,.1); }
+    #bank-list-body { flex:1; overflow-y:auto; padding:16px 22px 22px; }
+    .bank-list-cat-title {
+      font-size:.92em; color:var(--cyan); font-weight:900; letter-spacing:.3px;
+      margin:16px 0 8px;
+    }
+    .bank-list-cat-title:first-child { margin-top:0; }
+    .bank-list-item {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.05); font-size:.92em; color:var(--text);
+      cursor:pointer; border-radius:8px; transition:background .15s;
+    }
+    .bank-list-item:last-child { border-bottom:none; }
+    .bank-list-item:hover { background:rgba(0,212,255,.08); }
+    .bank-list-item:active { background:rgba(0,212,255,.16); }
+    .bank-list-item-hint { font-size:.8em; color:var(--text2); flex:0 0 auto; white-space:nowrap; }
+    .bank-list-item:hover .bank-list-item-hint { color:var(--cyan); }
   </style>
 </head>
 <body>
+
+<!-- 學習報告彈窗：跟 host.html 同一套（依暱稱查詢 launchers/serve-lan.js 的
+     /api/stats、/api/stats-list），放在 <body> 最外層，同樣放進 <body>，理由同 host.html。 -->
+<div id="stats-modal" class="hidden">
+  <div class="ai-gen-box">
+    <div class="ai-gen-modal-header">
+      <strong>📊 學習報告</strong>
+      <button type="button" class="ai-gen-modal-close" onclick="closeStatsModal()">✕ 關閉</button>
+    </div>
+    <div class="stats-picker-row">
+      <select id="stats-name-select" style="min-width:160px"></select>
+      <input id="stats-name-input" type="text" maxlength="20" placeholder="或直接輸入暱稱查詢" autocomplete="off">
+      <button type="button" class="stats-query-btn" id="btn-stats-query">🔍 查詢</button>
+      <select id="stats-category-select" style="min-width:150px"
+              title="依題庫分類篩選（分類由主持人在「管理題庫」設定）">
+        <option value="">全部分類</option>
+      </select>
+    </div>
+    <div id="stats-body" class="stats-scroll-body">
+      <div id="stats-status"></div>
+      <div id="stats-report"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 可選題庫彈窗：純唯讀清單，跟學習報告是不同功能——那個是查自己的作答紀錄，這個是讓
+     玩家在加入前先知道主持人「可以」選哪些題庫（不是只看得到目前選了哪一個），資料來源
+     跟大廳「目前題庫」橫幅一樣讀 questions/index.json。 -->
+<div id="bank-list-modal" class="hidden">
+  <div class="ai-gen-box">
+    <div class="ai-gen-modal-header">
+      <strong>📚 可選題庫</strong>
+      <button type="button" class="ai-gen-modal-close" onclick="closeBankListModal()">✕ 關閉</button>
+    </div>
+    <div style="padding:10px 22px 0;font-size:.78em;color:var(--text2)">點一下題庫名稱，就能推薦主持人玩這個題庫</div>
+    <div id="bank-list-body"></div>
+  </div>
+</div>
 
 <!-- ===== 加入畫面 ===== -->
 <div id="screen-join" class="screen active">
@@ -421,6 +514,8 @@
     <div class="join-title">🎮 多人搶答</div>
     <div class="join-sub">MULTIPLAYER QUIZ</div>
     <div id="p-bank-banner" class="bank-banner">📚 目前題庫：<span id="p-bank-name"></span></div>
+    <button type="button" class="stats-open-btn" onclick="openBankListModal()"
+            title="看看主持人可以選擇哪些題庫">📚 有哪些題庫可選？</button>
     <input id="player-name" class="join-input" type="text"
            maxlength="12" placeholder="輸入你的名稱..."
            autocomplete="off" spellcheck="false">
@@ -471,6 +566,8 @@
 
     <button id="btn-join" class="btn-primary" disabled>加入遊戲</button>
     <div id="join-status">連接 MQTT 中...</div>
+    <button type="button" class="stats-open-btn" onclick="openStatsModal()"
+            title="查詢自己跨場次的常錯範圍與進步狀況">📊 學習報告</button>
   </div>
 </div>
 
@@ -570,6 +667,8 @@
     <div id="end-title" class="end-title">遊戲結束！</div>
     <table class="end-table"><tbody id="end-tbody"></tbody></table>
     <button id="btn-back" class="btn-secondary">↩ 回到加入畫面</button>
+    <button type="button" class="stats-open-btn" onclick="openStatsModal()"
+            title="查詢自己跨場次的常錯範圍與進步狀況">📊 學習報告</button>
 
     <!-- 歷史成績 -->
     <div class="analysis-section">
@@ -869,9 +968,10 @@ function onState(state) {
       PS.score      = 0;
       PS.answered   = false;
       PS.localPhase = '';
-      // 積分/排行榜相關狀態要一起清，不然回到加入畫面後這些舊資料還留著——
-      // 跟下面 'lobby' case（結束畫面回大廳）用同一套重置邏輯，host_left 等於
-      // 「這一局直接解散」，比正常結束回大廳更需要徹底歸零
+      // 積分/排行榜相關狀態要一起清，不然回到加入畫面後這些舊資料還留著。
+      // 這個 case 現在只會在主持人真的斷線（MQTT will 觸發，見 host.html 的
+      // will payload）時才會收到；一局結束後主持人回大廳走的是下面的 'lobby' case，
+      // 不會經過這裡，所以不會誤顯示「主持人已離開」。
       PS.colorMap = {};
       PS.players  = [];
       hide('p-q-counter');
@@ -1338,6 +1438,102 @@ function renderPlayerHistory(hist) {
     wrap.innerHTML = html;
   } catch {}
 }
+
+// ── 學習報告彈窗 ─────────────────────────────────────────────────────────
+// 實際的查詢/渲染邏輯（queryStatsReport/renderStatsReport/openStatsModal 等）已搬到
+// multi/multiplay.js 共用（原本 host.html/player.html 各自維護一份幾乎一樣的複製貼上，
+// 見 multiplay.js 該區塊開頭的說明）。這裡只留「必須留在各自檔案」的東西：
+//   1) _statsDefaultName()：開學習報告視窗時要預填的暱稱，player.html 用 PS.myName
+//      （還沒加入的話退回 localStorage 記住的上次暱稱）。
+//   2) 下面 el('stats-name-select')?.addEventListener(...) 那幾行：multiplay.js 載入
+//      當下 el() 可能還沒被賦值（el 是這支檔案稍後才定義的全域變數），這種「立即執行」
+//      的頂層敘述不能搬過去，只有函式定義本體可以（函式要等使用者點擊才會真的呼叫，
+//      那時候 el 早就定義好了）。
+function _statsDefaultName() {
+  return PS.myName || localStorage.getItem('quiz_pname') || '';
+}
+
+// ── 可選題庫彈窗 ─────────────────────────────────────────────────────────
+// 純唯讀清單，直接讀 questions/index.json 列出主持人「可以」選哪些題庫，依分類分組——
+// 跟大廳「📚 目前題庫」橫幅（只顯示「目前選了哪一個」）是互補的兩件事，這個是讓玩家
+// 加入前就能先知道題庫範圍有哪些。這份清單不常變，不快取，每次開都重抓一次，確保
+// 主持人剛上傳的新題庫馬上就看得到。
+async function openBankListModal() {
+  show('bank-list-modal');
+  const bodyEl = el('bank-list-body');
+  bodyEl.textContent = '載入中…';
+  let banks;
+  try {
+    const r = await fetch('../questions/index.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    banks = await r.json();
+  } catch (e) {
+    bodyEl.textContent = '✗ 無法讀取題庫清單（' + ((e && e.message) || '連線失敗') + '）。';
+    return;
+  }
+  if (!Array.isArray(banks) || !banks.length) {
+    bodyEl.textContent = '目前還沒有任何題庫。';
+    return;
+  }
+
+  const groups = new Map();   // category（空字串代表未分類）→ [{file, name}, ...]
+  banks.forEach((b) => {
+    const cat = String(b.category || '').trim();
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push({ file: b.file, name: b.name || b.file });
+  });
+  // 未分類排最前面（比較可能是還沒整理的雜項），其餘分類依字母序
+  const cats = [...groups.keys()].sort((a, b) => {
+    if (!a) return -1;
+    if (!b) return 1;
+    return a.localeCompare(b, 'zh-Hant');
+  });
+
+  bodyEl.innerHTML = '';
+  cats.forEach((cat) => {
+    const title = document.createElement('div');
+    title.className = 'bank-list-cat-title';
+    title.textContent = cat || '未分類';
+    bodyEl.appendChild(title);
+    groups.get(cat).forEach(({ file, name }) => {
+      const item = document.createElement('div');
+      item.className = 'bank-list-item';
+      item.title = '點一下，推薦主持人玩這個題庫';
+      const nameEl = document.createElement('span');
+      nameEl.textContent = name;
+      const hintEl = document.createElement('span');
+      hintEl.className = 'bank-list-item-hint';
+      hintEl.textContent = '💡 推薦';
+      item.append(nameEl, hintEl);
+      item.addEventListener('click', () => recommendBank(file, name));
+      bodyEl.appendChild(item);
+    });
+  });
+}
+function closeBankListModal() {
+  hide('bank-list-modal');
+}
+
+// 點清單裡的某個題庫，推薦給主持人——單純送個提示（MP_TOPICS.BANK_RECOMMEND），
+// 不會真的幫主持人切換題庫，那個操作只有 host.html 的下拉選單做得到，職責分開。
+// 還沒加入房間也能用（PS.myName 還沒設定時退回 localStorage 記住的上次暱稱，跟學習
+// 報告彈窗預填暱稱同一套邏輯），所以「有哪些題庫可選」在加入前就能推薦。
+function recommendBank(bankFile, bankName) {
+  if (!PS.client || !PS.ok) { showToast('連線中，稍後再試', false); return; }
+  const name = PS.myName || localStorage.getItem('quiz_pname') || '匿名玩家';
+  pub(MP_TOPICS.BANK_RECOMMEND, { id: PS.myId, name, bankFile, bankName }, 0);
+  showToast(`已推薦「${bankName}」`, true);
+}
+
+el('stats-name-select')?.addEventListener('change', () => {
+  const name = el('stats-name-select').value;
+  if (name) { el('stats-name-input').value = name; queryStatsReport(name); }
+});
+el('btn-stats-query')?.addEventListener('click', () => {
+  const name = el('stats-name-input').value.trim();
+  if (name) queryStatsReport(name);
+});
+el('stats-category-select')?.addEventListener('change', renderStatsReport);
 
 // ── 得分飄字 ──────────────────────────────────────────────────────────────
 function showToast(text, positive) {

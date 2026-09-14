@@ -1,6 +1,10 @@
 # 相依套件（可用 npm install 重新產生，不進版本控制）
 node_modules/
 
+# 玩家個人學習報告紀錄（launchers/serve-lan.js 的 /api/record-session 寫入），
+# 屬於使用者個人作答資料，不進版本控制
+/stats/
+
 # electron-builder 打包輸出（可用 npm run dist 重新產生，不進版本控制）
 control-center/dist/
 desktop-pet/dist/

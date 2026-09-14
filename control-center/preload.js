@@ -31,4 +31,14 @@ contextBridge.exposeInMainWorld('controlCenter', {
   getProcessStatus: () => ipcRenderer.invoke('cc-process-status'),
   onProcessLog: (callback) => ipcRenderer.on('cc-process-log', (_event, data) => callback(data)),
   openExternal: (url) => ipcRenderer.send('cc-open-external', url),
+
+  // 開機自動啟動：見 autostart-manager.js／main.js 的 cc-autostart-* handler。
+  getAutostartStatus: () => ipcRenderer.invoke('cc-autostart-get'),
+  setAutostart: (modeId, enabled) => ipcRenderer.invoke('cc-autostart-set', modeId, enabled),
+
+  // 角色與寵物：透過桌寵的本機控制伺服器遙控，見 main.js 的 cc-get-extra-pets 等 handler。
+  getExtraPets: () => ipcRenderer.invoke('cc-get-extra-pets'),
+  setExtraPets: (ids) => ipcRenderer.invoke('cc-set-extra-pets', ids),
+  getModelConfig: () => ipcRenderer.invoke('cc-get-model-config'),
+  saveModelNames: (names) => ipcRenderer.invoke('cc-save-model-names', names),
 });

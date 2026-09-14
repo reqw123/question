@@ -46,13 +46,27 @@ function electronBinFor(projectDir) {
   return path.join(projectDir, 'node_modules', 'electron', 'dist', exeName);
 }
 
-function spawnAndTrack(modeId, command, args, options, onLog) {
+// opts.detached：只給「開機自動啟動」那條路徑用（見 main.js 的 --autostart 分支）——
+// 那條路徑會在啟動目標行程後很快呼叫 app.quit()，一般 GUI 手動啟動/停止（要即時把
+// stdout/stderr 轉到畫面、還要用 taskkill /pid 停止）完全不受影響，維持原本的
+// stdio:['ignore','pipe','pipe']。detached 時：
+//   1) spawn() 帶 detached:true，讓子行程不跟著這個短命的 control-center 一起被砍掉
+//      （Windows 有些情境下父行程屬於「父死全家死」的 Job Object，子行程會被牽連）；
+//   2) stdio 全部改成 'ignore'——因為 control-center 很快就會退出，沒有人讀 pipe 的話，
+//      子行程之後如果輸出夠多 log，管線緩衝區塞滿會卡住子行程自己的寫入；
+//   3) 呼叫 child.unref()，讓這個子行程不會阻止 control-center 的事件迴圈結束。
+function spawnAndTrack(modeId, command, args, options, onLog, opts) {
   if (running.has(modeId)) {
     return { ok: false, error: `${MODES[modeId].label} 已經在跑（PID ${running.get(modeId).pid}），請先停止再重新啟動` };
   }
+  const detached = !!(opts && opts.detached);
   let child;
   try {
-    child = spawn(command, args, { ...options, stdio: ['ignore', 'pipe', 'pipe'] });
+    child = spawn(command, args, {
+      ...options,
+      stdio: detached ? ['ignore', 'ignore', 'ignore'] : ['ignore', 'pipe', 'pipe'],
+      detached,
+    });
   } catch (err) {
     return { ok: false, error: `啟動失敗：${err.message}` };
   }
@@ -61,11 +75,15 @@ function spawnAndTrack(modeId, command, args, options, onLog) {
   }
   const entry = { child, pid: child.pid, startedAt: Date.now(), label: MODES[modeId].label };
   running.set(modeId, entry);
-  const forward = (streamName) => (chunk) => {
-    if (onLog) onLog(modeId, chunk.toString('utf8'), streamName);
-  };
-  child.stdout.on('data', forward('stdout'));
-  child.stderr.on('data', forward('stderr'));
+  if (detached) {
+    child.unref();
+  } else {
+    const forward = (streamName) => (chunk) => {
+      if (onLog) onLog(modeId, chunk.toString('utf8'), streamName);
+    };
+    child.stdout.on('data', forward('stdout'));
+    child.stderr.on('data', forward('stderr'));
+  }
   child.on('exit', (code, signal) => {
     running.delete(modeId);
     if (onLog) onLog(modeId, `— 行程已結束（exit code ${code}, signal ${signal}） —\n`, 'meta');
@@ -79,14 +97,14 @@ function spawnAndTrack(modeId, command, args, options, onLog) {
 // electronBinFor() 讀 path.txt 失敗（對應資料夾根本沒 npm install 過）會丟同步例外——
 // 這裡接住，回傳一般的 { ok:false, error }，不要讓例外一路往上炸穿 ipcMain.handle，
 // 變成 renderer 端 await 到一個 reject 而不是預期的失敗結果物件。
-function startDesktopPet(onLog) {
+function startDesktopPet(onLog, opts) {
   let electronBin;
   try {
     electronBin = electronBinFor(DESKTOP_PET_DIR);
   } catch (err) {
     return { ok: false, error: `找不到 desktop-pet 的 electron 執行檔（${err.message}）——請先在 desktop-pet 資料夾執行 npm install` };
   }
-  return spawnAndTrack('desktop-pet', electronBin, ['.'], { cwd: DESKTOP_PET_DIR }, onLog);
+  return spawnAndTrack('desktop-pet', electronBin, ['.'], { cwd: DESKTOP_PET_DIR }, onLog, opts);
 }
 
 // desktop-pet-web（跟 desktop-pet/ 是不同專案，見該資料夾 README.md：獨立的 React+Vite
@@ -96,12 +114,12 @@ function startDesktopPet(onLog) {
 // `npm run dev` 背後其實是純 JS 的 `node_modules/vite/bin/vite.js`（不是原生執行檔），
 // 直接用 node 執行這個檔案，同樣繞過 node_modules/.bin/vite.cmd 那層批次檔包裝，避免
 // 跟 electron.cmd 同一種 spawn EINVAL。
-function startDesktopPetWeb(onLog) {
+function startDesktopPetWeb(onLog, opts) {
   const viteBin = path.join(DESKTOP_PET_WEB_DIR, 'node_modules', 'vite', 'bin', 'vite.js');
   if (!fs.existsSync(viteBin)) {
     return { ok: false, error: '找不到 desktop-pet-web 的 vite 執行檔——請先在 desktop-pet-web 資料夾執行 npm install' };
   }
-  const result = spawnAndTrack('desktop-pet-web', process.execPath, [viteBin], { cwd: DESKTOP_PET_WEB_DIR }, onLog);
+  const result = spawnAndTrack('desktop-pet-web', process.execPath, [viteBin], { cwd: DESKTOP_PET_WEB_DIR }, onLog, opts);
   if (result.ok && onLog) {
     onLog('desktop-pet-web', '— Vite dev server 預設開在 http://localhost:5173/（實際網址以下面輸出為準，port 被占用時 Vite 會自動換一個） —\n', 'meta');
   }
@@ -144,7 +162,7 @@ function isPortListening(port, host = '127.0.0.1', timeoutMs = 800) {
 // 完全不會去動使用者自己開的 Live Server。
 let hostAppFallbackServerPid = null;
 
-async function startHostApp(onLog) {
+async function startHostApp(onLog, opts) {
   let electronBin;
   try {
     electronBin = electronBinFor(HOST_APP_DIR);
@@ -152,6 +170,7 @@ async function startHostApp(onLog) {
     return { ok: false, error: `找不到 host-app 的 electron 執行檔（${err.message}）——請先在 host-app 資料夾執行 npm install` };
   }
 
+  const detached = !!(opts && opts.detached);
   const already = await isPortListening(5500);
   if (already) {
     if (onLog) onLog('host-app', '— 偵測到 5500 埠已經有東西在服務（VS Code Live Server 或其他方式），直接沿用 —\n', 'meta');
@@ -159,8 +178,13 @@ async function startHostApp(onLog) {
     if (onLog) onLog('host-app', '— 偵測不到 5500 埠，改用內建 Node 靜態伺服器頂上（跟 launchers/啟動-主持人App.bat 同一套邏輯） —\n', 'meta');
     let fallback;
     try {
+      // detached 時（開機自動啟動）這個備援伺服器也要能撐過 control-center 退出，
+      // 理由跟 spawnAndTrack() 開頭註解的 detached 說明完全一樣。
       fallback = spawn(process.execPath, [SERVE_LAN_JS], {
-        cwd: REPO_ROOT, env: { ...process.env, PORT: '5500' }, stdio: ['ignore', 'pipe', 'pipe'],
+        cwd: REPO_ROOT,
+        env: { ...process.env, PORT: '5500' },
+        stdio: detached ? ['ignore', 'ignore', 'ignore'] : ['ignore', 'pipe', 'pipe'],
+        detached,
       });
     } catch (err) {
       return { ok: false, error: `啟動 5500 備援伺服器失敗：${err.message}` };
@@ -169,8 +193,12 @@ async function startHostApp(onLog) {
       return { ok: false, error: '啟動 5500 備援伺服器失敗：沒有取得行程 PID' };
     }
     hostAppFallbackServerPid = fallback.pid;
-    fallback.stdout.on('data', (chunk) => { if (onLog) onLog('host-app', chunk.toString('utf8'), 'stdout'); });
-    fallback.stderr.on('data', (chunk) => { if (onLog) onLog('host-app', chunk.toString('utf8'), 'stderr'); });
+    if (detached) {
+      fallback.unref();
+    } else {
+      fallback.stdout.on('data', (chunk) => { if (onLog) onLog('host-app', chunk.toString('utf8'), 'stdout'); });
+      fallback.stderr.on('data', (chunk) => { if (onLog) onLog('host-app', chunk.toString('utf8'), 'stderr'); });
+    }
     fallback.on('exit', () => { hostAppFallbackServerPid = null; });
     // 給備援伺服器一點時間把 port 綁起來，跟 .bat 那句 `ping -n 3 127.0.0.1` 的用意
     // 一樣（純粹是等待，不是真的要 ping 什麼）；輪詢確認真的連得上了才繼續開 host-app，
@@ -182,16 +210,16 @@ async function startHostApp(onLog) {
     }
   }
 
-  return spawnAndTrack('host-app', electronBin, ['.'], { cwd: HOST_APP_DIR }, onLog);
+  return spawnAndTrack('host-app', electronBin, ['.'], { cwd: HOST_APP_DIR }, onLog, opts);
 }
 
 // 跟 launchers/啟動-網頁遊戲.bat 完全同一套判斷邏輯：有 caddy.exe 就用它（支援之後接
 // ngrok 開放外網），沒有就退回內建的 launchers/serve-lan.js（純區網，零套件相依）。
-function startWeb(onLog) {
+function startWeb(onLog, opts) {
   const useCaddy = fs.existsSync(CADDY_EXE);
   const result = useCaddy
-    ? spawnAndTrack('web', CADDY_EXE, ['run'], { cwd: REPO_ROOT }, onLog)
-    : spawnAndTrack('web', process.execPath, [SERVE_LAN_JS], { cwd: REPO_ROOT, env: { ...process.env, PORT: '8080' } }, onLog);
+    ? spawnAndTrack('web', CADDY_EXE, ['run'], { cwd: REPO_ROOT }, onLog, opts)
+    : spawnAndTrack('web', process.execPath, [SERVE_LAN_JS], { cwd: REPO_ROOT, env: { ...process.env, PORT: '8080' } }, onLog, opts);
   if (result.ok && onLog) {
     onLog('web', `— 使用${useCaddy ? ' caddy.exe（公網/ngrok-capable）' : ' 內建 Node 靜態伺服器（純區網，見 launchers/README.md）'} —\n`, 'meta');
   }
@@ -203,10 +231,10 @@ const STARTERS = {
   'host-app': startHostApp, web: startWeb,
 };
 
-function start(modeId, onLog) {
+function start(modeId, onLog, opts) {
   const starter = STARTERS[modeId];
   if (!starter) return { ok: false, error: `不明的模式：${modeId}` };
-  return starter(onLog);
+  return starter(onLog, opts);
 }
 
 // 兩段式停止：先送一般的 taskkill（不加 /f）——對有主視窗的 GUI 程式（Electron）這樣會

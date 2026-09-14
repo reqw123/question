@@ -1,0 +1,132 @@
+/* ── 學習報告彈窗（host.html／player.html 共用）───────────────────────────
+   跟 #ai-gen-modal 同一套「全螢幕暗幕 + 置中卡片」疊層邏輯（#stats-modal 本身、
+   .hidden 開關），卡片本身加大加高、字體加粗加大更醒目，窄螢幕直接全螢幕。z-index
+   刻意比專案內目前找得到的所有浮動元素都高（Live2D 拖曳 canvas 9999、聊天/表情/
+   語音廣播面板 10000~10002、賽前閒聊角標 99999……），確保不管當下疊了什麼面板，
+   學習報告一開永遠蓋在最上面、✕ 一定點得到。
+
+   這份 CSS 本來在 host.html 跟 player.html 各自的 <style> 裡維護一份幾乎一樣的
+   複製貼上（改一邊很容易忘記改另一邊），統一搬到這支共用檔案。完全自成一格，不依賴
+   host.html 才有的其他 ai-gen 系列／btn-ctrl 系列 class，兩邊都可以直接引入。
+
+   唯一沒搬過來的是 .stats-open-btn（開啟學習報告彈窗的小按鈕本身）：那顆按鈕在兩邊
+   放置的位置/情境不同（host.html 只在大廳一處，player.html 同時出現在加入畫面跟
+   結算畫面，需要不同的字級/留白），兩邊各自在自己的 <style> 裡維護真正不同的樣式，
+   不勉強共用。 ── */
+#stats-modal {
+  position:fixed; inset:0; z-index:999999; background:rgba(0,0,0,.86);
+  display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;
+}
+#stats-modal.hidden { display:none; }
+#stats-modal .ai-gen-box {
+  width:min(1100px, 97vw); height:min(92vh, 940px);
+  background:linear-gradient(180deg, #0e1c2e, #0a1420);
+  border:1px solid rgba(0,212,255,.35); border-radius:20px;
+  overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:0 24px 70px rgba(0,0,0,.55);
+}
+@media (max-width:760px) {
+  #stats-modal { padding:0; }
+  #stats-modal .ai-gen-box { width:100vw; height:100vh; max-height:none; border-radius:0; border:none; }
+}
+#stats-modal .ai-gen-modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 24px; border-bottom:1px solid rgba(255,255,255,.1); flex:none;
+  background:rgba(0,212,255,.06);
+}
+#stats-modal .ai-gen-modal-header strong { font-size:1.35em; font-weight:900; letter-spacing:.5px; }
+#stats-modal .ai-gen-modal-close {
+  cursor:pointer; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.3);
+  color:var(--text); border-radius:9px; padding:7px 16px; font-size:.95em; font-weight:700; font-family:inherit;
+  transition:all .18s;
+}
+#stats-modal .ai-gen-modal-close:hover { border-color:var(--cyan); color:var(--cyan); background:rgba(0,212,255,.1); }
+.stats-picker-row {
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  padding:16px 24px; border-bottom:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.015); flex:none;
+}
+.stats-picker-row select, .stats-picker-row input {
+  padding:9px 13px; background:rgba(255,255,255,.05); border:1px solid var(--border);
+  border-radius:9px; color:var(--text); font-size:1em; outline:none; font-family:inherit;
+  transition:border-color .18s;
+}
+.stats-picker-row select:focus, .stats-picker-row input:focus { border-color:var(--cyan); }
+/* 原生 <select> 展開的選項清單是瀏覽器彈出視窗，CSS 管不到，只有 <option> 本身的
+   background/color 能生效（Chromium 系），跟 .bank-select option／.q-count-input option
+   同一套深色配色，不然這顆「查詢歷史暱稱」選單一展開會是刺眼白底。 */
+.stats-picker-row select option { background:#0d1a2b; color:var(--text); }
+/* 查詢按鈕：獨立命名、明確給色，不要再借用沒有預設文字色的 .btn-ctrl 裸樣式
+   （裸 .btn-ctrl 沒有 .yellow/.red 之類的顏色修飾詞時，字色/邊框吃到瀏覽器預設，
+   在深色底下會整顆糊成黑色——之前那顆「查詢」按鈕變黑就是這樣來的）。 */
+.stats-query-btn {
+  padding:9px 22px; border-radius:9px; cursor:pointer; font-size:.95em; font-weight:700;
+  background:rgba(0,212,255,.16); border:1px solid rgba(0,212,255,.45);
+  color:var(--cyan); white-space:nowrap; transition:all .18s; font-family:inherit;
+}
+.stats-query-btn:hover { background:rgba(0,212,255,.28); border-color:var(--cyan); }
+.stats-scroll-body { flex:1; overflow-y:auto; padding:20px 24px 32px; }
+#stats-status { font-size:.9em; font-weight:700; color:var(--text2); min-height:1.4em; margin-bottom:10px; }
+.stats-card {
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+  border-radius:14px; padding:16px 18px; margin-bottom:18px;
+}
+.stats-section-title { font-size:1.08em; color:var(--cyan); margin:0 0 12px; font-weight:900; letter-spacing:.3px; }
+.stats-domain-row { display:flex; align-items:center; gap:10px; padding:8px 2px; font-size:.95em; }
+/* 分類色點：跟常錯題目的長條用同一套 _domainColor() 配色，同一個 domain 兩區塊顏色
+   一致，方便使用者用顏色對照兩個區塊；顏色是用 domain 文字雜湊挑調色盤，不用手動配置，
+   之後新增題庫、新增 domain 都會自動吃到（循環使用調色盤，見 multiplay.js 的 _DOMAIN_COLOR_PALETTE）。 */
+.stats-domain-dot { flex:0 0 auto; width:11px; height:11px; border-radius:50%; }
+.stats-domain-name { flex:0 0 130px; color:var(--text); font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stats-domain-bar-wrap { flex:1; height:18px; background:rgba(255,255,255,.07); border-radius:9px; overflow:hidden; }
+/* display:block 不能省：這是個 <span>，預設 display:inline 的元素不吃 width/height，
+   少了這行整條 bar 會直接塌成 0×0（外層 .stats-domain-bar-wrap 是 flex 子項目才會被
+   自動 blockify，這層再往內一層的 <span> 不會，所以要自己明講）。 */
+.stats-domain-bar { display:block; height:100%; border-radius:9px; background:linear-gradient(90deg, var(--red), var(--yellow), var(--cyan)); transition:width .3s; }
+.stats-domain-pct { flex:0 0 104px; text-align:right; color:var(--text2); font-weight:700; font-variant-numeric:tabular-nums; }
+/* 準確率隨場次變化的小折線（見 multiplay.js 的 _renderTrendSpark()）：固定寬度的容器讓
+   「有／沒有畫出折線」（場次不足兩筆時不畫）的列都對得齊，不會因為有沒有折線而跑版。 */
+.stats-domain-spark-wrap { flex:0 0 64px; display:flex; align-items:center; justify-content:center; }
+.stats-domain-spark-wrap svg { display:block; }
+/* 最弱範圍的一鍵推薦按鈕（只有 player.html 用得到，recommendBank() 是玩家端才有的
+   函式；host.html 也載入同一份 CSS 但不會實際渲染出這顆按鈕）。 */
+.stats-recommend-cta {
+  display:block; width:100%; margin-top:12px; padding:10px 16px; border-radius:10px;
+  cursor:pointer; font-size:.92em; font-weight:700; font-family:inherit;
+  background:rgba(0,212,255,.14); border:1px solid rgba(0,212,255,.4); color:var(--cyan);
+  transition:all .18s;
+}
+.stats-recommend-cta:hover { background:rgba(0,212,255,.26); border-color:var(--cyan); }
+/* 常錯題目：每題一個 .stats-wrong-item（標頭列 + 可收合的詳解），分隔線移到 item 上
+   而不是標頭列，收合/展開時分隔線位置才不會跳動。只有存到正解/解說的題目（這個功能
+   上線後新錄的場次）才會有 caret、能展開；舊資料沒有這幾個欄位就只顯示標頭列。 */
+.stats-wrong-item { border-bottom:1px solid rgba(255,255,255,.05); }
+.stats-wrong-item:last-child { border-bottom:none; }
+.stats-wrong-row { display:flex; gap:10px; align-items:center; padding:10px 4px; font-size:.95em; }
+.stats-wrong-row.clickable { cursor:pointer; }
+.stats-wrong-row.clickable:hover { background:rgba(255,255,255,.02); }
+.stats-wrong-q { flex:1; font-weight:600; }
+.stats-wrong-domain {
+  color:var(--text2); flex:0 0 auto; font-size:.88em; padding:3px 9px; border-radius:6px; background:rgba(255,255,255,.05);
+}
+.stats-wrong-count { color:var(--red); flex:0 0 auto; white-space:nowrap; font-weight:900; }
+.stats-wrong-caret { flex:0 0 auto; color:var(--text2); font-size:.8em; transition:transform .18s; }
+.stats-wrong-item.expanded .stats-wrong-caret { transform:rotate(90deg); }
+.stats-wrong-detail { padding:0 4px 12px 30px; font-size:.88em; color:var(--text2); line-height:1.6; }
+.stats-wrong-detail .stats-wrong-answer { color:var(--green); font-weight:700; margin-bottom:4px; }
+.stats-session-table { width:100%; font-size:.92em; border-collapse:collapse; }
+.stats-session-table th, .stats-session-table td { padding:9px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,.06); }
+.stats-session-table th { color:var(--cyan); font-weight:800; }
+.stats-session-table tr:hover td { background:rgba(255,255,255,.02); }
+.stats-empty-hint { font-size:.92em; color:var(--text2); padding:16px 4px; text-align:center; }
+/* 題庫、常錯題目都會隨時間一直增加，三個區塊各自給獨立的捲動內框（固定高度），
+   不讓單一區塊把整張卡片、甚至整個彈窗越撐越高——外層 .stats-scroll-body 仍是
+   保底的整體捲動，這裡是「內層再捲一層」，兩層互不衝突。 */
+.stats-domain-list, .stats-wrong-list, .stats-session-scroll {
+  max-height:300px; overflow-y:auto; padding-right:4px;
+  scrollbar-width:thin; scrollbar-color:rgba(0,212,255,.4) transparent;
+}
+.stats-domain-list::-webkit-scrollbar, .stats-wrong-list::-webkit-scrollbar, .stats-session-scroll::-webkit-scrollbar { width:6px; }
+.stats-domain-list::-webkit-scrollbar-thumb, .stats-wrong-list::-webkit-scrollbar-thumb, .stats-session-scroll::-webkit-scrollbar-thumb {
+  background:rgba(0,212,255,.35); border-radius:3px;
+}

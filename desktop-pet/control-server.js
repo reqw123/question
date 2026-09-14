@@ -31,8 +31,110 @@ function sendJson(res, status, body) {
   res.end(data);
 }
 
-// handlers 由 main.js 注入（show/hide/toggleInteractive/randomMotion/resetPosition/getStatus），
-// 這支檔案只管 HTTP 路由跟 CORS，不直接碰 BrowserWindow/tray，避免跟 main.js 的狀態管理耦合。
+const MAX_BODY_BYTES = 64 * 1024;
+
+// 哪些路由真的會讀 body（見 dispatch() 對應分支）：/extra-pets、/model-config/names 這兩個
+// POST 才會用到 body 裡的欄位。其餘既有路由（show/hide/toggle-interactive/motion/
+// reset-position）從來不看 body，呼叫端本來就不會送——但如果哪天有別的呼叫方式（手動測試、
+// 舊版呼叫端）不小心帶了非 JSON 的 body，也不該因此讓這些動作本身失敗，見下面 startControlServer()
+// 的分流。
+const ROUTES_NEEDING_BODY = new Set(['POST /extra-pets', 'POST /model-config/names']);
+
+// 讀取並解析 JSON body，只給真的需要 body 的路由用。
+// body 超過上限時**不能呼叫 req.destroy()**——HTTP/1.x 底下 req 跟 res 共用同一條 TCP
+// socket，destroy() 會把整條連線關掉，等呼叫端要用 res 回錯誤訊息時 socket 早就死了，
+// 呼叫端只會看到連線被重置、收不到真正的錯誤內容（跟 launchers/serve-lan.js 的
+// readJsonBody() 踩過同一個坑，這裡比照同樣的修法：不 destroy，讓資料照常流完，
+// 超量之後進來的內容直接丟棄、不佔記憶體，settled 旗標防止重複 resolve/reject）。
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    let settled = false;
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    };
+    req.on('data', (chunk) => {
+      if (settled) return;
+      data += chunk;
+      if (data.length > MAX_BODY_BYTES) { fail(new Error('body too large')); return; }
+    });
+    req.on('end', () => {
+      if (settled) return;
+      if (!data) { settled = true; resolve({}); return; }
+      try {
+        const parsed = JSON.parse(data);
+        settled = true;
+        resolve(parsed);
+      } catch (err) {
+        fail(err);
+      }
+    });
+    req.on('error', fail);
+  });
+}
+
+// handlers 由 main.js 注入（show/hide/toggleInteractive/randomMotion/resetPosition/getStatus，
+// 以及額外寵物／模型命名管理那組），這支檔案只管 HTTP 路由跟 CORS，不直接碰
+// BrowserWindow/tray，避免跟 main.js 的狀態管理耦合。
+function dispatch(handlers, route, body, res) {
+  switch (route) {
+    case 'GET /status':
+      sendJson(res, 200, { ok: true, ...handlers.getStatus() });
+      return;
+    case 'POST /show':
+      handlers.show();
+      sendJson(res, 200, { ok: true, ...handlers.getStatus() });
+      return;
+    case 'POST /hide':
+      handlers.hide();
+      sendJson(res, 200, { ok: true, ...handlers.getStatus() });
+      return;
+    case 'POST /toggle-interactive':
+      handlers.toggleInteractive();
+      sendJson(res, 200, { ok: true, ...handlers.getStatus() });
+      return;
+    case 'POST /motion':
+      handlers.randomMotion();
+      sendJson(res, 200, { ok: true });
+      return;
+    case 'POST /reset-position':
+      handlers.resetPosition();
+      sendJson(res, 200, { ok: true });
+      return;
+    case 'GET /extra-pets':
+      sendJson(res, 200, {
+        ok: true,
+        candidates: handlers.getExtraPetCandidates(),
+        checked: handlers.getPendingExtraPetIds(),
+      });
+      return;
+    case 'POST /extra-pets': {
+      const ids = Array.isArray(body.ids) ? body.ids.filter((id) => Number.isInteger(id)) : null;
+      if (!ids) { sendJson(res, 400, { ok: false, error: 'ids 必須是整數陣列' }); return; }
+      const checked = handlers.setExtraPets(ids);
+      sendJson(res, 200, { ok: true, checked });
+      return;
+    }
+    case 'GET /model-config':
+      sendJson(res, 200, { ok: true, ...handlers.getModelConfig() });
+      return;
+    case 'POST /model-config/names': {
+      if (!body.names || typeof body.names !== 'object') {
+        sendJson(res, 400, { ok: false, error: 'names 必須是物件' });
+        return;
+      }
+      const result = handlers.saveModelNames(body.names);
+      sendJson(res, result.ok ? 200 : 500, result);
+      return;
+    }
+    default:
+      sendJson(res, 404, { ok: false, error: 'not found' });
+  }
+}
+
+// handlers 由 main.js 注入，見 dispatch() 開頭說明。
 function startControlServer(handlers) {
   const server = http.createServer((req, res) => {
     const origin = req.headers.origin;
@@ -61,33 +163,23 @@ function startControlServer(handlers) {
     }
 
     const route = `${req.method} ${pathname}`;
-    switch (route) {
-      case 'GET /status':
-        sendJson(res, 200, { ok: true, ...handlers.getStatus() });
-        return;
-      case 'POST /show':
-        handlers.show();
-        sendJson(res, 200, { ok: true, ...handlers.getStatus() });
-        return;
-      case 'POST /hide':
-        handlers.hide();
-        sendJson(res, 200, { ok: true, ...handlers.getStatus() });
-        return;
-      case 'POST /toggle-interactive':
-        handlers.toggleInteractive();
-        sendJson(res, 200, { ok: true, ...handlers.getStatus() });
-        return;
-      case 'POST /motion':
-        handlers.randomMotion();
-        sendJson(res, 200, { ok: true });
-        return;
-      case 'POST /reset-position':
-        handlers.resetPosition();
-        sendJson(res, 200, { ok: true });
-        return;
-      default:
-        sendJson(res, 404, { ok: false, error: 'not found' });
+    if (req.method === 'POST' && ROUTES_NEEDING_BODY.has(route)) {
+      readJsonBody(req)
+        .then((body) => dispatch(handlers, route, body, res))
+        .catch((err) => sendJson(res, 400, { ok: false, error: `body 解析失敗：${err.message}` }));
+      return;
     }
+    if (req.method === 'POST') {
+      // body-agnostic 路由（show/hide/toggle-interactive/motion/reset-position）：不解析
+      // body，帶什麼內容都不影響這些動作執行——維持這幾個路由原本「不管 body」的行為，
+      // 不要因為全域加了 JSON 解析就意外讓它們在收到非 JSON body 時失敗。仍然要把 body
+      // 讀乾淨（drain）：不然底層 socket 可能因為還有未讀資料卡住，影響連線重用。
+      req.on('data', () => {});
+      req.on('end', () => dispatch(handlers, route, {}, res));
+      req.on('error', () => sendJson(res, 400, { ok: false, error: 'bad request' }));
+      return;
+    }
+    dispatch(handlers, route, {}, res);
   });
 
   server.on('error', (err) => {

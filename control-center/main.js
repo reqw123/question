@@ -14,7 +14,41 @@ app.setPath('userData', path.join(app.getPath('appData'), 'desktop-pet'));
 const settingsBridge = require('./settings-bridge.js');
 const processManager = require('./process-manager.js');
 const schema = require('./settings-schema.js');
+const autostartManager = require('./autostart-manager.js');
 
+// 開機自動啟動：Windows Startup 資料夾裡產生出來的 .bat（見 autostart-manager.js）會用
+// 這個參數重新叫起 control-center，代表這次啟動不是使用者手動打開，而是開機時的自動
+// 啟動流程——這條路徑完全不開平常那個管理視窗，只是借用 process-manager.js 的既有
+// 啟動邏輯把目標模式叫起來，做完就自己退出，讓使用者感受到的是「那個模式自己開起來
+// 了」，而不是「多開了一個 control-center 視窗」。
+const AUTOSTART_ARG_PREFIX = '--autostart=';
+const autostartArg = process.argv.find((a) => a.startsWith(AUTOSTART_ARG_PREFIX));
+const autostartModeId = autostartArg ? autostartArg.slice(AUTOSTART_ARG_PREFIX.length) : null;
+
+if (autostartModeId) {
+  // 不搶單一實例鎖——這個行程不開視窗、活不久，搶鎖只會讓使用者剛好在這幾秒內手動
+  // 開控制中心時，手動那次直接被擋下來、開不了視窗。
+  app.whenReady().then(async () => {
+    const logPath = path.join(app.getPath('userData'), 'autostart-log.txt');
+    const writeLog = (line) => {
+      try { fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${line}\n`); } catch { /* 沒地方能報告失敗，忽略 */ }
+    };
+    if (!processManager.MODES[autostartModeId]) {
+      writeLog(`未知的模式：${autostartModeId}`);
+    } else {
+      writeLog(`開始自動啟動：${autostartModeId}`);
+      try {
+        // opts.detached：讓目標行程不會因為這個短命的 bootstrapper 結束而被牽連砍掉，
+        // 見 process-manager.js 的 spawnAndTrack() 開頭說明。
+        const result = await Promise.resolve(processManager.start(autostartModeId, () => {}, { detached: true }));
+        writeLog(result.ok ? `成功（PID ${result.pid}）` : `失敗：${result.error}`);
+      } catch (err) {
+        writeLog(`例外：${err.message}`);
+      }
+    }
+    app.quit();
+  });
+} else {
 // 單一實例：這個 app 代表「question 專案的中樞」，同時開兩個視窗沒有意義，也會讓兩邊
 // 對同一批正在追蹤的行程狀態各自為政。拿不到 lock 代表已經有一個在跑，直接讓這次
 // 啟動結束，讓既有那個視窗聚焦。
@@ -175,4 +209,45 @@ if (!gotLock) {
   ipcMain.on('cc-open-external', (_e, url) => {
     if (typeof url === 'string' && /^https?:\/\//.test(url)) shell.openExternal(url);
   });
+
+  // 開機自動啟動：每個模式各自獨立的 Startup .bat 開關，見 autostart-manager.js。
+  ipcMain.handle('cc-autostart-get', () => {
+    const status = {};
+    Object.keys(processManager.MODES).forEach((modeId) => {
+      status[modeId] = autostartManager.isAutostartEnabled(modeId);
+    });
+    return status;
+  });
+  ipcMain.handle('cc-autostart-set', (_e, modeId, enabled) => {
+    if (!processManager.MODES[modeId]) return { ok: false, error: `不明的模式：${modeId}` };
+    return enabled ? autostartManager.enableAutostart(modeId) : autostartManager.disableAutostart(modeId);
+  });
+
+  // ── 角色與寵物：透過 desktop-pet 的本機控制伺服器（127.0.0.1:47821）遙控正在跑的
+  // 桌寵，跟 desktop-pet-web「本機控制面板」是同一套機制、同一份 loopback 伺服器，
+  // 見 desktop-pet/control-server.js。桌寵沒有跑的話 fetch 會直接連線失敗，統一當成
+  // 「偵測不到桌寵」回傳，不特別區分是連線被拒還是逾時。
+  const CONTROL_SERVER_BASE = 'http://127.0.0.1:47821';
+  const PET_NOT_DETECTED_ERROR = '偵測不到桌寵，請先在「行程管理」啟動桌寵模式';
+
+  async function fetchDesktopPet(pathname, options) {
+    try {
+      const res = await fetch(`${CONTROL_SERVER_BASE}${pathname}`, options);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: body.error || `桌寵控制伺服器回應錯誤（HTTP ${res.status}）` };
+      return body;
+    } catch {
+      return { ok: false, error: PET_NOT_DETECTED_ERROR };
+    }
+  }
+
+  ipcMain.handle('cc-get-extra-pets', () => fetchDesktopPet('/extra-pets'));
+  ipcMain.handle('cc-set-extra-pets', (_e, ids) => fetchDesktopPet('/extra-pets', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+  }));
+  ipcMain.handle('cc-get-model-config', () => fetchDesktopPet('/model-config'));
+  ipcMain.handle('cc-save-model-names', (_e, names) => fetchDesktopPet('/model-config/names', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ names }),
+  }));
+}
 }
