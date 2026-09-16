@@ -38,7 +38,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 // reset-position）從來不看 body，呼叫端本來就不會送——但如果哪天有別的呼叫方式（手動測試、
 // 舊版呼叫端）不小心帶了非 JSON 的 body，也不該因此讓這些動作本身失敗，見下面 startControlServer()
 // 的分流。
-const ROUTES_NEEDING_BODY = new Set(['POST /extra-pets', 'POST /model-config/names']);
+const ROUTES_NEEDING_BODY = new Set(['POST /extra-pets', 'POST /model-config/names', 'POST /shortcuts']);
 
 // 讀取並解析 JSON body，只給真的需要 body 的路由用。
 // body 超過上限時**不能呼叫 req.destroy()**——HTTP/1.x 底下 req 跟 res 共用同一條 TCP
@@ -76,8 +76,9 @@ function readJsonBody(req) {
 }
 
 // handlers 由 main.js 注入（show/hide/toggleInteractive/randomMotion/resetPosition/getStatus，
-// 以及額外寵物／模型命名管理那組），這支檔案只管 HTTP 路由跟 CORS，不直接碰
-// BrowserWindow/tray，避免跟 main.js 的狀態管理耦合。
+// 額外寵物／模型命名管理那組，以及可自訂快捷鍵的 getShortcutsInfo/setShortcut/
+// resetShortcuts，見 control-center「快捷鍵」分頁），這支檔案只管 HTTP 路由跟 CORS，
+// 不直接碰 BrowserWindow/tray，避免跟 main.js 的狀態管理耦合。
 function dispatch(handlers, route, body, res) {
   switch (route) {
     case 'GET /status':
@@ -129,6 +130,22 @@ function dispatch(handlers, route, body, res) {
       sendJson(res, result.ok ? 200 : 500, result);
       return;
     }
+    case 'GET /shortcuts':
+      sendJson(res, 200, { ok: true, ...handlers.getShortcutsInfo() });
+      return;
+    case 'POST /shortcuts': {
+      const { action, accel } = body;
+      if (typeof action !== 'string' || !action) {
+        sendJson(res, 400, { ok: false, error: 'action 必須是字串' });
+        return;
+      }
+      const result = handlers.setShortcut(action, accel);
+      sendJson(res, 200, result);
+      return;
+    }
+    case 'POST /shortcuts/reset':
+      sendJson(res, 200, { ok: true, ...handlers.resetShortcuts() });
+      return;
     default:
       sendJson(res, 404, { ok: false, error: 'not found' });
   }

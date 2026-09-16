@@ -249,5 +249,15 @@ if (!gotLock) {
   ipcMain.handle('cc-save-model-names', (_e, names) => fetchDesktopPet('/model-config/names', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ names }),
   }));
+
+  // 快捷鍵：desktop-pet 那 14 個可自訂全域快捷鍵，實際驗證/註冊邏輯都在 desktop-pet/
+  // main.js（見 registerCustomShortcuts()），這裡只是轉呼叫本機控制伺服器，跟上面
+  // 額外寵物／模型命名管理同一套 fetchDesktopPet() 優雅降級（桌寵沒開就回「偵測不到
+  // 桌寵」，不會讓這個分頁卡住或讓 control-center 當掉）。
+  ipcMain.handle('cc-get-shortcuts', () => fetchDesktopPet('/shortcuts'));
+  ipcMain.handle('cc-set-shortcut', (_e, action, accel) => fetchDesktopPet('/shortcuts', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, accel }),
+  }));
+  ipcMain.handle('cc-reset-shortcuts', () => fetchDesktopPet('/shortcuts/reset', { method: 'POST' }));
 }
 }

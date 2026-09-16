@@ -41,4 +41,9 @@ contextBridge.exposeInMainWorld('controlCenter', {
   setExtraPets: (ids) => ipcRenderer.invoke('cc-set-extra-pets', ids),
   getModelConfig: () => ipcRenderer.invoke('cc-get-model-config'),
   saveModelNames: (names) => ipcRenderer.invoke('cc-save-model-names', names),
+
+  // 快捷鍵：一樣透過桌寵的本機控制伺服器遙控，見 main.js 的 cc-get-shortcuts 等 handler。
+  getShortcuts: () => ipcRenderer.invoke('cc-get-shortcuts'),
+  setShortcut: (action, accel) => ipcRenderer.invoke('cc-set-shortcut', action, accel),
+  resetShortcuts: () => ipcRenderer.invoke('cc-reset-shortcuts'),
 });

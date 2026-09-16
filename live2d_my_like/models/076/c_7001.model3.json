@@ -3,22 +3,13 @@
   "FileReferences": {
     "Moc": "c_7001.moc3",
     "Textures": [
-      "textures/texture_01.png"
+      "textures/texture_00.png"
     ],
     "Physics": ".physics3.json",
     "Motions": {
       "": [
         {
           "File": "motions/c_7001.motion3.json"
-        },
-        {
-          "File": "motions/skill_02.motion3.json"
-        },
-        {
-          "File": "motions/skill_03.motion3.json"
-        },
-        {
-          "File": "motions/skill_04.motion3.json"
         }
       ]
     }

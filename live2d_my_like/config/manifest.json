@@ -222,5 +222,141 @@
     "chatSounds": [],
     "partOverrides": {},
     "paramOverrides": {}
+  },
+  {
+    "id": 20,
+    "path": "models/1209100/1209100.model3.json",
+    "character": "1209100",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 21,
+    "path": "models/88type_5308_normal/model.json",
+    "character": "88type_5308_normal",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 22,
+    "path": "models/aek999_1505_destroy/model.json",
+    "character": "aek999_1505_destroy",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 23,
+    "path": "models/ar15mod_destroy/model.json",
+    "character": "ar15mod_destroy",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 24,
+    "path": "models/browninghp_4602_normal/model.json",
+    "character": "browninghp_4602_normal",
+    "cubism": 2,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 25,
+    "path": "models/furina/芙宁娜.model3.json",
+    "character": "furina",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 26,
+    "path": "models/girl120/l2d01.u.model3.json",
+    "character": "girl120",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
+  },
+  {
+    "id": 27,
+    "path": "models/芙宁娜（vts）/芙宁娜.model3.json",
+    "character": "芙宁娜（vts）",
+    "cubism": 4,
+    "layout": {
+      "offsetX": "",
+      "offsetY": "",
+      "scale": "",
+      "headRatio": "",
+      "headXRatio": "",
+      "bubbleGrow": ""
+    },
+    "chatSounds": [],
+    "partOverrides": {},
+    "paramOverrides": {}
   }
 ]

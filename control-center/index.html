@@ -95,6 +95,12 @@
   .msg.ok { color: var(--success); }
   .msg.error { color: var(--danger); white-space: pre-line; }
 
+  .sc-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+  .sc-label { min-width: 200px; flex: none; }
+  .sc-key { min-width: 140px; }
+  .sc-key.capturing { background: var(--cyan); color: #06222b; border-color: var(--cyan); font-weight: 700; }
+  .sc-note { margin: 0; min-height: auto; font-size: .85em; }
+
   .risk-banner {
     background: rgba(255,180,84,0.1); border: 1px solid rgba(255,180,84,0.35); border-radius: 8px;
     padding: 10px 14px; font-size: .85em; color: var(--warn); margin-bottom: 14px; line-height: 1.6;
@@ -183,6 +189,7 @@
     { id: 'voice', label: TABS.voice },
     { id: 'display', label: TABS.display },
     { id: 'pets', label: '角色與寵物' },
+    { id: 'shortcuts', label: '快捷鍵' },
     { id: 'cli', label: TABS.cli },
     { id: 'manage', label: '設定檔管理' },
     { id: 'diagnostics', label: '診斷與日誌' },
@@ -230,6 +237,7 @@
     buildProcessTab();
     buildDataTabs();
     buildPetsTab();
+    buildShortcutsTab();
     buildCliTab();
     buildManageTab();
     buildDiagnosticsTab();
@@ -706,6 +714,212 @@
     setPetsControlsDisabled(true);
     refreshPetsTab();
     panel._refreshPetsTab = refreshPetsTab;
+  }
+
+  // 快捷鍵分頁：改綁桌寵那 14 個可自訂全域快捷鍵（F8/F9/F10/Ctrl+Alt+C/Ctrl+Shift+I/
+  // Ctrl+Alt+S/E/V/N/Z/[/]/-/=，動作清單/標籤跟桌寵那邊 settings-store.js 的
+  // DEFAULT_SHORTCUTS／SHORTCUT_LABELS 是同一份資料來源，一字不差），一樣透過桌寵的
+  // 本機控制伺服器遙控（見 cc-get-shortcuts 等 handler／desktop-pet/main.js 的
+  // registerCustomShortcuts()）。跟「角色與寵物」分頁同一套優雅降級：偵測不到桌寵
+  // 就顯示「偵測不到桌寵」並停用整頁控制項——改快捷鍵本身雖然只是寫 settings.json、
+  // 不一定要桌寵開著才能寫，但「馬上生效」跟「目前是否真的註冊成功」這兩件事只有
+  // 桌寵這個行程自己知道，桌寵沒開著就先不讓使用者以為改了會立刻生效。
+  //
+  // 按鍵擷取（點按鈕→按下組合鍵→送出）跟保留鍵清單（RESERVED）是跟 wallpaper-app
+  // （C:\tools\file_search\wallpaper-app\settings.html）同一套寫法，字面上幾乎一模
+  // 一樣——這裡只是先在 client 端擋一次讓紅字馬上出現，真正權威判斷永遠是桌寵那邊
+  // main.js 的 validateAccelerator()（跟這裡萬一漏列了什麼保留鍵，存的時候還是會被
+  // 桌寵那邊擋下來，不會真的註冊成一個危險的系統鍵）。
+  function buildShortcutsTab() {
+    const panel = document.getElementById('panel-shortcuts');
+
+    const statusBox = document.createElement('div');
+    statusBox.className = 'field-card';
+    const statusMsg = document.createElement('div');
+    statusMsg.className = 'msg'; statusMsg.textContent = '讀取中...';
+    const reloadBtn = document.createElement('button');
+    reloadBtn.className = 'btn-secondary'; reloadBtn.textContent = '重新讀取';
+    reloadBtn.addEventListener('click', () => refreshShortcutsTab());
+    statusBox.appendChild(statusMsg); statusBox.appendChild(reloadBtn);
+    panel.appendChild(statusBox);
+
+    const box = document.createElement('div');
+    box.className = 'field-card';
+    const label = document.createElement('div');
+    label.className = 'field-label'; label.style.marginBottom = '8px';
+    label.textContent = '全域快捷鍵';
+    const desc = document.createElement('div');
+    desc.className = 'field-desc';
+    desc.textContent = '點右邊的按鍵，然後直接按你要的組合（至少含一個 Ctrl／Alt／Shift，F1–F24 可以單獨用）。Esc 取消擷取。桌寵正在跑的話改了立刻生效，不用重開；沒開著的話會先存進設定檔，下次啟動桌寵才套用。註冊失敗（跟其他軟體衝突）或跟保留鍵/其他動作撞在一起都會標紅。';
+    const list = document.createElement('div');
+    list.id = 'shortcuts-list';
+    const resetRow = document.createElement('div');
+    resetRow.className = 'btn-row'; resetRow.style.marginTop = '10px';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'btn-danger'; resetBtn.textContent = '↺ 全部回復預設';
+    resetBtn.addEventListener('click', async () => {
+      resetBtn.disabled = true;
+      const result = await cc.resetShortcuts();
+      resetBtn.disabled = false;
+      if (result.ok) { log('快捷鍵已全部回復預設', 'ok'); renderShortcutsList(result); }
+      else { log('回復預設快捷鍵失敗：' + result.error, 'err'); }
+    });
+    resetRow.appendChild(resetBtn);
+    box.appendChild(label); box.appendChild(desc); box.appendChild(list); box.appendChild(resetRow);
+    panel.appendChild(box);
+
+    let capturing = null; // action id | null
+    let lastData = null;
+
+    const STATUS_TEXT = {
+      ok: ['ok', '已生效'],
+      failed: ['error', '註冊失敗（可能被其他程式佔用）'],
+      invalid: ['error', '無法使用這組鍵'],
+      conflict: ['error', '和其他動作綁到同一組鍵'],
+    };
+
+    function accelDisplay(a) {
+      return (a || '').replace(/CommandOrControl|Command|Cmd|Meta/gi, 'Ctrl').replace(/Control/gi, 'Ctrl');
+    }
+
+    function renderShortcutsList(data) {
+      lastData = data;
+      list.innerHTML = '';
+      const { shortcuts, labels, status, errors } = data;
+      Object.keys(labels).forEach((action) => {
+        const st = status[action];
+        const [cls, defText] = STATUS_TEXT[st] || ['', '尚未確認註冊結果'];
+        const text = errors[action] || defText;
+        const row = document.createElement('div');
+        row.className = 'sc-row';
+        row.dataset.action = action;
+        const l = document.createElement('span');
+        l.className = 'sc-label';
+        l.textContent = labels[action];
+        const keyBtn = document.createElement('button');
+        keyBtn.className = 'btn-secondary sc-key';
+        keyBtn.textContent = accelDisplay(shortcuts[action]) || '（未設定）';
+        keyBtn.addEventListener('click', () => beginCapture(action));
+        const note = document.createElement('span');
+        note.className = 'msg sc-note' + (cls ? ' ' + cls : '');
+        note.textContent = text;
+        row.appendChild(l); row.appendChild(keyBtn); row.appendChild(note);
+        list.appendChild(row);
+      });
+    }
+
+    function rowFor(action) { return list.querySelector(`.sc-row[data-action="${action}"]`); }
+    function noteFor(action, cls, text) {
+      const note = rowFor(action)?.querySelector('.sc-note');
+      if (!note) return;
+      note.className = 'msg sc-note' + (cls ? ' ' + cls : '');
+      note.textContent = text;
+    }
+
+    function beginCapture(action) {
+      if (capturing) return;
+      capturing = action;
+      const btn = rowFor(action)?.querySelector('.sc-key');
+      if (btn) { btn.classList.add('capturing'); btn.textContent = '按下按鍵…'; }
+    }
+
+    function endCapture() {
+      capturing = null;
+      if (lastData) renderShortcutsList(lastData);
+    }
+
+    function keyName(e) {
+      const c = e.code || '';
+      if (/^Key[A-Z]$/.test(c)) return c.slice(3);
+      if (/^Digit[0-9]$/.test(c)) return c.slice(5);
+      if (/^Numpad[0-9]$/.test(c)) return 'num' + c.slice(6);
+      if (/^F([1-9]|1[0-9]|2[0-4])$/.test(c)) return c;
+      const M = {
+        ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right',
+        Space: 'Space', Enter: 'Return', Tab: 'Tab', Backspace: 'Backspace',
+        Delete: 'Delete', Insert: 'Insert', Home: 'Home', End: 'End',
+        PageUp: 'PageUp', PageDown: 'PageDown',
+        Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\',
+        Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backquote: '`',
+      };
+      return M[c] || null;
+    }
+
+    // 跟桌寵 main.js 的 RESERVED_ACCELS 一字不差（系統保留鍵 + 桌寵固定佔用的情境快速鍵
+    // Ctrl+Alt+數字鍵盤 1~9／全域中止鍵 Esc）。
+    const RESERVED = new Set([
+      'Control+C', 'Control+V', 'Control+X', 'Control+A', 'Control+Z', 'Control+Y',
+      'Control+S', 'Control+P', 'Control+F',
+      'Alt+F4', 'Alt+Tab', 'Alt+Escape', 'Alt+Space',
+      'Control+Escape', 'Control+Alt+Delete', 'Control+Shift+Escape',
+      'Super+L', 'Super+D', 'Super+E', 'Super+R',
+      'Escape',
+      ...Array.from({ length: 9 }, (_, i) => `Control+Alt+num${i + 1}`),
+    ]);
+
+    function toAccelerator(e) {
+      const mods = [];
+      if (e.ctrlKey) mods.push('Control');
+      if (e.altKey) mods.push('Alt');
+      if (e.shiftKey) mods.push('Shift');
+      if (e.metaKey) mods.push('Super');
+      const key = keyName(e);
+      if (!key) return { err: '需要一個實際按鍵' };
+      const isFKey = /^F([1-9]|1[0-9]|2[0-4])$/.test(key);
+      if (mods.length === 0 && !isFKey) {
+        return { err: '字母 / 數字 / 符號鍵要至少加一個 Ctrl / Alt / Shift（F1–F24 可單獨用）' };
+      }
+      const accel = [...mods, key].join('+');
+      if (RESERVED.has(accel)) {
+        return { err: '這是系統保留鍵或桌寵已經固定在用的鍵（剪貼簿、情境快速鍵、中止鍵等），換一組' };
+      }
+      return { accel };
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (!capturing) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') { endCapture(); return; }
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return; // 等真正的鍵
+      const action = capturing;
+      capturing = null;
+      const r = toAccelerator(e);
+      if (r.err) {
+        const btn = rowFor(action)?.querySelector('.sc-key');
+        if (btn) { btn.classList.remove('capturing'); btn.textContent = accelDisplay(lastData?.shortcuts[action]) || '（未設定）'; }
+        noteFor(action, 'error', r.err);
+        return;
+      }
+      (async () => {
+        const result = await cc.setShortcut(action, r.accel);
+        if (result.ok) log(`快捷鍵已更新：${lastData.labels[action]} → ${accelDisplay(r.accel)}`, 'ok');
+        else log(`設定快捷鍵失敗（${lastData.labels[action]}）：${result.error}`, 'err');
+        renderShortcutsList(result);
+      })();
+    }, true);
+
+    function setShortcutsControlsDisabled(disabled) {
+      box.querySelectorAll('button').forEach((el) => { el.disabled = disabled; });
+    }
+
+    async function refreshShortcutsTab() {
+      statusMsg.className = 'msg'; statusMsg.textContent = '讀取中...';
+      const result = await cc.getShortcuts();
+      if (!result.ok) {
+        statusMsg.className = 'msg error'; statusMsg.textContent = '❌ ' + result.error;
+        list.innerHTML = '';
+        setShortcutsControlsDisabled(true);
+        return;
+      }
+      statusMsg.className = 'msg ok'; statusMsg.textContent = '✅ 已連線';
+      setShortcutsControlsDisabled(false);
+      renderShortcutsList(result);
+    }
+
+    setShortcutsControlsDisabled(true);
+    refreshShortcutsTab();
+    panel._refreshShortcutsTab = refreshShortcutsTab;
   }
 
   // CLI 分頁只有 cliFreePermissionMode 這一個欄位，而且 requiresNativeConfirm——不走

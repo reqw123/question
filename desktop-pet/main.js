@@ -76,12 +76,29 @@ let particleEffectOn = settingsStore.getShowParticleModelOnStartup();
 // （執行 window.setParticleEffect(true)），不能每次 reload 都套用，否則會把 F8
 // 「reload 一律回到關閉」的既有修正蓋掉，變成每次 F8 都自動重新打開特效。
 let hasAppliedParticleEffectStartupDefault = false;
+// 「套用角色選擇」（applyMyLikeSelection()）觸發的 reload 是唯一例外：使用者只是
+// 在切角色，不是在操作光粒子特效，不該被「reload 一律回到關閉」這條規則連坐——
+// 不然「3D 模型預設開啟」會在切完角色後自己熄掉，要使用者自己重新開一次，體驗
+// 上跟 Live2D 原本的問題是同一種（見 live2dVisible 宣告處的說明）。這個旗標讓
+// did-finish-load 知道「這次 reload 要保留 particleEffectOn 現有的值，不要照
+// F8 那套邏輯歸零」，用一次就消耗掉，不影響之後其他 reload。
+let preserveParticleEffectOnNextReload = false;
 
 // 「模型序列播放」（一鍵觸發、在 sources.js 設定的多個模型之間連續變形、無限
 // 循環播放，直到手動停止，見 particle-effect.js 的 window.setParticleSequencePlayback()）
 // 開關。刻意不像 particleEffectOn 那樣有「開機預設顯示」選項——這是一次性觸發的
 // 展示效果，不是常駐狀態，每次開機/reload 都預設關閉即可。
 let particleSequenceOn = false;
+
+// Live2D 角色顯示：初始值來自使用者在設定畫面存的「開機預設顯示」
+// （settingsStore.getShowLive2DOnStartup()）。原本 did-finish-load 每次都直接重讀
+// settingsStore，導致「開機預設不顯示」一旦存成 false，之後任何 reload（F8、套用
+// 角色選擇...）都會被重新套成 false，角色永遠不會再出現——即使使用者透過系統匣
+// 「角色1／角色2」主動選了角色也一樣，因為那個操作本身沒有「順便打開顯示」的效果。
+// 改成跟 particleEffectOn 一樣，只在宣告時讀一次settings 當這次執行期間的初始值，
+// did-finish-load 一律套用這個變數（見下面），讓「選角色」這個動作可以直接把它
+// 撥成 true（見 applyMyLikeSelection()），不會被設定檔的開機預設值蓋回去。
+let live2dVisible = settingsStore.getShowLive2DOnStartup();
 
 function loadMyLikeManifest() {
   try {
@@ -366,6 +383,31 @@ function setPendingChar(key, val) {
 function setCharVisible(menuKey, visible) {
   const stateKey = CHAR_MENU_KEY_TO_STATE_KEY[menuKey];
   charVisible[stateKey] = visible;
+  // 使用者主動勾選「顯示」這個角色，但整體 Live2D 因為「開機預設不顯示」正被
+  // live2dVisible=false 藏著（見宣告處說明）——連帶打開整體顯示，不然勾了選單卻
+  // 還是因為外層 canvas 是 display:none 而看不到人，跟角色1/2「套用」選角色時的
+  // 邏輯一致。
+  //
+  // live2dVisible 是共用同一塊 canvas 的全域開關，跟 charVisible 那種「只影響單一
+  // 角色」不是同一層級——如果整體本來是關的，這裡把它打開，另一個角色只要沒被
+  // 個別卸載過（charVisible 預設兩個都是 true）就會跟著冒出來，變成「只點了一個
+  // 角色的選單，兩個角色卻都顯示」。所以打開整體顯示的同時，要把「另一個角色」
+  // 明確收掉（只在它還沒被使用者自己另外打開過、charVisible 還是預設值時才收），
+  // 讓畫面上只有這次被點的角色出現，另一個角色維持原本「沒顯示」的觀感不變。
+  const otherMenuKey = menuKey === 'char1' ? 'char2' : 'char1';
+  const otherStateKey = CHAR_MENU_KEY_TO_STATE_KEY[otherMenuKey];
+  if (visible && !live2dVisible) {
+    if (charVisible[otherStateKey]) {
+      charVisible[otherStateKey] = false;
+      win.webContents
+        .executeJavaScript(`window.setCharVisible(${JSON.stringify(otherStateKey)}, false)`)
+        .catch(() => {});
+    }
+    live2dVisible = true;
+    win.webContents
+      .executeJavaScript('window.setLive2DVisible ? window.setLive2DVisible(true) : null')
+      .catch(() => {});
+  }
   win.webContents
     .executeJavaScript(`window.setCharVisible(${JSON.stringify(stateKey)}, ${visible})`)
     .catch((err) => console.error(`[desktop-pet] 切換${CHAR_LABEL[stateKey]}顯示狀態失敗：`, err));
@@ -388,6 +430,14 @@ function applyMyLikeSelection() {
     .then(() => {
       currentChar1 = c1;
       currentChar2 = c2;
+      // 使用者主動從選單選了角色並按「套用」，代表明確想看到角色——不管「開機預設
+      // 顯示 Live2D」設定是不是 false，這次都要讓它顯示出來，不然選了角色卻還是
+      // 因為開機預設值被藏著，使用者會以為選擇沒生效（見 live2dVisible 宣告處說明）。
+      live2dVisible = true;
+      // 這次 reload 是切角色引起的，不是使用者在操作光粒子特效，不該套用
+      // 「reload 一律回到關閉」那條規則（見 preserveParticleEffectOnNextReload
+      // 宣告處說明）。
+      preserveParticleEffectOnNextReload = true;
       console.log('[desktop-pet] 已套用角色選擇，重新整理...');
       win.reload();
     })
@@ -397,12 +447,22 @@ function applyMyLikeSelection() {
 function buildCharSubmenu(key) {
   const pending = key === 'char1' ? pendingChar1 : pendingChar2;
   const stateKey = CHAR_MENU_KEY_TO_STATE_KEY[key];
+  // charVisible[stateKey] 只代表「這個角色自己有沒有被個別卸載」，不代表畫面上
+  // 真的看得到——「開機預設不顯示 Live2D」時 live2dVisible=false 會把整個 canvas
+  // 藏起來，這時候即使 charVisible[stateKey] 還是 true（角色模型仍在、沒被個別
+  // 卸載），選單卻顯示「顯示中」會讓使用者誤以為角色有秀出來。這裡用兩者相乘的
+  // 結果決定 label/勾選狀態，才符合實際看到的畫面。
+  const actuallyVisible = live2dVisible && charVisible[stateKey];
   return [
     {
-      label: charVisible[stateKey] ? '顯示中（點擊隱藏）' : '已隱藏（點擊顯示）',
+      label: actuallyVisible ? '顯示中（點擊隱藏）' : '已隱藏（點擊顯示）',
       type: 'checkbox',
-      checked: charVisible[stateKey],
-      click: () => setCharVisible(key, !charVisible[stateKey]),
+      checked: actuallyVisible,
+      // 跟著上面顯示的 label/勾選狀態（actuallyVisible）切換，不是跟著
+      // charVisible[stateKey]：不然「已隱藏（點擊顯示）」在 live2dVisible=false、
+      // charVisible[stateKey]=true 的情況下點下去，算出來的反而是 false，變成
+      // 「按了顯示，結果角色被關掉」。
+      click: () => setCharVisible(key, !actuallyVisible),
     },
     { type: 'separator' },
     {
@@ -1856,6 +1916,255 @@ function createTray() {
   }
 }
 
+// ── 可自訂全域快捷鍵（14 個，動作清單/預設值/標籤見 settings-store.js 的
+// DEFAULT_SHORTCUTS／SHORTCUT_LABELS）────────────────────────────────────────
+// 使用者可以在 control-center 的「快捷鍵」分頁改綁這些動作，存檔後 control-center 會呼叫
+// 這支桌寵的本機控制伺服器（control-server.js 的 POST /shortcuts，見 setShortcutAndReload()）
+// 觸發 registerCustomShortcuts() 重新註冊，不用重開桌寵就生效。跟「Ctrl+Alt+數字鍵盤
+// 1~9」（情境，createWindow() 裡獨立的迴圈）／「Esc」（updateGlobalEscapeRegistration()
+// 動態註冊/取消註冊的中止鍵）是分開管理的——這裡只 unregister/register 自己曾經註冊過的
+// accelerator（見 registeredShortcutAccels），不會動到那兩組，兩份清單分別驗證過不會撞在
+// 一起（validateAccelerator() 的 RESERVED_ACCELS 已經把 Ctrl+Alt+num1~9／Escape 都
+// 排進保留清單，使用者沒辦法把這 14 個動作的任何一個改綁成那兩組正在用的鍵）。
+const SHORTCUT_META = {
+  resetPosition: { fn: () => resetPosition() },
+  toggleClickThrough: { fn: () => setClickThrough(!clickThrough) },
+  quit: { fn: () => app.quit() },
+  quitBackup: {
+    fn: () => {
+      console.log('[desktop-pet] 收到「結束程式（備援組合鍵）」快捷鍵，結束桌寵。');
+      app.quit();
+    },
+  },
+  toggleDevTools: { fn: () => win.webContents.toggleDevTools() },
+  toggleParticleSequence: { fn: () => toggleParticleSequence() },
+  toggleIdleChatSound: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript('window.toggleIdleChatSound ? window.toggleIdleChatSound() : null')
+        .catch((err) => console.error('[desktop-pet] 切換閒置閒聊音效失敗：', err));
+    },
+  },
+  toggleTtsSound: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript('window.toggleTtsSound ? window.toggleTtsSound() : null')
+        .catch((err) => console.error('[desktop-pet] 切換對話語音回覆失敗：', err));
+    },
+  },
+  toggleNudgeMode: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript('window.toggleParticleNudgeMode ? window.toggleParticleNudgeMode() : null')
+        .catch((err) => console.error('[desktop-pet] 切換 3D 模型微調模式失敗：', err));
+    },
+  },
+  startVoiceChat: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript('window.startVoiceChatShortcut ? window.startVoiceChatShortcut() : null')
+        .catch((err) => console.error('[desktop-pet] 觸發語音輸入失敗：', err));
+    },
+  },
+  idleChatVolDown: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript(`window.adjustIdleChatVolume ? window.adjustIdleChatVolume(-${VOLUME_STEP}) : null`)
+        .catch((err) => console.error('[desktop-pet] 調降閒置閒聊音效音量失敗：', err));
+    },
+  },
+  idleChatVolUp: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript(`window.adjustIdleChatVolume ? window.adjustIdleChatVolume(${VOLUME_STEP}) : null`)
+        .catch((err) => console.error('[desktop-pet] 調升閒置閒聊音效音量失敗：', err));
+    },
+  },
+  ttsVolDown: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript(`window.adjustTtsVolume ? window.adjustTtsVolume(-${VOLUME_STEP}) : null`)
+        .catch((err) => console.error('[desktop-pet] 調降對話語音回覆音量失敗：', err));
+    },
+  },
+  ttsVolUp: {
+    fn: () => {
+      win.webContents
+        .executeJavaScript(`window.adjustTtsVolume ? window.adjustTtsVolume(${VOLUME_STEP}) : null`)
+        .catch((err) => console.error('[desktop-pet] 調升對話語音回覆音量失敗：', err));
+    },
+  },
+};
+const VOLUME_STEP = 0.1;
+
+let shortcutStatus = {};           // action -> 'ok' | 'failed' | 'invalid' | 'conflict'
+let shortcutErrors = {};           // action -> 錯誤訊息（status 非 'ok' 時才有）
+let registeredShortcutAccels = {}; // action -> 目前真的註冊在 OS 上的 accelerator 字串
+
+// 跟 wallpaper-app（C:\tools\file_search\wallpaper-app\main.js）的自訂快捷鍵驗證邏輯
+// 是同一套（正規化、保留鍵清單、驗證規則字面上一模一樣），這裡另外加了桌寵自己會撞到
+// 的兩組固定鍵（Escape、Ctrl+Alt+數字鍵盤 1~9），見 RESERVED_ACCELS 定義處。
+const MOD_CANON = {
+  control: 'Control', ctrl: 'Control', commandorcontrol: 'Control', cmdorctrl: 'Control',
+  command: 'Control', cmd: 'Control', meta: 'Control', super: 'Super',
+  alt: 'Alt', option: 'Alt', altgr: 'Alt', shift: 'Shift',
+};
+const MOD_ORDER = { Control: 0, Alt: 1, Shift: 2, Super: 3 };
+
+// 把 accelerator 正規化成「修飾鍵固定順序 + 單鍵」的字串，用來比對保留鍵清單／偵測
+// 兩個動作是不是綁到同一組鍵。
+function normalizeAccel(accel) {
+  const mods = [];
+  let key = '';
+  for (const raw of String(accel).split('+')) {
+    const p = raw.trim();
+    if (!p) continue;
+    const canon = MOD_CANON[p.toLowerCase()];
+    if (canon) {
+      if (!mods.includes(canon)) mods.push(canon);
+    } else {
+      key = p.length === 1 ? p.toUpperCase() : p;
+    }
+  }
+  mods.sort((a, b) => MOD_ORDER[a] - MOD_ORDER[b]);
+  return [...mods, key].filter(Boolean).join('+');
+}
+
+// 會蓋掉「全系統」通用功能的組合——一律擋掉，不給註冊（globalShortcut 是 OS 層攔截，
+// 綁了就每個 app 都沒得用）。剪貼簿／復原／全選／視窗切換這幾類是每個輸入框都靠肌肉
+// 記憶在用的，被搶走幾乎等於系統壞掉。後面兩行是桌寵自己已經固定在用、不開放這 14 個
+// 動作搶走的鍵（情境快速鍵、全域中止鍵，見上面 SHORTCUT_META 註解）。
+const RESERVED_ACCELS = new Set([
+  'Control+C', 'Control+V', 'Control+X', 'Control+A', 'Control+Z', 'Control+Y',
+  'Control+S', 'Control+P', 'Control+F',
+  'Alt+F4', 'Alt+Tab', 'Alt+Escape', 'Alt+Space',
+  'Control+Escape', 'Control+Alt+Delete', 'Control+Shift+Escape',
+  'Super+L', 'Super+D', 'Super+E', 'Super+R',
+  'Escape',
+  ...Array.from({ length: 9 }, (_, i) => `Control+Alt+num${i + 1}`),
+]);
+
+const IS_MODIFIER = /^(Control|Ctrl|CommandOrControl|Command|Cmd|Alt|Option|AltGr|Shift|Super|Meta)$/i;
+
+function acceleratorHasModifier(accel) {
+  return String(accel).split('+').some((p) => IS_MODIFIER.test(p.trim()));
+}
+
+function validateAccelerator(accel) {
+  if (typeof accel !== 'string' || !accel.trim()) return '快捷鍵不能是空的';
+  const norm = normalizeAccel(accel);
+  const last = norm.split('+').pop();
+  if (IS_MODIFIER.test(last)) return '結尾要是一個實際按鍵，不能只有修飾鍵';
+  // F1–F24 可以單獨用（沒有其他功能靠它們打字）；其他鍵一定要配修飾鍵。
+  const isFKey = /^F([1-9]|1[0-9]|2[0-4])$/.test(last);
+  if (!isFKey && !acceleratorHasModifier(accel)) {
+    return '字母 / 數字 / 符號鍵要至少加一個 Ctrl / Alt / Shift（F1–F24 可單獨用）';
+  }
+  if (RESERVED_ACCELS.has(norm)) {
+    return '這是系統保留鍵或桌寵已經固定在用的鍵（剪貼簿、情境快速鍵、中止鍵等），換一組';
+  }
+  return null;
+}
+
+// 重新註冊這 14 個可自訂快捷鍵：先把自己上次註冊過的 accelerator 解掉（只解自己這份
+// 清單裡的，不會動到 Ctrl+Alt+數字鍵盤 1~9／Esc），再依目前 settings.json 的值逐一
+// 驗證＋註冊。桌寵啟動時（createWindow()）跟 control-center 存了新的快捷鍵之後（透過
+// control-server.js 的 POST /shortcuts）都會呼叫這裡，兩種情境共用同一份邏輯，不會
+// 兩邊行為兜不起來。
+function registerCustomShortcuts() {
+  shortcutStatus = {};
+  shortcutErrors = {};
+  const sc = settingsStore.getShortcuts();
+  const seen = new Map(); // 正規化 accel -> action（同一組鍵被綁到兩個 action 時擋掉）
+
+  for (const [action, meta] of Object.entries(SHORTCUT_META)) {
+    const prevAccel = registeredShortcutAccels[action];
+    if (prevAccel) {
+      globalShortcut.unregister(prevAccel);
+      delete registeredShortcutAccels[action];
+    }
+    const accel = sc[action];
+    const bad = validateAccelerator(accel);
+    if (bad) {
+      shortcutStatus[action] = 'invalid';
+      shortcutErrors[action] = bad;
+      console.warn(`[desktop-pet] 快捷鍵「${accel}」（${settingsStore.SHORTCUT_LABELS[action]}）：${bad}`);
+      continue;
+    }
+    const norm = normalizeAccel(accel);
+    if (seen.has(norm)) {
+      shortcutStatus[action] = 'conflict';
+      shortcutErrors[action] = `和「${settingsStore.SHORTCUT_LABELS[seen.get(norm)]}」綁到同一組鍵`;
+      console.warn(`[desktop-pet] 快捷鍵「${accel}」重複（${seen.get(norm)} / ${action}）`);
+      continue;
+    }
+    let ok = false;
+    try {
+      ok = globalShortcut.register(accel, meta.fn);
+    } catch (err) {
+      console.warn(`[desktop-pet] 快捷鍵「${accel}」註冊丟錯：`, err.message);
+    }
+    shortcutStatus[action] = ok ? 'ok' : 'failed';
+    if (ok) {
+      seen.set(norm, action);
+      registeredShortcutAccels[action] = accel;
+    } else {
+      shortcutErrors[action] = '註冊失敗——可能被其他程式佔用，改用系統匣選單或換一組';
+      console.warn(`[desktop-pet] 快捷鍵「${accel}」（${settingsStore.SHORTCUT_LABELS[action]}）註冊失敗（可能跟其他程式衝突）`);
+    }
+  }
+}
+
+// 給 control-server.js 的 GET /shortcuts 用——control-center「快捷鍵」分頁開頁/存檔後
+// 都靠這包資料畫面。defaults／labels 是靜態資料，跟 status/errors（要看桌寵這個行程
+// 目前真正的註冊結果）分開放，讓呼叫端不用另外併資料。
+function getShortcutsInfo() {
+  return {
+    shortcuts: settingsStore.getShortcuts(),
+    defaults: settingsStore.DEFAULT_SHORTCUTS,
+    labels: settingsStore.SHORTCUT_LABELS,
+    status: shortcutStatus,
+    errors: shortcutErrors,
+  };
+}
+
+// 給 control-server.js 的 POST /shortcuts 用，跟 wallpaper-app 的 `dw-set-shortcut` IPC
+// handler 是同一套邏輯（驗證格式/保留鍵、查跟其他 action 撞不撞、沒問題才寫檔+重新
+// 註冊）。error 有值代表沒存（畫面顯示紅字，settings.json 裡舊的那組維持有效，因為
+// registerCustomShortcuts() 根本沒被呼叫到）。
+function setShortcutAndReload(action, accel) {
+  if (!settingsStore.SHORTCUT_ACTIONS.includes(action)) {
+    return { ok: false, error: '未知的快捷鍵動作', ...getShortcutsInfo() };
+  }
+  const trimmed = typeof accel === 'string' ? accel.trim() : '';
+  const invalid = validateAccelerator(trimmed);
+  if (invalid) return { ok: false, error: invalid, ...getShortcutsInfo() };
+  const cur = settingsStore.getShortcuts();
+  const norm = normalizeAccel(trimmed);
+  const clash = Object.entries(cur).find(([a, v]) => a !== action && normalizeAccel(v) === norm);
+  if (clash) {
+    return {
+      ok: false,
+      error: `這組鍵已經綁在「${settingsStore.SHORTCUT_LABELS[clash[0]]}」`,
+      ...getShortcutsInfo(),
+    };
+  }
+  settingsStore.setShortcut(action, trimmed);
+  registerCustomShortcuts();
+  const st = shortcutStatus[action];
+  return {
+    ok: st === 'ok',
+    error: st === 'ok' ? undefined : (shortcutErrors[action] || '無法設定'),
+    ...getShortcutsInfo(),
+  };
+}
+
+function resetShortcutsAndReload() {
+  settingsStore.resetShortcuts();
+  registerCustomShortcuts();
+  return getShortcutsInfo();
+}
+
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -1970,12 +2279,13 @@ function createWindow() {
     // 「第一次啟動」跟「之後 reload」兩種情況處理。
     syncParticleSequenceEnabledFromRenderer();
 
-    // Live2D 顯示：套用使用者在設定畫面存的開機預設值（settingsStore.getShowLive2DOnStartup()）。
-    // 這個沒有運行期切換（不像光粒子特效有系統匣選單可以隨時開關），永遠等於這份
-    // 設定，每次 reload 都套用同一個值即可，不用像下面 particleEffectOn 那樣分
-    // 「第一次啟動」跟「之後 reload」兩種情況處理。
+    // Live2D 顯示：套用 live2dVisible 這個變數（初始值＝使用者存的開機預設值，之後
+    // 可能被 applyMyLikeSelection() 撥成 true）——刻意不在這裡重讀
+    // settingsStore.getShowLive2DOnStartup()，不然「開機預設不顯示」會在每次 reload
+    // （F8、套用角色選擇...）都被重新套用一次，把剛剛選角色時撥成 true 的顯示狀態
+    // 蓋回去，變成永遠看不到角色（見 live2dVisible 宣告處的說明）。
     win.webContents.executeJavaScript(
-      `window.setLive2DVisible ? window.setLive2DVisible(${settingsStore.getShowLive2DOnStartup()}) : null`
+      `window.setLive2DVisible ? window.setLive2DVisible(${live2dVisible}) : null`
     ).catch(() => {});
 
     if (!hasAppliedParticleEffectStartupDefault) {
@@ -1991,144 +2301,32 @@ function createWindow() {
           .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
           .catch(() => {});
       }
+    } else if (preserveParticleEffectOnNextReload) {
+      // 這次 reload 是「套用角色選擇」引起的，不是 F8：使用者在切角色，沒有動到
+      // 光粒子特效，維持 reload 前 particleEffectOn 的值，不要被下面那條「reload
+      // 一律回到關閉」的規則歸零（見 preserveParticleEffectOnNextReload 宣告處說明）。
+      preserveParticleEffectOnNextReload = false;
+      if (particleEffectOn) {
+        win.webContents
+          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
+          .catch(() => {});
+      }
     } else {
-      // 之後任何 reload（F8、套用角色選擇...）：維持原本修好的行為——
-      // particle-effect.js reload 後一律回到關閉，這裡讓 main.js 記的狀態（系統匣
-      // 勾選）跟著對齊，不會卡在 reload 前的勾選狀態（見 syncParticleEffectEnabledFromRenderer()
-      // 開頭的說明）。這裡刻意不再套用開機預設值，不然每次 F8 都會自動重新打開
-      // 特效，跟「F8 reload 一律回到關閉」的既有修正互相矛盾。
+      // 之後任何 reload（F8...）：維持原本修好的行為——particle-effect.js reload
+      // 後一律回到關閉，這裡讓 main.js 記的狀態（系統匣勾選）跟著對齊，不會卡在
+      // reload 前的勾選狀態（見 syncParticleEffectEnabledFromRenderer() 開頭的
+      // 說明）。這裡刻意不再套用開機預設值，不然每次 F8 都會自動重新打開特效，
+      // 跟「F8 reload 一律回到關閉」的既有修正互相矛盾。
       syncParticleEffectEnabledFromRenderer();
     }
   });
 
-  // F9：切換「點擊穿透」。單一按鍵，比組合鍵好按。若跟其他軟體快捷鍵衝突導致註冊失敗，
-  // 系統匣圖示（右下角、右鍵選單）是保證能用的備援切換方式。
-  const ok = globalShortcut.register('F9', () => setClickThrough(!clickThrough));
-  if (!ok) console.warn('[desktop-pet] F9 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用系統匣圖示右鍵選單切換');
-
-  const okQ = globalShortcut.register('F10', () => app.quit());
-  if (!okQ) console.warn('[desktop-pet] F10 全域快捷鍵註冊失敗，請改用系統匣圖示右鍵選單結束');
-
-  // Ctrl+Alt+C：跟 F10 做同一件事（結束桌寵），多一個安全前綴組合鍵當備援——F10 是
-  // 裸鍵，比較容易跟其他常駐軟體（截圖/錄影工具、瀏覽器擴充功能等）的全域快捷鍵衝突。
-  // 使用者要求這顆一定要在終端機印出提示，跟 F10 靜默結束不同，好讓「桌寵是被快捷鍵
-  // 結束的，不是當掉」這件事在終端機看得到，不用回頭猜。
-  const okQuit = globalShortcut.register('Control+Alt+C', () => {
-    console.log('[desktop-pet] 收到 Ctrl+Alt+C，結束桌寵。');
-    app.quit();
-  });
-  if (!okQuit) console.warn('[desktop-pet] Ctrl+Alt+C 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用 F10 或系統匣圖示右鍵選單結束');
-
-  const okReset = globalShortcut.register('F8', resetPosition);
-  if (!okReset) console.warn('[desktop-pet] F8 全域快捷鍵註冊失敗，請改用系統匣圖示右鍵選單還原');
-
-  // Ctrl+Shift+I：開關 DevTools。這個視窗沒有設定應用程式選單（frame:false 本來就沒有
-  // 選單列），Electron 預設綁在選單上的「切換開發人員工具」F12/Ctrl+Shift+I 快捷鍵不會
-  // 生效，所以跟 F8/F9/F10 一樣手動註冊一個。原本試過 F12，但那顆鍵很容易被其他軟體
-  // （截圖/錄影工具等）全域佔用，改用瀏覽器 DevTools 同款的 Ctrl+Shift+I 組合鍵比較不
-  // 容易撞。主要是給校正 particle-effect（光粒子特效）模型的 scale/position/rotation
-  // 用——particle-sampler.js 沒填 scale/position 時會把自動置中縮放算出來的包圍盒
-  // 尺寸/中心印在 Console，直接照著抄就是校正起點。
-  const okDevTools = globalShortcut.register('CommandOrControl+Shift+I', () => win.webContents.toggleDevTools());
-  if (!okDevTools) console.warn('[desktop-pet] Ctrl+Shift+I 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
-
-  // Ctrl+Alt+S：切換「模型序列播放」（S 對應 Sequence；一鍵在 sources.js 的多個
-  // 模型之間連續變形，無限循環，直到再按一次停止，見 particle-effect.js 的
-  // window.setParticleSequencePlayback()）。原本試過 Ctrl+Alt+M，註冊失敗（跟
-  // 其他程式衝突，Windows 上很多軟體的靜音/切換快捷鍵會搶 Ctrl+Alt+M），改用
-  // 這個。跟下面 Ctrl+Alt+數字鍵盤同一種安全前綴慣例（避開會被日常打字誤觸的
-  // 裸鍵），註冊失敗時比照 F8/F9/F10，提示改用系統匣選單。
-  const okSequence = globalShortcut.register('Control+Alt+S', () => toggleParticleSequence());
-  if (!okSequence) console.warn('[desktop-pet] Ctrl+Alt+S 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用系統匣圖示右鍵選單切換');
-
-  // Ctrl+Alt+E／Ctrl+Alt+V：切換桌寵左下角那兩顆音效按鈕（見 index.html 的
-  // makeMuteButton()），不用切成互動模式、點得到按鈕才能操作。E 對應「閒置閒聊
-  // 音效」（角色待機時的環境音效，Effect）、V 對應「對話語音回覆」（即時對話的
-  // TTS 語音，Voice）——兩顆按鈕本來就用不同顏色色條/徽章區分（見 index.html
-  // makeMuteButton() 的說明），這裡的快捷鍵字母跟著同一組英文意象取，方便記。
-  // 跟 Ctrl+Alt+S 同一種安全前綴慣例，避開日常打字會誤觸的裸鍵；實際切換邏輯
-  // 呼叫 index.html 掛在 window 上的 toggleIdleChatSound()/toggleTtsSound()，
-  // 跟滑鼠點按鈕共用同一份 toggle()，不會兩邊邏輯兜不起來。
-  const okChatSound = globalShortcut.register('Control+Alt+E', () => {
-    win.webContents
-      .executeJavaScript('window.toggleIdleChatSound ? window.toggleIdleChatSound() : null')
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+E 切換閒置閒聊音效失敗：', err));
-  });
-  if (!okChatSound) console.warn('[desktop-pet] Ctrl+Alt+E 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用畫面左下角的音效按鈕切換');
-
-  const okTtsSound = globalShortcut.register('Control+Alt+V', () => {
-    win.webContents
-      .executeJavaScript('window.toggleTtsSound ? window.toggleTtsSound() : null')
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+V 切換對話語音回覆失敗：', err));
-  });
-  if (!okTtsSound) console.warn('[desktop-pet] Ctrl+Alt+V 全域快捷鍵註冊失敗（可能跟其他程式衝突），請改用畫面左下角的音效按鈕切換');
-
-  // Ctrl+Alt+N：切換 3D 模型微調 debug 模式（N 對應「Nudge」，跟 particle-effect.js
-  // 的 MANUAL_NUDGE_KEYS／handleManualNudgeKey() 是同一組詞彙）。這組方向鍵/[ ]/
-  // PageUp/PageDown/Home/End/R/P 原本借用「互動模式」當開關，但互動模式同時也是能
-  // 打字聊天的狀態，方向鍵會被這裡搶走、聊天輸入框的游標移動反而失效——改成獨立、
-  // 預設關閉的開關，只有明確按過這顆快捷鍵才會生效，用完記得再按一次關掉，避免忘記
-  // 開著、之後打字時又被搶鍵。呼叫 particle-effect.js 掛在 window 上的
-  // toggleParticleNudgeMode()，開/關都會印 [particle-debug] 開頭的訊息（見上面
-  // console-message 白名單，會同時出現在 DevTools Console 跟這個終端機視窗）。
-  const okNudgeMode = globalShortcut.register('Control+Alt+N', () => {
-    win.webContents
-      .executeJavaScript('window.toggleParticleNudgeMode ? window.toggleParticleNudgeMode() : null')
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+N 切換 3D 模型微調模式失敗：', err));
-  });
-  if (!okNudgeMode) console.warn('[desktop-pet] Ctrl+Alt+N 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
-
-  // Ctrl+Alt+Z：等同直接點麥克風鈕，不用先點角色開輸入框再點🎤兩個步驟。原本用
-  // Ctrl+Alt+M（M 對應「Mic」），但上面 Ctrl+Alt+S 那段註解就記過 Windows 上很多
-  // 軟體的靜音/切換快捷鍵會搶 Ctrl+Alt+M，這裡也一樣踩到，改用 Z（跟其他既有快捷鍵
-  // 沒有衝突，鍵盤位置也好按）。因為是全域快捷鍵（OS 層級攔截），互動/穿透模式都
-  // 按得到——穿透模式下滑鼠點不到角色本體，這是唯一能直接開口說話的入口。呼叫
-  // index.html 掛在 window 上的 startVoiceChatShortcut()：聊天框沒開就先開給目前
-  // 有就緒的角色，再等同觸發一次🎤點擊（見該函式定義處說明，含「錄音中再按一次＝
-  // 提前停止」「開講前先打斷正在播放的角色語音，避免錄到自己回覆造成回授」這些跟
-  // 滑鼠操作一致的行為）。
-  const okVoiceChat = globalShortcut.register('Control+Alt+Z', () => {
-    win.webContents
-      .executeJavaScript('window.startVoiceChatShortcut ? window.startVoiceChatShortcut() : null')
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+Z 觸發語音輸入失敗：', err));
-  });
-  if (!okVoiceChat) console.warn('[desktop-pet] Ctrl+Alt+Z 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
-
-  // Ctrl+Alt+[／]：調「閒置閒聊音效」音量（跟上面 Ctrl+Alt+E 切的是同一顆按鈕）；
-  // Ctrl+Alt+-／=：調「對話語音回覆」音量（跟 Ctrl+Alt+V 切的是同一顆）。方括號/
-  // 減等號各自成對、位置相鄰好記，跟切靜音用的 E/V 字母刻意分開，避免同一顆鍵
-  // 身兼「切靜音」跟「調音量」兩種語意。呼叫 index.html 掛在 window 上的
-  // adjustIdleChatVolume()/adjustTtsVolume()，每次 ±10%，並印目前音量（見 index.html
-  // 該函式的說明）——這則 log 在上面 win.webContents.on('console-message', ...) 的
-  // 白名單內，會同時出現在 DevTools Console 跟這個終端機視窗。
-  const VOLUME_STEP = 0.1;
-  const okChatVolDown = globalShortcut.register('Control+Alt+[', () => {
-    win.webContents
-      .executeJavaScript(`window.adjustIdleChatVolume ? window.adjustIdleChatVolume(-${VOLUME_STEP}) : null`)
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+[ 調降閒置閒聊音效音量失敗：', err));
-  });
-  if (!okChatVolDown) console.warn('[desktop-pet] Ctrl+Alt+[ 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
-
-  const okChatVolUp = globalShortcut.register('Control+Alt+]', () => {
-    win.webContents
-      .executeJavaScript(`window.adjustIdleChatVolume ? window.adjustIdleChatVolume(${VOLUME_STEP}) : null`)
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+] 調升閒置閒聊音效音量失敗：', err));
-  });
-  if (!okChatVolUp) console.warn('[desktop-pet] Ctrl+Alt+] 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
-
-  const okTtsVolDown = globalShortcut.register('Control+Alt+-', () => {
-    win.webContents
-      .executeJavaScript(`window.adjustTtsVolume ? window.adjustTtsVolume(-${VOLUME_STEP}) : null`)
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+- 調降對話語音回覆音量失敗：', err));
-  });
-  if (!okTtsVolDown) console.warn('[desktop-pet] Ctrl+Alt+- 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
-
-  const okTtsVolUp = globalShortcut.register('Control+Alt+=', () => {
-    win.webContents
-      .executeJavaScript(`window.adjustTtsVolume ? window.adjustTtsVolume(${VOLUME_STEP}) : null`)
-      .catch((err) => console.error('[desktop-pet] Ctrl+Alt+= 調升對話語音回覆音量失敗：', err));
-  });
-  if (!okTtsVolUp) console.warn('[desktop-pet] Ctrl+Alt+= 全域快捷鍵註冊失敗（可能跟其他程式衝突）');
+  // F8/F9/F10/Ctrl+Alt+C/Ctrl+Shift+I/Ctrl+Alt+S/E/V/N/Z/[/]/-/= 這 14 個可自訂快捷鍵
+  // 的實際註冊邏輯，見 createWindow() 之前的 registerCustomShortcuts()（動作內容/預設鍵
+  // 位在 SHORTCUT_META／settings-store.js 的 DEFAULT_SHORTCUTS）。註冊失敗只會印警告、
+  // 存進 shortcutStatus/shortcutErrors 供 control-center「快捷鍵」分頁顯示，不會擋住
+  // 桌寵繼續啟動——系統匣選單一直都是保證能用的備援操作方式。
+  registerCustomShortcuts();
 
   // Ctrl+Alt+數字鍵盤 1~9：依序觸發 scenes.json 裡的情境，順序跟系統匣「情境演出」子選單
   // （buildSceneSubmenu()）完全一致——都是 Object.keys(readScenes())，同一份資料來源，
@@ -2187,22 +2385,30 @@ app.whenReady().then(async () => {
   watchParticleModelSources();
   createWindow();
   createTray();
-  console.log([
-    '[desktop-pet] 啟動完成，快捷鍵：',
-    '[desktop-pet]   F8 還原預設位置/縮放',
-    '[desktop-pet]   F9 切換互動/穿透模式',
-    '[desktop-pet]   F10 結束',
-    '[desktop-pet]   Ctrl+Alt+C 結束（跟 F10 一樣，備援組合鍵，觸發時會印這行提示）',
-    '[desktop-pet]   Ctrl+Alt+數字鍵盤 1-9 依序觸發情境',
-    '[desktop-pet]   Ctrl+Alt+E 切換閒置閒聊音效',
-    '[desktop-pet]   Ctrl+Alt+V 切換對話語音回覆',
-    '[desktop-pet]   Ctrl+Alt+N 切換 3D 模型微調 debug 模式（開啟後方向鍵/[ ]/PageUp/PageDown/Home/End/R/P 才會生效）',
-    '[desktop-pet]   Ctrl+Alt+S 切換模型序列播放（sources.js 設定的多個 3D 模型間連續變形，跟系統匣「光粒子特效」子選單是同一個開關）',
-    '[desktop-pet]   Ctrl+Alt+Z 直接開始語音輸入（等同點🎤，穿透模式下也按得到）',
-    '[desktop-pet]   Ctrl+Alt+[ / ] 調降/調升閒置閒聊音效音量',
-    '[desktop-pet]   Ctrl+Alt+- / = 調降/調升對話語音回覆音量',
-    '[desktop-pet]   Ctrl+Shift+I 開關 DevTools（校正 particle-effect 模型 scale/position 用，見 particle-effect/動畫參數說明.md）',
-  ].join('\n'));
+  // 這 14 個現在是可自訂快捷鍵（見 SHORTCUT_META／registerCustomShortcuts()），啟動時
+  // 印的是「目前真的生效的組合」，不是寫死的預設值——使用者可能已經在 control-center
+  // 的「快捷鍵」分頁改過，印死的舊字串會跟實際狀況兜不起來。Ctrl+Alt+數字鍵盤 1~9
+  // （情境）跟 Esc（動態中止鍵）不開放自訂，繼續照舊印死。
+  {
+    const sc = settingsStore.getShortcuts();
+    const accelDisplay = (a) => String(a).replace(/CommandOrControl|Command|Cmd|Meta/gi, 'Ctrl').replace(/Control/gi, 'Ctrl');
+    console.log([
+      '[desktop-pet] 啟動完成，快捷鍵（可在主控中心的「快捷鍵」分頁修改）：',
+      `[desktop-pet]   ${accelDisplay(sc.resetPosition)} ${settingsStore.SHORTCUT_LABELS.resetPosition}`,
+      `[desktop-pet]   ${accelDisplay(sc.toggleClickThrough)} ${settingsStore.SHORTCUT_LABELS.toggleClickThrough}`,
+      `[desktop-pet]   ${accelDisplay(sc.quit)} ${settingsStore.SHORTCUT_LABELS.quit}`,
+      `[desktop-pet]   ${accelDisplay(sc.quitBackup)} ${settingsStore.SHORTCUT_LABELS.quitBackup}（觸發時會印這行提示）`,
+      '[desktop-pet]   Ctrl+Alt+數字鍵盤 1-9 依序觸發情境',
+      `[desktop-pet]   ${accelDisplay(sc.toggleIdleChatSound)} ${settingsStore.SHORTCUT_LABELS.toggleIdleChatSound}`,
+      `[desktop-pet]   ${accelDisplay(sc.toggleTtsSound)} ${settingsStore.SHORTCUT_LABELS.toggleTtsSound}`,
+      `[desktop-pet]   ${accelDisplay(sc.toggleNudgeMode)} ${settingsStore.SHORTCUT_LABELS.toggleNudgeMode}（開啟後方向鍵/[ ]/PageUp/PageDown/Home/End/R/P 才會生效）`,
+      `[desktop-pet]   ${accelDisplay(sc.toggleParticleSequence)} ${settingsStore.SHORTCUT_LABELS.toggleParticleSequence}（sources.js 設定的多個 3D 模型間連續變形，跟系統匣「光粒子特效」子選單是同一個開關）`,
+      `[desktop-pet]   ${accelDisplay(sc.startVoiceChat)} ${settingsStore.SHORTCUT_LABELS.startVoiceChat}（等同點🎤，穿透模式下也按得到）`,
+      `[desktop-pet]   ${accelDisplay(sc.idleChatVolDown)} / ${accelDisplay(sc.idleChatVolUp)} 調降/調升閒置閒聊音效音量`,
+      `[desktop-pet]   ${accelDisplay(sc.ttsVolDown)} / ${accelDisplay(sc.ttsVolUp)} 調降/調升對話語音回覆音量`,
+      `[desktop-pet]   ${accelDisplay(sc.toggleDevTools)} ${settingsStore.SHORTCUT_LABELS.toggleDevTools}（校正 particle-effect 模型 scale/position 用，見 particle-effect/動畫參數說明.md）`,
+    ].join('\n'));
+  }
   setClickThrough(clickThrough);
   startControlServer({
     getStatus: getControlStatus,
@@ -2234,6 +2440,10 @@ app.whenReady().then(async () => {
     setExtraPets: applyExtraPetIds,
     getModelConfig: readModelConfig,
     saveModelNames,
+    // 給 control-center「快捷鍵」分頁用（見 control-server.js 新增的 /shortcuts 路由）。
+    getShortcutsInfo,
+    setShortcut: setShortcutAndReload,
+    resetShortcuts: resetShortcutsAndReload,
   });
 });
 app.on('window-all-closed', () => app.quit());

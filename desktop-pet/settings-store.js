@@ -238,6 +238,96 @@ function setShowParticleModelOnStartup(enabled) {
   }
 }
 
+// ── 全域快捷鍵（可在 control-center「快捷鍵」分頁自訂，見該專案 settings-bridge.js）──
+// action id -> 預設 accelerator 字串，跟 main.js 原本寫死在 globalShortcut.register()
+// 呼叫裡的那些字串一字不差，保證「沒改過」的使用者行為完全不變。這裡只收「可自訂」的
+// 14 個：F8/F9/F10 之外還加了 Ctrl+Alt+C 這個結束備援、Ctrl+Shift+I／Ctrl+Alt+S/E/V/N/Z
+// 這幾個功能鍵、以及音量四個方向鍵。刻意不收「Ctrl+Alt+數字鍵盤 1~9」（情境快速鍵，
+// 九個一組、共用同一個前綴，開放個別自訂會讓 UI/驗證邏輯複雜很多，目前維持寫死）跟
+// 「Esc」（main.js 動態註冊/取消註冊、只有真的有東西可以中止時才佔用，且它是裸鍵，
+// 本來就不符合下面「非 F 鍵一定要帶修飾鍵」的驗證規則，開放自訂也設不了）——
+// main.js 的 registerCustomShortcuts() 一定要把這兩組排除在「可自訂」清單外去看待，
+// 不能被這裡的 unregister/re-register 邏輯誤傷。
+const DEFAULT_SHORTCUTS = Object.freeze({
+  resetPosition: 'F8',
+  toggleClickThrough: 'F9',
+  quit: 'F10',
+  quitBackup: 'Control+Alt+C',
+  toggleDevTools: 'CommandOrControl+Shift+I',
+  toggleParticleSequence: 'Control+Alt+S',
+  toggleIdleChatSound: 'Control+Alt+E',
+  toggleTtsSound: 'Control+Alt+V',
+  toggleNudgeMode: 'Control+Alt+N',
+  startVoiceChat: 'Control+Alt+Z',
+  idleChatVolDown: 'Control+Alt+[',
+  idleChatVolUp: 'Control+Alt+]',
+  ttsVolDown: 'Control+Alt+-',
+  ttsVolUp: 'Control+Alt+=',
+});
+const SHORTCUT_ACTIONS = Object.keys(DEFAULT_SHORTCUTS);
+
+// 顯示用中文標籤——control-center 的「快捷鍵」分頁、main.js 註冊失敗時的 console.warn
+// 共用同一份文字，不會兩邊各自寫一份、之後改名忘記改另一邊。
+const SHORTCUT_LABELS = Object.freeze({
+  resetPosition: '還原預設位置/縮放',
+  toggleClickThrough: '切換點擊穿透 / 互動模式',
+  quit: '結束程式',
+  quitBackup: '結束程式（備援組合鍵）',
+  toggleDevTools: '開關 DevTools',
+  toggleParticleSequence: '切換「模型序列播放」',
+  toggleIdleChatSound: '切換「閒置閒聊音效」',
+  toggleTtsSound: '切換「對話語音回覆」',
+  toggleNudgeMode: '切換「3D 模型微調 debug 模式」',
+  startVoiceChat: '直接開始語音輸入',
+  idleChatVolDown: '調降「閒置閒聊音效」音量',
+  idleChatVolUp: '調升「閒置閒聊音效」音量',
+  ttsVolDown: '調降「對話語音回覆」音量',
+  ttsVolUp: '調升「對話語音回覆」音量',
+});
+
+// 沒存過、或存的值不是字串（設定檔手動改壞）都退回預設值，逐個 key 檢查，不是整包
+// 「有壞就全部重置」，跟這個檔案其他 get*() 一貫的防呆風格一致。
+function getShortcuts() {
+  const { shortcuts } = readSettings();
+  const out = { ...DEFAULT_SHORTCUTS };
+  if (shortcuts && typeof shortcuts === 'object') {
+    for (const action of SHORTCUT_ACTIONS) {
+      const v = shortcuts[action];
+      if (typeof v === 'string' && v.trim()) out[action] = v.trim();
+    }
+  }
+  return out;
+}
+
+// 存單一 action 的快捷鍵——驗證（格式、保留鍵、跟其他 action 衝突）由呼叫端
+// （control-center/settings-bridge.js 轉呼叫桌寵本機控制伺服器）負責，這裡只單純寫檔，
+// 跟 setShowLive2DOnStartup() 等其他 setter 一致，不在 store 層重複一份驗證邏輯。
+function setShortcut(action, accel) {
+  if (!SHORTCUT_ACTIONS.includes(action)) return { ok: false, error: '未知的快捷鍵動作' };
+  try {
+    const current = readSettings();
+    const shortcuts = (current.shortcuts && typeof current.shortcuts === 'object') ? current.shortcuts : {};
+    current.shortcuts = { ...shortcuts, [action]: String(accel).trim() };
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    fs.writeFileSync(settingsPath(), JSON.stringify(current, null, 2));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+function resetShortcuts() {
+  try {
+    const current = readSettings();
+    current.shortcuts = { ...DEFAULT_SHORTCUTS };
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    fs.writeFileSync(settingsPath(), JSON.stringify(current, null, 2));
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 module.exports = {
   getApiKey, saveApiKey, clearApiKey,
   getMicSettings, saveMicSettings, resetMicSettings,
@@ -245,6 +335,8 @@ module.exports = {
   getCliFreePermissionMode, setCliFreePermissionMode,
   getShowLive2DOnStartup, setShowLive2DOnStartup,
   getShowParticleModelOnStartup, setShowParticleModelOnStartup,
+  getShortcuts, setShortcut, resetShortcuts,
+  DEFAULT_SHORTCUTS, SHORTCUT_ACTIONS, SHORTCUT_LABELS,
   // 給根目錄 control-center 用的唯讀 export，見 hasSettingKey()/settingsPath() 的說明。
   hasSettingKey, settingsPath,
 };
