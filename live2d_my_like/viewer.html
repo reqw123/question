@@ -67,6 +67,10 @@
     border:1px solid #3a4656;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">
     🧩 Part 透明度檢查器
   </button>
+  <button id="gestureEditorToggle" style="background:#1c2530;color:#9f9;
+    border:1px solid #3a4656;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">
+    🤸 手勢編輯器
+  </button>
 </div>
 
 <div id="status"></div>
@@ -107,6 +111,39 @@
   <div id="partList"></div>
 </div>
 
+<!-- 🤸 手勢編輯器：預覽/調整 multi/L2DGesturePlayer.js 的自訂手勢（不是模型自帶動作檔，
+     是直接改 Cubism 參數的 keyframe 定義，見該檔案開頭說明）。跟 Parameter 檢查器共用
+     右側同一塊位置（故意不再另外挪一個新位置，這個檢視器本來就假設一次只專心看一個
+     面板）——兩個一起開只會看到後開的那個蓋在上面，不是版面錯亂，先關掉一個再開另一個
+     即可看到被蓋住的那個。
+     用法同 Parameter/Part 檢查器：建議先勾上面的「凍結待機動作」，不然待機動作的自動
+     循環會每隔幾秒把手勢動作蓋掉/打斷，看不清楚實際效果。 -->
+<div id="gestureEditor" style="display:none;position:fixed;top:44px;right:0;bottom:0;width:400px;
+    z-index:15;background:rgba(10,14,20,.92);border-left:1px solid #3a4656;
+    overflow-y:auto;padding:10px;font:12px/1.5 monospace;color:#cde;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <b style="color:#9f9;">🤸 手勢編輯器</b>
+    <select id="gestureSelect" style="background:#1c2530;color:#eee;border:1px solid #3a4656;
+      border-radius:6px;padding:5px 8px;font-size:12px;max-width:160px;"></select>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+    <button id="gsPlayBtn" style="background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.4);
+      color:#cdefff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">▶ 播放預覽</button>
+    <button id="gsResetBtn" style="background:#1c2530;color:#f99;border:1px solid #3a4656;
+      border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">↺ 重置</button>
+    <button id="gsCopyBtn" style="background:#1c2530;color:#9fd;border:1px solid #3a4656;
+      border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">📋 複製 JSON</button>
+  </div>
+  <div style="font-size:11px;color:#789;margin-bottom:8px;">
+    調整滑桿後按「▶ 播放預覽」即時看效果（只影響這個分頁自己這份手勢定義，不會動到正式遊戲）；
+    滿意後按「📋 複製 JSON」，把結果貼進 multi/L2DGesturePlayer.js 對應動作的大括號裡取代原內容。
+  </div>
+  <div id="gestureEditorBody"></div>
+  <textarea id="gsJsonOut" readonly style="display:none;width:100%;height:140px;margin-top:8px;
+    background:#0a0e14;color:#9fd;border:1px solid #3a4656;border-radius:6px;padding:8px;
+    font:11px/1.4 monospace;box-sizing:border-box;"></textarea>
+</div>
+
 <!-- 沿用專案既有函式庫（唯讀引用，未修改任何檔案），同時支援 Cubism 2 與 Cubism 3/4 模型。
      這個檢視器是獨立頁面，不影響 multi/host.html、multi/player.html、desktop-pet 等既有系統。
 
@@ -120,6 +157,14 @@
 <script src="../lib/live2dcubismcore.min.js"></script>
 <script src="../lib/pixi.min.js"></script>
 <script src="../lib/all.min.js"></script>
+<!-- 自訂手勢系統（見下方「🤸 手勢編輯器」）：L2DGesturePlayer.js 的每個 hook 都寫死抓
+     L2D._c1.model.internalModel.coreModel 這個完整 L2D 單例系統才有的路徑，不是隨便一個
+     PIXI Live2DModel 就能用。viewer.html 仍然維持自己獨立的 loadPath() 載入流程（不改，
+     繼續保留 Cubism 2/3/4 雙支援、手動路徑載入、Parameter/Part 檢查器這些既有功能），
+     只在 loadPath() 載入成功後，把 curModel 這個實例「借」給 L2D._c1 當殼——不呼叫
+     L2D.init()/L2D._load()，避免拖進拖曳定位、大廳版面縮放這些跟檢視器無關的整套邏輯，
+     只滿足 L2DGesturePlayer 需要的最小介面（見下方 loadPath() 裡 syncToL2DSingleton()）。 -->
+<script src="../multi/L2DGesturePlayer.js"></script>
 
 <script>
 'use strict';
@@ -142,6 +187,13 @@ let motionDefs = [];  // 目前模型的動作攤平清單：[{ group, index, na
 let motionPos  = -1;  // , . 鍵目前停在攤平清單的第幾個
 let exprDefs   = [];  // 目前模型的表情清單：[{ index, name }]
 let exprPos    = -1;  // [ ] 鍵目前停在表情清單的第幾個
+
+// ── 🤸 手勢編輯器狀態 ────────────────────────────────────────────────────
+let curParamRanges  = new Map();   // 目前模型的 Parameter id → {min,max}，見 buildParamRangeMap()
+let ORIGINAL_GESTURES = {};        // name → L2DGesturePlayer.inspect(name) 的唯讀快照，頁面一開就
+                                    // 全部快取一份（早於任何編輯/預覽發生），「重置」按鈕永遠回得去
+let curGestureName  = '';          // 編輯器目前選到的動作名稱
+let curGestureEdit  = null;        // 目前編輯中的可變副本（inspect() 的深拷貝，可安全改動）
 
 function setStatus(msg) { statusEl.textContent = msg; }
 
@@ -332,10 +384,25 @@ function applyParamOverrides(model, paramOverrides) {
   });
 }
 
+// 把 curModel 這個實例「借」給 L2D._c1 當殼，滿足 L2DGesturePlayer 的 _cm()：
+// 它只需要 L2D._c1.model.internalModel.coreModel 存在，不管這個 model 是不是用
+// L2D.init()/L2D._load() 載入的——見上方 <script> 引入處的完整說明。
+function syncToL2DSingleton(model) {
+  if (typeof L2D === 'undefined') return;
+  L2D._c1.model = model;
+  L2D._c1.gMap  = model ? L2D._buildGroupMap(model) : {};
+  L2D._c1.ready = !!model;
+  L2D._activeSlotKeys = model ? ['c1'] : [];
+}
+
 async function loadPath(path, label, partOverrides, paramOverrides) {
   const myToken = ++_loadToken;
   motionsEl.innerHTML = '';
   setStatus('載入中... ' + path);
+  // 換角色/換模型前先停掉任何正在播放的自訂手勢——不停的話，還沒播完的 hook 會繼續
+  // 對「即將被 destroy() 的舊 coreModel」寫值，雖然外層 try/catch 吞得住不會噴錯，
+  // 但徒增一個沒有意義的殘留計時器。
+  if (typeof L2DGesturePlayer !== 'undefined') L2DGesturePlayer.stop('c1');
 
   try {
     const model = await PIXI.live2d.Live2DModel.from(encodeURI(path));
@@ -348,6 +415,7 @@ async function loadPath(path, label, partOverrides, paramOverrides) {
       curVisibilitySync = null;
     }
     if (curModel) {
+      syncToL2DSingleton(null);   // 先清空，避免有殘留計時器在舊模型 destroy() 之後那一瞬間還摸得到它
       app.stage.removeChild(curModel);
       curModel.destroy({ children: true });
     }
@@ -375,6 +443,9 @@ async function loadPath(path, label, partOverrides, paramOverrides) {
     buildPartInspector(model);
     curVisibilitySync = attachVisibilitySync(model);
     applyIdleFreezeState();
+    syncToL2DSingleton(model);
+    curParamRanges = buildParamRangeMap(model);
+    refreshGestureEditor();   // 換角色後手勢編輯器要用新模型的參數範圍重新畫滑桿
   } catch (err) {
     if (myToken !== _loadToken) return;
     setStatus('載入失敗（缺檔或格式有問題）：\n' + path + '\n' + (err && err.message || err));
@@ -746,6 +817,237 @@ function buildParamInspector(model) {
     'Parameter 介面）。</div>';
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// 🤸 手勢編輯器：multi/L2DGesturePlayer.js 自訂手勢（不是模型自帶的 .motion3.json，
+// 是直接改 Cubism 參數的 keyframe 定義）的視覺化預覽 + 關鍵幀調整面板。
+//
+// 跟上面的 Parameter/Part 檢查器刻意分開實作（各自獨立的 id→min/max 查詢邏輯），
+// 理由同檔案其他地方的既有慣例：這裡只需要一個唯讀 Map，不需要 Parameter 檢查器
+// 那整套「建 DOM 滑桿列表」的職責，硬要共用反而讓兩邊耦合、互相牽制。
+// ══════════════════════════════════════════════════════════════════════════
+
+// 查這個模型每個 Parameter 的真實 min/max（Cubism 3/4 用官方 API，Cubism 2 用
+// getModelContext() 那套私有介面，跟 buildParamInspectorC34/C2 是同一批底層呼叫，
+// 只是這裡只要數值、不用建 UI）。查不到就讓呼叫端退回 GESTURE_PARAM_FALLBACK。
+function buildParamRangeMap(model) {
+  const map = new Map();
+  const cm = model && model.internalModel && model.internalModel.coreModel;
+  if (!cm) return map;
+  try {
+    if (typeof cm.getParameterCount === 'function') {
+      const n = cm.getParameterCount();
+      for (let i = 0; i < n; i++) {
+        const id = String((cm._parameterIds && cm._parameterIds[i]) || ('#' + i));
+        map.set(id, { min: cm.getParameterMinimumValue(i), max: cm.getParameterMaximumValue(i) });
+      }
+      return map;
+    }
+    const mc = typeof cm.getModelContext === 'function' ? cm.getModelContext() : null;
+    const ids = mc && Array.isArray(mc._$pb) ? mc._$pb : null;
+    if (mc && ids && typeof mc.getParamMin === 'function') {
+      ids.forEach((id, i) => {
+        try { map.set(String(id), { min: mc.getParamMin(i), max: mc.getParamMax(i) }); } catch {}
+      });
+    }
+  } catch (err) {
+    console.warn('[GestureEditor] 讀取 Parameter 範圍失敗，滑桿會退回保底範圍', err);
+  }
+  return map;
+}
+
+// 查不到目前模型真實範圍時的保底猜測，整理自 multi/L2DGesturePlayer.js 開頭
+// 「參數範圍（模型實測）」那份註解表格。key 用「大寫、去底線」正規化比對，
+// 這樣 PARAM_ANGLE_X（多數手勢用的命名）跟 mini_cat 用的 ParamAngleX 兩種
+// 命名風格能對到同一筆，不用各寫一次。查不到落在這張表裡也對不到當前模型時，
+// 最終退回 ±30 這個籠統範圍，至少滑桿還能動，不會整排失效。
+function _normParamId(id) { return String(id).toUpperCase().replace(/_/g, ''); }
+const GESTURE_PARAM_FALLBACK = (() => {
+  const table = {
+    PARAM_ANGLE_X: [-30, 30], PARAM_ANGLE_Y: [-30, 30], PARAM_ANGLE_Z: [-30, 30],
+    PARAM_BODY_ANGLE_X: [-10, 10], PARAM_BODY_ANGLE_Y: [-10, 10], PARAM_BODY_ANGLE_Z: [-10, 10],
+    PARAM_STRETCH: [-1, 1],
+    PARAM_SHOLDER_POSITION: [-10, 10],
+    PARAM_ARM_L_ROTATE: [-10, 60], PARAM_ARM_R_ROTATE: [-10, 60],
+    PARAM_SHOULDER_L_ROTATE: [-35, 20], PARAM_SHOULDER_R_ROTATE: [-35, 20],
+    PARAM_HAND_L_ROTATE: [-30, 30], PARAM_HAND_R_ROTATE: [-30, 30],
+    PARAM_MOUTH_OPEN_Y: [0, 1],
+    PARAM_TAIL_L: [0, 1],
+    PARAM_POSITION_X: [-10, 10], PARAM_POSITION_Y: [-10, 10], PARAM_ROTATION_Z: [-30, 30],
+  };
+  const normed = {};
+  Object.entries(table).forEach(([k, v]) => { normed[_normParamId(k)] = v; });
+  return normed;
+})();
+function getParamRange(id) {
+  const hit = curParamRanges.get(id);
+  if (hit) return hit;
+  const fb = GESTURE_PARAM_FALLBACK[_normParamId(id)];
+  return fb ? { min: fb[0], max: fb[1] } : { min: -30, max: 30 };
+}
+
+// 頁面一開就把所有手勢的原始定義快取一份（早於任何預覽/編輯發生），「重置」按鈕
+// 永遠能回到這份，不會因為先前按過幾次「播放預覽」（會呼叫 define() 覆蓋掉
+// L2DGesturePlayer 內部的即時定義）就再也回不去原始數值。
+function cacheOriginalGestures() {
+  if (typeof L2DGesturePlayer === 'undefined') return;
+  L2DGesturePlayer.list().forEach(name => {
+    ORIGINAL_GESTURES[name] = L2DGesturePlayer.inspect(name);
+  });
+}
+
+function populateGestureSelect() {
+  const sel = document.getElementById('gestureSelect');
+  if (typeof L2DGesturePlayer === 'undefined') {
+    sel.innerHTML = '<option value="">（L2DGesturePlayer 未載入）</option>';
+    return;
+  }
+  sel.innerHTML = L2DGesturePlayer.list().map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+// 選了新動作，或換了角色/模型（見 loadPath() 尾端呼叫）都會呼叫這個，
+// 用 ORIGINAL_GESTURES 的快照重建一份全新的可編輯副本。
+function refreshGestureEditor() {
+  const panel = document.getElementById('gestureEditor');
+  if (!panel || panel.style.display === 'none') return;   // 面板沒開就不用白做工
+  if (!curGestureName) return;
+  curGestureEdit = JSON.parse(JSON.stringify(ORIGINAL_GESTURES[curGestureName] || null));
+  renderGestureEditor();
+}
+
+function onGestureSelectChange() {
+  curGestureName = document.getElementById('gestureSelect').value;
+  curGestureEdit = curGestureName
+    ? JSON.parse(JSON.stringify(ORIGINAL_GESTURES[curGestureName] || null))
+    : null;
+  const out = document.getElementById('gsJsonOut');
+  out.style.display = 'none';   // 換動作了，上一個動作複製出來的 JSON 不該繼續留在畫面上
+  out.value = '';
+  renderGestureEditor();
+}
+
+function renderGestureEditor() {
+  const body = document.getElementById('gestureEditorBody');
+  if (!curGestureName || !curGestureEdit) { body.innerHTML = ''; return; }
+  const g = curGestureEdit;
+
+  if (g.type === 'fn') {
+    body.innerHTML =
+      '<div style="padding:8px;border:1px solid #a55;background:rgba(255,80,80,.1);border-radius:6px;">' +
+      '<b style="color:#f99;">⚡ 這個動作由 JS 函式即時運算所有參數</b>' +
+      '<div style="margin-top:4px;color:#dab;">' +
+      `每幀直接讀模型當下的 Parameter 範圍隨機／插值算出來，不是固定的關鍵幀表，` +
+      `沒有東西可以用滑桿調——只能預覽，改內容要直接改 multi/L2DGesturePlayer.js 裡的 fn(...)。` +
+      '</div>' +
+      `<div style="margin-top:6px;color:#987;font-size:11px;">時長 ${g.duration ?? '(預設 1500)'} ms` +
+      `，重新計算間隔 ${g.interval ?? '(每幀)'} ms</div>` +
+      '</div>';
+    return;
+  }
+
+  const rows = [];
+  rows.push(`
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;color:#9ab;">
+        <span>blend（插值強度，越大到位越快）</span><span id="gsBlendVal">${(g.blend ?? 0.3).toFixed(2)}</span>
+      </div>
+      <input id="gsBlend" type="range" min="0" max="1" step="0.01" value="${g.blend ?? 0.3}" style="width:100%;">
+    </div>
+  `);
+
+  (g.frames || []).forEach((frame, fi) => {
+    const paramRows = Object.keys(frame.params || {}).map(id => {
+      const range = getParamRange(id);
+      const v = frame.params[id];
+      return `
+        <div style="margin:4px 0 4px 10px;">
+          <div style="display:flex;justify-content:space-between;color:#9ab;font-size:11px;">
+            <span>${id}</span><span id="gsVal_${fi}_${id}">${v.toFixed(2)}</span>
+          </div>
+          <input type="range" min="${range.min}" max="${range.max}" step="${(range.max - range.min) / 200 || 0.01}"
+                 value="${v}" style="width:100%;"
+                 oninput="onGestureParamInput(${fi}, '${id}', this.value)">
+        </div>
+      `;
+    }).join('');
+
+    rows.push(`
+      <div style="margin:10px 0;padding:8px;border:1px solid #3a4656;border-radius:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:#9fd;font-size:12px;">
+          <b>Frame ${fi + 1}</b>
+          <span>t = <input type="number" value="${frame.t}" min="0" step="10" style="width:70px;
+            background:#1c2530;color:#eee;border:1px solid #3a4656;border-radius:4px;padding:2px 4px;"
+            onchange="onGestureFrameTimeInput(${fi}, this.value)"> ms</span>
+        </div>
+        ${paramRows || '<div style="color:#789;font-size:11px;margin-top:4px;">（這一幀沒有參數）</div>'}
+      </div>
+    `);
+  });
+
+  body.innerHTML = rows.join('');
+  document.getElementById('gsBlend').addEventListener('input', (e) => {
+    curGestureEdit.blend = parseFloat(e.target.value);
+    document.getElementById('gsBlendVal').textContent = curGestureEdit.blend.toFixed(2);
+  });
+}
+
+function onGestureParamInput(frameIdx, paramId, rawVal) {
+  const v = parseFloat(rawVal);
+  curGestureEdit.frames[frameIdx].params[paramId] = v;
+  const label = document.getElementById(`gsVal_${frameIdx}_${paramId}`);
+  if (label) label.textContent = v.toFixed(2);
+}
+
+function onGestureFrameTimeInput(frameIdx, rawVal) {
+  const t = Math.max(0, parseInt(rawVal, 10) || 0);
+  curGestureEdit.frames[frameIdx].t = t;
+}
+
+// 用目前編輯中的數值即時預覽：define() 只會覆蓋這個 viewer.html 自己這份 script 執行期
+// 的 L2DGesturePlayer 內部狀態（每個載入 L2DGesturePlayer.js 的頁面各有一份獨立的
+// GESTURES 物件），不會影響 multi/host.html、multi/player.html 正式遊戲的任何東西。
+function previewGesture() {
+  if (typeof L2DGesturePlayer === 'undefined' || !curGestureName || !curGestureEdit) return;
+  if (curGestureEdit.type !== 'fn') {
+    L2DGesturePlayer.define(curGestureName, { blend: curGestureEdit.blend, frames: curGestureEdit.frames });
+  }
+  L2DGesturePlayer.trigger(curGestureName, 'c1');
+  setStatus(`🤸 預覽手勢：${curGestureName}`);
+}
+
+// 回到 ORIGINAL_GESTURES 快取的原始數值——同時刷新滑桿畫面，也把 L2DGesturePlayer
+// 內部的即時定義還原回去（萬一先前按過幾次「播放預覽」動過它）。
+function resetGesture() {
+  if (!curGestureName) return;
+  curGestureEdit = JSON.parse(JSON.stringify(ORIGINAL_GESTURES[curGestureName] || null));
+  if (typeof L2DGesturePlayer !== 'undefined' && curGestureEdit && curGestureEdit.type !== 'fn') {
+    L2DGesturePlayer.define(curGestureName, { blend: curGestureEdit.blend, frames: curGestureEdit.frames });
+  }
+  renderGestureEditor();
+  setStatus(`↺ 已重置「${curGestureName}」為原始定義`);
+}
+
+// 複製調整後的 JSON：navigator.clipboard 需要安全情境（https 或 localhost），這個專案
+// 平常是用區網 IP（http://192.168.x.x:8080）開，Clipboard API 很可能整個不存在或被擋，
+// 所以「一定能用」的做法是把內容放進下面那顆 <textarea readonly>，讓使用者自己
+// 全選/Ctrl+C；navigator.clipboard 能用就當作錦上添花順便嘗試，不能用也不影響主要用法。
+function copyGestureJson() {
+  if (!curGestureName || !curGestureEdit || curGestureEdit.type === 'fn') return;
+  const json = JSON.stringify({ blend: curGestureEdit.blend, frames: curGestureEdit.frames }, null, 2);
+  const ta = document.getElementById('gsJsonOut');
+  ta.value = json;
+  ta.style.display = 'block';
+  ta.focus();
+  ta.select();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(
+      () => setStatus(`📋 已複製到剪貼簿，也貼在下面文字框裡（貼到 GESTURES['${curGestureName}'] 取代大括號內容）`),
+      () => setStatus('📋 已選取下面文字框內容，手動 Ctrl+C 複製即可（瀏覽器擋掉了自動複製）'),
+    );
+  } else {
+    setStatus('📋 已選取下面文字框內容，手動 Ctrl+C 複製即可');
+  }
+}
+
 function stepChar(delta) {
   const total = charSel.options.length;
   if (!total) return;
@@ -817,6 +1119,21 @@ async function main() {
     freezeIdle = e.target.checked;
     applyIdleFreezeState();
   });
+
+  // 🤸 手勢編輯器：GESTURES 清單在 L2DGesturePlayer.js 一載入就固定存在，跟模型有沒有
+  // 載入完成無關，這裡可以直接初始化，不用等 loadSelected() 跑完。
+  cacheOriginalGestures();
+  populateGestureSelect();
+  const gesturePanel = document.getElementById('gestureEditor');
+  document.getElementById('gestureEditorToggle').addEventListener('click', () => {
+    const opening = gesturePanel.style.display === 'none';
+    gesturePanel.style.display = opening ? 'block' : 'none';
+    if (opening) onGestureSelectChange();   // 首次打開時把目前選到（預設第一個）的動作畫出來
+  });
+  document.getElementById('gestureSelect').addEventListener('change', onGestureSelectChange);
+  document.getElementById('gsPlayBtn').addEventListener('click', previewGesture);
+  document.getElementById('gsResetBtn').addEventListener('click', resetGesture);
+  document.getElementById('gsCopyBtn').addEventListener('click', copyGestureJson);
 
   loadSelected();
 }

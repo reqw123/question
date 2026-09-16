@@ -855,6 +855,12 @@ function joinGame() {
 
 // ── STATE 處理 ────────────────────────────────────────────────────────────
 function onState(state) {
+  // 主持人在「⚙ 遊戲設定」彈窗調整過的值（host.html 的 GS_SYNC_KEYS），透過每次
+  // STATE 廣播的 cfg 欄位同步進自己這份獨立的 MP_CFG（player.html 跟 host.html
+  // 各自載入一份 multiplay.js，兩邊常數互不相通，見 multiplay.js 開頭註解）。
+  // 放在最前面，確保下面用到 MP_CFG.PREPARE_TIME/ANSWER_TIME 等值時已經是最新的。
+  if (state.cfg) Object.assign(MP_CFG, state.cfg);
+
   const phase = state.phase;
   // 賽前閒聊面板只在大廳階段可用（含「已加入但還在等主持人開始」這段，不是只有
   // 未加入的 screen-join），這裡是唯一會處理 phase 的地方，集中更新一次比較好維護，

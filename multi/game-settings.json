@@ -1,0 +1,15 @@
+{
+  "PREPARE_TIME": 3,
+  "ANSWER_TIME": 12,
+  "LOCK_MS": 900,
+  "RESULT_MS": 2500,
+  "EXPL_MS": 4000,
+  "MAX_SCORE": 10,
+  "MIN_SCORE": 1,
+  "MAX_PENALTY": 5,
+  "MIN_PENALTY": 1,
+  "enableLive2D": true,
+  "maxPlayerChars": 4,
+  "IDLE_MOTION_MS": 6000,
+  "TOAST_MS": 1600
+}

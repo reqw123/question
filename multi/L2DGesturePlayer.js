@@ -473,6 +473,29 @@ const L2DGesturePlayer = (() => {
 
     define(name, gesture) { GESTURES[name] = gesture; },
     list()                { return Object.keys(GESTURES); },
+
+    /**
+     * 唯讀快照，給外部編輯器（見 live2d_my_like/viewer.html 的「🤸 手勢編輯器」）用，
+     * 不會回傳內部 GESTURES 物件的原始參照——frames 是深拷貝，可以放心改動再用
+     * define() 送回來，不會不小心動到還沒送回來之前的原始定義。
+     * type:'fn' 的動作（目前只有 random_1）沒有 frames 可編（每幀參數是即時算出來的，
+     * 不是固定表），frames 回傳 null，呼叫端要自己判斷 type 決定要不要顯示編輯介面。
+     * @param {string} name
+     * @returns {{type:string, blend:number|undefined, duration:number|undefined,
+     *            interval:number|undefined, frames:Array|null}|null}
+     */
+    inspect(name) {
+      const g = GESTURES[name];
+      if (!g) return null;
+      return {
+        type:     g.type || 'frames',
+        blend:    g.blend,
+        duration: g.duration,
+        interval: g.interval,
+        // frames 只含數字/字串，JSON 往返足夠深拷貝，不會漏掉巢狀物件
+        frames:   g.frames ? JSON.parse(JSON.stringify(g.frames)) : null,
+      };
+    },
   };
 })();
 

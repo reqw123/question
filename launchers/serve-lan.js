@@ -13,6 +13,8 @@ const PORT = process.env.PORT || process.argv[2] || 8080;
 const ROOT = path.resolve(__dirname, '..');   // launchers/ 的上一層 = 專案根目錄
 const QUESTIONS_DIR = path.join(ROOT, 'questions');
 const STATS_DIR = path.join(ROOT, 'stats');
+const MULTI_DIR = path.join(ROOT, 'multi');
+const GAME_SETTINGS_PATH = path.join(MULTI_DIR, 'game-settings.json');
 
 // ── 題庫寫檔 API（POST /api/save-bank）──────────────────────────────────────
 // host.html「上傳自訂題庫」時呼叫，把 JSON 題庫真的寫進 questions/<檔名>.json 並在
@@ -327,6 +329,72 @@ function handleListStatsNames(req, res) {
   sendJson(res, 200, { ok: true, names });
 }
 
+// ── 遊戲設定寫檔 API（POST /api/save-game-settings）─────────────────────────
+// host.html 大廳「⚙ 遊戲設定」彈窗按下「套用」時呼叫，把目前套用的參數子集寫進
+// multi/game-settings.json（跟 questions/、stats/ 不同，這個檔案**沒有**被 .gitignore
+// 排除——設計上就是要讓它進版本控制，換電腦 git clone/pull 時最後套用的遊戲參數會
+// 跟著過去，不用每個環境重新調一次）。讀取端不需要另開 API：它是專案裡的一個普通靜態
+// JSON 檔，host.html 用 fetch('game-settings.json') 直接讀（見 host.html 的
+// GameSettings.load()），Caddy/這支伺服器本來就會當一般靜態檔案伺服。
+//
+// 只接受白名單裡的欄位（跟 host.html 的 GameSettings.KEYS 對應），並各自夾限在合理
+// 範圍——不能假設送進來的 body 是乾淨的（純瀏覽器 fetch，任何人都能自己組 POST），
+// 這裡的 min/max 跟 host.html 彈窗 <input min max> 給的一致，屬於防禦性重複，不是
+// 唯一防線但也不能沒有。
+const GAME_SETTINGS_SCHEMA = {
+  PREPARE_TIME:    { type: 'number',  min: 1,    max: 30 },
+  ANSWER_TIME:     { type: 'number',  min: 3,    max: 120 },
+  LOCK_MS:         { type: 'number',  min: 0,    max: 5000 },
+  RESULT_MS:       { type: 'number',  min: 500,  max: 10000 },
+  EXPL_MS:         { type: 'number',  min: 500,  max: 20000 },
+  MAX_SCORE:       { type: 'number',  min: 1,    max: 100 },
+  MIN_SCORE:       { type: 'number',  min: 0,    max: 100 },
+  MAX_PENALTY:     { type: 'number',  min: 0,    max: 100 },
+  MIN_PENALTY:     { type: 'number',  min: 0,    max: 100 },
+  enableLive2D:    { type: 'boolean' },
+  maxPlayerChars:  { type: 'number',  min: 2,    max: 4 },
+  IDLE_MOTION_MS:  { type: 'number',  min: 1000, max: 30000 },
+  TOAST_MS:        { type: 'number',  min: 300,  max: 6000 },
+};
+
+async function handleSaveGameSettings(req, res) {
+  let body;
+  try { body = await readJsonBody(req, 4 * 1024); }
+  catch (e) { sendJson(res, e.code || 400, { ok: false, error: e.error || String(e) }); return; }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    sendJson(res, 400, { ok: false, error: '格式錯誤，需為物件' });
+    return;
+  }
+
+  // 讀現有檔案當底，逐欄位夾限後蓋上去，不認得的 key 直接忽略——host.html 目前一律
+  // 送完整的 13 個欄位，但這裡故意允許只送部分子集，之後要單獨調某幾項也不用改後端；
+  // 用「讀底 + merge」而不是整包覆蓋，partial body 才不會把沒送到的既有欄位噴掉。
+  let out = {};
+  try { out = JSON.parse(fs.readFileSync(GAME_SETTINGS_PATH, 'utf8')) || {}; } catch {}
+  if (typeof out !== 'object' || Array.isArray(out)) out = {};
+
+  for (const [key, rule] of Object.entries(GAME_SETTINGS_SCHEMA)) {
+    if (!(key in body)) continue;
+    if (rule.type === 'boolean') {
+      out[key] = !!body[key];
+    } else {
+      const n = Number(body[key]);
+      if (!Number.isFinite(n)) continue;
+      out[key] = Math.min(rule.max, Math.max(rule.min, n));
+    }
+  }
+
+  try {
+    fs.mkdirSync(MULTI_DIR, { recursive: true });
+    fs.writeFileSync(GAME_SETTINGS_PATH, JSON.stringify(out, null, 2) + '\n', 'utf8');
+    console.log('[serve-lan] 已更新 multi/game-settings.json');
+    sendJson(res, 200, { ok: true, settings: out });
+  } catch (e) {
+    sendJson(res, 500, { ok: false, error: String((e && e.message) || e) });
+  }
+}
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.htm':  'text/html; charset=utf-8',
@@ -400,6 +468,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 遊戲設定寫檔 API（見檔案上方 handleSaveGameSettings 說明）。讀取不需要專屬路由，
+  // multi/game-settings.json 落在下方的一般靜態檔案處理分支就會被伺服。
+  if (urlPath === '/api/save-game-settings') {
+    if (req.method !== 'POST') { res.writeHead(405); res.end('Method Not Allowed'); return; }
+    handleSaveGameSettings(req, res);
+    return;
+  }
+
   // 公網網址查詢 API（見檔案下方 fetchNgrokTunnels／findPublicTunnel 說明）——
   // host.html 用這條路由自動偵測 ngrok 通道，不用主持人自己開 127.0.0.1:4040 查完再手動貼。
   if (urlPath === '/api/public-url') {
@@ -453,6 +529,7 @@ server.listen(PORT, () => {
   }
   console.log('[serve-lan] POST /api/save-bank 可把上傳的題庫寫進 questions/ 並更新 index.json。');
   console.log('[serve-lan] POST /api/record-session 可把玩家這場的作答明細寫進 stats/ 供學習報告查詢。');
+  console.log('[serve-lan] POST /api/save-game-settings 可把「⚙ 遊戲設定」套用值寫進 multi/game-settings.json（跟著 git 版本走）。');
   console.log('[serve-lan] 關閉這個視窗即停止伺服器。');
 });
 

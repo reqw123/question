@@ -187,6 +187,48 @@
     }
     .bank-mgr-open-btn:hover { border-color:var(--cyan); color:var(--cyan); }
 
+    /* ── 遊戲設定彈窗：跟 #ai-gen-modal 同款真彈窗，各自獨立一份 CSS（同上，不重構共用類別）。
+       裡面欄位重用既有的 .cfg-row / .cfg-label / .cfg-input（原本是「⚙ 連線設定」那組
+       <details> 面板用的，純 class 沒有 id 前綴，可以直接借來排版數字輸入框）。 */
+    #game-settings-modal {
+      position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.82);
+      display:flex; align-items:center; justify-content:center;
+    }
+    #game-settings-modal.hidden { display:none; }
+    #game-settings-modal .ai-gen-box {
+      width:min(560px, 94vw); max-height:min(86vh, 720px);
+      background:#0d1a2b; border:1px solid rgba(0,212,255,.35); border-radius:16px;
+      overflow:hidden; display:flex; flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
+    }
+    #game-settings-modal .ai-gen-modal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.1); flex:none;
+    }
+    #game-settings-modal .ai-gen-modal-close {
+      cursor:pointer; background:transparent; border:1px solid rgba(255,255,255,.25);
+      color:var(--text); border-radius:8px; padding:4px 12px; font-size:.85em; font-family:inherit;
+    }
+    #game-settings-modal .ai-gen-modal-close:hover { border-color:var(--cyan); color:var(--cyan); }
+    #game-settings-modal .gs-body { flex:1; overflow-y:auto; padding:14px 16px; }
+    #game-settings-modal .gs-section-label {
+      font-size:.72em; color:var(--text2); letter-spacing:1px; margin:14px 0 8px;
+      text-transform:uppercase;
+    }
+    #game-settings-modal .gs-section-label:first-child { margin-top:0; }
+    #game-settings-modal .cfg-row { margin-bottom:8px; }
+    #game-settings-modal .cfg-label { width:150px; }
+    #game-settings-modal input[type=checkbox] { width:18px; height:18px; cursor:pointer; }
+    #gs-pending-hint {
+      font-size:.78em; color:var(--yellow); background:rgba(255,214,0,.08);
+      border:1px solid rgba(255,214,0,.3); border-radius:8px; padding:6px 10px; margin-bottom:10px;
+    }
+    #game-settings-modal .gs-footer {
+      display:flex; gap:8px; padding:12px 16px; border-top:1px solid rgba(255,255,255,.1); flex:none;
+    }
+    #game-settings-modal .gs-footer button { flex:1; }
+    #gs-msg { font-size:.75em; color:var(--text2); min-height:1.2em; margin-top:8px; text-align:center; }
+
     /* ── 學習報告彈窗：共用樣式已搬到 multi/stats-report.css（見該檔開頭說明，原本這裡
        跟 player.html 各自維護一份幾乎一樣的複製貼上）。這裡只留 .stats-open-btn ——
        開啟學習報告彈窗的小按鈕本身，host.html 跟 player.html 放置的位置/情境不同
@@ -592,6 +634,91 @@
   </div>
 </div>
 
+<!-- 遊戲設定彈窗：multi/multiplay.js 的 MP_CFG 裡「純遊戲體驗」參數子集的 GUI，見
+     GS_KEYS（host.html 這支檔案內）。大廳階段按「套用」立刻生效並廣播給玩家；
+     遊戲進行中按「套用」會暫存，等下一題開始（startQ()）才真正寫回 MP_CFG，
+     避免正在跑的倒數/計分被中途改動。設定值存在 localStorage（quiz_game_cfg），
+     下次開 host.html 會自動套用，不用每次重設。 -->
+<div id="game-settings-modal" class="hidden">
+  <div class="ai-gen-box">
+    <div class="ai-gen-modal-header">
+      <strong>⚙ 遊戲設定</strong>
+      <button type="button" class="ai-gen-modal-close" onclick="GameSettings.close()">✕ 關閉</button>
+    </div>
+    <div class="gs-body">
+      <div id="gs-pending-hint" style="display:none">⏳ 遊戲進行中，設定將於下一題開始時套用</div>
+
+      <div class="gs-section-label">節奏（秒 / 毫秒）</div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-PREPARE_TIME">準備倒數（秒）</label>
+        <input id="gs-PREPARE_TIME" class="cfg-input" type="number" min="1" max="30" step="1">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-ANSWER_TIME">作答時限（秒）</label>
+        <input id="gs-ANSWER_TIME" class="cfg-input" type="number" min="3" max="120" step="1">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-LOCK_MS">搶答停留（ms）</label>
+        <input id="gs-LOCK_MS" class="cfg-input" type="number" min="0" max="5000" step="100">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-RESULT_MS">結果停留（ms）</label>
+        <input id="gs-RESULT_MS" class="cfg-input" type="number" min="500" max="10000" step="100">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-EXPL_MS">解說停留（ms）</label>
+        <input id="gs-EXPL_MS" class="cfg-input" type="number" min="500" max="20000" step="100">
+      </div>
+
+      <div class="gs-section-label">計分</div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-MAX_SCORE">答對最高分</label>
+        <input id="gs-MAX_SCORE" class="cfg-input" type="number" min="1" max="100" step="1">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-MIN_SCORE">答對最低分</label>
+        <input id="gs-MIN_SCORE" class="cfg-input" type="number" min="0" max="100" step="1">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-MAX_PENALTY">答錯最高扣分</label>
+        <input id="gs-MAX_PENALTY" class="cfg-input" type="number" min="0" max="100" step="1">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-MIN_PENALTY">答錯最低扣分</label>
+        <input id="gs-MIN_PENALTY" class="cfg-input" type="number" min="0" max="100" step="1">
+      </div>
+
+      <div class="gs-section-label">玩家端體驗</div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-enableLive2D">載入 Live2D</label>
+        <input id="gs-enableLive2D" type="checkbox">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-maxPlayerChars">玩家角色數上限</label>
+        <select id="gs-maxPlayerChars" class="cfg-input">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-IDLE_MOTION_MS">閒置動作間隔（ms）</label>
+        <input id="gs-IDLE_MOTION_MS" class="cfg-input" type="number" min="1000" max="30000" step="500">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label" for="gs-TOAST_MS">得分飄字時長（ms）</label>
+        <input id="gs-TOAST_MS" class="cfg-input" type="number" min="300" max="6000" step="100">
+      </div>
+
+      <div id="gs-msg"></div>
+    </div>
+    <div class="gs-footer">
+      <button type="button" class="btn-secondary" onclick="GameSettings.resetDefaults()">恢復預設值</button>
+      <button type="button" class="btn-secondary" onclick="GameSettings.apply()">套用</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 大廳畫面 ===== -->
 <div id="screen-lobby" class="screen active">
   <div class="card lobby-card">
@@ -693,6 +820,8 @@
               title="編輯題庫名稱／分類／刪除自訂題庫">🗂️ 管理題庫</button>
       <button type="button" class="stats-open-btn" onclick="openStatsModal()"
               title="依暱稱查詢跨場次的常錯範圍與進步狀況">📊 學習報告</button>
+      <button type="button" class="stats-open-btn" onclick="GameSettings.open()"
+              title="調整倒數秒數、計分、Live2D 等遊戲體驗參數">⚙ 遊戲設定</button>
       <span class="ai-gen-hint">
         <span class="ai-gen-hint-text">題目你來做</span>
         <span class="ai-gen-hint-arrow">↓</span>
@@ -1196,6 +1325,13 @@ function mqttSts(cls, txt) {
 function pubState(extra = {}) {
   const q = HS.questions[HS.qIdx] || {};
   pub(MP_TOPICS.STATE, {
+    // GameSettings.getSyncPayload() 這幾項 player.html 自己也讀一份 MP_CFG（各頁面
+    // 各自的 JS 常數，不會自動同步，見 multiplay.js 開頭註解），所以每次 STATE 都
+    // 夾帶目前值，讓 player.html 的 onState() merge 進自己的 MP_CFG——因為 STATE
+    // 是 retained，晚加入的玩家也會立刻拿到主持人在「⚙ 遊戲設定」彈窗調整過的最新值。
+    // 低耦合防呆：GameSettings 模組不存在時退回 {}，pubState() 這個每題都會呼叫的
+    // 核心函式不會因為附加功能被刪掉而整個丟例外。
+    cfg: (typeof GameSettings !== 'undefined') ? GameSettings.getSyncPayload() : {},
     phase:        HS.phase,
     qNo:          HS.qIdx + 1,
     totalQ:       HS.questions.length,
@@ -1508,6 +1644,11 @@ async function init() {
 
   // 同步題庫選擇與設定面板
   loadSettings();
+  // 恢復「⚙ 遊戲設定」上次套用的值（優先讀專案檔案 multi/game-settings.json，見
+  // GameSettings.load()），需 await 完才能繼續，確保第一次 pubState() 廣播出去的
+  // cfg 欄位已經是正確值。防呆同上：模組不存在就跳過，MP_CFG 維持 multiplay.js
+  // 原本寫死的預設值，遊戲照常開始。
+  if (typeof GameSettings !== 'undefined') await GameSettings.load();
   edLoad();  // 恢復已存題庫（需在 loadSettings 之後，才能判斷是否為 __editor__ 模式）
 
   // 動態載入題庫清單，恢復使用者選擇，並載入題庫
@@ -1761,6 +1902,11 @@ function startGame() {
 }
 
 function startQ(idx) {
+  // 換到新一題的安全時機：把「⚙ 遊戲設定」彈窗在上一題進行中暫存的新值正式套用
+  // （見 GameSettings.commitPending()），下面的 pubState() 會把新值一起廣播給玩家。
+  // 低耦合防呆：GameSettings 模組（含彈窗 HTML）整個被刪掉時這行安靜跳過，
+  // 核心的換題流程不受影響，只是少了「下一題套用新設定」這個附加功能。
+  if (typeof GameSettings !== 'undefined') GameSettings.commitPending();
   HS.qIdx = idx;
   HS.wrongIds.clear();
   HS.answeredIds.clear();
@@ -3442,6 +3588,154 @@ function loadSettings() {
   el('cfg-ip').value   = MP_CFG.brokerIP;
   el('cfg-port').value = MP_CFG.wsPort;
 }
+
+// ── ⚙ 遊戲設定彈窗（GameSettings 模組）───────────────────────────────────
+// 低耦合設計：這整塊自成一個 IIFE，只透過 window.GameSettings 這一個入口暴露給
+// 外界。核心遊戲迴圈（HS／startQ()／pubState()）一律用「typeof GameSettings !==
+// 'undefined'」判斷存不存在才呼叫，never 直接引用這裡面的變數／函式名稱——這樣
+// 就算這整段 <script> 連同彈窗 HTML（#game-settings-modal）被整個刪掉，遊戲仍會
+// 照 multiplay.js 原始寫死的 MP_CFG 正常運作，差別只是少了「大廳可即時調參數」
+// 這個附加功能，不會讓 pubState()／startQ() 這種每題都會跑到的核心函式丟
+// ReferenceError 而讓整場遊戲當掉。
+//
+// 涵蓋 MP_CFG 裡「純遊戲體驗」的參數子集（節奏/計分/Live2D），不含 brokerIP/
+// wsPort（已有上面「⚙ 連線設定」）、HEARTBEAT_MS/OFFLINE_MS/MQTT_RECONNECT_MS
+// （連線穩定性基礎設施，改錯容易造成誤判離線或斷線風暴，不開放 GUI 調）、
+// SND/VFX/BGM 按鈕座標與 VOICE_ICE_SERVERS（版面/網路設定，非玩法）。
+const GameSettings = (() => {
+  const KEYS = [
+    'PREPARE_TIME', 'ANSWER_TIME', 'LOCK_MS', 'RESULT_MS', 'EXPL_MS',
+    'MAX_SCORE', 'MIN_SCORE', 'MAX_PENALTY', 'MIN_PENALTY',
+    'enableLive2D', 'maxPlayerChars', 'IDLE_MOTION_MS', 'TOAST_MS',
+  ];
+  // 上面 KEYS 的子集：player.html 自己的 MP_CFG 也有同名欄位，需要透過 pubState()
+  // 的 cfg 欄位廣播出去（見 getSyncPayload()／pubState()）。LOCK_MS/RESULT_MS/
+  // EXPL_MS/計分四項純粹是 host.html 自己排程/計分用，player.html 完全不讀。
+  const SYNC_KEYS = ['PREPARE_TIME', 'ANSWER_TIME', 'enableLive2D', 'maxPlayerChars', 'IDLE_MOTION_MS', 'TOAST_MS'];
+  const FIELD_KIND = { enableLive2D: 'checkbox', maxPlayerChars: 'select' };
+  // 程式碼裡 multiplay.js 原本寫死的值，當「恢復預設值」按鈕的還原基準——要在任何
+  // localStorage 覆蓋值套用到 MP_CFG 之前先存一份快照，不然重開頁面後「預設值」
+  // 就再也拿不回來了。
+  const DEFAULTS = {};
+  KEYS.forEach(k => { DEFAULTS[k] = MP_CFG[k]; });
+
+  // 遊戲進行中按「套用」時的暫存值，故意收在這個模組的閉包裡、不寫進 HS——
+  // HS 是核心遊戲狀態，不該認識這個附加功能的存在（高內聚：狀態跟操作它的
+  // 邏輯放一起）。commitPending() 只由 startQ() 在換題那一刻呼叫。
+  let pending = null;
+
+  // 優先讀專案檔案 multi/game-settings.json（跟著 git 版本走，見 launchers/serve-lan.js
+  // 的 handleSaveGameSettings 說明），失敗（伺服器沒開這支 API、純靜態模式下檔案還沒
+  // 建立、或離線）才退回瀏覽器本機的 localStorage 當備援，讓「至少在這台機器/瀏覽器上
+  // 記得上次設定」這個舊行為不會因為新機制而倒退。兩者都讀不到就維持 multiplay.js
+  // 原始寫死的預設值，行為跟完全沒有這個功能時一致。
+  async function load() {
+    try {
+      const r = await fetch('game-settings.json', { cache: 'no-store' });
+      if (r.ok) {
+        const s = await r.json();
+        if (s && typeof s === 'object') {
+          KEYS.forEach(k => { if (s[k] !== undefined) MP_CFG[k] = s[k]; });
+          return;
+        }
+      }
+    } catch {}
+    try {
+      const s = JSON.parse(localStorage.getItem('quiz_game_cfg') || '{}');
+      KEYS.forEach(k => { if (s[k] !== undefined) MP_CFG[k] = s[k]; });
+    } catch {}
+  }
+
+  function fillForm(values) {
+    KEYS.forEach(k => {
+      const f = el('gs-' + k);
+      if (!f) return;
+      if (FIELD_KIND[k] === 'checkbox') f.checked = !!values[k];
+      else f.value = values[k];
+    });
+  }
+
+  function open() {
+    const modal = el('game-settings-modal');
+    if (!modal) return;   // 彈窗 HTML 被刪掉的話安靜地什麼都不做，不丟錯
+    fillForm(MP_CFG);
+    if (el('gs-msg')) el('gs-msg').textContent = '';
+    if (el('gs-pending-hint')) el('gs-pending-hint').style.display = (HS.phase && HS.phase !== 'lobby') ? '' : 'none';
+    modal.classList.remove('hidden');
+  }
+
+  function close() {
+    el('game-settings-modal')?.classList.add('hidden');
+  }
+
+  function resetDefaults() {
+    fillForm(DEFAULTS);
+    if (el('gs-msg')) el('gs-msg').textContent = '已回填程式預設值，仍要按「套用」才會生效';
+  }
+
+  async function apply() {
+    const next = {};
+    KEYS.forEach(k => {
+      const f = el('gs-' + k);
+      if (!f) return;
+      if (FIELD_KIND[k] === 'checkbox')      next[k] = f.checked;
+      else if (FIELD_KIND[k] === 'select')   next[k] = parseInt(f.value, 10) || DEFAULTS[k];
+      else {
+        // 數字輸入防呆：空白/非數字/負數就退回目前值，不整批擋掉其他欄位的變更
+        const v = parseFloat(f.value);
+        next[k] = (Number.isFinite(v) && v >= 0) ? v : MP_CFG[k];
+      }
+    });
+    next.maxPlayerChars = Math.max(2, Math.min(4, next.maxPlayerChars || 4));
+
+    // localStorage 當本機備援快取（見 load()），跟下面寫專案檔案互不依賴。
+    try { localStorage.setItem('quiz_game_cfg', JSON.stringify(next)); } catch {}
+
+    const midGame = HS.phase && HS.phase !== 'lobby';
+    if (midGame) {
+      // 不立刻寫回 MP_CFG——正在跑的倒數/計分沿用原本的值，等 startQ() 換到下一題
+      // 才套用（見 commitPending()），避免同一題中途改規則造成不公平。
+      pending = next;
+      if (el('gs-msg')) el('gs-msg').textContent = '已儲存，將於下一題開始套用';
+    } else {
+      Object.assign(MP_CFG, next);
+      if (el('gs-msg')) el('gs-msg').textContent = '已套用';
+      pubState();   // 立刻廣播給已連線玩家；STATE 是 retained，晚加入者也會拿到
+    }
+
+    // 寫進專案檔案 multi/game-settings.json，讓這次套用的值跟著 git 版本走、遷移專案
+    // 也會帶著（見 launchers/serve-lan.js 的 handleSaveGameSettings）。best-effort：
+    // 上面「遊戲內生效」已經完成，這裡失敗（純 Caddy 靜態模式沒開 serve-lan.js 的 API、
+    // 離線等）不影響本次調整當場有沒有作用，只是不會被寫進專案檔案，換一台機器/
+    // 重新 clone 專案要重設一次——用 gs-msg 額外提示，不只是印在 console。
+    try {
+      const r = await fetch('/api/save-game-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    } catch (e) {
+      console.warn('[遊戲設定] 寫入 multi/game-settings.json 失敗，僅套用於本機瀏覽器：', e);
+      if (el('gs-msg')) el('gs-msg').textContent += '（⚠️ 未寫入專案檔案，僅套用於本機）';
+    }
+  }
+
+  // startQ() 在每題開頭呼叫，把上一題暫存的值正式套用進 MP_CFG。
+  function commitPending() {
+    if (!pending) return;
+    Object.assign(MP_CFG, pending);
+    pending = null;
+  }
+
+  // pubState() 呼叫，回傳要廣播給玩家端的子集；模組不存在時呼叫端會直接跳過，
+  // 但這裡仍保留單純函式介面，之後要在別處重用也不用改呼叫端。
+  function getSyncPayload() {
+    return Object.fromEntries(SYNC_KEYS.map(k => [k, MP_CFG[k]]));
+  }
+
+  return { load, open, close, resetDefaults, apply, commitPending, getSyncPayload };
+})();
 
 async function applySettings() {
   const ip   = el('cfg-ip').value.trim();
