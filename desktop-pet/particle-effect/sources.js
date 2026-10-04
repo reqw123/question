@@ -48,8 +48,9 @@
 //       在 animation/animationTime 那個姿勢。欄位：
 //         name:       要播哪一段（或哪幾段，陣列）動畫
 //         frameCount: 關鍵幀貼圖張數，不填依總秒數自動算
-//       動作比停留時間短就自然循環播滿；比停留時間長就在停留時間結束時截斷，不會等
-//       播完，也不會拉長停留時間配合。詳見 particle-effect.js 的 advanceSequencePlayback()。
+//       只播一次不循環：動作比停留時間短，播完就定在最後一幀直到停留結束；比停留時間
+//       長就在停留時間結束時截斷，不會等播完，也不會拉長停留時間配合。詳見
+//       particle-effect.js 的 resolveHoldFrames()。
 //
 //     sequenceVoice
 //       只有「模型序列播放」會讀，平常單獨顯示這個模型不受影響。序列播放到這個
@@ -318,7 +319,7 @@ export default {
           // 換成真的動畫標籤，會接在 skill_e_1 播完之後再播，兩段都播完才退回上面
           // idle_a 定格姿勢。
         ],
-        intervalSeconds: 50,
+        intervalSeconds: 10,
         frameCount: 48, // 覆寫預設 24——skill_e_1 長達 25 秒，24 張會太跳，拉高到 48 張讓內插平滑
       },
     },
@@ -502,7 +503,9 @@ export default {
 // 「模型序列播放」用的順序清單——跟上面 export default 的單一模型設定是不同層級的
 // 東西：上面是「每個模型自己的取樣校正」，這裡是「一鍵觸發後依序在哪些模型之間
 // 連續變形、順序為何」的跨模型清單，見 particle-effect.js 的 loadSequenceStages()／
-// advanceSequencePlayback()。每一站固定用該模型的靜態預設形狀（不管那個模型自己
+// advanceSequencePlayback()。序列裡每一站一律自動置中縮放，忽略各模型手動填的
+// scale/position（那是單獨顯示時的擺位；rotationX/Y/Z 照樣套用），讓每站大小、位置
+// 一致。每一站固定用該模型的靜態預設形狀（不管那個模型自己
 // 有沒有設定 animatedIdle/periodicAnimation，序列本身就是動畫了，不疊加）——除非
 // 那個模型另外填了 sequenceAction（見上面「每個項目」那段的說明），這種情況下
 // 「停留段」會播放那段動作，不是單純定格。

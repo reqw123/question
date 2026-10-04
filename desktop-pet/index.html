@@ -12,18 +12,6 @@
     background: transparent;
     overflow: hidden;
   }
-  #hint {
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    z-index: 20000;
-    pointer-events: none;
-    color: #fff;
-    font: 12px/1.5 monospace;
-    background: rgba(0,0,0,.4);
-    padding: 4px 10px;
-    border-radius: 6px;
-  }
   /* lib/live2d.js（唯讀共用檔案）的 L2D.init() 一開始就把角色 canvas 同步
      appendChild 進 body、完全沒帶 display:none，可見度全靠之後才會呼叫的
      window.setLive2DVisible() 補設 inline style 修正。「開機預設不顯示」那個
@@ -42,7 +30,6 @@
 </style>
 </head>
 <body>
-<div id="hint">F8 還原預設位置/縮放　F9 切換互動／拖曳角色　F10 結束　Ctrl+Alt+數字鍵盤 1-9 觸發情境　（快捷鍵沒反應請用系統匣圖示右鍵選單）</div>
 
 <script>
   // 桌寵有兩種聲音來源，各自獨立靜音（一開始 TTS 加進來時跟閒聊共用一顆開關，
