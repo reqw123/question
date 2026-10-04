@@ -18,10 +18,20 @@
 // 模式：main.js 用 executeJavaScript 呼叫這裡掛在 window 上的 setParticleEffect()。
 // 選單裡列出的模型清單來自 sources.js，main.js 動態 import() 讀取，選了哪個就呼叫
 // 這裡的 window.setParticleActiveModel(key) 即時換模型（不用整頁 reload，見
-// swapActiveModel()）。
+// ParticlePet.swapModel()）。
 //
-// 3D 視角控制（拖曳旋轉／滾輪縮放／右鍵拖曳平移）直接沿用 OrbitControls，*不*
-// 另外做開關，理由跟 index.html 既有的「點角色開聊天框」overlay 是同一套邏輯
+// 同時最多兩隻模型（ParticlePet 實例）：primary 是原本那隻（開機就讀、序列播放
+// 只在它身上），secondary 是第二隻（第一次開啟才讀 GLB）。兩隻共用同一個
+// renderer/scene/camera/canvas，各自有自己的 FBO、模型、聚合狀態、閒置動畫，
+// 系統匣分開開關、分開選模型，但不能同時選同一個模型（見 window.setParticleActiveModel()）。
+// window.* 介面多一個選用的 slot 參數（'primary'／'secondary'，不填＝primary），
+// 舊的呼叫方式行為不變。
+//
+// 3D 操作（左鍵拖曳旋轉／滾輪縮放／右鍵拖曳平移）原本用 OrbitControls 轉相機，
+// 兩隻模型會被一起轉；改成自己做的「點到哪隻就動哪隻」（見 setupScene() 的
+// pointer 事件、pickPetAt()），套在每隻模型自己的 root 群組上，位置/縮放存
+// localStorage（見 ParticlePet.saveLayout()）。*不*另外做開關，理由跟
+// index.html 既有的「點角色開聊天框」overlay 是同一套邏輯
 // （見 index.html 裡「共用 canvas 預設 pointer-events:none」那段註解）：
 //   1. 這個 canvas 全程 pointer-events:auto，但桌寵視窗預設是「穿透模式」
 //      （main.js 的 clickThrough），穿透模式下整個視窗連滑鼠點擊都收不到，
@@ -40,7 +50,6 @@
 // window.setParticleEffectInteractiveMode() 告知。
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import FBO from './fbo.js';
 import {
   sampleModelToParticles,
@@ -123,59 +132,21 @@ const SEQUENCE_STAGE_DURATION = SEQUENCE_HOLD_SECONDS + SEQUENCE_TRANSITION_SECO
 // 的需求。
 const SEQUENCE_VOICE_DELAY_SECONDS = 0.3;
 
-let renderer, scene, camera, canvas, fbo, controls;
-let currentModelKey = DEFAULT_MODEL;
-let progress = 0;
-let transitionFrom = 0;
-let transitionTarget = 0; // 0=散開（目標狀態）、1=聚合（目標狀態）
-let transitionStart = null;
-// 目前這個模型的閒置動畫設定（type/axis/amplitude/speed，見 normalizeIdleMotion()）
-// 跟動畫自己的相位時鐘。idleElapsed 只在「完全聚合、沒轉場、使用者沒在拖」時往前走
-// （跟原本 rotation.y 只在同一條件下累加是同一招），bob/swing 靠它算 sin() 相位，
-// spin 則沿用原本「靠 delta 累加角度」的寫法（見 applyIdleMotion()）。
-let currentIdleMotion = { type: 'spin', axis: 'y', amplitude: 0, speed: IDLE_ROTATE_SPEED };
-let idleElapsed = 0;
-// 「動畫粒子化」目前的播放狀態：currentAnimFrames 是 DataTexture 陣列（null 代表
-// 目前這個模型是單幀定格、沒有動畫可播）；animPhase 是在 currentAnimClipDuration
-// 這個循環週期裡的當前秒數，每幀不管有沒有轉場/使用者拖曳都會往前走（見 tick()
-// 裡的 advanceAnimationPlayback()）——這是刻意跟 idleMotion 的暫停條件分開的：
-// idleMotion 是「整團粒子的裝飾性搖擺」，使用者拖鏡頭時停下來才不會跟鏡頭打架；
-// 這裡是「角色本身在呼吸/待機」，應該持續播放，跟拖不拖鏡頭無關。
-let currentAnimFrames = null;
-let currentAnimClipDuration = 1; // 秒；預設 1 只是避免 animPhase 取模時除以 0，static 模型用不到
-let currentAnimSpeed = 1; // sources.js 的 particle.animationSpeed，倍率套在 delta 上，見 advanceAnimationPlayback()
-let animPhase = 0;
-// loadModelTexture() 回傳的完整結果（{type, texture} 或 {type, textures, clipDuration}）
-// ——currentAnimFrames 只存了「目前綁在 uniform 上可能用到的那份參照」，animated
-// 情況下換模型要把全部 N 張貼圖都 dispose() 掉，不能只看 uniform A/B 當下指到的那
-// 兩張，所以額外留一份完整結果在這裡給 swapActiveModel() 換模型前呼叫
-// disposeModelResult() 用。currentModelResult 現在是 { default, periodic } 這個
-// 形狀（見 loadModelTexture()），default 就是原本單獨一份 modelResult，periodic
-// 是下面這組「定時動作」用的，沒設定 particle.periodicAnimation 就是 null。
-let currentModelResult = null;
-
-// 「定時動作」：跟上面 currentAnimFrames／animPhase 那組「動畫粒子化」是兩套獨立
-// 機制，共用同一組 shader uniform（uTextureModelA/B/uAnimBlend），但語意不同——
-// currentAnimFrames 那組是「一直循環播放」（particle.animatedIdle），這組是
-// 「預設定格在 bind pose，閒置滿 periodicIntervalSeconds 秒才觸發播一次，播完
-// 自動退回定格姿勢」（particle.periodicAnimation，例如 aatroxModel 的 Recall）。
-// 一個模型應該只用其中一種，不要兩個都設定，不然兩邊會搶著寫同一組 uniform，
-// 誰在 tick() 裡後執行就蓋過誰，畫面會忽動忽靜。
-let periodicFrames = null; // DataTexture[]，null 代表這個模型沒設定 periodicAnimation
-let periodicClipDuration = 1;
-let periodicAnimSpeed = 1; // sources.js 的 particle.periodicAnimation.speed，倍率套在 delta 上，見 advancePeriodicAnimation()
-let periodicIntervalSeconds = DEFAULT_PERIODIC_INTERVAL_SECONDS;
-let periodicTimer = 0; // 「已經閒置多久」的累加秒數，只在完全聚合/沒轉場/沒拖曳時累加，見 advancePeriodicAnimation()
-let periodicPlaying = false; // 目前是不是正在播那段觸發動畫（true 期間 periodicTimer 不會動，播完才重新從 0 開始倒數）
-let periodicPhase = 0; // 播放中的已播秒數，播到 periodicClipDuration 就算播完一輪（不循環，跟 animPhase 用 % 取模的邏輯不一樣）
+// 兩隻模型共用的 three.js 基礎設施。每隻模型自己的狀態（FBO、聚合進度、閒置動畫、
+// 動畫粒子化、定時動作、手動微調偏移）在 ParticlePet 裡，見那邊的說明。
+let renderer, scene, camera, canvas;
+const pets = {}; // { primary: ParticlePet, secondary: ParticlePet }，init() 建立
+// 最後一次被滑鼠點到的那隻，手動微調 debug 工具（handleManualNudgeKey()）調整的
+// 就是它；還沒點過任何一隻就調 primary。
+let activePet = null;
 
 // 「模型序列播放」：跟上面兩組（animatedIdle／periodicAnimation）是同一種
 // 「換指標＋改一個 float」機制、寫進同一組 uTextureModelA/B/uAnimBlend uniform，
 // 但語意是「跨模型」而不是「同一個模型的不同姿勢」——sequenceStages 陣列裡每一項
 // 是不同模型（依 sources.js 的 sequenceModels 清單）各自取樣出來的靜態形狀 +
-// 顏色。啟用期間會整個接管 uTextureModelA/B/uAnimBlend/uColor，tick() 裡改呼叫
+// 顏色。啟用期間會整個接管 uTextureModelA/B/uAnimBlend/uColor，ParticlePet.update() 裡改呼叫
 // advanceSequencePlayback() 取代 advanceAnimationPlayback()／advancePeriodicAnimation()
-// （見 tick() 的說明），兩邊不會同時搶著寫同一組 uniform。
+// （見 ParticlePet.update() 的說明），兩邊不會同時搶著寫同一組 uniform。
 //
 // sequenceStages 故意不在 App 一開機就預載——sequenceModels 清單可能有好幾個
 // 模型、甚至偏大的檔案，這個功能不是每次都會用到，無條件背景讀會白白佔頻寬/
@@ -218,11 +189,9 @@ let sequenceVoiceFired = false;
 let sequenceBgmAudio = null;
 
 let rafId = null;
-let ready = false;
-let pendingEnabled = null;
-let modelSwapPending = false;
 let lastFrameTime = null;
-let userInteracting = false; // 使用者正在用 OrbitControls 拖/滾的時候，暫停自動緩慢自轉
+// 正在拖曳的那隻：{ pet, button, pointerId, lastX, lastY }，見 setupScene() 的 pointer 事件
+let drag = null;
 let interactiveMode = false; // 桌寵視窗目前是不是「互動模式」，由 main.js 同步（見檔案開頭說明）
 // 3D 模型微調 debug 模式是否開啟：由 Ctrl+Alt+N（main.js 全域快捷鍵，見該檔案
 // window.toggleParticleNudgeMode 那段）切換，見 handleManualNudgeKey() 開頭的說明——
@@ -252,20 +221,17 @@ const MANUAL_NUDGE_ROT_STEP_FINE = 0.01; // 按住 Shift 時用這個較小的�
 // 大 scale 時每步又感覺太小。
 const MANUAL_NUDGE_SCALE_FACTOR = 1.05; // 一般幅度：每按一下乘上/除以 5%
 const MANUAL_NUDGE_SCALE_FACTOR_FINE = 1.01; // 按住 Shift 時用這個較小的幅度：1%
-const manualOffset = new THREE.Vector3(0, 0, 0); // 累加的手動 position 偏移，疊加在 idleMotion 算出的值上面
-let manualRotationY = 0; // 累加的手動 rotationY 偏移（rad），疊加在 idleMotion 算出的值上面
-let manualScale = 1; // 累加的手動 scale 倍率（乘法性質，基準是 1，不是 0），疊加在 fbo.particles.scale 上面
+// 累加的偏移/倍率本身存在每隻 ParticlePet 上（manualOffset/manualRotationY/manualScale），
+// 見 ParticlePet.hasManualNudge()。
 
-// 只要有任何一項還沒歸零/歸一，就代表使用者正在用手動微調工具校正。tick() 用這個
-// 判斷要不要暫停閒置動畫（spin/bob/swing）——swing 每幀是直接覆蓋 rotation[axis]
-// （不是疊加），如果閒置動畫繼續跑，手動調的 rotationY 會立刻被蓋掉，畫面上完全
-// 看不出變化（只有 Console 印出來的累計數字是對的）；bob 同理會蓋掉 position 那一軸；
-// spin 雖然是疊加不會蓋掉，但持續自轉也會讓人分不清「這是我調的」還是「它本來就在轉」。
-// 一律暫停最單純，反正是校正 debug 用，不需要邊看閒置動畫邊校正。按 R 全部歸零後
-// 這個判斷自然變 false，閒置動畫會恢復。
-function hasManualNudge() {
-  return manualOffset.x !== 0 || manualOffset.y !== 0 || manualOffset.z !== 0 || manualRotationY !== 0 || manualScale !== 1;
-}
+// 使用者用滑鼠直接操作模型（拖曳旋轉／右鍵平移／滾輪縮放，見 setupScene()）的手感參數。
+const DRAG_ROTATE_SPEED = 0.01; // 每拖 1px 轉幾 rad
+const WHEEL_SCALE_FACTOR = 1.1; // 滾輪每格乘上/除以這個倍率
+const PET_SCALE_MIN = 0.2;
+const PET_SCALE_MAX = 5;
+// 每隻模型 root 群組的預設擺位（使用者沒拖過、或按了重置）見 defaultPetLayout()。
+const PET_LAYOUT_LS_PREFIX = 'particle_pet_layout_';
+const SECONDARY_MODEL_LS_KEY = 'particle_pet_model_secondary';
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -333,41 +299,9 @@ function resolveModel(key) {
   };
 }
 
-// 換模型／重新初始化時呼叫：套用新模型的閒置動畫設定，並把粒子群組的
-// position/rotation 歸零、相位時鐘歸零。歸零是必要的——不然假設上一個模型是
-// bob（會動 position.y），消散動畫開始時 tick() 就不再呼叫 applyIdleMotion()，
-// position.y 會停在消散當下的偏移值；如果沒歸零，新模型即使是 swing（只動
-// rotation，不會去動 position）也會整團永遠偏移，看起來像是聚合錯位置。
-function applyIdleMotionConfig(idleMotion) {
-  currentIdleMotion = idleMotion;
-  idleElapsed = 0;
-  if (fbo) {
-    fbo.particles.position.set(0, 0, 0);
-    fbo.particles.rotation.set(0, 0, 0);
-  }
-}
-
-// 完全聚合、沒有動畫在跑、使用者也沒在拖鏡頭時，tick() 每幀呼叫這個套用「這個模型
-// 該有的閒置動畫」。bob/swing 是純函式（用 idleElapsed 算 sin() 相位），本身不會
-// 累積誤差；spin 沿用原本「靠 delta 累加角度」的寫法，因為它本來就是無界的連續
-// 旋轉，用 sin() 表示不了。
-function applyIdleMotion(delta) {
-  const motion = currentIdleMotion;
-  switch (motion.type) {
-    case 'bob': // 上下（或指定軸向）短距離來回：只動 position，不動 rotation
-      fbo.particles.position[motion.axis] = Math.sin(idleElapsed * motion.speed) * motion.amplitude;
-      break;
-    case 'swing': // 水平（或指定軸向）短距離轉動：只動 rotation，不動 position
-      fbo.particles.rotation[motion.axis] = Math.sin(idleElapsed * motion.speed) * motion.amplitude;
-      break;
-    default: // spin：跟原本行為一樣，繞 Y 軸連續自轉
-      fbo.particles.rotation.y += delta * motion.speed;
-      break;
-  }
-}
-
-// 手動微調 debug 工具的按鍵處理，見上面 manualOffset/manualRotationY/manualScale
-// 宣告處的說明。只有 Ctrl+Alt+N 開過「微調模式」（manualNudgeModeActive）才生效——
+// 手動微調 debug 工具的按鍵處理，調整的是 activePet（最後一次被滑鼠點到的那隻，
+// 沒點過就是 primary），累計值存在那隻 ParticlePet 的 manualOffset/manualRotationY/
+// manualScale 上。只有 Ctrl+Alt+N 開過「微調模式」（manualNudgeModeActive）才生效——
 // 曾經借用 interactiveMode 當開關，但方向鍵這幾顆同時也是聊天輸入框打字時要用的鍵，
 // interactiveMode 開著才能打字，兩邊搶同一組鍵；改成獨立、預設關閉的開關，平常打字
 // 不會被這個 debug 工具吃掉按鍵，只有明確按過 Ctrl+Alt+N 才會生效：
@@ -387,7 +321,7 @@ function applyIdleMotion(delta) {
 // 被輸入法攔截，才選它們。
 // 每次按鍵都直接把這次的差量/倍率套用到 fbo.particles 上（不是每幀重複疊加），
 // manualOffset/manualRotationY/manualScale 只是跟著同步累計、給下面的
-// console.log 顯示用，應該永遠對得上。只要有任何一項不是預設值，tick() 就會
+// console.log 顯示用，應該永遠對得上。只要有任何一項不是預設值，ParticlePet.update() 就會
 // 透過 hasManualNudge()（見宣告處說明）自動暫停這個模型的閒置動畫（spin/bob/
 // swing），不然像 swing 那種每幀直接覆蓋 rotation[axis] 的閒置動畫，會把手動調
 // 的 rotationY 立刻蓋掉、畫面上看不出變化。按 R 全部歸零後閒置動畫會自動恢復，
@@ -403,7 +337,8 @@ const MANUAL_NUDGE_KEYS = new Set([
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '[', ']', 'PageUp', 'PageDown', 'Home', 'End', 'r', 'R', 'p', 'P',
 ]);
 function handleManualNudgeKey(e) {
-  if (!manualNudgeModeActive || !fbo) return;
+  const pet = activePet || pets.primary;
+  if (!manualNudgeModeActive || !pet || !pet.fbo) return;
   if (!MANUAL_NUDGE_KEYS.has(e.key)) return;
   e.preventDefault();
 
@@ -413,69 +348,69 @@ function handleManualNudgeKey(e) {
   let label = '';
   switch (e.key) {
     case 'ArrowLeft':
-      fbo.particles.position.x -= posStep;
-      manualOffset.x -= posStep;
+      pet.fbo.particles.position.x -= posStep;
+      pet.manualOffset.x -= posStep;
       label = `position.x -${posStep}`;
       break;
     case 'ArrowRight':
-      fbo.particles.position.x += posStep;
-      manualOffset.x += posStep;
+      pet.fbo.particles.position.x += posStep;
+      pet.manualOffset.x += posStep;
       label = `position.x +${posStep}`;
       break;
     case 'ArrowUp':
-      fbo.particles.position.y += posStep;
-      manualOffset.y += posStep;
+      pet.fbo.particles.position.y += posStep;
+      pet.manualOffset.y += posStep;
       label = `position.y +${posStep}`;
       break;
     case 'ArrowDown':
-      fbo.particles.position.y -= posStep;
-      manualOffset.y -= posStep;
+      pet.fbo.particles.position.y -= posStep;
+      pet.manualOffset.y -= posStep;
       label = `position.y -${posStep}`;
       break;
     case '[':
-      fbo.particles.position.z -= posStep;
-      manualOffset.z -= posStep;
+      pet.fbo.particles.position.z -= posStep;
+      pet.manualOffset.z -= posStep;
       label = `position.z -${posStep}`;
       break;
     case ']':
-      fbo.particles.position.z += posStep;
-      manualOffset.z += posStep;
+      pet.fbo.particles.position.z += posStep;
+      pet.manualOffset.z += posStep;
       label = `position.z +${posStep}`;
       break;
     case 'PageDown':
-      fbo.particles.rotation.y -= rotStep;
-      manualRotationY -= rotStep;
+      pet.fbo.particles.rotation.y -= rotStep;
+      pet.manualRotationY -= rotStep;
       label = `rotationY -${rotStep}`;
       break;
     case 'PageUp':
-      fbo.particles.rotation.y += rotStep;
-      manualRotationY += rotStep;
+      pet.fbo.particles.rotation.y += rotStep;
+      pet.manualRotationY += rotStep;
       label = `rotationY +${rotStep}`;
       break;
     case 'Home':
-      fbo.particles.scale.multiplyScalar(1 / scaleFactor);
-      manualScale /= scaleFactor;
+      pet.fbo.particles.scale.multiplyScalar(1 / scaleFactor);
+      pet.manualScale /= scaleFactor;
       label = `scale ÷${scaleFactor}`;
       break;
     case 'End':
-      fbo.particles.scale.multiplyScalar(scaleFactor);
-      manualScale *= scaleFactor;
+      pet.fbo.particles.scale.multiplyScalar(scaleFactor);
+      pet.manualScale *= scaleFactor;
       label = `scale ×${scaleFactor}`;
       break;
     case 'r':
     case 'R':
-      // 歸零：把已經套用到 fbo.particles 上的累計偏移/倍率還原回去（不是直接
-      // set(0,0,0)/set(1,1,1)——fbo.particles.position/rotation/scale 上可能還
+      // 歸零：把已經套用到 pet.fbo.particles 上的累計偏移/倍率還原回去（不是直接
+      // set(0,0,0)/set(1,1,1)——pet.fbo.particles.position/rotation/scale 上可能還
       // 疊著 idleMotion 這一幀算出來的值，直接蓋掉會連 idleMotion 的部分一起洗掉）。
       // position/rotation 是加法性質用減的還原，scale 是乘法性質用除的還原。
-      fbo.particles.position.x -= manualOffset.x;
-      fbo.particles.position.y -= manualOffset.y;
-      fbo.particles.position.z -= manualOffset.z;
-      fbo.particles.rotation.y -= manualRotationY;
-      fbo.particles.scale.divideScalar(manualScale);
-      manualOffset.set(0, 0, 0);
-      manualRotationY = 0;
-      manualScale = 1;
+      pet.fbo.particles.position.x -= pet.manualOffset.x;
+      pet.fbo.particles.position.y -= pet.manualOffset.y;
+      pet.fbo.particles.position.z -= pet.manualOffset.z;
+      pet.fbo.particles.rotation.y -= pet.manualRotationY;
+      pet.fbo.particles.scale.divideScalar(pet.manualScale);
+      pet.manualOffset.set(0, 0, 0);
+      pet.manualRotationY = 0;
+      pet.manualScale = 1;
       label = '重置歸零';
       break;
     case 'p':
@@ -484,12 +419,12 @@ function handleManualNudgeKey(e) {
       break;
   }
 
-  const source = sources[currentModelKey];
+  const source = sources[pet.modelKey];
   const basePosition = source && source.particle && source.particle.position;
   const baseRotationY = source && source.particle && source.particle.rotationY;
   const baseScale = source && source.particle && source.particle.scale;
   console.log(
-    `[particle-debug] "${currentModelKey}" ${label} → 累計偏移 position: [${manualOffset.x.toFixed(3)}, ${manualOffset.y.toFixed(3)}, ${manualOffset.z.toFixed(3)}]，rotationY: ${manualRotationY.toFixed(3)}，scale 倍率: ${manualScale.toFixed(3)}\n` +
+    `[particle-debug] ${pet.slot} "${pet.modelKey}" ${label} → 累計偏移 position: [${pet.manualOffset.x.toFixed(3)}, ${pet.manualOffset.y.toFixed(3)}, ${pet.manualOffset.z.toFixed(3)}]，rotationY: ${pet.manualRotationY.toFixed(3)}，scale 倍率: ${pet.manualScale.toFixed(3)}\n` +
       `  目前 sources.js 生效的參考值：position: ${basePosition ? `[${basePosition.join(', ')}]` : '(未填，auto-fit，看模型載入時 Console 印的那行自動置中 log)'}，` +
       `rotationY: ${baseRotationY != null ? baseRotationY.toFixed(3) : '(未填，預設 0)'}，` +
       `scale: ${baseScale ? `[${baseScale.join(', ')}]` : '(未填，auto-fit，看模型載入時 Console 印的那行自動置中 log)'}\n` +
@@ -510,79 +445,6 @@ window.toggleParticleNudgeMode = function toggleParticleNudgeMode() {
   );
   return manualNudgeModeActive;
 };
-
-// 「動畫粒子化」的播放推進：currentAnimFrames 是 null 就什麼都不做（static 模型，
-// A/B 已經在 applyAnimationState() 設定成同一張，不用每幀動）。有的話，把
-// animPhase（在 currentAnimClipDuration 這個循環週期裡的秒數）換算成「該顯示第
-// 幾幀、跟下一幀之間內插多少」，更新 uTextureModelA/B/uAnimBlend 這三個 uniform，
-// 兩幀之間的形變交給 GPU（shaders.js 的 mix()）——不是每幀都重新取樣/上傳新貼圖，
-// 貼圖在 loadModelTexture() 就全部烘好了，這裡純粹是「換指標＋改一個 float」，
-// 對效能幾乎沒有額外負擔。
-//
-// 不管有沒有轉場、使用者拖不拖鏡頭都會呼叫（跟 idleMotion 那組「使用者拖曳時暫停」
-// 的邏輯是分開的，見 currentAnimFrames 宣告處的說明）。
-function advanceAnimationPlayback(delta) {
-  if (!currentAnimFrames || currentAnimFrames.length < 2) return;
-
-  animPhase = (animPhase + delta * currentAnimSpeed) % currentAnimClipDuration;
-  const frameFloat = (animPhase / currentAnimClipDuration) * currentAnimFrames.length;
-  const frameIndexA = Math.floor(frameFloat) % currentAnimFrames.length;
-  const frameIndexB = (frameIndexA + 1) % currentAnimFrames.length;
-  const blend = frameFloat - Math.floor(frameFloat);
-
-  fbo.simulationMaterial.uniforms.uTextureModelA.value = currentAnimFrames[frameIndexA];
-  fbo.simulationMaterial.uniforms.uTextureModelB.value = currentAnimFrames[frameIndexB];
-  fbo.simulationMaterial.uniforms.uAnimBlend.value = blend;
-}
-
-// 「定時動作」的播放推進：跟上面 advanceAnimationPlayback() 是同一種「換指標＋改
-// 一個 float」機制、寫進同一組 uniform，但語意是「預設定格在 default 貼圖，閒置滿
-// periodicIntervalSeconds 秒才觸發播一次 periodicFrames、播完自動退回 default」，
-// 不是持續循環。periodicFrames 是 null 就什麼都不做（這個模型沒設定
-// particle.periodicAnimation）。
-//
-// periodicPlaying=false 時只做一件事：累計「已經閒置多久」，且只在完全聚合、沒有
-// 轉場、使用者沒在拖鏡頭時累加（跟 idleMotion 的暫停條件一致——拖曳中/轉場中不算
-// 「閒置」，但也不會歸零，鏡頭放開後接著累計，不會因為拖了一下就整個重新等）。
-// 累到門檻就切成播放模式，從第 0 幀開始。
-//
-// periodicPlaying=true 時，periodicPhase 從 0 累加到 periodicClipDuration 就代表
-// 播完一輪——不像 animPhase 用 % 取模那樣無限循環，是播一次就停，接著把 A/B 都設
-// 回 default 貼圖、periodicTimer 歸零重新倒數下一次觸發。
-function advancePeriodicAnimation(delta) {
-  if (!periodicFrames || periodicFrames.length < 2) return;
-
-  if (periodicPlaying) {
-    periodicPhase += delta * periodicAnimSpeed;
-    if (periodicPhase >= periodicClipDuration) {
-      periodicPlaying = false;
-      periodicPhase = 0;
-      periodicTimer = 0;
-      const defaultResult = currentModelResult && currentModelResult.default;
-      if (defaultResult) {
-        const initial = firstTextureOf(defaultResult);
-        fbo.simulationMaterial.uniforms.uTextureModelA.value = initial;
-        fbo.simulationMaterial.uniforms.uTextureModelB.value = initial;
-        fbo.simulationMaterial.uniforms.uAnimBlend.value = 0;
-      }
-      return;
-    }
-
-    const frameFloat = (periodicPhase / periodicClipDuration) * periodicFrames.length;
-    const frameIndexA = Math.min(Math.floor(frameFloat), periodicFrames.length - 1);
-    const frameIndexB = Math.min(frameIndexA + 1, periodicFrames.length - 1);
-    const blend = frameFloat - Math.floor(frameFloat);
-    fbo.simulationMaterial.uniforms.uTextureModelA.value = periodicFrames[frameIndexA];
-    fbo.simulationMaterial.uniforms.uTextureModelB.value = periodicFrames[frameIndexB];
-    fbo.simulationMaterial.uniforms.uAnimBlend.value = blend;
-  } else if (transitionTarget === 1 && transitionStart === null && !userInteracting) {
-    periodicTimer += delta;
-    if (periodicTimer >= periodicIntervalSeconds) {
-      periodicPlaying = true;
-      periodicPhase = 0;
-    }
-  }
-}
 
 // HSL 空間的色相內插：色相是環狀的（0 跟 1 是同一個角度），直接線性內插兩個
 // 色相值可能會繞遠路（例如從 0.05 到 0.95，最短路徑其實是往負方向繞過 0，
@@ -614,19 +476,21 @@ function lerpColorHSL(colorA, colorB, t, target) {
 }
 
 // stageA 在停留段（withinStage < SEQUENCE_HOLD_SECONDS）該顯示哪兩張貼圖＋blend：
-// 沒有 sequenceAction 就是單純定格（A===B，blend=0）；有的話用跟
-// advanceAnimationPlayback() 一樣的「frameIndexA/B + blend、% 取模無限循環」數學
-// 播放那段動作——動作比 SEQUENCE_HOLD_SECONDS 短就自然循環用滿停留時間，比較長
-// 就會在停留段結束時被直接截斷（見 sources.js sequenceAction 的說明，這是刻意
-// 的行為，序列節奏不被個別模型的動作長度綁架）。
+// 沒有 sequenceAction 就是單純定格（A===B，blend=0）；有的話從第一幀開始只播
+// 一次，播到最後一幀就定在那個姿勢直到停留段結束——不循環，因為這些動作多半
+// 不是循環動畫，最後一幀跟第一幀姿勢差很多，繞回去時會整團粒子大幅甩一下。
+// 動作比 SEQUENCE_HOLD_SECONDS 長就會在停留段結束時被直接截斷（見 sources.js
+// sequenceAction 的說明，這是刻意的行為，序列節奏不被個別模型的動作長度綁架）。
 function resolveHoldFrames(stageA, holdElapsed) {
   if (!stageA.actionFrames || stageA.actionFrames.length < 2) {
     return { textureA: stageA.defaultTexture, textureB: stageA.defaultTexture, blend: 0 };
   }
-  const actionElapsed = holdElapsed % stageA.actionDuration;
-  const frameFloat = (actionElapsed / stageA.actionDuration) * stageA.actionFrames.length;
-  const frameIndexA = Math.floor(frameFloat) % stageA.actionFrames.length;
-  const frameIndexB = (frameIndexA + 1) % stageA.actionFrames.length;
+  const lastIndex = stageA.actionFrames.length - 1;
+  // 關鍵幀 i 對應動作時間 i / length * actionDuration（見 particle-sampler.js
+  // sampleModelAnimationFrames()），所以同一套換算，只是夾在最後一幀不再往後推。
+  const frameFloat = Math.min((holdElapsed / stageA.actionDuration) * stageA.actionFrames.length, lastIndex);
+  const frameIndexA = Math.floor(frameFloat);
+  const frameIndexB = Math.min(frameIndexA + 1, lastIndex);
   return {
     textureA: stageA.actionFrames[frameIndexA],
     textureB: stageA.actionFrames[frameIndexB],
@@ -649,7 +513,7 @@ function resolveHoldFrames(stageA, holdElapsed) {
 // sequenceStages 每一項除了位置貼圖還帶了這個模型自己的顏色，轉換段額外用
 // lerpColorHSL()（不是直接 RGB lerpColors()）在 JS 端算出 A/B 兩站顏色的內插
 // 結果，直接寫回 uColor（本來就是每次換模型都會被 JS 端整個覆寫的 flat
-// uniform，見 setupParticles()／swapActiveModel()），不用另外加
+// uniform，見 ParticlePet.setupParticles()／swapModel()），不用另外加
 // uColorA/uColorB uniform；停留段（不管有沒有在播動作）維持 indexA 自己的
 // 顏色，動作播放不換角色配色。
 //
@@ -664,6 +528,7 @@ function resolveHoldFrames(stageA, holdElapsed) {
 // 用這個訊號判斷「這一輪掃描圖案是不是剛好畫完整圈」，見那邊的說明。
 function advanceSequenceLoadingSweep(delta) {
   if (!sequenceLoadingTexture) return true;
+  const fbo = pets.primary.fbo; // 序列播放只在 primary 身上，見檔案開頭說明
   const next = sequenceLoadingSweepPhase + delta;
   const completedCycle = next >= SEQUENCE_LOADING_SWEEP_SECONDS;
   sequenceLoadingSweepPhase = next % SEQUENCE_LOADING_SWEEP_SECONDS;
@@ -692,6 +557,7 @@ function playSequenceStageVoice(stage) {
 }
 
 function advanceSequencePlayback(delta) {
+  const fbo = pets.primary.fbo; // 序列播放只在 primary 身上，見檔案開頭說明
   if (!sequenceStages || sequenceStages.length < 2) {
     advanceSequenceLoadingSweep(delta); // 還在等背景載入：讓 loading 佔位圖案的掃描動畫繼續跑
     return;
@@ -792,6 +658,13 @@ function createCanvas() {
   return el;
 }
 
+function updatePointerNDC(e) {
+  lastMouseMoveAt = performance.now();
+  const rect = canvas.getBoundingClientRect();
+  pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+}
+
 function setupScene() {
   canvas = createCanvas();
 
@@ -805,16 +678,21 @@ function setupScene() {
   camera.position.set(0, 0, 4);
   camera.lookAt(0, 0, 0);
 
-  // 拖曳旋轉／滾輪縮放／右鍵拖曳平移。只有桌寵視窗處在「互動模式」時才收得到
-  // 這些事件（見檔案開頭大註解），穿透模式下形同沒接。
-  controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.target.set(0, 0, 0);
-  controls.minDistance = 1.5;
-  controls.maxDistance = 15;
-  controls.addEventListener('start', () => { userInteracting = true; });
-  controls.addEventListener('end', () => { userInteracting = false; });
+  // 「點到哪隻就動哪隻」：左鍵拖曳旋轉、右鍵拖曳平移、滾輪縮放，都只套在滑鼠
+  // 底下那隻模型自己的 root 群組上（見 pickPetAt()／ParticlePet.rotateByPixels()
+  // 等），相機固定不動——原本 OrbitControls 轉的是相機，兩隻模型會被一起轉。
+  // 只有桌寵視窗處在「互動模式」時才收得到這些事件（見檔案開頭大註解），穿透
+  // 模式下形同沒接。setPointerCapture 讓拖出模型範圍、甚至拖出 canvas 也不會斷。
+  canvas.addEventListener('pointerdown', (e) => {
+    updatePointerNDC(e);
+    const pet = pickPetAt(pointerNDC);
+    if (!pet) return;
+    e.preventDefault();
+    activePet = pet;
+    pet.dragging = true;
+    drag = { pet, button: e.button, pointerId: e.pointerId, lastX: e.clientX, lastY: e.clientY };
+    canvas.setPointerCapture(e.pointerId);
+  });
 
   // 滑鼠移到粒子點雲上就顯示「抓取」游標，離開就還原——用滑鼠位置換算成 NDC
   // 座標存起來，實際 raycast 放進 tick() 裡跟渲染同一個節奏做，不用每個
@@ -827,12 +705,42 @@ function setupScene() {
   // 縫隙時會被判定成「沒命中」，於是 mousemove/mouseleave 會在同一個游標位置
   // 高頻互相穿插觸發。如果 mouseleave 一收到就立刻重置座標，游標會瘋狂閃爍；
   // 改成「一段時間沒收到新 mousemove 才算離開」可以撐過這些穿插的假離開事件。
-  canvas.addEventListener('mousemove', (e) => {
-    lastMouseMoveAt = performance.now();
-    const rect = canvas.getBoundingClientRect();
-    pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  canvas.addEventListener('pointermove', (e) => {
+    updatePointerNDC(e);
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    const dx = e.clientX - drag.lastX;
+    const dy = e.clientY - drag.lastY;
+    drag.lastX = e.clientX;
+    drag.lastY = e.clientY;
+    if (drag.button === 2) drag.pet.panByPixels(dx, dy);
+    else drag.pet.rotateByPixels(dx, dy);
   });
+
+  const endDrag = (e) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    drag.pet.dragging = false;
+    drag.pet.saveLayout();
+    try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    drag = null;
+  };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  // 右鍵拖曳是平移，不要跳出瀏覽器右鍵選單
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  canvas.addEventListener(
+    'wheel',
+    (e) => {
+      updatePointerNDC(e);
+      const pet = pickPetAt(pointerNDC);
+      if (!pet) return;
+      e.preventDefault();
+      activePet = pet;
+      pet.scaleBy(e.deltaY < 0 ? WHEEL_SCALE_FACTOR : 1 / WHEEL_SCALE_FACTOR);
+      pet.saveLayout();
+    },
+    { passive: false }
+  );
 
   // 手動微調 debug 工具（互動模式下用鍵盤即時微調 position/rotationY），見
   // handleManualNudgeKey() 開頭的說明。掛在 window 不是 canvas——鍵盤事件不像
@@ -848,9 +756,699 @@ function setupScene() {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    if (fbo) fbo.renderMaterial.uniforms.uResolution.value.set(width, height);
+    for (const pet of Object.values(pets)) {
+      if (pet.fbo) pet.fbo.renderMaterial.uniforms.uResolution.value.set(width, height);
+    }
   });
 }
+
+// 從粒子位置貼圖（DataTexture，RGBA float）算出這個形狀在 fbo.particles 本地座標
+// 下的包圍盒，給 pickPetAt() 判斷滑鼠有沒有點在這隻模型上。FBO 粒子的
+// geometry 頂點只是 0~1 的 UV 索引、不是真正位置（真正位置在 GPU 上算），沒辦法
+// 直接對 Points 做 raycast，所以改用取樣結果的包圍盒近似。65536 顆，一次迴圈，
+// 只在換模型時算。
+function computeTextureBounds(texture, target) {
+  const data = texture.image.data;
+  const v = new THREE.Vector3();
+  target.makeEmpty();
+  for (let i = 0; i < data.length; i += 4) target.expandByPoint(v.set(data[i], data[i + 1], data[i + 2]));
+  return target;
+}
+
+// 每隻模型 root 群組的預設擺位：primary 維持原本的正中央；secondary 擺在畫面左半邊
+// 的中間，避開 primary（sources.js 裡有些模型本身就故意偏右擺）。不寫死世界座標——
+// 可見寬度跟視窗長寬比有關，寫死 x=-2 在比較窄的螢幕上會有半隻跑到畫面外。
+function defaultPetLayout(slot) {
+  if (slot !== 'secondary') return { x: 0, y: 0, z: 0, scale: 1 };
+  const visibleHalfHeight = camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  return { x: -(visibleHalfHeight * camera.aspect) / 2, y: 0, z: 0, scale: 1 };
+}
+
+function otherPet(pet) {
+  return pet.slot === 'primary' ? pets.secondary : pets.primary;
+}
+
+// 一隻 3D 模型：自己的 FBO（粒子）、目前模型、聚合/消散進度、閒置動畫、動畫粒子化、
+// 定時動作、手動微調偏移，以及使用者拖曳出來的擺位（root 群組）。
+//
+// 物件層級：scene → root（使用者拖曳旋轉/平移/滾輪縮放，存 localStorage）→
+// fbo.particles（sources.js 的閒置動畫 idleMotion、手動微調 debug 工具）。兩層
+// 分開，閒置動畫每幀覆蓋 rotation/position 時不會把使用者擺好的角度/位置蓋掉。
+class ParticlePet {
+  constructor(slot, modelKey) {
+    this.slot = slot;
+    this.modelKey = modelKey;
+    this.root = new THREE.Group();
+    this.fbo = null;
+    this.localBounds = new THREE.Box3();
+    this.loadPromise = null; // load() 進行中/完成的 Promise；secondary 第一次開啟才讀
+    this.ready = false;
+    this.pendingEnabled = null; // 還沒 ready 時被要求的開關狀態，ready 後補套用
+    this.modelSwapPending = false; // 擋連續快速點選單造成的重疊載入，見 swapModel()
+    this.dragging = false; // 使用者正在拖這隻的時候，暫停閒置動畫/定時動作倒數
+
+    this.progress = 0;
+    this.transitionFrom = 0;
+    this.transitionTarget = 0; // 0=散開（目標狀態）、1=聚合（目標狀態）
+    this.transitionStart = null;
+
+    // 目前這個模型的閒置動畫設定（type/axis/amplitude/speed，見 normalizeIdleMotion()）
+    // 跟動畫自己的相位時鐘。idleElapsed 只在「完全聚合、沒轉場、使用者沒在拖」時往前走，
+    // bob/swing 靠它算 sin() 相位，spin 則沿用「靠 delta 累加角度」的寫法（見 applyIdleMotion()）。
+    this.idleMotion = normalizeIdleMotion(undefined);
+    this.idleElapsed = 0;
+
+    // 「動畫粒子化」目前的播放狀態：animFrames 是 DataTexture 陣列（null 代表目前這個
+    // 模型是單幀定格、沒有動畫可播）；animPhase 是在 animClipDuration 這個循環週期裡的
+    // 當前秒數，每幀不管有沒有轉場/使用者拖曳都會往前走——這是刻意跟 idleMotion 的暫停
+    // 條件分開的：idleMotion 是「整團粒子的裝飾性搖擺」，使用者拖曳時停下來才不會打架；
+    // 這裡是「角色本身在呼吸/待機」，應該持續播放。
+    this.animFrames = null;
+    this.animClipDuration = 1; // 秒；預設 1 只是避免 animPhase 取模時除以 0，static 模型用不到
+    this.animSpeed = 1; // sources.js 的 particle.animationSpeed，倍率套在 delta 上
+    this.animPhase = 0;
+    // loadModelTexture() 回傳的完整 { default, periodic, color }——animFrames 只存了
+    // 「目前綁在 uniform 上可能用到的那份參照」，換模型要把全部貼圖都 dispose() 掉，
+    // 所以額外留一份完整結果給 swapModel() 呼叫 disposeModelResult() 用。
+    this.modelResult = null;
+
+    // 「定時動作」：跟上面「動畫粒子化」是兩套獨立機制，共用同一組 shader uniform
+    // （uTextureModelA/B/uAnimBlend），但語意不同——上面是「一直循環播放」
+    // （particle.animatedIdle），這組是「預設定格，閒置滿 periodicIntervalSeconds 秒才
+    // 觸發播一次，播完自動退回定格姿勢」（particle.periodicAnimation，例如 aatroxModel
+    // 的 Recall）。一個模型應該只用其中一種，不然兩邊會搶著寫同一組 uniform。
+    this.periodicFrames = null; // DataTexture[]，null 代表這個模型沒設定 periodicAnimation
+    this.periodicClipDuration = 1;
+    this.periodicAnimSpeed = 1;
+    this.periodicIntervalSeconds = DEFAULT_PERIODIC_INTERVAL_SECONDS;
+    this.periodicTimer = 0; // 「已經閒置多久」的累加秒數，只在完全聚合/沒轉場/沒拖曳時累加
+    this.periodicPlaying = false; // 正在播那段觸發動畫（期間 periodicTimer 不動，播完才重新從 0 倒數）
+    this.periodicPhase = 0; // 播放中的已播秒數，播到 periodicClipDuration 就算播完一輪（不循環）
+
+    // 手動微調 debug 工具累加的偏移/倍率，見 handleManualNudgeKey()。只影響畫面顯示，
+    // 不會寫回 sources.js、也不會在換模型/reload 後留著。
+    this.manualOffset = new THREE.Vector3(0, 0, 0); // 疊加在 idleMotion 算出的值上面
+    this.manualRotationY = 0; // rad，疊加在 idleMotion 算出的值上面
+    this.manualScale = 1; // 乘法性質，基準是 1，疊加在 fbo.particles.scale 上面
+
+    this.restoreLayout();
+    scene.add(this.root);
+  }
+
+  // ── 擺位（使用者拖曳/滾輪的結果）────────────────────────────────────────
+  // 只存位置跟縮放，不存旋轉：旋轉是「轉過去看一下」的暫時操作，下次開機回到
+  // sources.js 校正好的正面比較直覺。
+
+  restoreLayout() {
+    const fallback = defaultPetLayout(this.slot);
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(PET_LAYOUT_LS_PREFIX + this.slot)); } catch {}
+    const layout = saved && typeof saved.x === 'number' ? saved : fallback;
+    this.root.position.set(layout.x, layout.y, layout.z || 0);
+    this.root.scale.setScalar(layout.scale || 1);
+    this.root.rotation.set(0, 0, 0);
+  }
+
+  saveLayout() {
+    const p = this.root.position;
+    try {
+      localStorage.setItem(
+        PET_LAYOUT_LS_PREFIX + this.slot,
+        JSON.stringify({ x: p.x, y: p.y, z: p.z, scale: this.root.scale.x })
+      );
+    } catch {}
+  }
+
+  resetLayout() {
+    try { localStorage.removeItem(PET_LAYOUT_LS_PREFIX + this.slot); } catch {}
+    this.restoreLayout();
+  }
+
+  rotateByPixels(dx, dy) {
+    this.root.rotation.y += dx * DRAG_ROTATE_SPEED;
+    this.root.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.root.rotation.x + dy * DRAG_ROTATE_SPEED));
+  }
+
+  // 把螢幕上拖了幾 px 換算成模型所在深度的世界座標距離，平移手感才會跟滑鼠同步
+  panByPixels(dx, dy) {
+    const distance = camera.position.z - this.root.position.z;
+    const worldPerPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / window.innerHeight;
+    this.root.position.x += dx * worldPerPixel;
+    this.root.position.y -= dy * worldPerPixel;
+  }
+
+  scaleBy(factor) {
+    const s = Math.max(PET_SCALE_MIN, Math.min(PET_SCALE_MAX, this.root.scale.x * factor));
+    this.root.scale.setScalar(s);
+  }
+
+  // ── 載入 / 換模型 ──────────────────────────────────────────────────────
+
+  // secondary 是使用者按下「開啟」才讀 GLB，大檔案（例如 25MB 的 kaido_dragon_form.glb
+  // 加上烘 48 張定時動作關鍵幀）要等好幾十秒，這段期間畫面什麼都沒有，看起來像是
+  // 開了沒反應。所以 secondary 先用序列播放那個「LOADING」佔位圖案（見
+  // buildSequenceLoadingTexture()）建好粒子頂著，真的模型讀完再消散、重新聚合成
+  // 真的模型。primary 開機就讀、維持原本行為，不顯示佔位圖案。
+  load() {
+    if (!this.loadPromise) {
+      this.loadPromise = (async () => {
+        const modelInfo = resolveModel(this.modelKey);
+        const showPlaceholder = this.slot === 'secondary';
+        if (showPlaceholder) {
+          const placeholderResult = {
+            default: { type: 'static', texture: buildSequenceLoadingTexture() },
+            periodic: null,
+            color: SEQUENCE_LOADING_COLOR,
+          };
+          this.setupParticles(placeholderResult);
+          this.applyAnimationState(placeholderResult); // 記住 modelResult，真的模型讀完才能 dispose 佔位貼圖
+          if (this.pendingEnabled) this.applyEnabled(true);
+        }
+
+        const modelResult = await loadModelTexture(modelInfo);
+
+        if (showPlaceholder) {
+          // 佔位圖案正顯示中就先播完消散，再換成真的模型（跟 swapModel() 同一種轉場）
+          if (this.transitionTarget === 1 || this.transitionStart !== null) await this.disperseAndWait();
+          const placeholder = this.modelResult;
+          this.applyAnimationState(modelResult);
+          disposeModelResult(placeholder);
+          this.fbo.renderMaterial.uniforms.uColor.value.copy(modelResult.color);
+        } else {
+          this.setupParticles(modelResult);
+          this.applyAnimationState(modelResult); // setupParticles() 已經幫 A/B 設過初始值，這裡主要是記錄 animFrames/modelResult 供之後換模型 dispose 用
+        }
+        this.applyIdleMotionConfig(modelInfo.idleMotion);
+        this.ready = true;
+        if (this.pendingEnabled !== null) {
+          this.applyEnabled(this.pendingEnabled);
+          this.pendingEnabled = null;
+        }
+      })();
+    }
+    return this.loadPromise;
+  }
+
+  setupParticles(modelResult) {
+    const width = FBO_SIZE;
+    const height = FBO_SIZE;
+    const scatterTexture = createRandomDataTexture(width, height, SCATTER_SPREAD);
+    const initialTexture = firstTextureOf(modelResult.default);
+
+    // uTextureModelA/B + uAnimBlend 取代原本單一的 uTextureModel：static 模型
+    // A===B、uAnimBlend 恆為 0（mix(A,B,0) 數學上就是 A，等同原本行為，沒有額外
+    // 開銷）；animated 模型則由 advanceAnimationPlayback() 每幀更新這三個 uniform，
+    // 在兩個相鄰關鍵幀貼圖之間做 GPU 端內插，見 shaders.js simulationFragmentShader 的說明。
+    const simMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTextureScatter: { value: scatterTexture },
+        uTextureModelA: { value: initialTexture },
+        uTextureModelB: { value: initialTexture },
+        uAnimBlend: { value: 0 },
+        uAnimBlendFX: { value: 0 }, // 模型序列播放專用的加強版轉換開關，見 shaders.js 的說明
+        uProgress: { value: 0 },
+      },
+      vertexShader: simulationVertexShader,
+      fragmentShader: simulationFragmentShader,
+    });
+
+    const renderMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uPositions: { value: null },
+        uSize: { value: 8 }, // 跟 morph-particles 原版粒子大小同一個量級（原本動態範圍 5-20）
+        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        uProgress: { value: 0 },
+        uColor: { value: modelResult.color.clone() }, // clone：換模型時用 .copy() 原地覆寫，不用整個 material 重建
+        uAnimBlend: { value: 0 }, // 跟 simMaterial 同名 uniform 同步，見 advanceSequencePlayback()
+        uAnimBlendFX: { value: 0 },
+        uLoadingActive: { value: 0 }, // loading 佔位圖案「左到右掃描顯現」開關，見 shaders.js／advanceSequenceLoadingSweep() 的說明
+        uLoadingSweep: { value: 0 },
+      },
+      vertexShader: particlesVertexShader,
+      fragmentShader: particlesFragmentShader,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    this.fbo = new FBO(width, height, renderer, simMaterial, renderMaterial);
+    this.fbo.particles.visible = false; // 還沒開啟前不畫，見 tick()
+    this.root.add(this.fbo.particles);
+  }
+
+  // 換模型／初始化時呼叫：把新模型的動畫播放狀態（有沒有多關鍵幀可播、播放週期多長、
+  // 有沒有定時動作可播）記起來，並把 A/B 兩張貼圖、uAnimBlend 重設成「從預設姿勢的
+  // 第 0 幀開始」——不重設的話，比如從一個開了 animatedIdle 的模型換到一個 static
+  // 模型，simMaterial 上舊的 uTextureModelB 還指著上一個模型已經被 dispose() 的
+  // 貼圖。periodicTimer/periodicPlaying 也在這裡歸零，換模型不會沿用上一個模型累積
+  // 的閒置秒數。順便重算點選用的包圍盒（見 computeTextureBounds()）。
+  applyAnimationState(modelResult) {
+    this.modelResult = modelResult;
+    const defaultResult = modelResult.default;
+    this.animFrames = defaultResult.type === 'animated' ? defaultResult.textures : null;
+    this.animClipDuration = defaultResult.type === 'animated' ? defaultResult.clipDuration || 1 : 1;
+    this.animSpeed = defaultResult.type === 'animated' && defaultResult.speed != null ? defaultResult.speed : 1;
+    this.animPhase = 0;
+
+    const periodic = modelResult.periodic;
+    this.periodicFrames = periodic ? periodic.textures : null;
+    this.periodicClipDuration = periodic ? periodic.clipDuration || 1 : 1;
+    this.periodicAnimSpeed = periodic && periodic.speed != null ? periodic.speed : 1;
+    this.periodicIntervalSeconds = periodic ? periodic.intervalSeconds : DEFAULT_PERIODIC_INTERVAL_SECONDS;
+    this.periodicTimer = 0;
+    this.periodicPlaying = false;
+    this.periodicPhase = 0;
+
+    const initial = firstTextureOf(defaultResult);
+    computeTextureBounds(initial, this.localBounds);
+    if (this.fbo) {
+      this.fbo.simulationMaterial.uniforms.uTextureModelA.value = initial;
+      this.fbo.simulationMaterial.uniforms.uTextureModelB.value = initial;
+      this.fbo.simulationMaterial.uniforms.uAnimBlend.value = 0;
+    }
+  }
+
+  // 換模型／重新初始化時呼叫：套用新模型的閒置動畫設定，並把粒子群組的
+  // position/rotation 歸零、相位時鐘歸零。歸零是必要的——不然假設上一個模型是
+  // bob（會動 position.y），消散動畫開始時就不再呼叫 applyIdleMotion()，
+  // position.y 會停在消散當下的偏移值；如果沒歸零，新模型即使是 swing（只動
+  // rotation，不會去動 position）也會整團永遠偏移，看起來像是聚合錯位置。
+  // （使用者拖出來的擺位在外層 root，不受影響。）
+  applyIdleMotionConfig(idleMotion) {
+    this.idleMotion = idleMotion;
+    this.idleElapsed = 0;
+    if (this.fbo) {
+      this.fbo.particles.position.set(0, 0, 0);
+      this.fbo.particles.rotation.set(0, 0, 0);
+    }
+  }
+
+  rememberModelKey(key) {
+    this.modelKey = key;
+    if (this.slot === 'secondary') {
+      try { localStorage.setItem(SECONDARY_MODEL_LS_KEY, key); } catch {}
+    }
+  }
+
+  // 換成 sources.js 裡另一個模型：如果目前正顯示/正在轉場，先播完整消散動畫、
+  // 讀新模型取樣完成後再重新聚合，視覺上就是「原本的消散、換了個新的聚合出來」，
+  // 不是貼圖硬切造成的瞬間位移。還沒讀過（secondary 還沒開過）就只記住 key，
+  // 等第一次開啟時直接讀新的那個。
+  async swapModel(key) {
+    if (this.modelSwapPending) return;
+    if (!this.loadPromise) {
+      this.rememberModelKey(key);
+      return;
+    }
+    this.modelSwapPending = true;
+    try {
+      await this.loadPromise;
+      // primary 序列播放中如果被叫去換單一模型（例如使用者直接點了模型清單裡的
+      // 某一項），先停掉序列、恢復成序列播放前的狀態，再照正常流程換——不這樣做
+      // 的話序列的 uTextureModelA/B/uAnimBlend 還沒清乾淨就會被這次 swap 蓋過去。
+      if (this.slot === 'primary') stopSequenceMode();
+
+      const wasVisible = this.transitionTarget === 1 || this.transitionStart !== null;
+      if (wasVisible) await this.disperseAndWait();
+
+      const modelInfo = resolveModel(key);
+      const modelResult = await loadModelTexture(modelInfo);
+
+      const oldModelResult = this.modelResult;
+      this.applyAnimationState(modelResult); // 先切到新的（設好 A/B/uAnimBlend）...
+      disposeModelResult(oldModelResult); // ...再丟舊的，避免舊貼圖還在被 uniform 參照的空檔被提早釋放
+      this.fbo.renderMaterial.uniforms.uColor.value.copy(modelResult.color);
+      this.applyIdleMotionConfig(modelInfo.idleMotion);
+      this.rememberModelKey(key);
+
+      if (wasVisible) this.applyEnabled(true);
+    } finally {
+      this.modelSwapPending = false;
+    }
+  }
+
+  // ── 開關 / 聚合消散 ────────────────────────────────────────────────────
+
+  // 「目前要不要顯示」：還沒 ready 時以 pendingEnabled 為準
+  isEnabled() {
+    return this.pendingEnabled !== null ? this.pendingEnabled : this.transitionTarget === 1;
+  }
+
+  // 這一幀需不需要更新/渲染：正在轉場、聚合中、或正被拖曳
+  isActive() {
+    return !!this.fbo && (this.transitionStart !== null || this.transitionTarget === 1 || this.dragging);
+  }
+
+  // GLB 還在載入、pipeline 還沒 ready 時先記住目標狀態，load() 完成後立刻補套用；
+  // 開啟時順便觸發 load()（secondary 第一次開啟才讀 GLB）。回傳值代表「這次呼叫
+  // 有沒有立刻生效」。
+  setEnabled(enabled) {
+    if (!this.ready) {
+      this.pendingEnabled = enabled;
+      if (enabled) {
+        this.load().catch((err) => console.error(`[particle-effect] ${this.slot} 模型載入失敗：`, err));
+      }
+      // 載入中已經有「LOADING」佔位粒子的話（見 load()），開關要立刻反映在佔位圖案上
+      if (this.fbo) this.applyEnabled(enabled);
+      return false;
+    }
+    this.applyEnabled(enabled);
+    return true;
+  }
+
+  applyEnabled(enabled) {
+    const target = enabled ? 1 : 0;
+    if (target === this.transitionTarget && this.transitionStart === null) return; // 已經是這個狀態，不用重跑
+    this.startTransition(target);
+  }
+
+  startTransition(target) {
+    this.transitionFrom = this.progress;
+    this.transitionTarget = target;
+    this.transitionStart = performance.now();
+    this.fbo.particles.visible = true;
+    canvas.style.display = 'block';
+    ensureRenderLoop();
+  }
+
+  // 等消散動畫真的跑完才 resolve，給 swapModel() 換模型前用——不能用「等 X 毫秒」
+  // 這種土法煉鋼，使用者拖曳中會延後消散完成的時間點。
+  disperseAndWait() {
+    return new Promise((resolve) => {
+      this.applyEnabled(false);
+      const check = () => {
+        if (this.transitionTarget === 0 && this.transitionStart === null && !this.dragging) resolve();
+        else requestAnimationFrame(check);
+      };
+      requestAnimationFrame(check);
+    });
+  }
+
+  setProgressUniform(value) {
+    this.fbo.simulationMaterial.uniforms.uProgress.value = value;
+    this.fbo.renderMaterial.uniforms.uProgress.value = value;
+  }
+
+  // 只要有任何一項還沒歸零/歸一，就代表使用者正在用手動微調工具校正。update() 用這個
+  // 判斷要不要暫停閒置動畫（spin/bob/swing）——swing 每幀是直接覆蓋 rotation[axis]
+  // （不是疊加），如果閒置動畫繼續跑，手動調的 rotationY 會立刻被蓋掉，畫面上完全
+  // 看不出變化（只有 Console 印出來的累計數字是對的）；bob 同理會蓋掉 position 那一軸；
+  // spin 雖然是疊加不會蓋掉，但持續自轉也會讓人分不清「這是我調的」還是「它本來就在轉」。
+  // 一律暫停最單純。按 R 全部歸零後這個判斷自然變 false，閒置動畫會恢復。
+  hasManualNudge() {
+    const o = this.manualOffset;
+    return o.x !== 0 || o.y !== 0 || o.z !== 0 || this.manualRotationY !== 0 || this.manualScale !== 1;
+  }
+
+  // ── 每幀更新 ──────────────────────────────────────────────────────────
+
+  update(delta, now) {
+    if (this.transitionStart !== null) {
+      const elapsed = now - this.transitionStart;
+      const t = Math.min(elapsed / TRANSITION_MS, 1);
+      this.progress = this.transitionFrom + (this.transitionTarget - this.transitionFrom) * easeInOutCubic(t);
+      this.setProgressUniform(this.progress);
+      if (t >= 1) {
+        this.transitionStart = null;
+        this.progress = this.transitionTarget;
+        this.setProgressUniform(this.progress);
+      }
+    } else if (this.transitionTarget === 1 && !this.dragging && !this.hasManualNudge()) {
+      // 完全聚合、沒有動畫在跑、使用者也沒在拖、也沒在用手動微調工具：套用這個模型
+      // 自己的閒置動畫（spin/bob/swing，見 sources.js 的 idleMotion）營造浮動感。
+      this.idleElapsed += delta;
+      this.applyIdleMotion(delta);
+    }
+
+    // 模型序列播放期間整個接管 primary 的 uTextureModelA/B/uAnimBlend/uColor（見
+    // advanceSequencePlayback() 開頭說明），跟平常這個模型自己的 animatedIdle／
+    // periodicAnimation 是互斥的兩條路，不會同時跑、不會搶著寫同一組 uniform。
+    if (this.slot === 'primary' && sequenceModeActive) {
+      advanceSequencePlayback(delta);
+    } else {
+      this.advanceAnimationPlayback(delta);
+      this.advancePeriodicAnimation(delta);
+    }
+  }
+
+  // bob/swing 是純函式（用 idleElapsed 算 sin() 相位），本身不會累積誤差；spin 沿用
+  // 「靠 delta 累加角度」的寫法，因為它本來就是無界的連續旋轉，用 sin() 表示不了。
+  applyIdleMotion(delta) {
+    const motion = this.idleMotion;
+    const particles = this.fbo.particles;
+    switch (motion.type) {
+      case 'bob': // 上下（或指定軸向）短距離來回：只動 position，不動 rotation
+        particles.position[motion.axis] = Math.sin(this.idleElapsed * motion.speed) * motion.amplitude;
+        break;
+      case 'swing': // 水平（或指定軸向）短距離轉動：只動 rotation，不動 position
+        particles.rotation[motion.axis] = Math.sin(this.idleElapsed * motion.speed) * motion.amplitude;
+        break;
+      default: // spin：繞 Y 軸連續自轉
+        particles.rotation.y += delta * motion.speed;
+        break;
+    }
+  }
+
+  // 「動畫粒子化」的播放推進：animFrames 是 null 就什麼都不做（static 模型，A/B
+  // 已經在 applyAnimationState() 設定成同一張，不用每幀動）。有的話，把 animPhase
+  // 換算成「該顯示第幾幀、跟下一幀之間內插多少」，更新 uTextureModelA/B/uAnimBlend，
+  // 兩幀之間的形變交給 GPU（shaders.js 的 mix()）——貼圖在 loadModelTexture() 就
+  // 全部烘好了，這裡純粹是「換指標＋改一個 float」，對效能幾乎沒有額外負擔。
+  advanceAnimationPlayback(delta) {
+    const frames = this.animFrames;
+    if (!frames || frames.length < 2) return;
+
+    this.animPhase = (this.animPhase + delta * this.animSpeed) % this.animClipDuration;
+    const frameFloat = (this.animPhase / this.animClipDuration) * frames.length;
+    const frameIndexA = Math.floor(frameFloat) % frames.length;
+    const frameIndexB = (frameIndexA + 1) % frames.length;
+    const uniforms = this.fbo.simulationMaterial.uniforms;
+    uniforms.uTextureModelA.value = frames[frameIndexA];
+    uniforms.uTextureModelB.value = frames[frameIndexB];
+    uniforms.uAnimBlend.value = frameFloat - Math.floor(frameFloat);
+  }
+
+  // 「定時動作」的播放推進：跟上面同一種「換指標＋改一個 float」機制、寫進同一組
+  // uniform，但語意是「預設定格在 default 貼圖，閒置滿 periodicIntervalSeconds 秒才
+  // 觸發播一次 periodicFrames、播完自動退回 default」，不是持續循環。
+  //
+  // periodicPlaying=false 時只累計「已經閒置多久」，且只在完全聚合、沒有轉場、使用者
+  // 沒在拖時累加（拖曳中/轉場中不算「閒置」，但也不會歸零）。累到門檻就切成播放模式。
+  // periodicPlaying=true 時，periodicPhase 累加到 periodicClipDuration 就代表播完一輪
+  // ——播一次就停，接著把 A/B 都設回 default 貼圖、periodicTimer 歸零重新倒數。
+  advancePeriodicAnimation(delta) {
+    const frames = this.periodicFrames;
+    if (!frames || frames.length < 2) return;
+    const uniforms = this.fbo.simulationMaterial.uniforms;
+
+    if (this.periodicPlaying) {
+      this.periodicPhase += delta * this.periodicAnimSpeed;
+      if (this.periodicPhase >= this.periodicClipDuration) {
+        this.periodicPlaying = false;
+        this.periodicPhase = 0;
+        this.periodicTimer = 0;
+        const defaultResult = this.modelResult && this.modelResult.default;
+        if (defaultResult) {
+          const initial = firstTextureOf(defaultResult);
+          uniforms.uTextureModelA.value = initial;
+          uniforms.uTextureModelB.value = initial;
+          uniforms.uAnimBlend.value = 0;
+        }
+        return;
+      }
+
+      const frameFloat = (this.periodicPhase / this.periodicClipDuration) * frames.length;
+      const frameIndexA = Math.min(Math.floor(frameFloat), frames.length - 1);
+      const frameIndexB = Math.min(frameIndexA + 1, frames.length - 1);
+      uniforms.uTextureModelA.value = frames[frameIndexA];
+      uniforms.uTextureModelB.value = frames[frameIndexB];
+      uniforms.uAnimBlend.value = frameFloat - Math.floor(frameFloat);
+    } else if (this.transitionTarget === 1 && this.transitionStart === null && !this.dragging) {
+      this.periodicTimer += delta;
+      if (this.periodicTimer >= this.periodicIntervalSeconds) {
+        this.periodicPlaying = true;
+        this.periodicPhase = 0;
+      }
+    }
+  }
+}
+
+const _pickInverse = new THREE.Matrix4();
+const _pickRay = new THREE.Ray();
+const _pickHit = new THREE.Vector3();
+
+// 滑鼠（NDC 座標）底下是哪一隻模型：把射線轉進每隻模型的本地座標，跟它的取樣
+// 包圍盒（computeTextureBounds()）求交，取離相機最近的那隻。只算聚合中/已聚合的。
+function pickPetAt(ndc) {
+  raycaster.setFromCamera(ndc, camera);
+  let best = null;
+  let bestDistance = Infinity;
+  for (const pet of Object.values(pets)) {
+    if (!pet.fbo || pet.transitionTarget !== 1 || pet.localBounds.isEmpty()) continue;
+    const particles = pet.fbo.particles;
+    particles.updateWorldMatrix(true, false);
+    _pickInverse.copy(particles.matrixWorld).invert();
+    _pickRay.copy(raycaster.ray).applyMatrix4(_pickInverse);
+    if (!_pickRay.intersectBox(pet.localBounds, _pickHit)) continue;
+    const distance = _pickHit.applyMatrix4(particles.matrixWorld).distanceTo(raycaster.ray.origin);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = pet;
+    }
+  }
+  return best;
+}
+
+function updateHoverAndCursor() {
+  const stale = performance.now() - lastMouseMoveAt > HOVER_STALE_MS;
+  hovering = canvas.style.display !== 'none' && !stale && pickPetAt(pointerNDC) !== null;
+  canvas.style.cursor = !interactiveMode ? 'default' : drag ? 'grabbing' : hovering ? 'grab' : 'default';
+}
+
+function ensureRenderLoop() {
+  if (rafId !== null) return;
+  lastFrameTime = null;
+  rafId = requestAnimationFrame(tick);
+}
+
+function tick(now) {
+  const delta = lastFrameTime ? (now - lastFrameTime) / 1000 : 0;
+  lastFrameTime = now;
+
+  let anyActive = false;
+  for (const pet of Object.values(pets)) {
+    if (!pet.isActive()) continue;
+    pet.update(delta, now);
+    // update() 裡消散剛跑完的這一幀起就不再畫它（等同原本「消散完藏起 canvas」）
+    const stillActive = pet.isActive();
+    pet.fbo.particles.visible = stillActive;
+    if (stillActive) {
+      pet.fbo.update();
+      anyActive = true;
+    }
+  }
+
+  updateHoverAndCursor();
+  renderer.render(scene, camera);
+
+  if (anyActive) {
+    rafId = requestAnimationFrame(tick);
+  } else {
+    // 每一隻都消散完、目標狀態是「散開」、也沒在拖：停掉 render loop、藏起 canvas，
+    // 開關關閉時就不會在背景空轉浪費 GPU。
+    rafId = null;
+    lastFrameTime = null;
+    canvas.style.display = 'none';
+  }
+}
+
+async function init() {
+  setupScene();
+  let secondaryKey = null;
+  try { secondaryKey = localStorage.getItem(SECONDARY_MODEL_LS_KEY); } catch {}
+  if (!secondaryKey || !sources[secondaryKey]) {
+    secondaryKey = Object.keys(sources).find((key) => key !== DEFAULT_MODEL) || DEFAULT_MODEL;
+  }
+  pets.primary = new ParticlePet('primary', DEFAULT_MODEL);
+  pets.secondary = new ParticlePet('secondary', secondaryKey);
+  activePet = pets.primary;
+
+  // primary 照舊開機就讀；secondary 第一次開啟才讀（見 ParticlePet.setEnabled()），
+  // 沒用到第二隻就不白佔頻寬/GPU 記憶體。
+  await pets.primary.load();
+
+  // 「模型序列播放」故意不在這裡預載——sequenceModels 清單可能有好幾個模型、
+  // 甚至偏大的檔案，這個功能又不是每次都會用到，App 一開機就無條件在背景讀
+  // 是白白佔頻寬/CPU/記憶體。改成真的第一次觸發（Ctrl+Alt+S／系統匣選單）才
+  // 呼叫 startSequencePreload()，見 window.setParticleSequencePlayback()。
+  //
+  // loading 佔位圖案（見 buildSequenceLoadingTexture()）則相反，這裡先在背景
+  // 算好——這一步只是畫一次 canvas＋掃描像素，不牽扯任何網路／檔案 I/O，成本
+  // 很低。先準備好，之後任何一次觸發序列播放都能瞬間顯示佔位圖案，不會卡在畫
+  // canvas 這一步。用 requestAnimationFrame 讓出這一幀，不要卡在 init() 主流程
+  // 完成的同一個 tick 上。
+  requestAnimationFrame(() => {
+    if (!cachedSequenceLoadingPositions) {
+      cachedSequenceLoadingPositions = computeSequenceLoadingPositions(FBO_SIZE * FBO_SIZE);
+    }
+  });
+}
+
+// ── 給 main.js 用的介面 ─────────────────────────────────────────────────
+// main.js 用跟 setExtraPetWander 一樣的 executeJavaScript 模式呼叫這些全域函式。
+// slot 參數選用：'secondary' 是第二隻，其他（含不填）都是 primary，舊呼叫方式不變。
+
+function petForSlot(slot) {
+  return slot === 'secondary' ? pets.secondary : pets.primary;
+}
+
+// 回傳值代表「這次呼叫有沒有立刻生效」，跟 toggleExtraPetWander() 判斷 ok 的用法一致；
+// false 也可能只是還在載入，就緒後會自動補套用（見 ParticlePet.setEnabled()）。
+//
+// 兩隻不能同時顯示同一個模型：開啟這一隻時，如果另一隻正開著而且剛好是同一個
+// 模型（例如 secondary 關著的時候 primary 換成了 secondary 記住的那個），先自動
+// 換成清單裡另一個模型再開。
+window.setParticleEffect = function setParticleEffect(enabled, slot) {
+  const pet = petForSlot(slot);
+  if (!pet) return false;
+  if (enabled) {
+    const other = otherPet(pet);
+    if (other.isEnabled() && other.modelKey === pet.modelKey) {
+      const alt = Object.keys(sources).find((key) => key !== other.modelKey);
+      if (!alt) return false;
+      if (pet.ready) {
+        // 先記住新 key（這隻目前關著，畫面上沒有舊模型），main.js 開完馬上同步就讀得到
+        pet.rememberModelKey(alt);
+        pet.swapModel(alt).then(() => pet.applyEnabled(true));
+        return true;
+      }
+      pet.rememberModelKey(alt);
+    }
+  }
+  return pet.setEnabled(enabled);
+};
+
+// main.js 的 syncParticleEffectEnabledFromRenderer() 在頁面 reload 完後呼叫，讀回
+// 「畫面上這隻實際是不是開著」，讓 main.js 自己記的開關狀態（系統匣選單勾選狀態用
+// 的那份）能對齊——這個模組每次 reload 都是全新的模組實例，一定會回到關閉狀態，
+// 除非 ready 之前就被叫成 true。跟 getParticleActiveModel() 是同一種「main.js 問
+// renderer 拿真值，不用在 main.js 那邊猜測 reload 後一定是什麼狀態」的寫法。
+window.getParticleEffectEnabled = function getParticleEffectEnabled(slot) {
+  const pet = petForSlot(slot);
+  return !!pet && pet.isEnabled();
+};
+
+// main.js 系統匣「光粒子特效」子選單挑模型時呼叫。key 不存在、或另一隻正開著而且
+// 就是這個模型（兩隻不能同模型）就回傳 false（main.js 會印警告並重新同步選單）。
+// 已經是目前這個模型就直接當作成功、不重跑轉場——但 primary 序列播放中不能走這條
+// 捷徑：modelKey 在序列播放期間不會變，如果使用者點的剛好是序列開始前那個模型，
+// 這裡直接短路回傳 true 會漏掉呼叫 swapModel()／stopSequenceMode()，序列會繼續在
+// 背景播、畫面卻已經顯示這個模型被選取，兩邊對不上。
+window.setParticleActiveModel = function setParticleActiveModel(key, slot) {
+  const pet = petForSlot(slot);
+  if (!pet || !sources[key]) return false;
+  if (pet.slot === 'primary' && !pet.ready) return false;
+  const other = otherPet(pet);
+  if (other.isEnabled() && other.modelKey === key) return false;
+  const sequenceBusy = pet.slot === 'primary' && sequenceModeActive;
+  if (key === pet.modelKey && !pet.modelSwapPending && !sequenceBusy) return true;
+  pet.swapModel(key);
+  return true;
+};
+
+// main.js 的 syncParticleModelFromRenderer() 在頁面 reload 完後呼叫，讀回「目前
+// 真正在用的模型 key」去對齊系統匣選單的勾選狀態，不用在 main.js 那邊重複寫死
+// DEFAULT_MODEL 這個預設值（secondary 的則是 localStorage 記住的那個）。
+window.getParticleActiveModel = function getParticleActiveModel(slot) {
+  const pet = petForSlot(slot);
+  return pet ? pet.modelKey : null;
+};
+
+// 系統匣「重置 3D 模型位置」：兩隻的擺位（位置/縮放/旋轉）都回到預設值。
+window.resetParticlePetLayout = function resetParticlePetLayout() {
+  for (const pet of Object.values(pets)) pet.resetLayout();
+  return true;
+};
 
 // 回傳值統一包成 { default, periodic, color } 三塊：
 //   default:  這個模型「平常顯示」用的貼圖，跟以前一樣是 { type: 'static', texture }
@@ -1079,8 +1677,16 @@ async function loadSequenceStages() {
       // 兩段都是同步重工作，中間不隔一下的話等於沒拆。
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
+      // 序列裡每一站一律交給 particle-sampler.js 自動置中縮放，忽略 sources.js 手動填的
+      // scale/position——那兩個值是給「單獨顯示這個模型」微調擺位用的（有些故意偏到
+      // 旁邊、或放得比較大），拿到序列裡會讓整團粒子在站與站之間忽大忽小、左右漂移。
+      // rotationX/Y/Z 照樣沿用，自動置中縮放是在旋轉之後算的，不影響置中。
+      const sequenceConfig = { ...modelInfo.particleConfig };
+      delete sequenceConfig.scale;
+      delete sequenceConfig.position;
+
       const tSampleStart = performance.now();
-      const stage = sampleStaticStage(gltf, modelInfo.particleConfig, modelInfo.color, `particle-effect sequence(${key})`);
+      const stage = sampleStaticStage(gltf, sequenceConfig, modelInfo.color, `particle-effect sequence(${key})`);
       console.log(`[particle-effect][序列計時] "${key}" sampleStaticStage() 耗時 ${(performance.now() - tSampleStart).toFixed(1)}ms`);
       if (!stage) {
         console.error(`[particle-effect] 模型序列播放："${key}" 讀到了但取樣不到表面資料，改用隨機散點頂著這一站。`);
@@ -1090,14 +1696,14 @@ async function loadSequenceStages() {
 
       let actionFrames = null;
       let actionDuration = 1;
-      const sequenceAction = modelInfo.particleConfig.sequenceAction;
+      const sequenceAction = sequenceConfig.sequenceAction;
       if (sequenceAction && sequenceAction.name) {
         // 靜態定格取樣剛做完，動作關鍵幀取樣（同樣是 MeshSurfaceSampler，還要
         // 烘好幾張）開始之前再讓一幀，理由跟上面同一段。
         await new Promise((resolve) => requestAnimationFrame(resolve));
 
         const actionLabel = Array.isArray(sequenceAction.name) ? sequenceAction.name.join(' → ') : sequenceAction.name;
-        const actionConfig = { ...modelInfo.particleConfig, animation: sequenceAction.name };
+        const actionConfig = { ...sequenceConfig, animation: sequenceAction.name };
         const tActionStart = performance.now();
         const result = await sampleModelAnimationFrames(
           gltf,
@@ -1117,8 +1723,18 @@ async function loadSequenceStages() {
         }
       }
 
-      const voiceAudio = createSequenceVoiceAudio(modelInfo.particleConfig.sequenceVoice, key);
-      stages.push({ defaultTexture: stage.texture, color: stage.color, actionFrames, actionDuration, voiceAudio });
+      // 有 sequenceAction 的站，「預設姿勢」直接用動作第一幀，不用上面靜態取樣那張：
+      // 兩份是各自隨機挑表面取樣點（姿勢也不一定一樣），停留段一開始從靜態那張切到
+      // 動作第一幀時，每顆粒子會瞬間跳到別的位置、整團閃一下。改成這樣，上一站轉換
+      // 過來的終點就是動作起點，停留段開始播動作時是連續的。
+      let defaultTexture = stage.texture;
+      if (actionFrames) {
+        stage.texture.dispose();
+        defaultTexture = actionFrames[0];
+      }
+
+      const voiceAudio = createSequenceVoiceAudio(sequenceConfig.sequenceVoice, key);
+      stages.push({ defaultTexture, color: stage.color, actionFrames, actionDuration, voiceAudio });
     } catch (err) {
       console.warn(
         `[particle-effect] 模型序列播放：讀不到 "${key}"（${modelInfo.url}），改用隨機散點頂著這一站：`,
@@ -1169,39 +1785,6 @@ function firstTextureOf(defaultResult) {
   return defaultResult.type === 'animated' ? defaultResult.textures[0] : defaultResult.texture;
 }
 
-// 換模型／初始化時呼叫：把新模型的動畫播放狀態（有沒有多關鍵幀可播、播放週期多長、
-// 有沒有定時動作可播）記起來，並把 A/B 兩張貼圖、uAnimBlend 重設成「從預設姿勢的
-// 第 0 幀開始」——不重設的話，比如從一個開了 animatedIdle 的模型換到一個 static
-// 模型，simMaterial 上舊的 uTextureModelB 還指著上一個模型已經被 dispose() 的
-// 貼圖，static 模型雖然每幀都會把 A/B 都設回同一張正確貼圖（見 tick() 的
-// advanceAnimationPlayback()），但只有在 currentAnimFrames 非 null 時才會這樣
-// 做——所以這裡才要主動重設，讓 currentAnimFrames=null 的 static 情況下 A/B 從
-// 一開始就是新模型的正確貼圖。periodicTimer/periodicPlaying 也在這裡歸零，換模型
-// 不會沿用上一個模型累積的閒置秒數。
-function applyAnimationState(modelResult) {
-  currentModelResult = modelResult;
-  const defaultResult = modelResult.default;
-  currentAnimFrames = defaultResult.type === 'animated' ? defaultResult.textures : null;
-  currentAnimClipDuration = defaultResult.type === 'animated' ? defaultResult.clipDuration || 1 : 1;
-  currentAnimSpeed = defaultResult.type === 'animated' && defaultResult.speed != null ? defaultResult.speed : 1;
-  animPhase = 0;
-
-  periodicFrames = modelResult.periodic ? modelResult.periodic.textures : null;
-  periodicClipDuration = modelResult.periodic ? modelResult.periodic.clipDuration || 1 : 1;
-  periodicAnimSpeed = modelResult.periodic && modelResult.periodic.speed != null ? modelResult.periodic.speed : 1;
-  periodicIntervalSeconds = modelResult.periodic ? modelResult.periodic.intervalSeconds : DEFAULT_PERIODIC_INTERVAL_SECONDS;
-  periodicTimer = 0;
-  periodicPlaying = false;
-  periodicPhase = 0;
-
-  if (fbo) {
-    const initial = firstTextureOf(defaultResult);
-    fbo.simulationMaterial.uniforms.uTextureModelA.value = initial;
-    fbo.simulationMaterial.uniforms.uTextureModelB.value = initial;
-    fbo.simulationMaterial.uniforms.uAnimBlend.value = 0;
-  }
-}
-
 // defaultResult（{type, texture|textures}）換模型時舊貼圖要記得 dispose()，不然
 // GPU 記憶體會一直堆——animated 情況下是 N 張貼圖都要丟，不是只丟一張。
 function disposeDefaultResult(defaultResult) {
@@ -1233,161 +1816,19 @@ function disposeModelResult(modelResult) {
 function disposeSequenceStages(stages) {
   if (!stages) return;
   for (const stage of stages) {
-    stage.defaultTexture.dispose();
     if (stage.actionFrames) {
+      // defaultTexture 就是 actionFrames[0]（見 loadSequenceStages()），跟著這裡一起丟
       for (const tex of stage.actionFrames) tex.dispose();
+    } else {
+      stage.defaultTexture.dispose();
     }
   }
 }
 
-function setupParticles(modelResult, color) {
-  const width = FBO_SIZE;
-  const height = FBO_SIZE;
-  const scatterTexture = createRandomDataTexture(width, height, SCATTER_SPREAD);
-  const initialTexture = firstTextureOf(modelResult.default);
-
-  // uTextureModelA/B + uAnimBlend 取代原本單一的 uTextureModel：static 模型
-  // A===B、uAnimBlend 恆為 0（mix(A,B,0) 數學上就是 A，等同原本行為，沒有額外
-  // 開銷）；animated 模型則由 tick() 裡的 advanceAnimationPlayback() 每幀更新
-  // 這三個 uniform，在兩個相鄰關鍵幀貼圖之間做 GPU 端內插，見 shaders.js
-  // simulationFragmentShader 的說明。
-  const simMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      uTextureScatter: { value: scatterTexture },
-      uTextureModelA: { value: initialTexture },
-      uTextureModelB: { value: initialTexture },
-      uAnimBlend: { value: 0 },
-      uAnimBlendFX: { value: 0 }, // 模型序列播放專用的加強版轉換開關，見 shaders.js 的說明
-      uProgress: { value: 0 },
-    },
-    vertexShader: simulationVertexShader,
-    fragmentShader: simulationFragmentShader,
-  });
-
-  const renderMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      uPositions: { value: null },
-      uSize: { value: 8 }, // 跟 morph-particles 原版粒子大小同一個量級（原本動態範圍 5-20）
-      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      uProgress: { value: 0 },
-      uColor: { value: color.clone() }, // clone：換模型時用 .copy() 原地覆寫，不用整個 material 重建
-      uAnimBlend: { value: 0 }, // 跟 simMaterial 同名 uniform 同步，見 advanceSequencePlayback()
-      uAnimBlendFX: { value: 0 },
-      uLoadingActive: { value: 0 }, // loading 佔位圖案「左到右掃描顯現」開關，見 shaders.js／advanceSequenceLoadingSweep() 的說明
-      uLoadingSweep: { value: 0 },
-    },
-    vertexShader: particlesVertexShader,
-    fragmentShader: particlesFragmentShader,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  });
-
-  fbo = new FBO(width, height, renderer, simMaterial, renderMaterial);
-  scene.add(fbo.particles);
-}
-
-function setProgressUniform(value) {
-  fbo.simulationMaterial.uniforms.uProgress.value = value;
-  fbo.renderMaterial.uniforms.uProgress.value = value;
-}
-
-function updateHoverAndCursor() {
-  const stale = performance.now() - lastMouseMoveAt > HOVER_STALE_MS;
-  if (canvas.style.display === 'none' || stale) {
-    hovering = false;
-  } else {
-    raycaster.setFromCamera(pointerNDC, camera);
-    hovering = raycaster.intersectObject(fbo.particles).length > 0;
-  }
-  canvas.style.cursor = !interactiveMode ? 'default' : userInteracting ? 'grabbing' : hovering ? 'grab' : 'default';
-}
-
-function tick(now) {
-  const delta = lastFrameTime ? (now - lastFrameTime) / 1000 : 0;
-  lastFrameTime = now;
-
-  if (transitionStart !== null) {
-    const elapsed = now - transitionStart;
-    const t = Math.min(elapsed / TRANSITION_MS, 1);
-    progress = transitionFrom + (transitionTarget - transitionFrom) * easeInOutCubic(t);
-    setProgressUniform(progress);
-    if (t >= 1) {
-      transitionStart = null;
-      progress = transitionTarget;
-      setProgressUniform(progress);
-    }
-  } else if (transitionTarget === 1 && !userInteracting && !hasManualNudge()) {
-    // 完全聚合、沒有動畫在跑、使用者也沒在拖鏡頭、也沒在用手動微調工具：套用
-    // 這個模型自己的閒置動畫（spin/bob/swing，見 sources.js 的 idleMotion 與
-    // applyIdleMotion()）營造浮動感。使用者拖曳中就先停，不然鏡頭跟物件一起動
-    // 很難對準想要的角度；正在用手動微調工具（hasManualNudge()）也先停，理由見
-    // hasManualNudge() 宣告處的說明——不然 swing/bob 每幀直接覆蓋的那個軸，手動
-    // 調的結果會立刻被蓋掉，畫面上完全看不出變化。
-    idleElapsed += delta;
-    applyIdleMotion(delta);
-  }
-
-  // 模型序列播放期間整個接管 uTextureModelA/B/uAnimBlend/uColor（見
-  // advanceSequencePlayback() 開頭說明），跟平常這個模型自己的 animatedIdle／
-  // periodicAnimation 是互斥的兩條路，不會同時跑、不會搶著寫同一組 uniform。
-  if (sequenceModeActive) {
-    advanceSequencePlayback(delta);
-  } else {
-    advanceAnimationPlayback(delta); // 跟上面的 if/else 分開、每幀都跑，見函式開頭說明
-    advancePeriodicAnimation(delta); // 「定時動作」，內部自己判斷閒置/播放中該做什麼，見函式開頭說明
-  }
-
-  controls.update(); // enableDamping 需要每幀呼叫，慣性減速才會生效
-  updateHoverAndCursor();
-  fbo.update();
-  renderer.render(scene, camera);
-
-  if (transitionStart !== null || transitionTarget === 1 || userInteracting) {
-    rafId = requestAnimationFrame(tick);
-  } else {
-    // 消散動畫跑完、目標狀態是「散開」、使用者也沒在拖：停掉 render loop、
-    // 藏起 canvas，開關關閉時就不會在背景空轉浪費 GPU。
-    rafId = null;
-    lastFrameTime = null;
-    canvas.style.display = 'none';
-  }
-}
-
-function startTransition(target) {
-  transitionFrom = progress;
-  transitionTarget = target;
-  transitionStart = performance.now();
-  canvas.style.display = 'block';
-  if (rafId === null) {
-    lastFrameTime = null;
-    rafId = requestAnimationFrame(tick);
-  }
-}
-
-function applyEnabled(enabled) {
-  const target = enabled ? 1 : 0;
-  if (target === transitionTarget && transitionStart === null) return; // 已經是這個狀態，不用重跑
-  startTransition(target);
-}
-
-// 等消散動畫真的跑完（canvas 藏起來）才 resolve，給 swapActiveModel() 換模型前
-// 用——不能用「等 X 毫秒」這種土法煉鋼，使用者拖曳中會延後消散完成的時間點。
-function disperseAndWait() {
-  return new Promise((resolve) => {
-    applyEnabled(false);
-    const check = () => {
-      if (transitionTarget === 0 && transitionStart === null && !userInteracting) resolve();
-      else requestAnimationFrame(check);
-    };
-    requestAnimationFrame(check);
-  });
-}
-
-// 停止模型序列播放，恢復成序列播放前顯示的那個單一模型——currentModelResult
-// 在序列播放期間完全沒被動過（見 tick() 裡 sequenceModeActive 那個 if/else 分支），
+// 停止模型序列播放，恢復成序列播放前 primary 顯示的那個單一模型——pet.modelResult
+// 在序列播放期間完全沒被動過（見 ParticlePet.update() 裡 sequenceModeActive 那個 if/else 分支），
 // 直接重新套用就好，不用重新讀 GLB。window.setParticleSequencePlayback(false)
-// 跟下面 swapActiveModel()（序列播放中被叫去換單一模型時，要先把序列收乾淨才能
+// 跟 ParticlePet.swapModel()（primary 序列播放中被叫去換單一模型時，要先把序列收乾淨才能
 // 換）都呼叫這個，避免兩處各寫一份「收尾」邏輯。
 //
 // 注意：這裡不會 dispose sequenceStages（背景預載快取），那份資料是刻意留著
@@ -1427,6 +1868,8 @@ function stopSequenceBgm() {
 
 function stopSequenceMode() {
   if (!sequenceModeActive) return;
+  const pet = pets.primary;
+  const fbo = pet.fbo;
   sequenceModeActive = false;
   stopSequenceBgm();
   if (sequenceLoadingTexture) {
@@ -1440,125 +1883,12 @@ function stopSequenceMode() {
   fbo.simulationMaterial.uniforms.uAnimBlendFX.value = 0;
   fbo.renderMaterial.uniforms.uAnimBlendFX.value = 0;
   fbo.renderMaterial.uniforms.uLoadingActive.value = 0;
-  if (currentModelResult) {
-    applyAnimationState(currentModelResult);
-    fbo.renderMaterial.uniforms.uColor.value.copy(currentModelResult.color);
-    applyIdleMotionConfig(resolveModel(currentModelKey).idleMotion);
+  if (pet.modelResult) {
+    pet.applyAnimationState(pet.modelResult);
+    fbo.renderMaterial.uniforms.uColor.value.copy(pet.modelResult.color);
+    pet.applyIdleMotionConfig(resolveModel(pet.modelKey).idleMotion);
   }
 }
-
-// 換成 sources.js 裡另一個模型：如果目前正顯示/正在轉場，先播完整消散動畫、
-// 讀新模型取樣完成後再重新聚合，視覺上就是「原本的消散、換了個新的聚合出來」，
-// 不是貼圖硬切造成的瞬間位移。modelSwapPending 擋連續快速點選單造成的重疊載入。
-async function swapActiveModel(key) {
-  if (modelSwapPending) return;
-  // 序列播放中如果被叫去換單一模型（例如使用者直接點了模型清單裡的某一項），
-  // 先停掉序列、恢復成序列播放前的狀態，再照正常流程換到 key 指定的新模型——
-  // 不這樣做的話序列的 uTextureModelA/B/uAnimBlend 還沒清乾淨就會被這次 swap
-  // 蓋過去，兩邊互相打架。
-  stopSequenceMode();
-  modelSwapPending = true;
-  try {
-    const wasVisible = transitionTarget === 1 || transitionStart !== null;
-    if (wasVisible) {
-      await disperseAndWait();
-    }
-
-    const modelInfo = resolveModel(key);
-    const modelResult = await loadModelTexture(modelInfo);
-
-    const oldModelResult = currentModelResult;
-    applyAnimationState(modelResult); // 先切到新的（設好 A/B/uAnimBlend、記住新的 currentAnimFrames）...
-    disposeModelResult(oldModelResult); // ...再丟舊的，避免舊貼圖還在被 uniform 參照的空檔被提早釋放
-    fbo.renderMaterial.uniforms.uColor.value.copy(modelResult.color);
-    applyIdleMotionConfig(modelInfo.idleMotion);
-    currentModelKey = key;
-
-    if (wasVisible) applyEnabled(true);
-  } finally {
-    modelSwapPending = false;
-  }
-}
-
-async function init() {
-  setupScene();
-  const modelInfo = resolveModel(currentModelKey);
-  const modelResult = await loadModelTexture(modelInfo);
-  setupParticles(modelResult, modelResult.color);
-  applyAnimationState(modelResult); // setupParticles() 已經幫 A/B 設過初始值，這裡主要是記錄 currentAnimFrames/currentModelResult 供之後換模型 dispose 用
-  applyIdleMotionConfig(modelInfo.idleMotion);
-  ready = true;
-  if (pendingEnabled !== null) {
-    applyEnabled(pendingEnabled);
-    pendingEnabled = null;
-  }
-  // 「模型序列播放」故意不在這裡預載——sequenceModels 清單可能有好幾個模型、
-  // 甚至偏大的檔案，這個功能又不是每次都會用到，App 一開機就無條件在背景讀
-  // 是白白佔頻寬/CPU/記憶體。改成真的第一次觸發（Ctrl+Alt+S／系統匣選單）才
-  // 呼叫 startSequencePreload()，見 window.setParticleSequencePlayback()。
-  //
-  // loading 佔位圖案（見 buildSequenceLoadingTexture()）則相反，這裡先在背景
-  // 算好——這一步只是畫一次 256×256 canvas＋掃描像素，不牽扯任何網路／檔案
-  // I/O，成本跟 sequenceModels 那種可能要讀好幾十 MB GLB 的重工作完全不是
-  // 同一個量級，不違反上面「功能沒用到就不要佔資源」的原則。先在這裡把它
-  // 準備好，之後任何一次觸發序列播放都能瞬間顯示佔位圖案，不會卡在畫 canvas
-  // 這一步（這步在使用者實際按下觸發鍵的當下才做，會讓那一下感覺卡頓，是
-  // 之前這個效果做完後實測出來的問題）。用 requestAnimationFrame 讓出這一幀，
-  // 不要卡在 init() 主流程完成的同一個 tick 上。
-  requestAnimationFrame(() => {
-    if (!cachedSequenceLoadingPositions) {
-      cachedSequenceLoadingPositions = computeSequenceLoadingPositions(FBO_SIZE * FBO_SIZE);
-    }
-  });
-}
-
-// main.js 的 toggleParticleEffect() 用跟 setExtraPetWander 一樣的
-// executeJavaScript 模式呼叫這個全域函式。GLB 還在載入、pipeline 還沒 ready
-// 時先記住目標狀態，init() 完成後立刻補套用；回傳值代表「這次呼叫有沒有
-// 立刻生效」，跟 toggleExtraPetWander() 判斷 ok 的用法一致。
-window.setParticleEffect = function setParticleEffect(enabled) {
-  if (!ready) {
-    pendingEnabled = enabled;
-    return false;
-  }
-  applyEnabled(enabled);
-  return true;
-};
-
-// main.js 的 syncParticleEffectEnabledFromRenderer() 在頁面 reload 完後呼叫，讀回
-// 「畫面上光粒子特效實際是不是開著」，讓 main.js 自己記的 particleEffectOn（系統匣
-// 選單勾選狀態用的那份）能對齊——這個模組每次 reload 都是全新的模組實例，
-// transitionTarget 這幾個 let 都會回到宣告時的初始值（0=關閉），沒有任何 reload
-// 前的狀態會留下來，所以 F8／套用角色選擇之類觸發的 reload 之後，這裡永遠會回報
-// false，除非 pendingEnabled 在 ready 之前就被叫成 true（正常操作流程不會發生：
-// pendingEnabled 只有 setParticleEffect() 在 !ready 時才會設，而 reload 後第一時間
-// 沒有任何呼叫方會搶在 init() 完成前呼叫它）。跟 getParticleActiveModel() 是同一種
-// 「main.js 問 renderer 拿真值，不用在 main.js 那邊猜測/假設 reload 後一定是什麼
-// 狀態」的寫法。
-window.getParticleEffectEnabled = function getParticleEffectEnabled() {
-  return transitionTarget === 1;
-};
-
-// main.js 系統匣「光粒子特效」子選單挑模型時呼叫。key 不存在就回傳 false
-// （main.js 會印警告），已經是目前這個模型就直接當作成功、不重跑轉場——但序列
-// 播放中不能走這條捷徑：currentModelKey 在序列播放期間不會變（見 tick() 的
-// sequenceModeActive 分支），如果使用者點的剛好是序列開始前那個模型，這裡如果
-// 直接短路回傳 true，會漏掉呼叫 swapActiveModel()／stopSequenceMode()，序列會
-// 繼續在背景播、畫面卻已經顯示這個模型被選取，兩邊對不上。
-window.setParticleActiveModel = function setParticleActiveModel(key) {
-  if (!ready) return false;
-  if (!sources[key]) return false;
-  if (key === currentModelKey && !modelSwapPending && !sequenceModeActive) return true;
-  swapActiveModel(key);
-  return true;
-};
-
-// main.js 的 syncParticleModelFromRenderer() 在頁面 reload 完後呼叫，讀回「目前
-// 真正在用的模型 key」去對齊系統匣選單的勾選狀態，不用在 main.js 那邊重複寫死
-// DEFAULT_MODEL 這個預設值。
-window.getParticleActiveModel = function getParticleActiveModel() {
-  return currentModelKey;
-};
 
 // computeSequenceLoadingPositions() 算出來的結果快取在這裡——loading 佔位圖案
 // 永遠長一樣（不依賴任何動態資料），沒有必要每次觸發序列播放都重新畫一次
@@ -1714,13 +2044,15 @@ function buildSequenceLoadingTexture() {
 // 生效」：還沒 ready、或正好有一般模型切換在進行中（modelSwapPending）都會
 // 回傳 false（後者請稍等切換完再試一次，比硬插隊去搶 uniform 安全）。
 window.setParticleSequencePlayback = function setParticleSequencePlayback(enabled) {
-  if (!ready) return false;
+  const pet = pets.primary;
+  if (!pet || !pet.ready) return false;
   if (!enabled) {
     stopSequenceMode();
     return true;
   }
   if (sequenceModeActive) return true;
-  if (modelSwapPending) return false;
+  if (pet.modelSwapPending) return false;
+  const fbo = pet.fbo;
 
   sequenceModeActive = true;
   sequencePhase = 0;
@@ -1753,7 +2085,7 @@ window.setParticleSequencePlayback = function setParticleSequencePlayback(enable
     startSequencePreload(); // 懶載入：這裡才是真的第一次觸發讀取，不是 App 開機就讀
   }
 
-  applyEnabled(true); // 序列播放隱含「聚合可見」，跟目前是否已經顯示某個模型無關
+  pet.applyEnabled(true); // 序列播放隱含「聚合可見」，跟目前是否已經顯示某個模型無關
   return true;
 };
 

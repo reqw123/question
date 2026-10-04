@@ -83,6 +83,18 @@ let hasAppliedParticleEffectStartupDefault = false;
 // did-finish-load 知道「這次 reload 要保留 particleEffectOn 現有的值，不要照
 // F8 那套邏輯歸零」，用一次就消耗掉，不影響之後其他 reload。
 let preserveParticleEffectOnNextReload = false;
+// 第二隻 3D 模型（particle-effect.js 的 secondary slot）開關：跟上面 particleEffectOn
+// 分開控制，但沒有「開機預設顯示」選項，每次啟動預設關閉；reload 規則跟
+// particleEffectOn 一樣（F8 回到關閉、套用角色選擇保留），見 did-finish-load。
+let particleEffect2On = false;
+
+function isParticleOn(slot) {
+  return slot === 'secondary' ? particleEffect2On : particleEffectOn;
+}
+function setParticleOn(slot, on) {
+  if (slot === 'secondary') particleEffect2On = on;
+  else particleEffectOn = on;
+}
 
 // 「模型序列播放」（一鍵觸發、在 sources.js 設定的多個模型之間連續變形、無限
 // 循環播放，直到手動停止，見 particle-effect.js 的 window.setParticleSequencePlayback()）
@@ -169,12 +181,14 @@ function toggleExtraPetWander() {
 // particle-effect/particle-effect.js 掛在 window 上的 setParticleEffect()。
 // 該模組要先讀完 GLB 才算「就緒」，開關可能在還沒就緒時就被按下——setParticleEffect()
 // 自己會記住目標狀態、等就緒後補套用，這裡收到 ok:false 只是印個提示，不是錯誤。
-function toggleParticleEffect() {
-  particleEffectOn = !particleEffectOn;
+// slot：'primary'（預設，原本那隻）或 'secondary'（第二隻）。
+function toggleParticleEffect(slot = 'primary') {
+  const on = !isParticleOn(slot);
+  setParticleOn(slot, on);
   win.webContents
     .executeJavaScript(
       `(function() {
-        if (window.setParticleEffect) { return window.setParticleEffect(${particleEffectOn}); }
+        if (window.setParticleEffect) { return window.setParticleEffect(${on}, ${JSON.stringify(slot)}); }
         return false;
       })();`
     )
@@ -182,7 +196,11 @@ function toggleParticleEffect() {
       if (!ok) console.warn('[desktop-pet] 光粒子特效尚未就緒（模型可能還在載入中），就緒後會自動套用目前的開關狀態');
     })
     .catch((err) => console.error('[desktop-pet] 切換光粒子特效失敗：', err))
-    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+    .finally(() => {
+      if (tray) tray.setContextMenu(buildTrayMenu());
+      // 開啟時如果撞到另一隻正在用的模型，renderer 會自動換成別的，這裡讀回來對齊勾選
+      syncParticleModelFromRenderer();
+    });
 }
 
 // 切換「模型序列播放」開關：跟 toggleParticleEffect() 同一種寫法，呼叫
@@ -226,6 +244,15 @@ let particleModelKeys = [];
 // particle-effect.js 的 DEFAULT_MODEL，改成用 syncParticleModelFromRenderer()
 // （did-finish-load 時）跟 renderer 問真正的值，兩邊只要維護一份就好。
 let activeParticleModel = null;
+let activeParticleModel2 = null; // 第二隻（secondary slot）的模型 key，同上由 renderer 同步
+
+function getActiveParticleModel(slot) {
+  return slot === 'secondary' ? activeParticleModel2 : activeParticleModel;
+}
+function setActiveParticleModel(slot, key) {
+  if (slot === 'secondary') activeParticleModel2 = key;
+  else activeParticleModel = key;
+}
 
 async function refreshParticleModelKeys() {
   try {
@@ -258,20 +285,30 @@ function watchParticleModelSources() {
 // executeJavaScript 寫法，呼叫 particle-effect.js 掛的 setParticleActiveModel()。
 // 該函式自己會處理「目前正顯示中就先消散、換完模型再重新聚合」的動畫轉場，
 // 這裡不用管顯示狀態，也不用等它真的換完才更新選單勾選。
-function selectParticleModel(key) {
-  activeParticleModel = key;
+// renderer 拒絕（還沒就緒、找不到、或另一隻正在用這個模型）就跟 renderer 重新同步
+// 一次，讓勾選回到實際狀態。
+function selectParticleModel(key, slot = 'primary') {
+  setActiveParticleModel(slot, key);
   win.webContents
     .executeJavaScript(
       `(function() {
-        if (window.setParticleActiveModel) { return window.setParticleActiveModel(${JSON.stringify(key)}); }
+        if (window.setParticleActiveModel) { return window.setParticleActiveModel(${JSON.stringify(key)}, ${JSON.stringify(slot)}); }
         return false;
       })();`
     )
     .then((ok) => {
-      if (!ok) console.warn(`[desktop-pet] 光粒子模型切換尚未就緒或找不到 "${key}"`);
+      if (!ok) {
+        console.warn(`[desktop-pet] 光粒子模型切換尚未就緒、找不到 "${key}"，或另一隻 3D 模型正在用它`);
+        syncParticleModelFromRenderer();
+      }
     })
     .catch((err) => console.error('[desktop-pet] 切換光粒子模型失敗：', err))
-    .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+    .finally(() => {
+      // 第二隻：在「第二隻模型」清單裡挑模型就代表想看到它，關著的話順便開啟——
+      // 不然只會默默記住選擇、畫面上什麼都沒出現，看起來像選了沒反應
+      if (slot === 'secondary' && !particleEffect2On) toggleParticleEffect('secondary');
+      else if (tray) tray.setContextMenu(buildTrayMenu());
+    });
 }
 
 // 跟 syncMyLikeSelectionFromRenderer() 同一種「reload 後跟畫面實際狀態對一次」
@@ -279,12 +316,19 @@ function selectParticleModel(key) {
 // 這裡讀回來才知道選單該勾哪一個，不用在 main.js 這邊重複寫死同一個預設值。
 function syncParticleModelFromRenderer() {
   win.webContents
-    .executeJavaScript(`window.getParticleActiveModel ? window.getParticleActiveModel() : null`)
-    .then((key) => {
-      if (key && key !== activeParticleModel) {
-        activeParticleModel = key;
-        if (tray) tray.setContextMenu(buildTrayMenu());
-      }
+    .executeJavaScript(
+      `window.getParticleActiveModel ? [window.getParticleActiveModel('primary'), window.getParticleActiveModel('secondary')] : null`
+    )
+    .then((keys) => {
+      if (!keys) return;
+      let changed = false;
+      ['primary', 'secondary'].forEach((slot, i) => {
+        if (keys[i] && keys[i] !== getActiveParticleModel(slot)) {
+          setActiveParticleModel(slot, keys[i]);
+          changed = true;
+        }
+      });
+      if (changed && tray) tray.setContextMenu(buildTrayMenu());
     })
     .catch(() => {});
 }
@@ -318,14 +362,32 @@ function syncParticleEffectStateFromMain() {
 // 以為現在是開著的，但畫面早就是關的）。
 function syncParticleEffectEnabledFromRenderer() {
   win.webContents
-    .executeJavaScript(`window.getParticleEffectEnabled ? window.getParticleEffectEnabled() : false`)
-    .then((enabled) => {
-      if (enabled !== particleEffectOn) {
-        particleEffectOn = enabled;
-        if (tray) tray.setContextMenu(buildTrayMenu());
-      }
+    .executeJavaScript(
+      `window.getParticleEffectEnabled ? [window.getParticleEffectEnabled('primary'), window.getParticleEffectEnabled('secondary')] : [false, false]`
+    )
+    .then((states) => {
+      let changed = false;
+      ['primary', 'secondary'].forEach((slot, i) => {
+        const enabled = !!states[i];
+        if (enabled !== isParticleOn(slot)) {
+          setParticleOn(slot, enabled);
+          changed = true;
+        }
+      });
+      if (changed && tray) tray.setContextMenu(buildTrayMenu());
     })
     .catch(() => {});
+}
+
+// 系統匣「重置 3D 模型位置/縮放」：兩隻 3D 模型被拖曳/縮放過的擺位都回到預設值
+// （particle-effect.js 存在 localStorage，不用 reload）。
+function resetParticleLayout() {
+  win.webContents
+    .executeJavaScript(`window.resetParticlePetLayout ? window.resetParticlePetLayout() : false`)
+    .then((ok) => {
+      if (!ok) console.warn('[desktop-pet] 3D 模型尚未就緒，無法重置位置');
+    })
+    .catch((err) => console.error('[desktop-pet] 重置 3D 模型位置失敗：', err));
 }
 
 // 跟 syncParticleEffectEnabledFromRenderer() 完全同一種必要性、同一種寫法，只是
@@ -1814,15 +1876,25 @@ function buildSceneSubmenu() {
 // 選了哪個就打勾）。particleModelKeys 由 refreshParticleModelKeys() 讀
 // particle-effect/sources.js 填好，這裡單純渲染，不重讀檔案（避免每次開選單都
 // 觸發一次動態 import()）。
+// 兩隻不能同時顯示同一個模型：另一隻開著的話，它正在用的那個模型在這份清單裡
+// 會變灰（renderer 端 setParticleActiveModel() 也會擋，這裡只是讓選單先看得出來）。
+function buildParticleModelItems(slot) {
+  if (!particleModelKeys.length) {
+    return [{ label: '（sources.js 讀不到模型，或裡面還沒有任何項目）', enabled: false }];
+  }
+  const otherSlot = slot === 'secondary' ? 'primary' : 'secondary';
+  const takenKey = isParticleOn(otherSlot) ? getActiveParticleModel(otherSlot) : null;
+  return particleModelKeys.map((key) => ({
+    label: key === takenKey ? `${key}（另一隻使用中）` : key,
+    type: 'radio',
+    checked: key === getActiveParticleModel(slot),
+    enabled: key !== takenKey,
+    click: () => selectParticleModel(key, slot),
+  }));
+}
+
 function buildParticleEffectSubmenu() {
-  const modelItems = particleModelKeys.length
-    ? particleModelKeys.map((key) => ({
-        label: key,
-        type: 'radio',
-        checked: key === activeParticleModel,
-        click: () => selectParticleModel(key),
-      }))
-    : [{ label: '（sources.js 讀不到模型，或裡面還沒有任何項目）', enabled: false }];
+  const modelItems = buildParticleModelItems('primary');
 
   return [
     {
@@ -1842,6 +1914,25 @@ function buildParticleEffectSubmenu() {
     },
     { type: 'separator' },
     ...modelItems,
+    { type: 'separator' },
+    {
+      label: particleEffect2On ? `第二隻模型（顯示中：${activeParticleModel2 || ''}）` : '第二隻模型',
+      submenu: [
+        {
+          label: particleEffect2On ? '關閉' : '開啟',
+          type: 'checkbox',
+          checked: particleEffect2On,
+          click: () => toggleParticleEffect('secondary'),
+        },
+        { type: 'separator' },
+        ...buildParticleModelItems('secondary'),
+      ],
+    },
+    {
+      // 互動模式下可以直接用滑鼠操作每一隻：左鍵拖曳旋轉、右鍵拖曳移動、滾輪縮放
+      label: '重置 3D 模型位置/縮放',
+      click: () => resetParticleLayout(),
+    },
   ];
 }
 
@@ -2309,6 +2400,11 @@ function createWindow() {
       if (particleEffectOn) {
         win.webContents
           .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
+          .catch(() => {});
+      }
+      if (particleEffect2On) {
+        win.webContents
+          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true, 'secondary') : null`)
           .catch(() => {});
       }
     } else {
