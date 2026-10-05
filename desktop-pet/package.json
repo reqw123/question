@@ -9,7 +9,8 @@
     "start": "electron .",
     "test": "vitest run",
     "inspect-model": "node particle-effect/tools/inspect-model.mjs",
-    "dist": "node scripts/prepare-live2d-assets.js && electron-builder --win portable"
+    "check-assets": "node asset-check.js",
+    "dist": "node asset-check.js --warn && node scripts/prepare-live2d-assets.js && electron-builder --win portable"
   },
   "devDependencies": {
     "electron": "^43.0.0",

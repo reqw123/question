@@ -1,6 +1,6 @@
 # 序列播放：每站語音（sequenceVoice）
 
-把 1~2 秒的短語音 mp3 放這裡，檔名對應 `sources.js` 各模型 `particle.sequenceVoice` 欄位。
+把 1~2 秒的短語音 mp3 放這裡，檔名對應 `sources.json` 各模型 `particle.sequenceVoice` 欄位（「模型設定」視窗 → 選模型 →「模型序列播放到這一站時」→ 語音，可以直接從電腦選檔，會自動複製進來）。
 
 - 序列播放到這個模型、轉場淡入完成、進入停留段那一刻起算，滿 0.3 秒後播放一次。
 - 不填或填空字串都跳過，不會出聲。
@@ -8,4 +8,4 @@
 - 播放走跟桌寵其他音效（index.html 的「閒置閒聊音效」）同一顆靜音鈕，預設靜音，
   要聽得到記得先按開。
 
-見 `sources.js` 開頭欄位說明、`particle-effect.js` 的 `advanceSequencePlayback()`。
+見 `particle-effect/動畫參數說明.md` 的欄位說明、`particle-effect.js` 的 `advanceSequencePlayback()`。

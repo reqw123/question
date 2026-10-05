@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>模型設定</title>
+<!-- 「模型設定」視窗：新增/調整 3D 模型（particle-effect/sources.json）跟 2D 模型
+     （live2d_my_like/config/manifest.json、names.json），不用手打程式碼。
+     資料讀寫都透過 model-config-preload.js 交給 main.js／model-config-store.js。
+     表單只改自己認得的欄位，其他欄位（例如之後新增、這裡還沒做 UI 的）原樣保留。
+     欄位空白＝用程式預設值；placeholder 顯示的預設值、「建議」按鈕的數值，都對照
+     particle-effect.js／particle-sampler.js／lib/live2d.js 的實際預設常數，改那邊記得一起改。 -->
+<style>
+  :root {
+    --cyan: #3cc8f0; --cyan-soft: rgba(60,200,240,0.14); --cyan-line: rgba(60,200,240,0.45);
+    --bg: #11151c; --panel: #171c25; --card: #1c222d; --card2: #222937;
+    --border: rgba(255,255,255,0.09); --border2: rgba(255,255,255,0.16);
+    --text: #e9edf2; --text2: #a3adbb; --text3: #737e8e;
+    --warn: #ffb454; --err: #ff6b6b; --ok: #5be49b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13.5px/1.6 "Segoe UI", "Microsoft JhengHei UI", "Microsoft JhengHei", sans-serif;
+  }
+  body { display: flex; flex-direction: column; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+
+  /* ── 按鈕／輸入 ── */
+  button {
+    background: var(--card2); color: var(--text); border: 1px solid var(--border2);
+    border-radius: 7px; padding: 5px 12px; font: inherit; font-size: .92em; cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #2a3242; border-color: rgba(255,255,255,0.24); }
+  button.primary { background: var(--cyan); color: #04222c; border-color: var(--cyan); font-weight: 600; }
+  button.primary:hover { filter: brightness(1.08); }
+  button.ghost { background: transparent; border-color: transparent; color: var(--text2); }
+  button.ghost:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+  button.danger { color: var(--err); }
+  button.small { padding: 2px 9px; font-size: .85em; }
+  button:disabled { opacity: .35; cursor: default; }
+  input[type=text], select, textarea {
+    background: #0f131a; border: 1px solid var(--border2); color: var(--text);
+    border-radius: 7px; padding: 6px 9px; font: inherit; font-size: .95em; width: 100%;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  input::placeholder, textarea::placeholder { color: var(--text3); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-soft); }
+  input.invalid { border-color: var(--err); box-shadow: 0 0 0 3px rgba(255,107,107,0.15); }
+  select option { background: #1c222d; }
+  textarea { resize: vertical; min-height: 58px; line-height: 1.55; }
+  input[type=checkbox] { accent-color: var(--cyan); width: 15px; height: 15px; margin: 0; }
+  input[type=color] {
+    width: 38px; height: 30px; padding: 2px; border: 1px solid var(--border2); border-radius: 7px; background: #0f131a; cursor: pointer;
+  }
+  label.check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+
+  /* ── 上方分頁 ── */
+  #tabs { display: flex; align-items: flex-end; gap: 4px; padding: 10px 14px 0; border-bottom: 1px solid var(--border); background: var(--panel); }
+  #tabs button[data-tab] {
+    border-radius: 9px 9px 0 0; border: 1px solid transparent; border-bottom: none; padding: 8px 18px;
+    background: transparent; color: var(--text2); font-size: .98em;
+  }
+  #tabs button[data-tab]:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  #tabs button[data-tab].active { background: var(--bg); color: var(--cyan); border-color: var(--border); font-weight: 600; }
+  #tabs .spacer { flex: 1; }
+  #tabs .tools { display: flex; gap: 6px; padding-bottom: 7px; }
+
+  .tab { flex: 1; display: none; min-height: 0; }
+  .tab.active { display: flex; }
+
+  /* ── 左側清單 ── */
+  .sidebar { width: 268px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--panel); }
+  .sidebar .actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border-bottom: 1px solid var(--border); }
+  .sidebar .actions .primary { flex: 1 1 100%; padding: 7px 12px; }
+  .sidebar .actions button:not(.primary) { flex: 1; }
+  .sidebar .list-title { padding: 10px 14px 4px; color: var(--text3); font-size: .8em; letter-spacing: .05em; }
+  .sidebar .list { flex: 1; overflow-y: auto; padding: 2px 8px 10px; }
+  .item {
+    padding: 7px 10px; border-radius: 8px; cursor: pointer; display: flex; gap: 9px; align-items: flex-start;
+    border: 1px solid transparent; margin-bottom: 2px;
+  }
+  .item:hover { background: rgba(255,255,255,0.045); }
+  .item.selected { background: var(--cyan-soft); border-color: var(--cyan-line); }
+  .item .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; box-shadow: 0 0 0 2px rgba(255,255,255,0.08); }
+  .item .body { min-width: 0; flex: 1; }
+  .item .title { font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .item .sub { color: var(--text3); font-size: .82em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item.special { margin-top: 8px; border-top: 1px solid var(--border); border-radius: 0 0 8px 8px; padding-top: 11px; }
+  .badge { font-size: .74em; font-weight: 500; padding: 0 7px; border-radius: 9px; white-space: nowrap; line-height: 1.7; }
+  .badge.err { background: rgba(255,107,107,0.16); color: var(--err); }
+  .badge.warn { background: rgba(255,180,84,0.16); color: var(--warn); }
+  .badge.ok { background: rgba(91,228,155,0.14); color: var(--ok); }
+  .badge.muted { background: rgba(255,255,255,0.08); color: var(--text2); }
+
+  /* ── 右側表單 ── */
+  .content { flex: 1; overflow-y: auto; padding: 20px 26px 48px; }
+  .content-inner { max-width: 860px; }
+  .empty { color: var(--text2); padding: 70px 20px; text-align: center; }
+  .empty .big { font-size: 2.4em; display: block; margin-bottom: 8px; }
+  .page-head { margin-bottom: 16px; }
+  .page-head h2 { margin: 0; font-size: 1.35em; display: flex; align-items: center; gap: 10px; }
+  .page-head h2 .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .page-head .path { color: var(--text3); font-size: .86em; margin-top: 2px; word-break: break-all; }
+  .summary { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .summary .chip {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 2px 11px; font-size: .86em; color: var(--text2);
+  }
+  .summary .chip b { color: var(--text); font-weight: 600; }
+
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; }
+  .section > .sec-head { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.015); border-radius: var(--radius) var(--radius) 0 0; }
+  .section > .sec-head .t { font-weight: 600; font-size: 1.04em; display: flex; align-items: center; gap: 8px; }
+  .section > .sec-head .d { color: var(--text2); font-size: .88em; margin-top: 2px; }
+  .section > .sec-body { padding: 14px 16px 4px; }
+  .section.dim > .sec-body { opacity: .45; pointer-events: none; }
+  .section .callout {
+    margin: 0 0 12px; padding: 8px 11px; border-radius: 8px; font-size: .88em;
+    background: rgba(60,200,240,0.07); border: 1px solid rgba(60,200,240,0.22); color: #bfe9f7;
+  }
+  .section .callout.warn { background: rgba(255,180,84,0.08); border-color: rgba(255,180,84,0.3); color: #ffd9a6; }
+
+  .row { display: grid; grid-template-columns: 168px 1fr; gap: 6px 16px; align-items: start; margin-bottom: 14px; }
+  .row > .label { padding-top: 6px; color: #d5dce5; font-weight: 500; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .row .hint { color: var(--text2); font-size: .85em; margin-top: 4px; }
+  .row .hint b { color: var(--text); font-weight: 600; }
+  .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 200px; }
+  .disabled-block { opacity: .4; pointer-events: none; }
+
+  /* 名詞解釋：標籤旁的 ⓘ，滑鼠移上去看說明 */
+  .term {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%; font-size: 11px; font-weight: 700; font-style: normal;
+    background: rgba(255,255,255,0.1); color: var(--text2); cursor: help; flex: none;
+  }
+  .term:hover { background: var(--cyan); color: #04222c; }
+  .term .tip {
+    display: none; position: absolute; left: 22px; top: -6px; z-index: 20; width: 300px;
+    background: #2a3242; color: var(--text); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 9px 11px; font-size: 12.5px; font-weight: 400; line-height: 1.6; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    white-space: normal;
+  }
+  .term:hover .tip { display: block; }
+
+  /* 數字欄位：輸入框＋單位＋建議值 */
+  .numfield { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .numbox { display: flex; align-items: stretch; width: 150px; }
+  .numbox input { border-radius: 7px 0 0 7px; text-align: right; }
+  .numbox .unit {
+    display: flex; align-items: center; padding: 0 9px; border: 1px solid var(--border2); border-left: none;
+    border-radius: 0 7px 7px 0; background: var(--card2); color: var(--text2); font-size: .85em; white-space: nowrap;
+  }
+  .numbox.nounit input { border-radius: 7px; }
+  .suggest { display: inline-flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  .suggest .lbl { color: var(--text3); font-size: .82em; }
+  .suggest button {
+    padding: 1px 9px; font-size: .82em; border-radius: 12px; background: transparent; border: 1px dashed var(--border2); color: var(--text2);
+  }
+  .suggest button:hover { border-style: solid; border-color: var(--cyan-line); color: var(--cyan); background: var(--cyan-soft); }
+
+  .xyz { display: grid; grid-template-columns: repeat(3, 118px); gap: 8px; }
+  .xyz label { display: flex; align-items: center; gap: 6px; color: var(--text3); font-weight: 600; font-size: .85em; }
+  .xyz input { text-align: right; }
+
+  /* 二選一／多選一的卡片 */
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .choice {
+    text-align: left; padding: 10px 12px; border-radius: 9px; background: #151a23; border: 1px solid var(--border2);
+    display: flex; flex-direction: column; gap: 2px; line-height: 1.45;
+  }
+  .choice .ct { font-weight: 600; font-size: 1em; }
+  .choice .cd { color: var(--text2); font-size: .84em; }
+  .choice.on { border-color: var(--cyan); background: var(--cyan-soft); box-shadow: 0 0 0 1px var(--cyan) inset; }
+  .choice.on .ct { color: var(--cyan); }
+
+  /* 有順序的清單（動畫序列等） */
+  .anim-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .anim-list .anim { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; background: #151a23; border: 1px solid var(--border); border-radius: 7px; }
+  .anim-list .anim .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: Consolas, "Cascadia Mono", monospace; font-size: .92em; }
+  .anim-list .anim .idx { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--card2); color: var(--text2); font-size: .78em; display: flex; align-items: center; justify-content: center; }
+  .anim-list .empty-line { color: var(--text3); font-size: .88em; padding: 6px 2px; font-style: italic; }
+  .kv { display: grid; grid-template-columns: 1fr 130px auto; gap: 6px; margin-bottom: 6px; }
+  .kv-head { display: grid; grid-template-columns: 1fr 130px 34px; gap: 6px; color: var(--text3); font-size: .8em; margin-bottom: 3px; }
+
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); cursor: pointer; padding: 0; }
+  .swatch:hover { transform: scale(1.12); border-color: #fff; }
+
+  /* ── 名詞說明面板 ── */
+  #glossary {
+    display: none; position: fixed; top: 52px; right: 14px; bottom: 64px; width: 380px; z-index: 50;
+    background: var(--panel); border: 1px solid var(--border2); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,0.5);
+    flex-direction: column;
+  }
+  #glossary.show { display: flex; }
+  #glossary .gh { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  #glossary .gh span { flex: 1; }
+  #glossary .gb { overflow-y: auto; padding: 8px 16px 16px; }
+  #glossary h4 { margin: 14px 0 6px; color: var(--cyan); font-size: .9em; }
+  #glossary dl { margin: 0; }
+  #glossary dt { font-weight: 600; margin-top: 8px; }
+  #glossary dd { margin: 2px 0 0; color: var(--text2); font-size: .9em; }
+
+  /* ── 底部狀態列 ── */
+  #footer { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--panel); }
+  #status { flex: 1; color: var(--text2); white-space: pre-wrap; max-height: 90px; overflow-y: auto; }
+  #status.err { color: var(--err); }
+  #status.warn { color: var(--warn); }
+  #status.ok { color: var(--ok); }
+  #dirty { color: var(--warn); display: none; font-size: .9em; }
+  #dirty.show { display: inline; }
+  #footer .primary { padding: 7px 18px; }
+  kbd { font: inherit; font-size: .8em; background: var(--card2); border: 1px solid var(--border2); border-radius: 4px; padding: 0 5px; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<div id="tabs">
+  <button data-tab="tab3d" class="active">✨ 3D 模型（光粒子）</button>
+  <button data-tab="tab2d">🧍 2D 模型（Live2D）</button>
+  <span class="spacer"></span>
+  <span class="tools">
+    <button id="btn-glossary" class="ghost small">📖 名詞說明</button>
+    <button id="btn-refresh" class="ghost small" title="重新讀取磁碟上的設定檔（放棄還沒儲存的修改）">↻ 重新讀取</button>
+  </span>
+</div>
+
+<div id="tab3d" class="tab active">
+  <div class="sidebar">
+    <div class="actions">
+      <button id="btn-3d-add" class="primary">＋ 新增 3D 模型</button>
+      <button id="btn-3d-dup" title="複製目前選的模型設定，當成新模型的起點">⧉ 複製</button>
+      <button id="btn-3d-del" class="danger" title="只刪除設定，不會刪掉 GLB 檔">🗑 刪除</button>
+    </div>
+    <div class="list-title">模型清單（顏色點＝粒子顏色）</div>
+    <div class="list" id="list3d"></div>
+  </div>
+  <div class="content"><div class="content-inner" id="form3d"></div></div>
+</div>
+
+<div id="tab2d" class="tab">
+  <div class="sidebar">
+    <div class="actions">
+      <button id="btn-2d-add" class="primary">＋ 新增 Live2D 模型</button>
+    </div>
+    <div class="list-title">角色清單（#編號 顯示名稱）</div>
+    <div class="list" id="list2d"></div>
+  </div>
+  <div class="content"><div class="content-inner" id="form2d"></div></div>
+</div>
+
+<div id="glossary">
+  <div class="gh"><span>📖 名詞說明</span><button class="ghost small" id="btn-glossary-close">✕</button></div>
+  <div class="gb" id="glossary-body"></div>
+</div>
+
+<div id="footer">
+  <div id="status">載入中…</div>
+  <span id="dirty">● 有還沒儲存的修改</span>
+  <button id="btn-save" class="primary">儲存</button>
+  <button id="btn-close">關閉</button>
+</div>
+
+<script>
+'use strict';
+const api = window.modelConfig;
+
+// ── 狀態 ────────────────────────────────────────────────────────────────
+let snap = null;            // main.js 送來的整包資料（modelConfigSnapshot()）
+let particle = null;        // 3D 設定的工作副本（存檔前都改這份）
+let dirty3d = false;
+let sel3d = null;           // 選中的模型 key；'__sequence__' = 序列播放設定
+const animCache = {};       // GLB 檔名 → 動畫名稱清單
+let sel2d = null;           // 選中的 Live2D path；'__add__' = 新增流程
+let work2d = null;          // 選中 2D 模型的工作副本
+let dirty2d = false;
+let mocIds = { params: [], parts: [] };
+let addFlow = null;         // { srcDir, folderName, modelJsons, trackInGit }
+let activeTab = 'tab3d';
+
+const SEQ = '__sequence__';
+const ADD = '__add__';
+
+// ── 預設值（對照 particle-effect.js / particle-sampler.js / lib/live2d.js）──
+const DEF = {
+  color: [0.55, 0.8, 1.0],      // particle-effect.js DEFAULT_COLOR
+  interval: 60,                 // DEFAULT_PERIODIC_INTERVAL_SECONDS
+  spinSpeed: 0.15,              // IDLE_ROTATE_SPEED
+  bobAmp: 0.18, bobSpeed: 1.4,  // IDLE_BOB_AMPLITUDE / IDLE_BOB_SPEED
+  swingDeg: 20, swingSpeed: 0.9,// IDLE_SWING_AMPLITUDE（π/9）/ IDLE_SWING_SPEED
+  hold: 3, transition: 1.5,
+};
+// 粒子顏色建議色票（取自既有模型用過的顏色）
+const SWATCHES = [
+  ['橘黃', [1, 0.5, 0]], ['暗紅', [1, 0.1, 0]], ['風系青', [0.1, 0.85, 0.9]], ['翠綠', [0.3, 0.9, 0.35]],
+  ['紫', [0.8, 0.2, 0.9]], ['深藍', [0.08, 0.16, 0.55]], ['金', [0.75, 0.55, 0.15]], ['淡藍（預設）', DEF.color],
+];
+
+// ── 名詞解釋（標籤旁的 ⓘ 跟「📖 名詞說明」面板共用）──────────────────────
+const TERMS = {
+  key: ['代號', '程式辨認這個模型用的名字，也是系統匣「光粒子特效」選單上顯示的名稱。只能用英文字母、數字、底線，例如 aatroxModel。'],
+  glb: ['GLB 模型檔', '3D 模型的檔案格式（.glb），裡面包含形狀、貼圖、骨架和動畫。檔案很大、授權不明，所以不放進 git，換電腦要另外複製。'],
+  autofit: ['自動置中縮放', '程式自動量模型大小，縮放成適合的尺寸並放在畫面中間。新模型建議先用這個，看效果不對再手動調。'],
+  bind: ['預設姿勢', '模型檔本身存的姿勢（術語叫 bind pose），沒套任何動畫時就是這個樣子。例如亞托克斯的預設姿勢是站在劍上。'],
+  still: ['定格', '從某段動畫挑一個瞬間，粒子排成那個姿勢後就不再變動。'],
+  loop: ['動畫循環播放', '粒子形狀跟著動畫一直動，選多段會依序接起來無限重播。比較吃記憶體和載入時間。'],
+  keyframe: ['關鍵幀', '程式把動畫拍成幾張「快照」，播放時在快照之間補間。張數越多越平滑，但載入越久、越吃記憶體。空白會依動畫長度自動算（每秒約 3 張，最少 8 張、最多 64 張），通常不用改。'],
+  periodic: ['定時動作', '平常保持定格，閒置一段時間後播一次指定動畫，播完回到原本姿勢。像角色偶爾做個小動作。'],
+  sequence: ['模型序列播放', '一鍵讓多個 3D 模型輪流變形（A 變 B 變 C…）無限循環。從系統匣「光粒子特效」或 Ctrl+Alt+S 開關。'],
+  idle: ['閒置動畫', '整團粒子的小動作（轉圈、前後晃、左右擺），不是角色本身的動作，可以跟角色動畫同時存在。'],
+  speed: ['播放速度', '倍率：1＝原速、2＝兩倍快、0.5＝慢一半。'],
+  rotation: ['旋轉', '模型轉幾度。最常用的是 Y 軸 180°：模型背對鏡頭時轉半圈就會正面朝向你。'],
+  part: ['Part（部件）', 'Live2D 模型由很多部件組成（頭髮、眼睛、衣服…）。調整某個 Part 的透明度可以藏掉模型上的瑕疵或多餘的東西：0＝完全隱藏、1＝完全顯示。'],
+  param: ['Parameter（參數）', 'Live2D 模型用來控制表情、姿勢的數值（例如臉紅程度、眼睛開合）。固定某個參數可以讓角色一直維持某個狀態。'],
+  bubble: ['文字泡泡', '角色說話時頭上冒出的對話框。高度、水平比例決定它出現在模型的哪個位置。'],
+  git: ['git 版本控制', '專案的歷史紀錄。進了 git 的檔案，別人下載專案時才拿得到。Live2D 模型資料夾預設不進 git，要逐一加例外。'],
+  cubism: ['Cubism 版本', 'Live2D 的格式版本。Cubism 4 是 *.model3.json、Cubism 2 是 model.json，兩種都支援。'],
+};
+function term(id) {
+  const t = TERMS[id];
+  return t ? h('i', { class: 'term' }, '?', h('span', { class: 'tip' }, h('b', {}, t[0]), '：', t[1])) : null;
+}
+function renderGlossary() {
+  const groups = [
+    ['3D 模型', ['key', 'glb', 'autofit', 'rotation', 'bind', 'still', 'loop', 'keyframe', 'periodic', 'speed', 'sequence', 'idle']],
+    ['2D 模型（Live2D）', ['cubism', 'bubble', 'part', 'param', 'git']],
+  ];
+  document.getElementById('glossary-body').replaceChildren(...groups.map(([title, ids]) =>
+    h('div', {}, h('h4', {}, title), h('dl', {}, ids.flatMap((id) => [h('dt', {}, TERMS[id][0]), h('dd', {}, TERMS[id][1])])))));
+}
+
+// ── 小工具 ──────────────────────────────────────────────────────────────
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === undefined || v === null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'value') el.value = v;
+    else if (k === 'checked') el.checked = !!v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const isBlank = (v) => v === '' || v === undefined || v === null;
+const round = (n, d = 4) => Math.round(n * 10 ** d) / 10 ** d;
+
+function setStatus(text, kind = '') {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = kind;
+}
+function updateDirty() {
+  const d = activeTab === 'tab3d' ? dirty3d : dirty2d;
+  document.getElementById('dirty').classList.toggle('show', d);
+  const save = document.getElementById('btn-save');
+  save.disabled = activeTab === 'tab2d' && (!work2d || sel2d === ADD);
+  save.textContent = activeTab === 'tab3d' ? '💾 儲存 3D 設定' : '💾 儲存這個 Live2D 模型';
+}
+function mark3d() { dirty3d = true; updateDirty(); }
+function mark2d() { dirty2d = true; updateDirty(); }
+
+// 區塊：圖示＋標題＋一句話說明這區在設定什麼
+function section(icon, title, desc, body, { dim = false } = {}) {
+  return h('div', { class: 'section' + (dim ? ' dim' : '') },
+    h('div', { class: 'sec-head' }, h('div', { class: 't' }, icon, ' ', title), desc ? h('div', { class: 'd' }, desc) : null),
+    h('div', { class: 'sec-body' }, body));
+}
+function callout(text, kind = '') { return h('div', { class: 'callout ' + kind }, text); }
+
+// 表單一列：左邊標籤（可帶名詞解釋 ⓘ）、右邊控制項＋說明
+function row(label, control, hint, termId) {
+  return h('div', { class: 'row' },
+    h('div', { class: 'label' }, label, termId ? term(termId) : null),
+    h('div', {}, control, hint ? h('div', { class: 'hint' }, hint) : null));
+}
+
+// 數字輸入：空白＝不填（回傳 undefined），其他要是數字
+function numInput(value, onChange, attrs = {}) {
+  const el = h('input', { type: 'text', inputmode: 'decimal', value: isBlank(value) ? '' : String(value), ...attrs });
+  el.addEventListener('input', () => {
+    const t = el.value.trim();
+    if (t === '') { el.classList.remove('invalid'); onChange(undefined); return; }
+    const n = Number(t);
+    el.classList.toggle('invalid', !Number.isFinite(n));
+    if (Number.isFinite(n)) onChange(n);
+  });
+  return el;
+}
+
+// 數字欄位：輸入框（placeholder 顯示空白時的預設值）＋單位＋「建議」按鈕。
+// 按建議值等於幫使用者打字，走同一條 input 事件，資料寫入方式跟手打一樣。
+function numField(value, onChange, { unit, placeholder, suggest } = {}) {
+  const input = numInput(value, onChange, { placeholder: placeholder || '' });
+  const box = h('div', { class: 'numbox' + (unit ? '' : ' nounit') }, input, unit ? h('span', { class: 'unit' }, unit) : null);
+  const chips = suggest && suggest.length
+    ? h('div', { class: 'suggest' }, h('span', { class: 'lbl' }, '建議'),
+        suggest.map(([lbl, v]) => h('button', {
+          title: v === '' ? '清空，改用預設值' : `填入 ${v}`,
+          onclick: () => { input.value = v === '' ? '' : String(v); input.dispatchEvent(new Event('input')); },
+        }, lbl)))
+    : null;
+  return h('div', { class: 'numfield' }, box, chips);
+}
+
+// 多選一卡片
+function choiceCards(options, current, onPick) {
+  return h('div', { class: 'choices' }, options.map((o) =>
+    h('button', { class: 'choice' + (o.value === current ? ' on' : ''), onclick: () => { if (o.value !== current) onPick(o.value); } },
+      h('span', { class: 'ct' }, o.title), o.desc ? h('span', { class: 'cd' }, o.desc) : null)));
+}
+
+// 從物件取/設巢狀欄位，設成 undefined 就刪掉該欄位（空物件也一起刪）
+function setIn(obj, pathArr, value) {
+  const parents = [];
+  let o = obj;
+  for (const k of pathArr.slice(0, -1)) {
+    if (o[k] == null || typeof o[k] !== 'object') o[k] = {};
+    parents.push([o, k]);
+    o = o[k];
+  }
+  const last = pathArr[pathArr.length - 1];
+  if (value === undefined) delete o[last]; else o[last] = value;
+  for (let i = parents.length - 1; i >= 0; i--) {
+    const [p, k] = parents[i];
+    if (p[k] && typeof p[k] === 'object' && !Array.isArray(p[k]) && !Object.keys(p[k]).length) delete p[k];
+  }
+}
+
+// 動畫名稱 → 陣列（sources.json 允許單一字串或陣列）
+const toList = (v) => (isBlank(v) ? [] : Array.isArray(v) ? v.slice() : [v]);
+
+// 有順序的名稱清單編輯器（動畫序列、序列播放順序共用）
+function orderedList({ items, options, placeholder, emptyText, onChange }) {
+  const wrap = h('div');
+  function render() {
+    wrap.replaceChildren();
+    const list = h('div', { class: 'anim-list' });
+    if (!items.length) list.append(h('div', { class: 'empty-line' }, emptyText || '（還沒加入）'));
+    items.forEach((name, i) => {
+      const missing = options && options.length && !options.includes(name);
+      list.append(h('div', { class: 'anim' },
+        h('span', { class: 'idx' }, i + 1),
+        h('span', { class: 'nm', title: name }, name),
+        missing ? h('span', { class: 'badge warn' }, '模型裡找不到') : null,
+        h('button', { class: 'small ghost', title: '往前移', disabled: i === 0, onclick: () => { [items[i - 1], items[i]] = [items[i], items[i - 1]]; changed(); } }, '↑'),
+        h('button', { class: 'small ghost', title: '往後移', disabled: i === items.length - 1, onclick: () => { [items[i + 1], items[i]] = [items[i], items[i + 1]]; changed(); } }, '↓'),
+        h('button', { class: 'small ghost danger', title: '移除', onclick: () => { items.splice(i, 1); changed(); } }, '✕')));
+    });
+    wrap.append(list);
+    const listId = 'dl' + Math.random().toString(36).slice(2);
+    const input = h('input', { type: 'text', list: listId, placeholder: placeholder || '點這裡選擇，或直接輸入名稱' });
+    const add = () => {
+      const v = input.value.trim();
+      if (!v) return;
+      items.push(v);
+      changed();
+    };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+    // 從下拉清單點選就直接加入，不用再按一次「加入」
+    input.addEventListener('change', () => { if (options && options.includes(input.value.trim())) add(); });
+    wrap.append(h('div', { class: 'inline' }, h('div', { class: 'grow' }, input), h('button', { onclick: add }, '＋ 加入')),
+      h('datalist', { id: listId }, (options || []).map((o) => h('option', { value: o }))));
+  }
+  function changed() { onChange(items.slice()); render(); }
+  render();
+  return wrap;
+}
+
+// 色碼 ↔ sources.json 的 [r, g, b]（0~1）
+function rgbToHex(rgb) {
+  return '#' + rgb.map((c) => Math.round(Math.max(0, Math.min(1, c)) * 255).toString(16).padStart(2, '0')).join('');
+}
+function hexToRgb(hex) {
+  return [1, 3, 5].map((i) => round(parseInt(hex.slice(i, i + 2), 16) / 255, 3));
+}
+const entryColor = (entry) => (Array.isArray(entry.color) && entry.color.length === 3 ? entry.color : DEF.color);
+
+// 檔案下拉選單＋「從電腦選擇」按鈕（GLB、語音、背景音樂共用）
+function fileSelect({ files, current, emptyLabel, onSelect, pickKind, onPicked }) {
+  const sel = h('select', {},
+    h('option', { value: '' }, emptyLabel),
+    files.map((f) => h('option', { value: f, selected: f === current }, f)),
+    current && !files.includes(current) ? h('option', { value: current, selected: true }, `${current}（找不到檔案）`) : null);
+  sel.addEventListener('change', () => onSelect(sel.value));
+  const pick = h('button', { onclick: async () => {
+    const r = await api.pickFile(pickKind);
+    if (r.canceled) return;
+    if (!r.ok) { setStatus(r.error, 'err'); return; }
+    if (!files.includes(r.value)) files.push(r.value);
+    onPicked(r.value);
+  } }, '📂 從電腦選擇…');
+  return h('div', { class: 'inline' }, h('div', { class: 'grow' }, sel), pick);
+}
+
+// ── 分頁／名詞說明 ──────────────────────────────────────────────────────
+document.querySelectorAll('#tabs button[data-tab]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('#tabs button[data-tab]').forEach((b) => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.id === activeTab));
+    updateDirty();
+  });
+});
+document.getElementById('btn-glossary').addEventListener('click', () => document.getElementById('glossary').classList.toggle('show'));
+document.getElementById('btn-glossary-close').addEventListener('click', () => document.getElementById('glossary').classList.remove('show'));
+renderGlossary();
+
+// ══════════════════════════════════════════════════════════════════════
+// 3D 模型
+// ══════════════════════════════════════════════════════════════════════
+
+function renderList3d() {
+  const list = document.getElementById('list3d');
+  list.replaceChildren();
+  if (!particle) return;
+  const missing = new Set(snap.missingParticleKeys);
+  for (const [key, entry] of Object.entries(particle.models)) {
+    const fileMissing = entry.file && !snap.glbFiles.includes(entry.file);
+    list.append(h('div', { class: 'item' + (sel3d === key ? ' selected' : ''), onclick: () => select3d(key) },
+      h('span', { class: 'dot', style: `background:${rgbToHex(entryColor(entry))}` }),
+      h('div', { class: 'body' },
+        h('div', { class: 'title' }, key,
+          fileMissing || missing.has(key) ? h('span', { class: 'badge err' }, '缺模型檔') : null,
+          particle.sequenceModels.includes(key) ? h('span', { class: 'badge muted' }, '序列') : null),
+        h('div', { class: 'sub', title: entry.file }, entry.file || '（還沒選模型檔）'))));
+  }
+  list.append(h('div', { class: 'item special' + (sel3d === SEQ ? ' selected' : ''), onclick: () => select3d(SEQ) },
+    h('span', { style: 'flex:none' }, '🎬'),
+    h('div', { class: 'body' },
+      h('div', { class: 'title' }, '模型序列播放設定'),
+      h('div', { class: 'sub' }, '多個模型輪流變形的順序、秒數、音樂'))));
+  document.getElementById('btn-3d-dup').disabled = !particle.models[sel3d];
+  document.getElementById('btn-3d-del').disabled = !particle.models[sel3d];
+}
+
+function select3d(key) {
+  sel3d = key;
+  renderList3d();
+  renderForm3d();
+}
+
+async function loadAnimations(file) {
+  if (!file) return [];
+  if (!animCache[file]) {
+    const r = await api.glbAnimations(file);
+    animCache[file] = r.ok ? r.names : null;
+  }
+  return animCache[file];
+}
+
+// 一句話總結這個模型「什麼時候怎麼動」，放在頁首
+function summarize3d(entry) {
+  const p = entry.particle || {};
+  const chips = [];
+  const anim = toList(p.animation);
+  if (p.animatedIdle) chips.push(['平常', anim.length ? `循環播放 ${anim.length} 段動畫` : '循環播放（還沒選動畫）']);
+  else chips.push(['平常', anim.length ? `定格在 ${anim[0]}` : '定格在預設姿勢']);
+  if (p.periodicAnimation) {
+    const n = toList(p.periodicAnimation.name);
+    chips.push(['定時動作', `每 ${p.periodicAnimation.intervalSeconds ?? DEF.interval} 秒播 ${n.join('→') || '（還沒選）'}`]);
+  }
+  if (p.sequenceAction || p.sequenceVoice) {
+    chips.push(['序列播放時', [toList(p.sequenceAction && p.sequenceAction.name).join('→'), p.sequenceVoice ? '🔊語音' : ''].filter(Boolean).join(' ＋ ')]);
+  }
+  const type = (entry.idleMotion && entry.idleMotion.type) || 'spin';
+  chips.push(['整團粒子', { spin: '慢慢自轉', bob: '來回晃動', swing: '左右擺動' }[type] || type]);
+  return h('div', { class: 'summary' }, chips.map(([k, v]) => h('span', { class: 'chip' }, k, '：', h('b', {}, v))));
+}
+
+async function renderForm3d() {
+  const form = document.getElementById('form3d');
+  form.replaceChildren();
+  if (!particle) {
+    form.append(h('div', { class: 'empty' }, h('span', { class: 'big' }, '⚠'), snap && snap.particleError ? `sources.json 讀取失敗：${snap.particleError}` : '載入中…'));
+    return;
+  }
+  if (sel3d === SEQ) { renderSequenceForm(form); return; }
+  const key = sel3d;
+  const entry = particle.models[key];
+  if (!entry) {
+    form.append(h('div', { class: 'empty' }, h('span', { class: 'big' }, '✨'), '從左邊選一個模型開始調整，或按「＋ 新增 3D 模型」'));
+    return;
+  }
+  const anims = await loadAnimations(entry.file);
+  if (sel3d !== key) return; // 等動畫清單期間換選了別的
+  const p = () => entry.particle || {};
+  const set = (pathArr, v) => { setIn(entry, pathArr, v); mark3d(); };
+  const noAnim = anims && anims.length === 0;
+  const animOpts = anims || [];
+
+  form.append(h('div', { class: 'page-head' },
+    h('h2', {}, h('span', { class: 'dot', style: `background:${rgbToHex(entryColor(entry))}` }), key),
+    h('div', { class: 'path' }, entry.file ? `particle-effect/models/${entry.file}` : '還沒選模型檔'),
+    summarize3d(entry)));
+
+  // ── 基本 ──
+  const keyInput = h('input', { type: 'text', value: key, style: 'max-width:280px' });
+  keyInput.addEventListener('change', () => renameModel(key, keyInput.value.trim(), keyInput));
+  const note = h('textarea', { rows: 2, placeholder: '例如：模型來源、量過的數字、為什麼這樣調…（只給人看，不影響顯示）' });
+  note.value = entry.note || '';
+  note.addEventListener('input', () => set(['note'], note.value.trim() ? note.value : undefined));
+  form.append(section('📄', '基本資料', '這個模型叫什麼、用哪個檔案。',
+    [
+      row('代號', keyInput, '只能用英文字母、數字、底線，例如 aatroxModel。', 'key'),
+      row('模型檔', fileSelect({
+        files: snap.glbFiles, current: entry.file, emptyLabel: '（選擇模型檔）', pickKind: 'glb',
+        onSelect: (v) => { set(['file'], v || undefined); renderForm3d(); renderList3d(); },
+        onPicked: (v) => { set(['file'], v); delete animCache[v]; renderForm3d(); renderList3d(); },
+      }), '從電腦選的檔案會自動複製到 particle-effect/models/。', 'glb'),
+      row('備註', note),
+    ]));
+
+  // ── 大小／位置／方向 ──
+  const autoFit = isBlank(p().scale) && isBlank(p().position);
+  const vecRow = (field, label, hint, def, sugg) => {
+    const vals = toList(p()[field]);
+    const cells = ['X', 'Y', 'Z'].map((axis, i) => {
+      const inp = numInput(vals[i], (n) => {
+        const cur = (Array.isArray(p()[field]) ? p()[field] : [def, def, def]).slice();
+        cur[i] = n === undefined ? def : n;
+        set(['particle', field], cur);
+      }, { placeholder: String(def) });
+      return h('label', {}, axis, inp);
+    });
+    const uniform = sugg ? h('div', { class: 'suggest', style: 'margin-top:6px' }, h('span', { class: 'lbl' }, '三軸一起設成'),
+      sugg.map((v) => h('button', { onclick: () => { set(['particle', field], [v, v, v]); renderForm3d(); } }, String(v)))) : null;
+    return row(label, h('div', {}, h('div', { class: 'xyz' }, cells), uniform), hint);
+  };
+  const rotCells = ['X', 'Y', 'Z'].map((axis) => {
+    const field = 'rotation' + axis;
+    const rad = p()[field];
+    return h('label', {}, axis, numInput(isBlank(rad) ? '' : round((rad * 180) / Math.PI, 3), (deg) => {
+      set(['particle', field], deg === undefined ? undefined : (deg === 180 ? Math.PI : deg === -180 ? -Math.PI : (deg * Math.PI) / 180));
+    }, { placeholder: '0°' }));
+  });
+  const setRotY = (deg) => { set(['particle', 'rotationY'], deg === 0 ? undefined : deg === 180 ? Math.PI : (deg * Math.PI) / 180); renderForm3d(); };
+  form.append(section('📐', '大小／位置／方向', '模型在畫面上多大、放哪裡、面向哪邊。大多數模型只要決定「方向」就好。',
+    [
+      row('大小和位置', choiceCards([
+        { value: true, title: '🪄 自動（建議）', desc: '程式自動量大小、放到畫面中間' },
+        { value: false, title: '✍ 手動填數字', desc: '自動的效果不理想時再用' },
+      ], autoFit, (v) => {
+        if (v) { set(['particle', 'scale'], undefined); set(['particle', 'position'], undefined); }
+        else { set(['particle', 'scale'], [1, 1, 1]); set(['particle', 'position'], [0, 0, 0]); }
+        renderForm3d();
+      }), null, 'autofit'),
+      autoFit ? null : vecRow('scale', '縮放（倍）', '1＝原始大小。數字一樣就是等比例縮放。', 1, [0.5, 1, 1.5, 2]),
+      autoFit ? null : vecRow('position', '位置', 'Y 負數往下、正數往上。可以先用桌寵的鍵盤微調工具試出數字（見 動畫參數說明.md）。', 0, [0]),
+      row('方向（度）', h('div', {}, h('div', { class: 'xyz' }, rotCells),
+        h('div', { class: 'suggest', style: 'margin-top:6px' }, h('span', { class: 'lbl' }, '常用'),
+          h('button', { onclick: () => setRotY(0) }, '正面 0°'),
+          h('button', { onclick: () => setRotY(180) }, '背對鏡頭時 → Y 180°'),
+          h('button', { onclick: () => setRotY(90) }, 'Y 90°'),
+          h('button', { onclick: () => setRotY(-90) }, 'Y -90°'))),
+        '空白＝0°。模型背對你的話，Y 填 180 轉半圈。', 'rotation'),
+    ]));
+
+  // ── 平常的樣子 ──
+  const idleMode = p().animatedIdle ? 'loop' : 'still';
+  const animsInfo = anims === null ? callout('讀不到這個檔案的動畫清單，動畫名稱需要自己輸入。', 'warn')
+    : noAnim ? callout('這個模型沒有任何動畫，下面三個動作相關的區塊都用不到，維持預設即可。', 'warn')
+    : callout(`這個模型有 ${anims.length} 段動畫，點輸入框就會列出全部名稱。名稱是模型作者取的，看不懂的話挑一段存檔後看效果，不對再換。`);
+  const animList = orderedList({
+    items: toList(p().animation),
+    options: animOpts,
+    placeholder: '點這裡選擇動畫…',
+    emptyText: idleMode === 'loop' ? '還沒選要循環哪幾段動畫' : '沒選＝使用模型檔本身的預設姿勢',
+    // 定格模式只有一段時存成字串（跟既有資料同格式）；多段照樣存陣列，不默默丟掉後面幾段
+    onChange: (items) => set(['particle', 'animation'], items.length === 0 ? undefined : idleMode === 'still' && items.length === 1 ? items[0] : items),
+  });
+  const modeBody = [
+    anims && anims.length ? animsInfo : null,
+    row('模式', choiceCards([
+      { value: 'still', title: '🧍 定格（建議）', desc: '擺一個姿勢不動，最省資源' },
+      { value: 'loop', title: '🔁 動畫循環播放', desc: '粒子一直跟著動畫動' },
+    ], idleMode, (v) => { set(['particle', 'animatedIdle'], v === 'loop' ? true : undefined); renderForm3d(); }), null, idleMode === 'loop' ? 'loop' : 'still'),
+    row(idleMode === 'loop' ? '要循環的動畫' : '定格用的動畫', animList,
+      idleMode === 'loop' ? '選多段會照順序接起來一直重播。' : '只會用第一段。不選的話就是模型檔本身的預設姿勢。', idleMode === 'loop' ? null : 'bind'),
+    // 定格模式套了動畫之後，「回到原本的姿勢」就是把動畫清空——一顆按鈕講清楚，不用猜
+    idleMode === 'still' && toList(p().animation).length
+      ? row('', h('button', { onclick: () => {
+          set(['particle', 'animation'], undefined);
+          set(['particle', 'animationTime'], undefined);
+          renderForm3d();
+        } }, '↺ 改回模型預設姿勢（不套動畫）'))
+      : null,
+    idleMode === 'still'
+      ? row('停在第幾秒', numField(p().animationTime, (n) => set(['particle', 'animationTime'], n),
+          { unit: '秒', placeholder: '預設 0', suggest: [['0', ''], ['0.5', 0.5], ['1', 1]] }),
+          '動畫裡挑哪個瞬間當姿勢。0＝動畫的第一個畫面。')
+      : [
+          row('關鍵幀張數', numField(p().animationFrames, (n) => set(['particle', 'animationFrames'], n),
+            { unit: '張', placeholder: '自動', suggest: [['自動', ''], ['24', 24], ['48', 48], ['60', 60]] }),
+            h('span', {}, '建議留「自動」。動作看起來一頓一頓才調高，例如 48。'), 'keyframe'),
+          row('播放速度', numField(p().animationSpeed, (n) => set(['particle', 'animationSpeed'], n),
+            { unit: '倍', placeholder: '預設 1', suggest: [['0.5', 0.5], ['1', ''], ['1.5', 1.5], ['2', 2]] }),
+            '0＝停住不動。', 'speed'),
+        ],
+  ];
+  form.append(section('🧍', '平常的樣子', '模型平常顯示時是擺一個姿勢不動，還是一直在動。', modeBody, { dim: noAnim }));
+
+  // ── 定時動作 ──
+  const pa = p().periodicAnimation;
+  const paOn = !!pa;
+  const paBody = [
+    idleMode === 'loop' ? callout('「平常的樣子」目前是動畫循環播放，跟定時動作互斥，通常只開一種。', 'warn') : null,
+    row('要不要開', choiceCards([
+      { value: false, title: '關閉', desc: '平常就維持上面的樣子' },
+      { value: true, title: '⏰ 開啟', desc: '閒置一陣子就做一次動作' },
+    ], paOn, (v) => { set(['particle', 'periodicAnimation'], v ? { name: [] } : undefined); renderForm3d(); }), null, 'periodic'),
+  ];
+  if (paOn) {
+    paBody.push(
+      row('要播的動畫', orderedList({
+        items: toList(pa.name), options: animOpts, placeholder: '點這裡選擇動畫…', emptyText: '還沒選（一定要選一段）',
+        onChange: (items) => { entry.particle.periodicAnimation.name = items; mark3d(); },
+      }), '選多段會依序播完才回到平常的樣子。'),
+      row('每隔多久', numField(pa.intervalSeconds, (n) => set(['particle', 'periodicAnimation', 'intervalSeconds'], n),
+        { unit: '秒', placeholder: `預設 ${DEF.interval}`, suggest: [['10', 10], ['30', 30], ['60', '']] }),
+        '閒置滿這麼久就觸發一次。想測試效果可以先填 10，調好再改回 30~60。'),
+      row('關鍵幀張數', numField(pa.frameCount, (n) => set(['particle', 'periodicAnimation', 'frameCount'], n),
+        { unit: '張', placeholder: '自動', suggest: [['自動', ''], ['24', 24], ['48', 48]] }),
+        '建議留「自動」。動畫很長（超過 10 秒）又覺得卡卡的再調高。', 'keyframe'),
+      row('播放速度', numField(pa.speed, (n) => set(['particle', 'periodicAnimation', 'speed'], n),
+        { unit: '倍', placeholder: '預設 1', suggest: [['0.5', 0.5], ['1', ''], ['1.5', 1.5]] }),
+        h('span', {}, '⚠ 不要填 0：動作會卡住、回不到平常的樣子。'), 'speed'));
+  }
+  form.append(section('⏰', '定時動作', '平常不動，每隔一段時間做一次動作（像偶爾伸個懶腰）。', paBody, { dim: noAnim }));
+
+  // ── 模型序列播放到這一站時 ──
+  const sa = p().sequenceAction || {};
+  form.append(section('🎬', '序列播放輪到它時', '只有開啟「模型序列播放」才會用到，平常單獨顯示這個模型時沒有影響。',
+    [
+      row('播一段動作', h('div', { class: noAnim ? 'disabled-block' : '' }, orderedList({
+        items: toList(sa.name), options: animOpts, placeholder: '點這裡選擇動畫…', emptyText: '沒選＝輪到它時單純定格',
+        onChange: (items) => set(['particle', 'sequenceAction', 'name'], items.length ? (items.length === 1 ? items[0] : items) : undefined),
+      })), '只播一次。比停留時間長的話會在中途切到下一個模型。', 'sequence'),
+      sa.name ? row('動作關鍵幀張數', numField(sa.frameCount, (n) => set(['particle', 'sequenceAction', 'frameCount'], n),
+        { unit: '張', placeholder: '自動', suggest: [['自動', ''], ['24', 24], ['48', 48]] }), '建議留「自動」。', 'keyframe') : null,
+      row('播一句語音', fileSelect({
+        files: snap.voiceFiles, current: p().sequenceVoice, emptyLabel: '（不播語音）', pickKind: 'voice',
+        onSelect: (v) => set(['particle', 'sequenceVoice'], v || undefined),
+        onPicked: (v) => { set(['particle', 'sequenceVoice'], v); renderForm3d(); },
+      }), '建議 1~2 秒的短句，輪到它 0.3 秒後播放。檔案放在 particle-effect/audio/voice/。'),
+    ]));
+
+  // ── 外觀 ──
+  const hasColor = Array.isArray(entry.color) && entry.color.length === 3;
+  const colorInput = h('input', { type: 'color', value: rgbToHex(entryColor(entry)), title: '自訂顏色' });
+  colorInput.addEventListener('input', () => { set(['color'], hexToRgb(colorInput.value)); renderList3d(); });
+  colorInput.addEventListener('change', () => renderForm3d());
+  const colorRow = h('div', {},
+    choiceCards([
+      { value: 'auto', title: '🎨 自動取色（建議）', desc: '從模型貼圖算出平均顏色' },
+      { value: 'manual', title: '🖌 指定顏色', desc: '自己挑一個顏色' },
+    ], hasColor ? 'manual' : 'auto', (v) => { set(['color'], v === 'auto' ? undefined : clone(entryColor(entry))); renderForm3d(); renderList3d(); }),
+    hasColor ? h('div', { class: 'swatches', style: 'margin-top:10px' }, colorInput,
+      SWATCHES.map(([name, rgb]) => h('button', { class: 'swatch', title: name, style: `background:${rgbToHex(rgb)}`,
+        onclick: () => { set(['color'], rgb.slice()); renderForm3d(); renderList3d(); } }))) : null);
+
+  const im = entry.idleMotion || {};
+  const imType = im.type || '';
+  const isSwing = imType === 'swing';
+  const isBob = imType === 'bob';
+  const axisSel = h('select', { style: 'width:170px', onchange: (e) => set(['idleMotion', 'axis'], e.target.value || undefined) },
+    h('option', { value: '' }, '預設（Y 軸）'),
+    h('option', { value: 'x', selected: im.axis === 'x' }, 'X 軸（左右）'),
+    h('option', { value: 'y', selected: im.axis === 'y' }, 'Y 軸（上下）'),
+    h('option', { value: 'z', selected: im.axis === 'z' }, 'Z 軸（前後）'));
+  const ampField = isSwing
+    ? numField(isBlank(im.amplitude) ? '' : round((im.amplitude * 180) / Math.PI, 2),
+        (n) => set(['idleMotion', 'amplitude'], n === undefined ? undefined : (n * Math.PI) / 180),
+        { unit: '度', placeholder: `預設 ${DEF.swingDeg}`, suggest: [['10', 10], ['20', ''], ['30', 30]] })
+    : numField(im.amplitude, (n) => set(['idleMotion', 'amplitude'], n),
+        { placeholder: `預設 ${DEF.bobAmp}`, suggest: [['0.1', 0.1], [String(DEF.bobAmp), ''], ['0.3', 0.3]] });
+  const speedDef = isSwing ? DEF.swingSpeed : isBob ? DEF.bobSpeed : DEF.spinSpeed;
+  form.append(section('🎨', '外觀', '粒子的顏色，還有整團粒子平常的小動作。',
+    [
+      row('粒子顏色', colorRow),
+      row('整團粒子的小動作', choiceCards([
+        { value: '', title: '🔄 慢慢自轉', desc: '預設，繞著軸一直轉' },
+        { value: 'bob', title: '↕ 來回晃動', desc: '短距離來回移動' },
+        { value: 'swing', title: '↔ 左右擺動', desc: '像擺頭，轉一點就轉回來' },
+      ], imType === 'spin' ? '' : imType, (v) => { set(['idleMotion', 'type'], v || undefined); renderForm3d(); renderList3d(); }),
+        '跟角色本身的動畫是兩回事，兩者會同時存在。', 'idle'),
+      row('軸向', axisSel, isBob ? '晃動的方向。Z 軸＝往鏡頭靠近、遠離。' : isSwing ? '繞哪個軸擺。Y 軸＝左右擺頭。' : '繞哪個軸轉。'),
+      isBob || isSwing ? row(isSwing ? '擺動幅度' : '晃動距離', ampField, '空白＝預設值。數字越大動作越明顯。') : null,
+      row('動作快慢', numField(im.speed, (n) => set(['idleMotion', 'speed'], n),
+        { placeholder: `預設 ${speedDef}`, suggest: [['慢', round(speedDef * 0.5, 3)], ['預設', ''], ['快', round(speedDef * 1.5, 3)]] }),
+        '數字越大越快。'),
+    ]));
+}
+
+function renderSequenceForm(form) {
+  const allKeys = Object.keys(particle.models);
+  const useAll = particle.sequenceModels.length === 0;
+  form.append(h('div', { class: 'page-head' },
+    h('h2', {}, '🎬 模型序列播放設定'),
+    h('div', { class: 'path' }, '一鍵讓多個 3D 模型輪流變形、無限循環。從系統匣「光粒子特效」或 Ctrl+Alt+S 開關。')));
+  form.append(section('📋', '播放順序', '要輪播哪些模型、照什麼順序。',
+    [
+      row('播哪些模型', choiceCards([
+        { value: true, title: '全部（建議）', desc: '照左邊清單的順序全部輪一次' },
+        { value: false, title: '自己挑', desc: '只播指定的模型、自訂順序' },
+      ], useAll, (v) => { particle.sequenceModels = v ? [] : allKeys.slice(); mark3d(); renderForm3d(); renderList3d(); }), null, 'sequence'),
+      useAll ? null : row('順序', orderedList({
+        items: particle.sequenceModels.slice(), options: allKeys, placeholder: '點這裡選擇模型…',
+        onChange: (items) => { particle.sequenceModels = items; mark3d(); renderList3d(); },
+      })),
+      callout('⚠ 模型檔特別大的（例如 superheroSculptModel）放進序列可能會卡頓。', 'warn'),
+    ]));
+  form.append(section('⏱', '節奏', '每個模型停多久、切換要多快。',
+    [
+      row('每個模型停留', numField(particle.sequenceHoldSeconds, (n) => { particle.sequenceHoldSeconds = n; mark3d(); },
+        { unit: '秒', placeholder: `預設 ${DEF.hold}`, suggest: [['2', 2], ['3', 3], ['5', 5]] }), '變成某個模型之後停多久才換下一個。'),
+      row('切換花多久', numField(particle.sequenceTransitionSeconds, (n) => { particle.sequenceTransitionSeconds = n; mark3d(); },
+        { unit: '秒', placeholder: `預設 ${DEF.transition}`, suggest: [['0（瞬間切換）', 0], ['1', 1], ['1.5', 1.5]] }), '從這個模型變到下一個的時間。'),
+    ]));
+  form.append(section('🎵', '背景音樂', '序列播放期間一直重複播放的音樂。',
+    [
+      row('音樂檔', fileSelect({
+        files: snap.bgmFiles, current: particle.sequenceBgm, emptyLabel: '（不播背景音樂）', pickKind: 'bgm',
+        onSelect: (v) => { particle.sequenceBgm = v; mark3d(); },
+        onPicked: (v) => { particle.sequenceBgm = v; mark3d(); renderForm3d(); },
+      }), '檔案放在 particle-effect/audio/bgm/。跟桌寵的音效共用同一個靜音開關。'),
+    ]));
+}
+
+// 改代號：維持原本在清單裡的位置，序列播放清單裡的引用一起改
+function renameModel(oldKey, newKey, input) {
+  if (newKey === oldKey) return;
+  if (!/^[A-Za-z_$][\w$]*$/.test(newKey)) {
+    setStatus('代號只能用英文字母、數字、底線，而且不能數字開頭', 'err');
+    input.value = oldKey; return;
+  }
+  if (particle.models[newKey]) { setStatus(`已經有叫「${newKey}」的模型了`, 'err'); input.value = oldKey; return; }
+  const next = {};
+  for (const [k, v] of Object.entries(particle.models)) next[k === oldKey ? newKey : k] = v;
+  particle.models = next;
+  particle.sequenceModels = particle.sequenceModels.map((k) => (k === oldKey ? newKey : k));
+  sel3d = newKey;
+  mark3d();
+  setStatus(`代號改成 ${newKey}（記得儲存）`);
+  renderList3d(); renderForm3d();
+}
+
+document.getElementById('btn-3d-add').addEventListener('click', async () => {
+  if (!particle) return;
+  const r = await api.pickFile('glb');
+  if (r.canceled) return;
+  if (!r.ok) { setStatus(r.error, 'err'); return; }
+  if (!snap.glbFiles.includes(r.value)) snap.glbFiles.push(r.value);
+  const key = await api.suggestModelKey(r.value, Object.keys(particle.models));
+  particle.models[key] = { file: r.value, particle: {} };
+  mark3d();
+  setStatus(`已加入 ${key}（${r.value}）。先按「儲存 3D 設定」看看效果，再慢慢調整。`, 'ok');
+  select3d(key);
+});
+
+document.getElementById('btn-3d-dup').addEventListener('click', () => {
+  const src = particle.models[sel3d];
+  if (!src) return;
+  let key = sel3d + 'Copy';
+  for (let i = 2; particle.models[key]; i++) key = sel3d + 'Copy' + i;
+  particle.models[key] = clone(src);
+  mark3d();
+  select3d(key);
+});
+
+document.getElementById('btn-3d-del').addEventListener('click', () => {
+  if (!particle.models[sel3d]) return;
+  if (!confirm(`確定要刪除「${sel3d}」？（只刪設定，不會刪掉 GLB 檔。按儲存才會真的寫入。）`)) return;
+  delete particle.models[sel3d];
+  particle.sequenceModels = particle.sequenceModels.filter((k) => k !== sel3d);
+  mark3d();
+  sel3d = Object.keys(particle.models)[0] || SEQ;
+  renderList3d(); renderForm3d();
+});
+
+// 紅框＝格式不對、還沒套用到資料的欄位。存檔前先擋下，不然會存成舊值、使用者以為存進去了
+function hasInvalidFields(formId) {
+  const bad = [...document.querySelectorAll(`#${formId} input.invalid`)];
+  if (!bad.length) return false;
+  bad[0].scrollIntoView({ block: 'center' });
+  bad[0].focus();
+  setStatus(`有 ${bad.length} 個欄位格式不對（紅框），請改成數字或清空後再儲存。`, 'err');
+  return true;
+}
+
+async function save3d() {
+  if (hasInvalidFields('form3d')) return;
+  setStatus('儲存中…');
+  const r = await api.saveParticle(particle);
+  if (!r.ok) {
+    setStatus('沒有儲存，請先修正：\n' + r.errors.join('\n'), 'err');
+    return;
+  }
+  applySnapshot(r.snapshot, { keep2d: true });
+  dirty3d = false; updateDirty();
+  const warn = r.warnings && r.warnings.length ? '\n提醒：' + r.warnings.join('；') : '';
+  setStatus((r.reloaded ? '✔ 已儲存，3D 模型已重新載入。' : '✔ 已儲存（3D 視窗沒開，下次開啟時生效）。') + warn, warn ? 'warn' : 'ok');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 2D 模型
+// ══════════════════════════════════════════════════════════════════════
+
+function renderList2d() {
+  const list = document.getElementById('list2d');
+  list.replaceChildren();
+  for (const m of snap.live2d) {
+    const color = m.fatal ? 'var(--err)' : m.missingCount ? 'var(--warn)' : 'var(--ok)';
+    list.append(h('div', { class: 'item' + (sel2d === m.path ? ' selected' : ''), onclick: () => select2d(m.path) },
+      h('span', { class: 'dot', style: `background:${color}`, title: m.fatal ? '無法顯示' : m.missingCount ? '有缺檔' : '檔案齊全' }),
+      h('div', { class: 'body' },
+        h('div', { class: 'title' }, `#${m.id} ${m.name}`,
+          m.fatal ? h('span', { class: 'badge err' }, '無法顯示') : m.missingCount ? h('span', { class: 'badge warn' }, `缺 ${m.missingCount} 檔`) : null,
+          m.tracked ? null : h('span', { class: 'badge muted', title: '.gitignore 沒有這個資料夾的例外，別人下載專案會沒有這隻' }, '未進 git')),
+        h('div', { class: 'sub', title: m.path }, m.path))));
+  }
+}
+
+async function select2d(modelPath) {
+  if (dirty2d && sel2d !== modelPath && !confirm('這個 Live2D 模型有還沒儲存的修改，確定要切換？（修改會丟掉）')) return;
+  sel2d = modelPath;
+  dirty2d = false;
+  addFlow = null;
+  const m = snap.live2d.find((e) => e.path === modelPath);
+  work2d = m ? {
+    name: m.name,
+    layout: { offsetX: '', offsetY: '', scale: '', headRatio: '', headXRatio: '', bubbleGrow: '', ...(m.layout || {}) },
+    chatSounds: (m.chatSounds || []).slice(),
+    partOverrides: Object.entries(m.partOverrides || {}).map(([id, value]) => ({ id, value })),
+    paramOverrides: Object.entries(m.paramOverrides || {}).map(([id, value]) => ({ id, value })),
+  } : null;
+  mocIds = { params: [], parts: [] };
+  renderList2d(); renderForm2d(); updateDirty();
+  if (m) {
+    const r = await api.mocIds(modelPath);
+    if (sel2d === modelPath) { mocIds = r; renderForm2d(); }
+  }
+}
+
+function kvEditor(rows, ids, valueHint, onChange, idHint) {
+  const wrap = h('div');
+  const listId = 'kv' + Math.random().toString(36).slice(2);
+  function render() {
+    wrap.replaceChildren();
+    if (!rows.length) wrap.append(h('div', { class: 'anim-list' }, h('div', { class: 'empty-line' }, '（沒有設定，維持模型原樣）')));
+    else wrap.append(h('div', { class: 'kv-head' }, h('span', {}, idHint), h('span', {}, valueHint), h('span', {})));
+    rows.forEach((r, i) => {
+      const idIn = h('input', { type: 'text', list: listId, value: r.id, placeholder: '點這裡選擇…' });
+      idIn.addEventListener('input', () => { r.id = idIn.value; onChange(); });
+      const valIn = h('input', { type: 'text', inputmode: 'decimal', value: isBlank(r.value) ? '' : String(r.value), placeholder: valueHint, style: 'text-align:right' });
+      valIn.addEventListener('input', () => { r.value = valIn.value; onChange(); });
+      wrap.append(h('div', { class: 'kv' }, idIn, valIn,
+        h('button', { class: 'small ghost danger', title: '移除', onclick: () => { rows.splice(i, 1); onChange(); render(); } }, '✕')));
+    });
+    wrap.append(h('button', { class: 'small', onclick: () => { rows.push({ id: '', value: '' }); onChange(); render(); } }, '＋ 新增一列'),
+      ids.length ? h('span', { class: 'hint', style: 'margin-left:8px' }, `從模型檔讀到 ${ids.length} 個可選的 ID`) : null,
+      h('datalist', { id: listId }, ids.map((id) => h('option', { value: id }))));
+  }
+  render();
+  return wrap;
+}
+
+function renderForm2d() {
+  const form = document.getElementById('form2d');
+  form.replaceChildren();
+  if (snap.live2dError) form.append(callout(`manifest.json 讀取失敗：${snap.live2dError}`, 'warn'));
+  if (sel2d === ADD) { renderAddForm(form); return; }
+  const m = snap.live2d.find((e) => e.path === sel2d);
+  if (!m || !work2d) {
+    form.append(h('div', { class: 'empty' }, h('span', { class: 'big' }, '🧍'), '從左邊選一個 Live2D 角色，或按「＋ 新增 Live2D 模型」'));
+    return;
+  }
+  const L = work2d.layout;
+  const nameIn = h('input', { type: 'text', value: work2d.name, style: 'max-width:320px' });
+  nameIn.addEventListener('input', () => { work2d.name = nameIn.value; mark2d(); });
+  const layoutField = (field, opts) => numField(L[field], (n) => { L[field] = n === undefined ? '' : n; mark2d(); }, opts);
+
+  form.append(h('div', { class: 'page-head' },
+    h('h2', {}, `#${m.id} ${m.name}`),
+    h('div', { class: 'path' }, `live2d_my_like/${m.path}`),
+    h('div', { class: 'summary' },
+      h('span', { class: 'chip' }, '格式：', h('b', {}, `Cubism ${m.cubism}`)),
+      h('span', { class: 'chip' }, '檔案：', h('b', { style: `color:${m.fatal ? 'var(--err)' : m.missingCount ? 'var(--warn)' : 'var(--ok)'}` },
+        m.fatal ? '缺核心檔，無法顯示' : m.missingCount ? `缺 ${m.missingCount} 個動作/表情檔` : '齊全')),
+      h('span', { class: 'chip' }, 'git：', h('b', {}, m.tracked ? '會進版本控制' : '不會進版本控制')))));
+
+  const gitRow = m.tracked
+    ? h('span', { class: 'badge ok', style: 'font-size:.9em' }, '✔ 會進 git，別人下載專案也拿得到')
+    : h('div', { class: 'inline' }, h('span', { style: 'color:var(--warn)' }, '這隻不會進 git，別人下載專案會沒有它'),
+        h('button', { class: 'small', onclick: async () => {
+          const r = await api.trackLive2D(m.folder);
+          if (!r.ok) { setStatus(r.error, 'err'); return; }
+          applySnapshot(r.snapshot, { keep2d: true, keep3d: true });
+          setStatus(`✔ 已在 .gitignore 加入 ${m.folder} 的例外，記得 git add 這個資料夾。`, 'ok');
+        } }, '加入 git 版本控制'));
+  const fileState = m.fatal
+    ? h('span', { style: 'color:var(--err)' }, '✖ 核心檔或貼圖缺少，這隻顯示不出來')
+    : m.missingCount ? h('span', { style: 'color:var(--warn)' }, `△ 缺 ${m.missingCount} 個動作/表情/物理效果檔，角色看得到但部分動作會失效`)
+    : h('span', { style: 'color:var(--ok)' }, '✔ 檔案齊全');
+
+  form.append(section('📄', '基本資料', '這個角色在選單上叫什麼，以及檔案狀況。',
+    [
+      row('顯示名稱', nameIn, '系統匣角色選單和主持人頁面看到的名字。'),
+      row('檔案狀態', h('div', {}, fileState, m.fatal || m.missingCount ? h('div', { class: 'hint' }, '想看缺哪些檔：在 desktop-pet 資料夾執行 npm run check-assets') : null)),
+      row('版本控制', gitRow, null, 'git'),
+    ]));
+
+  const growChoices = choiceCards([
+    { value: '', title: '預設', desc: '沿用桌寵設定' },
+    { value: 'right', title: '往右長 →', desc: '角色在畫面左邊時' },
+    { value: 'left', title: '← 往左長', desc: '角色在畫面右邊時' },
+  ], L.bubbleGrow || '', (v) => { L.bubbleGrow = v; mark2d(); renderForm2d(); });
+  form.append(section('📐', '位置與大小', '全部留空＝沿用桌寵的預設排版。只有角色位置跑掉、太大太小時才需要調。',
+    [
+      row('左右移動', layoutField('offsetX', { unit: 'px', placeholder: '預設 0', suggest: [['0', ''], ['-50', -50], ['+50', 50]] }), '正數往右、負數往左。'),
+      row('上下移動', layoutField('offsetY', { unit: 'px', placeholder: '預設 0', suggest: [['0', ''], ['-50', -50], ['+50', 50]] }), '正數往下、負數往上。'),
+      row('大小', layoutField('scale', { unit: '倍', placeholder: '沿用預設', suggest: [['0.7', 0.7], ['1', 1], ['1.3', 1.3]] }), '1＝原始大小。'),
+    ]));
+  form.append(section('💬', '文字泡泡位置', '角色說話時對話框出現在哪裡。可以用情境編輯器的「泡泡校正」分頁邊看邊調，調好會自動存回這裡。',
+    [
+      row('泡泡高度', layoutField('headRatio', { placeholder: '預設 0.25', suggest: [['0.1（靠頭頂）', 0.1], ['0.25', 0.25], ['0.4（偏下）', 0.4]] }),
+        '0＝模型最上緣，數字越大越往下。通常 0.1~0.4，對準頭部。', 'bubble'),
+      row('泡泡左右', layoutField('headXRatio', { placeholder: '預設 0.5', suggest: [['0.3（偏左）', 0.3], ['0.5（中間）', 0.5], ['0.7（偏右）', 0.7]] }),
+        '0.5＝模型正中間，數字越大越往右。'),
+      row('泡泡往哪邊長', growChoices),
+    ]));
+
+  const soundsWrap = h('div');
+  const renderSounds = () => {
+    soundsWrap.replaceChildren();
+    const list = h('div', { class: 'anim-list' });
+    if (!work2d.chatSounds.length) list.append(h('div', { class: 'empty-line' }, '（沒有設定，使用全域預設音效）'));
+    work2d.chatSounds.forEach((s, i) => {
+      const inp = h('input', { type: 'text', value: s });
+      inp.addEventListener('input', () => { work2d.chatSounds[i] = inp.value; mark2d(); });
+      list.append(h('div', { class: 'kv', style: 'grid-template-columns:1fr auto;margin:0' }, inp,
+        h('button', { class: 'small ghost danger', title: '移除', onclick: () => { work2d.chatSounds.splice(i, 1); mark2d(); renderSounds(); } }, '✕')));
+    });
+    soundsWrap.append(list, h('button', { class: 'small', onclick: async () => {
+      const r = await api.pickFile('chatSound');
+      if (r.canceled) return;
+      if (!r.ok) { setStatus(r.error, 'err'); return; }
+      work2d.chatSounds.push(r.value); mark2d(); renderSounds();
+    } }, '📂 ＋ 選擇音效檔…'));
+  };
+  renderSounds();
+  form.append(section('🔊', '閒話音效', '角色閒聊冒泡泡時隨機播放的聲音。不設定就用全域預設音效。',
+    [row('音效檔', soundsWrap, '電腦其他地方的檔案會自動複製到「特定角色語音/」資料夾。')]));
+
+  form.append(section('🩹', '修正模型瑕疵（進階）', '模型本身有殘影、多餘部件，或想固定某個表情時才需要。一般角色不用設定。',
+    [
+      row('隱藏或調淡部件', kvEditor(work2d.partOverrides, mocIds.parts || [], '透明度 0~1', mark2d, 'Part ID'),
+        '透明度 0＝完全隱藏、1＝正常顯示、0.5＝半透明。', 'part'),
+      row('固定參數值', kvEditor(work2d.paramOverrides, mocIds.params || [], '數值', mark2d, 'Parameter ID'),
+        '把某個表情或姿勢參數固定在指定數值。', 'param'),
+    ]));
+
+  form.append(h('label', { class: 'check', style: 'margin:4px 2px' },
+    h('input', { type: 'checkbox', id: 'reload-pet', checked: true }), '儲存後重新載入桌寵畫面（建議勾選，改的東西要重新載入才看得到）'));
+}
+
+function renderAddForm(form) {
+  form.append(h('div', { class: 'page-head' },
+    h('h2', {}, '＋ 新增 Live2D 模型'),
+    h('div', { class: 'path' }, '選一個模型資料夾，會整個複製到 live2d_my_like/models/，並自動加進角色清單。')));
+  const pick = h('button', { class: addFlow ? '' : 'primary', onclick: async () => {
+    const r = await api.pickLive2DFolder();
+    if (r.canceled) return;
+    if (!r.ok) { setStatus(r.error, 'err'); return; }
+    addFlow = { ...r, trackInGit: true };
+    setStatus('');
+    renderForm2d();
+  } }, addFlow ? '📂 重新選擇資料夾…' : '📂 選擇模型資料夾…');
+  form.append(section('1️⃣', '選資料夾', '資料夾裡要有 *.model3.json 或 model.json（Live2D 的模型設定檔）。',
+    [pick, addFlow ? h('div', { class: 'hint', style: 'margin:8px 0 12px' }, '已選：', addFlow.srcDir) : h('div', { style: 'height:12px' })]));
+  if (!addFlow) return;
+  const nameIn = h('input', { type: 'text', value: addFlow.folderName, style: 'max-width:300px' });
+  nameIn.addEventListener('input', () => { addFlow.folderName = nameIn.value; });
+  const exists = (n) => snap.live2d.some((e) => e.folder === n);
+  form.append(section('2️⃣', '確認', '確認名稱和要不要進 git，然後按「加入模型」。',
+    [
+      row('資料夾名稱', nameIn, exists(addFlow.folderName) ? h('span', { style: 'color:var(--warn)' }, '⚠ 已經有同名資料夾，請換一個。') : '加入後可以另外取一個好認的顯示名稱。'),
+      row('找到的模型設定檔', h('div', { class: 'anim-list' }, addFlow.modelJsons.map((f) => h('div', { class: 'anim' }, h('span', { class: 'nm' }, f)))),
+        addFlow.modelJsons.length > 1 ? '有多個設定檔（例如不同服裝），每一個都會變成清單裡的一個角色。' : null, 'cubism'),
+      row('版本控制', h('label', { class: 'check' },
+        h('input', { type: 'checkbox', checked: addFlow.trackInGit, onchange: (e) => { addFlow.trackInGit = e.target.checked; } }),
+        '讓這隻進 git（別人下載專案也拿得到）'),
+        '來源不明、不方便公開的模型建議取消勾選。', 'git'),
+      h('div', { style: 'padding:4px 0 14px' }, h('button', { class: 'primary', onclick: async () => {
+        setStatus('複製中…');
+        const r = await api.addLive2D({ srcDir: addFlow.srcDir, folderName: addFlow.folderName, trackInGit: addFlow.trackInGit });
+        if (!r.ok) { setStatus(r.error, 'err'); return; }
+        applySnapshot(r.snapshot, { keep2d: true, keep3d: true });
+        setStatus(`✔ 已加入 ${r.paths.join('、')}。` + (addFlow.trackInGit ? '記得 git add 這個資料夾。' : ''), 'ok');
+        addFlow = null;
+        select2d(r.paths[0]);
+      } }, '＋ 加入模型')),
+    ]));
+}
+
+document.getElementById('btn-2d-add').addEventListener('click', () => {
+  if (dirty2d && !confirm('這個 Live2D 模型有還沒儲存的修改，確定要離開？（修改會丟掉）')) return;
+  sel2d = ADD; work2d = null; dirty2d = false; addFlow = null;
+  renderList2d(); renderForm2d(); updateDirty();
+});
+
+async function save2d() {
+  if (!work2d || sel2d === ADD) return;
+  if (hasInvalidFields('form2d')) return;
+  setStatus('儲存中…');
+  const reloadPet = !!(document.getElementById('reload-pet') || {}).checked;
+  const r = await api.saveLive2D({ modelPath: sel2d, patch: work2d, reloadPet });
+  if (!r.ok) { setStatus('沒有儲存，請先修正：\n' + r.errors.join('\n'), 'err'); return; }
+  dirty2d = false;
+  applySnapshot(r.snapshot, { keep2d: true, keep3d: true });
+  await select2d(sel2d);
+  setStatus(reloadPet ? '✔ 已儲存，桌寵畫面重新載入中。' : '✔ 已儲存（重新載入桌寵畫面後生效）。', 'ok');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 共用
+// ══════════════════════════════════════════════════════════════════════
+
+// keep2d／keep3d：從另一個分頁的操作回來時，這個分頁還沒存的修改不能被磁碟上的版本蓋掉
+function applySnapshot(data, { keep2d = false, keep3d = false } = {}) {
+  snap = data;
+  if (!(keep3d && dirty3d && particle)) {
+    particle = data.particle ? clone(data.particle) : null;
+    dirty3d = false;
+  }
+  if (particle && !particle.models[sel3d] && sel3d !== SEQ) sel3d = Object.keys(particle.models)[0] || SEQ;
+  renderList3d(); renderForm3d();
+  if (!keep2d) {
+    dirty2d = false;
+    if (sel2d !== ADD && !snap.live2d.some((e) => e.path === sel2d)) sel2d = snap.live2d[0] ? snap.live2d[0].path : null;
+    select2d(sel2d);
+  } else {
+    renderList2d();
+  }
+  updateDirty();
+}
+
+api.onInit((data) => {
+  if ((dirty3d || dirty2d) && snap) return; // 視窗已開著又被叫出來：不蓋掉還沒存的修改
+  applySnapshot(data);
+  const notes = [];
+  if (data.particleError) notes.push('sources.json 讀取失敗：' + data.particleError);
+  if (data.live2dError) notes.push('manifest.json 讀取失敗：' + data.live2dError);
+  setStatus(notes.length ? notes.join('\n') : '選一個模型開始調整，改完按「儲存」（Ctrl+S）。看不懂的名詞，滑鼠移到 ? 上面，或按右上角「📖 名詞說明」。', notes.length ? 'err' : '');
+});
+
+document.getElementById('btn-refresh').addEventListener('click', async () => {
+  if ((dirty3d || dirty2d) && !confirm('有還沒儲存的修改，重新讀取會丟掉，確定？')) return;
+  for (const k of Object.keys(animCache)) delete animCache[k];
+  applySnapshot(await api.reload());
+  setStatus('已重新讀取。');
+});
+
+document.getElementById('btn-save').addEventListener('click', () => (activeTab === 'tab3d' ? save3d() : save2d()));
+document.getElementById('btn-close').addEventListener('click', () => {
+  if ((dirty3d || dirty2d) && !confirm('有還沒儲存的修改，確定要關閉？')) return;
+  api.close();
+});
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); document.getElementById('btn-save').click(); }
+  if (e.key === 'Escape') document.getElementById('glossary').classList.remove('show');
+});
+</script>
+</body>
+</html>

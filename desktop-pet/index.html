@@ -87,10 +87,19 @@
   // 静音時（muted）音量還是可以調，只是要等使用者自己解除靜音才聽得到——跟一般
   // 系統音量的心智模型一致，調音量不會連帶自動解除靜音。
   function _clampVolume(v) { return Math.min(1, Math.max(0, Math.round(v * 100) / 100)); }
+  // 3D 模型（光粒子）已搬到獨立的 particle.html 視窗，它的序列語音/BGM 跟著「閒置閒聊音效」
+  // 的靜音/音量走——這裡每次變動就通知 main process 轉送過去（見 main.js 的
+  // idle-chat-audio-changed）。
+  function _notifyIdleChatAudioChanged() {
+    if (window.petBridge && window.petBridge.idleChatAudioChanged) {
+      window.petBridge.idleChatAudioChanged(soundEnabled, soundVolume);
+    }
+  }
   window.adjustIdleChatVolume = function adjustIdleChatVolume(delta) {
     soundVolume = _clampVolume(soundVolume + delta);
     _allAudio.forEach(a => { if (!a._isTts) a.volume = soundVolume; });
     console.log(`[desktop-pet] 閒置閒聊音效音量：${Math.round(soundVolume * 100)}%`);
+    _notifyIdleChatAudioChanged();
     return soundVolume;
   };
   window.adjustTtsVolume = function adjustTtsVolume(delta) {
@@ -188,20 +197,8 @@
      沒有 MQTT/計分板的環境一樣能單獨載入。 -->
 <script src="../multi/L2DGesturePlayer.js"></script>
 
-<!-- 光粒子裝飾（particle-effect/）：獨立於 Live2D 角色之外、常駐可切換的浮動裝飾，
-     技術上跟 C:\morph-particles 同一套手法（GLB 表面取樣 → FBO GPGPU → 粒子聚合/消散），
-     精簡成單一模型的「聚合⇄消散」版本，見 docs/adr（若日後補上）與 particle-effect/*.js
-     內的說明。這裡沒有 bundler，用瀏覽器原生 import map 直接指到 node_modules 裡的
-     ESM 版 three.js（threejs.org 官方文件給「不用 bundler」場景的標準做法）。 -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "./node_modules/three/build/three.module.js",
-    "three/addons/": "./node_modules/three/examples/jsm/"
-  }
-}
-</script>
-<script type="module" src="particle-effect/particle-effect.js"></script>
+<!-- 光粒子裝飾（particle-effect/）已搬到獨立的 particle.html 視窗（main.js 的 createParticleWindow()），
+     那個視窗蓋住所有螢幕的聯集範圍，3D 模型才能跑到其他螢幕；這個 Live2D 主視窗維持只蓋主螢幕。 -->
 
 <script>
   // ── 桌寵可調參數集中在這裡，方便找、方便改（其餘程式碼一律讀這個物件，不要散在各處寫死數字）──
@@ -233,6 +230,87 @@
     if (_dC1Pick) L2D_CFG.char1.model = '../live2d_my_like/' + _dC1Pick;
     if (_dC2Pick) L2D_CFG.char2.model = '../live2d_my_like/' + _dC2Pick;
   })();
+
+  // ── 模型檔防呆 ──────────────────────────────────────────────────────────
+  // live2d_my_like/models/ 在 .gitignore 預設排除，manifest 列了但沒進版本控制的角色，
+  // 別人 clone 下來整隻都沒有；model3.json 引用的貼圖缺了也一樣載不起來。以前這種
+  // 情況角色就默默不見，只在 DevTools 印一行錯誤。main.js（asset-check.js）在載入前
+  // 先檢查過，這裡拿結果：角色一／二選到的（或預設的）角色顯示不出來，就暫時改用
+  // 清單裡第一個沒問題的角色，並在畫面角落提示（showAssetNotice()）。不改 localStorage
+  // 裡使用者的選擇——檔案補回來之後重新整理就會用回原本選的角色。
+  window._l2dAssetStatus = [];
+  try {
+    if (window.petBridge && window.petBridge.getLive2DAssetStatus) {
+      window._l2dAssetStatus = window.petBridge.getLive2DAssetStatus() || [];
+    }
+  } catch (err) {
+    console.warn('[pet] 取得 Live2D 模型檔檢查結果失敗，略過防呆：', err);
+  }
+  window._l2dAssetNotices = [];
+  (function () {
+    const status = window._l2dAssetStatus;
+    if (!status.length) return;
+    const byPath = Object.fromEntries(status.map((e) => [e.path, e]));
+    const byId = Object.fromEntries(status.map((e) => [e.id, e]));
+    const slots = [['char1', '角色一'], ['char2', '角色二']];
+    // 這個 slot 打算載入哪一筆 manifest：有覆寫（使用者選的）用覆寫，沒有就照 lib/live2d.js 預設的 manifestId
+    const desiredEntry = (cfg) => {
+      if (cfg.model) return byPath[cfg.model.replace(/^.*live2d_my_like\//, '')] || null;
+      return byId[cfg.manifestId] || null;
+    };
+    const used = new Set(slots.map(([key]) => desiredEntry(L2D_CFG[key])).filter((e) => e && !e.broken).map((e) => e.path));
+    for (const [key, label] of slots) {
+      const cfg = L2D_CFG[key];
+      if (!cfg || cfg.enabled === false) continue;
+      const entry = desiredEntry(cfg);
+      if (!entry || !entry.broken) continue;
+      const fallback = status.find((e) => !e.broken && !used.has(e.path));
+      if (fallback) {
+        used.add(fallback.path);
+        cfg.model = '../live2d_my_like/' + fallback.path;
+        window._l2dAssetNotices.push(`${label}的「${entry.name}」缺模型檔，暫時改用「${fallback.name}」。`);
+      } else {
+        cfg.enabled = false;
+        window._l2dAssetNotices.push(`${label}的「${entry.name}」缺模型檔，也沒有其他可用的角色，先不顯示。`);
+      }
+      console.warn(`[pet] ${window._l2dAssetNotices[window._l2dAssetNotices.length - 1]}`);
+    }
+  })();
+
+  // 畫面角落的模型檔提示：桌寵視窗平常滑鼠穿透、看不到終端機，用一個不擋滑鼠的小框
+  // 告訴使用者「為什麼角色換了／不見了」。角色一二、額外寵物的提示在不同時間點產生，
+  // 都塞進同一個框裡往下排（不會疊在一起），最後一則出現後幾秒才整框淡出。
+  let _assetNoticeBox = null;
+  let _assetNoticeTimer = null;
+  function showAssetNotice(lines) {
+    if (!lines.length) return;
+    if (!_assetNoticeBox) {
+      _assetNoticeBox = document.createElement('div');
+      _assetNoticeBox.style.cssText = [
+        'position:fixed', 'left:16px', 'bottom:16px', 'max-width:420px', 'z-index:20000',
+        'padding:10px 14px', 'border-radius:8px', 'border-left:4px solid #ff5a4a',
+        'background:rgba(20,20,24,.88)', 'color:#fff', 'font:13px/1.6 "Microsoft JhengHei",sans-serif',
+        'pointer-events:none', 'transition:opacity .8s', 'opacity:1',
+      ].join(';');
+      _assetNoticeBox.innerHTML = '<div style="font-weight:bold;margin-bottom:4px">⚠ 模型檔缺少</div><div class="lines"></div>' +
+        '<div style="margin-top:6px;opacity:.7;font-size:12px">模型放在 live2d_my_like/models/，缺哪些檔可執行 npm run check-assets 查看。</div>';
+      document.body.appendChild(_assetNoticeBox);
+    }
+    const list = _assetNoticeBox.querySelector('.lines');
+    for (const line of lines) {
+      const div = document.createElement('div');
+      div.textContent = line;
+      list.appendChild(div);
+    }
+    _assetNoticeBox.style.opacity = '1';
+    clearTimeout(_assetNoticeTimer);
+    _assetNoticeTimer = setTimeout(() => {
+      const box = _assetNoticeBox;
+      _assetNoticeBox = null;
+      box.style.opacity = '0';
+      setTimeout(() => box.remove(), 1000);
+    }, 15000);
+  }
 
   // 桌寵不限制主要角色 slots 數量（引擎層沒有上限），但 lib/live2d.js 目前其實已經定義了
   // char3/char4（enabled:true，預設 manifestId 分別指向 id:1 納茲、id:2 露西——上面那段
@@ -416,6 +494,16 @@
 
   Promise.all([L2D.init(), _loadIdleChat()]).then(() => {
     window._l2dReady = true;
+    // 檢查時沒抓到、但實際還是載入失敗的（例如檔案在但損毀）：lib/live2d.js 只印
+    // console.error，這裡補一則畫面提示
+    [['c1', 'char1', '角色一'], ['c2', 'char2', '角色二']].forEach(([key, cfgKey, label]) => {
+      const cfg = L2D_CFG[cfgKey];
+      const state = L2D['_' + key];
+      if (cfg && cfg.enabled !== false && cfg.model && state && !state.ready) {
+        window._l2dAssetNotices.push(`${label}的模型載入失敗（${cfg.model.replace(/^.*live2d_my_like\//, '')}），檔案可能缺少或損毀。`);
+      }
+    });
+    showAssetNotice(window._l2dAssetNotices);
     L2D.startIdleChat(PET_CFG.idleMotionMs);
     L2D.startIdleMotion(PET_CFG.idleMotionMs);
     loadExtraPets();
@@ -1073,10 +1161,24 @@
     if (!ids.length) return;
     const manifest = await _getManifest();
     const byId = Object.fromEntries(manifest.map(e => [e.id, e]));
+    const brokenPaths = new Set(window._l2dAssetStatus.filter((e) => e.broken).map((e) => e.path));
+    const failed = [];
     for (const id of ids) {
       const entry = byId[id];
       if (!entry) { console.warn('[pet] 額外寵物 id=' + id + ' 不存在於 manifest，已跳過'); continue; }
-      window._extraPets[id] = await loadExtraPet(entry);
+      // 缺模型檔（main.js 的 asset-check 檢查過）就跳過；檢查時沒抓到的載入失敗也接住，
+      // 不要一隻失敗就讓後面的額外寵物全部載不出來
+      if (brokenPaths.has(entry.path)) { failed.push(entry); continue; }
+      try {
+        window._extraPets[id] = await loadExtraPet(entry);
+      } catch (err) {
+        console.error('[pet] 額外寵物 id=' + id + ' 載入失敗:', err);
+        failed.push(entry);
+      }
+    }
+    if (failed.length) {
+      const names = Object.fromEntries(window._l2dAssetStatus.map((e) => [e.path, e.name]));
+      showAssetNotice([`額外寵物「${failed.map((e) => names[e.path] || e.character).join('、')}」缺模型檔或載入失敗，先略過。`]);
     }
   }
 
@@ -1205,7 +1307,7 @@
     bottom: 61,
     title: '開關閒置閒聊音效（角色待機時的環境音效，Ctrl+Alt+E）',
     isEnabled: () => soundEnabled,
-    setEnabled: (v) => { soundEnabled = v; },
+    setEnabled: (v) => { soundEnabled = v; _notifyIdleChatAudioChanged(); },
     matches: (a) => !a._isTts,
     accent: 'rgba(0,212,255,.85)',
     badge: '💬',

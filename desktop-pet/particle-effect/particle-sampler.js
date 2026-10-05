@@ -541,7 +541,7 @@ export async function sampleModelAnimationFrames(resource, config = {}, sampleCo
   // 24 張等於每秒不到 1 張，播起來會跳，當時是手動加到 48 張才解決）。公式跟
   // MIN/MAX 兩個常數的說明見檔案開頭 ANIM_AUTO_FPS 那段。這條公式量不出「動作
   // 快不快、動幅大不大」，這種細節還是得開特效實際看一次，覺得不夠平滑再用
-  // animationFrames/frameCount 手動覆寫，見 sources.js 開頭說明。
+  // animationFrames/frameCount 手動覆寫，見 動畫參數說明.md。
   const resolvedFrameCount =
     frameCount != null
       ? frameCount

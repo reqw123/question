@@ -1,0 +1,269 @@
+{
+  "models": {
+    "aatroxModel": {
+      "file": "至臻_腥红之月_亚托克斯.glb",
+      "particle": {
+        "sequenceAction": {
+          "name": "Channel_Wndup"
+        },
+        "sequenceVoice": "亞托克斯.mp3"
+      },
+      "color": [
+        1,
+        0.5,
+        0
+      ],
+      "idleMotion": {
+        "type": "bob",
+        "axis": "z",
+        "amplitude": 0.15,
+        "speed": 1.2
+      },
+      "note": "scale/position 不填，交給自動置中縮放。平常不套動畫（模型檔本身的預設姿勢：站在劍上），只在「模型序列播放」播到這一站時播 Channel_Wndup。"
+    },
+    "virgoModel": {
+      "file": "殺五社異音_維爾戈.glb",
+      "particle": {
+        "scale": [
+          1.1,
+          1.1,
+          1.1
+        ],
+        "position": [
+          0,
+          -1.43,
+          0
+        ],
+        "rotationY": 3.141592653589793,
+        "sequenceAction": {
+          "name": "Spell1_Torun_-180"
+        },
+        "sequenceVoice": "維爾戈.mp3",
+        "animation": [
+          "Attack1_Towalk",
+          "Attack1",
+          "Attack2",
+          "Viego_Spell1_towalk.anm",
+          "Run_Homeguard",
+          "Viego_IdleIn_INTO_Homeguard.anm",
+          "Spell1_ToIdle",
+          "Stunned"
+        ],
+        "animationTime": 1,
+        "animatedIdle": true,
+        "animationFrames": 60
+      },
+      "idleMotion": {
+        "type": "swing",
+        "amplitude": 0.3141592653589793,
+        "speed": 0.8
+      },
+      "note": "原始 GLB 預設背對鏡頭，rotationY 轉 180° 才會正面朝鏡頭。animatedIdle 開著，8 段動畫接成循環序列。",
+      "color": [
+        0,
+        0.431,
+        1
+      ]
+    },
+    "yasuoModel": {
+      "file": "闇夜使者_犽宿.glb",
+      "particle": {
+        "scale": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "position": [
+          0.85,
+          -1.54,
+          1.24
+        ],
+        "rotationY": 3.141592653589793,
+        "sequenceAction": {
+          "name": "Joke"
+        },
+        "sequenceVoice": "犽宿.mp3",
+        "periodicAnimation": {
+          "name": [
+            "Spell4"
+          ],
+          "intervalSeconds": 10
+        }
+      },
+      "color": [
+        0.1,
+        0.85,
+        0.9
+      ],
+      "note": "rotationY 轉 180° 才正面朝鏡頭。閒置滿 intervalSeconds 秒觸發 Spell4（風牆，約 1.97 秒），播完退回定格；frameCount 自動算（約 8 張）就夠平滑。"
+    },
+    "mordekaiserModel": {
+      "file": "死灰墓騎_魔鬥凱薩.glb",
+      "particle": {
+        "sequenceVoice": "魔鬥凱薩.mp3",
+        "animation": "Idle_In",
+        "animationTime": 0,
+        "periodicAnimation": {
+          "name": [
+            "Skin42_Recall.anm"
+          ],
+          "intervalSeconds": 45
+        }
+      },
+      "color": [
+        0.3,
+        0.9,
+        0.35
+      ],
+      "idleMotion": {
+        "type": "swing",
+        "amplitude": 0.2243994752564138,
+        "speed": 0.5
+      },
+      "note": "死灰墓騎 Skin42。inspect-model 量過：3 個 SkinnedMesh、12486 個三角形、69 段動畫。Idle_In（1.13 秒）當定格姿勢，Skin42_Recall.anm（8.67 秒）是這顆皮膚專屬的回城動畫。"
+    },
+    "urshanModel": {
+      "file": "遠古霸者_厄薩斯.glb",
+      "particle": {
+        "animation": [
+          "Idle1",
+          "Attack2",
+          "Attack3",
+          "Crit"
+        ],
+        "animationTime": 0,
+        "animatedIdle": true,
+        "animationFrames": 60
+      },
+      "color": [
+        0.8,
+        0.2,
+        0.9
+      ],
+      "note": "scale/position 不填，交給自動置中縮放。animatedIdle 開著，4 段動畫接成循環。"
+    },
+    "kaidoDragonModel": {
+      "file": "kaido_dragon_form.glb",
+      "particle": {
+        "animation": [
+          "pl_kaido_orig02_bs01_idle_a",
+          "pl_kaido_orig02_bs01_metamorphosis_b"
+        ],
+        "animationTime": 1,
+        "periodicAnimation": {
+          "name": [
+            "pl_kaido_orig02_bs01_skill_e_1"
+          ],
+          "intervalSeconds": 10,
+          "frameCount": 48
+        }
+      },
+      "color": [
+        0.85,
+        0.1,
+        0.05
+      ],
+      "idleMotion": {
+        "type": "swing",
+        "amplitude": 0.2617993877991494,
+        "speed": 0.4
+      },
+      "note": "One Piece 凱多龍形態（Sketchfab：Cyrone），25 段動畫。skill_e_1 長達 25 秒，所以 frameCount 拉高到 48 張讓動作平滑。實測 idle_a 跟 skill_e_1 自動置中縮放的包圍盒一樣，觸發時不會跳大小。沒開 animatedIdle，animation 陣列只有第一個會生效；idle_a/idle_a_1/idle_a_2/idle_a_3 四段實測可以接成循環。"
+    },
+    "goingMerryModel": {
+      "file": "going_merry_one_piece.glb",
+      "color": [
+        1,
+        0.92,
+        0.6
+      ],
+      "idleMotion": {
+        "type": "bob",
+        "amplitude": 0.12,
+        "speed": 1
+      },
+      "note": "梅利號（Sketchfab：RadhruinT），17 個 mesh、沒有骨架也沒有動畫，動畫相關欄位全部不適用。"
+    },
+    "kaidoModel": {
+      "file": "4.glb",
+      "particle": {
+        "scale": [
+          0.3,
+          0.3,
+          0.3
+        ],
+        "position": [
+          1.5,
+          -1.25,
+          0
+        ],
+        "rotationY": -1.4,
+        "animation": [
+          "pl_kaido_orig01_boost",
+          "pl_kaido_orig01_victory",
+          "pl_kaido_orig01_lose"
+        ],
+        "animationTime": 1,
+        "animatedIdle": true,
+        "animationFrames": 60,
+        "periodicAnimation": {
+          "name": [
+            "pl_kaido_orig01_combo_a",
+            "pl_kaido_orig01_combo_b",
+            "pl_kaido_orig01_combo_c"
+          ],
+          "intervalSeconds": 15
+        }
+      },
+      "color": [
+        0.75,
+        0.55,
+        0.15
+      ],
+      "idleMotion": {
+        "type": "swing",
+        "amplitude": 0.19634954084936207,
+        "speed": 0.6
+      },
+      "note": "One Piece Bounty Rush 凱多人形（Sketchfab：primalfrom12），30 段動畫。臉（face_normal/attack/damage）跟手勢都是各自獨立的 mesh、全部會被取樣，臉部/手部附近粒子會比較厚，是 GLB 本身的結構限制。注意：animatedIdle 跟 periodicAnimation 照理互斥，這顆兩個都有填。"
+    },
+    "superheroSculptModel": {
+      "file": "5.glb",
+      "color": [
+        0.25,
+        0.45,
+        0.95
+      ],
+      "note": "ZBrush 雕塑匯出（Sketchfab：aunpyz），84 個 mesh、沒有骨架和動畫。檔案 142MB、約 180 萬個三角形，載入明顯比較慢；放進模型序列播放大機率會卡頓。particle/idleMotion 都不填＝自動置中縮放＋預設繞 Y 軸自轉。"
+    },
+    "bearModel": {
+      "file": "尊爵不凡_雙相古龍_弗力貝爾.glb",
+      "particle": {
+        "rotationY": -0.1,
+        "animation": "Idle_Base",
+        "animationTime": 0,
+        "periodicAnimation": {
+          "name": [
+            "Recall"
+          ],
+          "intervalSeconds": 45
+        }
+      },
+      "color": [
+        0.08,
+        0.16,
+        0.55
+      ],
+      "idleMotion": {
+        "type": "swing",
+        "amplitude": 0.2617993877991494,
+        "speed": 0.5
+      },
+      "note": "弗力貝爾（Volibear）尊爵版，inspect-model 量過：4 個 SkinnedMesh、11323 個三角形、90 段動畫。頂點資料裡混了一批沒有面積的幽靈頂點，舊版自動置中縮放會被灌水縮小；現在 computeBounds() 已會過濾退化三角形。Idle_Base 當定格，閒置觸發 Recall（8.67 秒）。"
+    }
+  },
+  "sequenceModels": [],
+  "sequenceHoldSeconds": 3,
+  "sequenceTransitionSeconds": 1.5,
+  "sequenceBgm": "season.mp3"
+}

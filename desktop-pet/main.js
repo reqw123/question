@@ -2,7 +2,6 @@
 const { app, BrowserWindow, globalShortcut, screen, Tray, Menu, nativeImage, ipcMain, session, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
 const settingsStore = require('./settings-store.js');
 const { synthesizeSpeech } = require('./tts.js');
 const { sendChatMessage } = require('./chat.js');
@@ -12,6 +11,9 @@ const { fetchPageText } = require('./page-digest.js');
 const chatMemoryStore = require('./chat-memory-store.js');
 const { transcribeAudio } = require('./stt.js');
 const { startControlServer } = require('./control-server.js');
+const assetCheck = require('./asset-check.js');
+const modelConfigStore = require('./model-config-store.js');
+const childProcess = require('child_process');
 
 // 未預期的錯誤一律印到終端機，不讓主行程默默中止（方便排查）
 process.on('uncaughtException', (err) => {
@@ -33,6 +35,17 @@ const TRAY_ICON_DATA_URL =
 let win;
 let tray;
 let clickThrough = true;
+
+// 3D 模型（光粒子，particle-effect/）專用的透明視窗，蓋住「所有螢幕」的聯集範圍，
+// 讓 3D 模型可以跑到其他螢幕（見 createParticleWindow()）。Live2D 主視窗 win 維持只蓋
+// 主螢幕——lib/live2d.js 依視窗大小排版，視窗放大角色會跑到兩個螢幕中間。
+let particleWin = null;
+// 所有 3D 模型相關的 executeJavaScript 都走這裡；視窗還沒建好/已關閉時回一個
+// 什麼都不做的替身，呼叫端照舊 .then()/.catch() 不用個別判斷。
+function particleContents() {
+  if (particleWin && !particleWin.isDestroyed()) return particleWin.webContents;
+  return { executeJavaScript: () => Promise.resolve(undefined) };
+}
 
 // ── live2d_my_like 角色選擇：改在系統匣右鍵選單配置（不用 index.html 上的按鈕/下拉選單，
 // 原生選單樣式跟著系統走，不會有 HTML <select> 選項清單在深色主題下變白底看不清楚的問題）──
@@ -65,27 +78,15 @@ let extraPetWander = true;
 
 // 光粒子裝飾（particle-effect/particle-effect.js）開關：獨立於 Live2D 角色之外，
 // 初始值來自使用者在設定畫面存的「開機預設顯示」（settingsStore.getShowParticleModelOnStartup()，
-// 沒設定過就是 false，跟原本寫死的預設一致）。這裡的初始值只在「桌寵這次真的剛啟動」
-// 時有意義——之後任何 reload（F8、套用角色選擇...）particleEffectOn 都是靠
-// syncParticleEffectEnabledFromRenderer() 讀 renderer 的真實狀態校正（見那個函式的
-// 說明：reload 後 renderer 一律回到關閉，這是刻意修好的行為），不會再套用這個開機
-// 預設值，兩者互不衝突（見 did-finish-load 那段 hasAppliedParticleEffectStartupDefault
-// 的說明）。
+// 沒設定過就是 false，跟原本寫死的預設一致）。3D 模型搬到獨立的 particle.html 視窗後，
+// Live2D 主視窗的 reload（F8、套用角色選擇...）不會再連帶把 3D 模型重置，這個值只在
+// 3D 視窗第一次載入完成時套用一次（見 createParticleWindow() 的 did-finish-load）；
+// 3D 視窗自己被 reload（例如 DevTools 裡按 Ctrl+R）才靠
+// syncParticleEffectEnabledFromRenderer() 讀回 renderer 的真實狀態校正。
 let particleEffectOn = settingsStore.getShowParticleModelOnStartup();
-// 上面 particleEffectOn 的開機預設值只應該在「桌寵這次真的剛啟動」套用一次
-// （執行 window.setParticleEffect(true)），不能每次 reload 都套用，否則會把 F8
-// 「reload 一律回到關閉」的既有修正蓋掉，變成每次 F8 都自動重新打開特效。
 let hasAppliedParticleEffectStartupDefault = false;
-// 「套用角色選擇」（applyMyLikeSelection()）觸發的 reload 是唯一例外：使用者只是
-// 在切角色，不是在操作光粒子特效，不該被「reload 一律回到關閉」這條規則連坐——
-// 不然「3D 模型預設開啟」會在切完角色後自己熄掉，要使用者自己重新開一次，體驗
-// 上跟 Live2D 原本的問題是同一種（見 live2dVisible 宣告處的說明）。這個旗標讓
-// did-finish-load 知道「這次 reload 要保留 particleEffectOn 現有的值，不要照
-// F8 那套邏輯歸零」，用一次就消耗掉，不影響之後其他 reload。
-let preserveParticleEffectOnNextReload = false;
 // 第二隻 3D 模型（particle-effect.js 的 secondary slot）開關：跟上面 particleEffectOn
-// 分開控制，但沒有「開機預設顯示」選項，每次啟動預設關閉；reload 規則跟
-// particleEffectOn 一樣（F8 回到關閉、套用角色選擇保留），見 did-finish-load。
+// 分開控制，但沒有「開機預設顯示」選項，每次啟動預設關閉。
 let particleEffect2On = false;
 
 function isParticleOn(slot) {
@@ -96,7 +97,7 @@ function setParticleOn(slot, on) {
   else particleEffectOn = on;
 }
 
-// 「模型序列播放」（一鍵觸發、在 sources.js 設定的多個模型之間連續變形、無限
+// 「模型序列播放」（一鍵觸發、在 sources.json 設定的多個模型之間連續變形、無限
 // 循環播放，直到手動停止，見 particle-effect.js 的 window.setParticleSequencePlayback()）
 // 開關。刻意不像 particleEffectOn 那樣有「開機預設顯示」選項——這是一次性觸發的
 // 展示效果，不是常駐狀態，每次開機/reload 都預設關閉即可。
@@ -112,6 +113,69 @@ let particleSequenceOn = false;
 // 撥成 true（見 applyMyLikeSelection()），不會被設定檔的開機預設值蓋回去。
 let live2dVisible = settingsStore.getShowLive2DOnStartup();
 
+// Live2D 角色檔案檢查結果（asset-check.js 的 checkLive2DManifest()，順序同 manifest）。
+// live2d_my_like/models/ 在 .gitignore 預設排除，manifest 列了但沒進版本控制的角色，
+// 別人 clone 下來就整隻缺；model3.json 引用的貼圖漏傳也會讓角色載入失敗。fatal 的
+// （顯示不出來）在選單標示「缺模型檔」並停用，index.html 也會避開它們（見
+// live2d-asset-status IPC）。
+let live2dCheckResults = [];
+let lastLive2DReport = null;
+
+function isLive2DPathBroken(modelPath) {
+  return live2dCheckResults.some((r) => r.path === modelPath && r.fatal);
+}
+function live2dCheckResultFor(modelPath) {
+  return live2dCheckResults.find((r) => r.path === modelPath) || null;
+}
+
+function refreshLive2DAssetCheck() {
+  live2dCheckResults = assetCheck.checkLive2DManifest(myLikeManifest);
+  const report = assetCheck.formatLive2DReport(live2dCheckResults, myLikeNames);
+  if (report !== lastLive2DReport) {
+    if (report) console.warn(report);
+    else if (lastLive2DReport) console.log('[asset-check] Live2D 角色檔案現在齊全了。');
+    lastLive2DReport = report;
+  }
+}
+
+// 本機有、但沒進 git 的 Live2D 檔案：只對維護者有意義（推上去之後別人會缺），印在
+// 終端機就好，不跳系統匣提示。打包後的 .exe 沒有 git，findUntrackedFiles() 回傳 null 直接略過。
+function reportUntrackedLive2DFiles() {
+  const untracked = assetCheck.findUntrackedFiles(live2dCheckResults.flatMap((r) => r.files));
+  const report = assetCheck.formatUntrackedReport(untracked);
+  if (report) console.warn(report);
+}
+
+// 使用者照提示補上 Live2D 檔案後，選單不用重開桌寵就會解除「缺模型檔」（畫面上的角色
+// 要等下一次重新整理，例如套用角色選擇或 F8）。
+let live2dWatchTimer = null;
+function watchLive2DModels() {
+  try {
+    fs.watch(path.join(assetCheck.LIVE2D_ROOT, 'models'), { recursive: true }, () => {
+      clearTimeout(live2dWatchTimer);
+      live2dWatchTimer = setTimeout(() => {
+        refreshLive2DAssetCheck();
+        if (tray) tray.setContextMenu(buildTrayMenu());
+      }, 1000);
+    });
+  } catch (err) {
+    console.warn('[desktop-pet] 監看 live2d_my_like/models/ 失敗（補上模型檔後要重開桌寵才會生效）：', err.message);
+  }
+}
+
+// index.html 在套用角色選擇前同步問一次（見 preload.js 的 getLive2DAssetStatus）：
+// 選到的、或預設的角色顯示不出來就改用其他角色。每次頁面載入都重新檢查，補上檔案
+// 之後 reload 就會用回原本選的角色。
+ipcMain.on('live2d-asset-status', (event) => {
+  refreshLive2DAssetCheck();
+  event.returnValue = live2dCheckResults.map((r) => ({
+    id: r.id,
+    path: r.path,
+    name: myLikeNames[r.path] || r.character,
+    broken: !!r.fatal,
+  }));
+});
+
 function loadMyLikeManifest() {
   try {
     const dir = path.join(__dirname, '..', 'live2d_my_like', 'config');
@@ -122,6 +186,7 @@ function loadMyLikeManifest() {
     myLikeManifest = [];
     myLikeNames    = {};
   }
+  refreshLive2DAssetCheck();
 }
 
 // 視窗載入/重新整理完成後，跟 renderer 的 localStorage 對一次目前實際套用的選擇，
@@ -185,7 +250,7 @@ function toggleExtraPetWander() {
 function toggleParticleEffect(slot = 'primary') {
   const on = !isParticleOn(slot);
   setParticleOn(slot, on);
-  win.webContents
+  particleContents()
     .executeJavaScript(
       `(function() {
         if (window.setParticleEffect) { return window.setParticleEffect(${on}, ${JSON.stringify(slot)}); }
@@ -211,7 +276,7 @@ function toggleParticleEffect(slot = 'primary') {
 // 還沒就緒/正忙/取樣站數不足，印個提示，不是致命錯誤。
 function toggleParticleSequence() {
   particleSequenceOn = !particleSequenceOn;
-  win.webContents
+  particleContents()
     .executeJavaScript(
       `(function() {
         if (window.setParticleSequencePlayback) { return window.setParticleSequencePlayback(${particleSequenceOn}); }
@@ -231,14 +296,10 @@ function toggleParticleSequence() {
     .finally(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
 }
 
-// 「光粒子特效」子選單裡列出的模型清單，讀自 particle-effect/sources.js。
-// sources.js 是 particle-effect.js（renderer 端）用 <script type="module"> 直接
-// import 的 ES module，跟 main.js 這支 CommonJS 檔案是不同的模組系統，不能直接
-// require()——particle-effect/package.json 的 {"type":"module"} 讓 Node 也能把
-// 它當 ES module 動態 import()。URL 加時間戳查詢字串是為了繞過 Node 的 ES module
-// cache，確保每次都讀到磁碟上最新內容（跟「情境演出」子選單每次開都重讀
-// scenes.json 是同一種「改完設定不用重開桌寵」體驗）；讀取失敗（例如 sources.js
-// 語法錯了）就維持舊清單，不讓桌寵其他功能被拖垮。
+// 「光粒子特效」子選單裡列出的模型清單，讀自 particle-effect/sources.json（「模型設定」
+// 視窗存的就是這份，也可以手動編輯）。每次都重新讀檔，改完設定不用重開桌寵（跟「情境
+// 演出」子選單每次開都重讀 scenes.json 是同一種體驗）；讀取失敗（例如 JSON 語法錯了）
+// 就維持舊清單，不讓桌寵其他功能被拖垮。
 let particleModelKeys = [];
 // 目前作用中的模型 key。null 代表還沒跟 renderer 同步過——這裡不寫死預設值去對齊
 // particle-effect.js 的 DEFAULT_MODEL，改成用 syncParticleModelFromRenderer()
@@ -254,31 +315,109 @@ function setActiveParticleModel(slot, key) {
   else activeParticleModel = key;
 }
 
+// sources.json 列了、但 particle-effect/models/ 底下找不到 GLB 的模型 key。GLB 不進
+// 版本控制（見 asset-check.js 開頭說明），剛從 git 拿到專案的人會全部缺檔——
+// 選單把這些標成「缺模型檔」並停用，3D 視窗也會避開它們（見 createParticleWindow()
+// 帶給 renderer 的 ?missing=），不會再默默變成一團看不出是什麼的隨機散點。
+let missingParticleModelKeys = new Set();
+let lastMissingReport = null;
+
+function isParticleModelMissing(key) {
+  return missingParticleModelKeys.has(key);
+}
+function hasAnyAvailableParticleModel() {
+  return particleModelKeys.some((key) => !missingParticleModelKeys.has(key));
+}
+
 async function refreshParticleModelKeys() {
   try {
-    const url = pathToFileURL(path.join(__dirname, 'particle-effect', 'sources.js')).href + `?t=${Date.now()}`;
-    const mod = await import(url);
-    particleModelKeys = Object.keys(mod.default || {});
+    const sources = await assetCheck.loadSources();
+    particleModelKeys = Object.keys(sources);
+    const missing = assetCheck.findMissingModelFiles(sources);
+    missingParticleModelKeys = new Set(missing.map((m) => m.key));
+    // 同樣的缺檔狀況只印一次（sources.json 每次存檔都會觸發重讀）
+    const report = assetCheck.formatMissingReport(missing, particleModelKeys.length);
+    if (report !== lastMissingReport) {
+      if (report) console.warn(report);
+      else if (lastMissingReport) console.log('[asset-check] 3D 模型檔現在齊全了。');
+      lastMissingReport = report;
+    }
   } catch (err) {
-    console.warn('[desktop-pet] 讀取光粒子模型清單失敗（particle-effect/sources.js 可能有語法錯誤）：', err.message);
+    console.warn('[desktop-pet] 讀取光粒子模型清單失敗（particle-effect/sources.json 可能有語法錯誤）：', err.message);
   }
 }
 
-// sources.js 改了（例如加一個新模型）就自動重讀清單、重畫選單，不用重開桌寵。
-// Windows 上同一次存檔常常連續觸發兩次 change 事件，debounce 一下避免重複刷新。
+// 啟動時缺 3D 模型檔就從系統匣跳一次提示（Windows 的氣球通知），不用打開終端機或
+// DevTools 也看得到問題在哪。只在啟動時提示一次，之後的細節看系統匣選單的標示。
+function notifyMissingAssets() {
+  if (!tray) return;
+  const parts = [];
+  if (missingParticleModelKeys.size) {
+    parts.push(
+      hasAnyAvailableParticleModel()
+        ? `缺少 ${missingParticleModelKeys.size}/${particleModelKeys.length} 個 3D 模型檔（GLB 不跟著 git 版本走，放到 desktop-pet/particle-effect/models/，見該資料夾 README.md）。`
+        : '找不到任何 3D 模型檔，3D 功能暫時無法使用（GLB 不跟著 git 版本走，見 desktop-pet/particle-effect/models/README.md）。'
+    );
+  }
+  const brokenL2D = live2dCheckResults.filter((r) => r.fatal);
+  if (brokenL2D.length) {
+    const names = brokenL2D.map((r) => myLikeNames[r.path] || r.character).join('、');
+    parts.push(`Live2D 角色「${names}」缺模型檔、無法顯示（live2d_my_like/models/）。`);
+  }
+  if (!parts.length) return;
+  try {
+    tray.displayBalloon({
+      iconType: 'warning',
+      title: 'desktop-pet：缺少模型檔',
+      content: `${parts.join('')}缺檔的模型在選單裡無法選取，詳細清單見終端機或執行 npm run check-assets。`,
+    });
+  } catch {}
+}
+
+// sources.json 改了（「模型設定」存檔、或手動編輯）就自動重讀清單、重畫選單，不用重開桌寵。
+// 監看的是資料夾不是檔案本身：「模型設定」存檔是先寫暫存檔再改名（見
+// model-config-store.js 的 writeJsonAtomic()），Windows 上直接監看檔案的話，改名一次之後
+// watcher 就收不到後續變動了。同一次存檔常常連續觸發好幾次事件，debounce 一下避免重複刷新。
 let particleSourcesWatchTimer = null;
 function watchParticleModelSources() {
-  const sourcesPath = path.join(__dirname, 'particle-effect', 'sources.js');
   try {
-    fs.watch(sourcesPath, () => {
+    fs.watch(path.join(__dirname, 'particle-effect'), (_event, filename) => {
+      if (filename && filename !== 'sources.json') return;
       clearTimeout(particleSourcesWatchTimer);
       particleSourcesWatchTimer = setTimeout(() => {
-        refreshParticleModelKeys().then(() => { if (tray) tray.setContextMenu(buildTrayMenu()); });
+        refreshParticleModelKeys().then(() => {
+          pushMissingParticleModels();
+          if (tray) tray.setContextMenu(buildTrayMenu());
+        });
       }, 300);
     });
   } catch (err) {
-    console.warn('[desktop-pet] 監看 particle-effect/sources.js 失敗（模型清單只能靠重開桌寵刷新）：', err.message);
+    console.warn('[desktop-pet] 監看 particle-effect/sources.json 失敗（模型清單只能靠重開桌寵刷新）：', err.message);
   }
+  // 使用者照提示把 GLB 放進 models/ 之後，不用重開桌寵選單就會解除「缺模型檔」。
+  // 3D 視窗那邊的 ?missing= 是開窗時帶的，所以順便通知 renderer 更新。
+  try {
+    fs.mkdirSync(assetCheck.MODELS_DIR, { recursive: true });
+    fs.watch(assetCheck.MODELS_DIR, () => {
+      clearTimeout(particleSourcesWatchTimer);
+      particleSourcesWatchTimer = setTimeout(() => {
+        refreshParticleModelKeys().then(() => {
+          pushMissingParticleModels();
+          if (tray) tray.setContextMenu(buildTrayMenu());
+        });
+      }, 500);
+    });
+  } catch (err) {
+    console.warn('[desktop-pet] 監看 particle-effect/models/ 失敗（補上模型檔後要重開桌寵才會生效）：', err.message);
+  }
+}
+
+function pushMissingParticleModels() {
+  particleContents()
+    .executeJavaScript(
+      `window.setParticleMissingModels ? window.setParticleMissingModels(${JSON.stringify([...missingParticleModelKeys])}) : false`
+    )
+    .catch(() => {});
 }
 
 // 系統匣選單點模型清單裡的某一個：跟 toggleParticleEffect() 同一種
@@ -289,7 +428,7 @@ function watchParticleModelSources() {
 // 一次，讓勾選回到實際狀態。
 function selectParticleModel(key, slot = 'primary') {
   setActiveParticleModel(slot, key);
-  win.webContents
+  particleContents()
     .executeJavaScript(
       `(function() {
         if (window.setParticleActiveModel) { return window.setParticleActiveModel(${JSON.stringify(key)}, ${JSON.stringify(slot)}); }
@@ -315,7 +454,7 @@ function selectParticleModel(key, slot = 'primary') {
 // 的必要性：particle-effect.js 每次重新初始化都會用它自己的 DEFAULT_MODEL，
 // 這裡讀回來才知道選單該勾哪一個，不用在 main.js 這邊重複寫死同一個預設值。
 function syncParticleModelFromRenderer() {
-  win.webContents
+  particleContents()
     .executeJavaScript(
       `window.getParticleActiveModel ? [window.getParticleActiveModel('primary'), window.getParticleActiveModel('secondary')] : null`
     )
@@ -342,7 +481,7 @@ function syncParticleModelFromRenderer() {
 // 切換都會呼叫；reload 後（F8、套用角色選擇...）particle-effect.js 重新初始化
 // 預設值又會歸零，所以 did-finish-load 也要補呼叫一次。
 function syncParticleEffectStateFromMain() {
-  win.webContents
+  particleContents()
     .executeJavaScript(
       `(function() {
         if (window.setParticleEffectInteractiveMode) { window.setParticleEffectInteractiveMode(${!clickThrough}); }
@@ -361,7 +500,7 @@ function syncParticleEffectStateFromMain() {
 // reload 前的勾選狀態，兩邊對不上（使用者會看到選單寫「關閉」這個下一步動作，
 // 以為現在是開著的，但畫面早就是關的）。
 function syncParticleEffectEnabledFromRenderer() {
-  win.webContents
+  particleContents()
     .executeJavaScript(
       `window.getParticleEffectEnabled ? [window.getParticleEffectEnabled('primary'), window.getParticleEffectEnabled('secondary')] : [false, false]`
     )
@@ -382,7 +521,7 @@ function syncParticleEffectEnabledFromRenderer() {
 // 系統匣「重置 3D 模型位置/縮放」：兩隻 3D 模型被拖曳/縮放過的擺位都回到預設值
 // （particle-effect.js 存在 localStorage，不用 reload）。
 function resetParticleLayout() {
-  win.webContents
+  particleContents()
     .executeJavaScript(`window.resetParticlePetLayout ? window.resetParticlePetLayout() : false`)
     .then((ok) => {
       if (!ok) console.warn('[desktop-pet] 3D 模型尚未就緒，無法重置位置');
@@ -390,11 +529,86 @@ function resetParticleLayout() {
     .catch((err) => console.error('[desktop-pet] 重置 3D 模型位置失敗：', err));
 }
 
+// 「3D 模型隨機跑到其他螢幕」開關：跟 extraPetWander 一樣不存檔，每次啟動預設開。
+// 實際的觸發時機（做動作時／閒置一段時間後隨機）在 particle-effect.js 的
+// ParticlePet.maybeMigrate()。
+let particleMigrationOn = true;
+
+function pushParticleMigrationEnabled() {
+  particleContents()
+    .executeJavaScript(`window.setParticleMigrationEnabled ? window.setParticleMigrationEnabled(${particleMigrationOn}) : false`)
+    .catch(() => {});
+}
+
+function toggleParticleMigration() {
+  particleMigrationOn = !particleMigrationOn;
+  pushParticleMigrationEnabled();
+  if (tray) tray.setContextMenu(buildTrayMenu());
+}
+
+function migrateParticlePetNow(slot) {
+  particleContents()
+    .executeJavaScript(`window.migrateParticlePet ? window.migrateParticlePet(${JSON.stringify(slot)}) : false`)
+    .then((ok) => {
+      if (!ok) console.warn('[desktop-pet] 3D 模型現在沒辦法跑到另一個螢幕（只有一個螢幕、模型沒開，或還在載入/轉場中）');
+    })
+    .catch((err) => console.error('[desktop-pet] 3D 模型跨螢幕移動失敗：', err));
+}
+
+// 3D 視窗的序列語音/BGM 沿用「閒置閒聊音效」的靜音/音量（見 particle.html 開頭說明）。
+function pushParticleAudio(enabled, volume) {
+  particleContents()
+    .executeJavaScript(
+      `window.setParticleAudioSettings ? window.setParticleAudioSettings(${!!enabled}, ${Number(volume) || 0}) : false`
+    )
+    .catch(() => {});
+}
+
+// 主動去 index.html 讀目前值再推過去：3D 視窗剛載入完、或主視窗 reload 後（閒置閒聊
+// 音效回到預設靜音）用。平常的變動走 idle-chat-audio-changed 即時通知。
+function syncParticleAudioFromMain() {
+  if (!win || win.isDestroyed()) return;
+  win.webContents
+    .executeJavaScript(
+      `[typeof soundEnabled !== 'undefined' && soundEnabled, typeof soundVolume !== 'undefined' ? soundVolume : 1]`
+    )
+    .then(([enabled, volume]) => pushParticleAudio(enabled, volume))
+    .catch(() => {});
+}
+
+ipcMain.on('idle-chat-audio-changed', (_event, { enabled, volume }) => pushParticleAudio(enabled, volume));
+
+// 3D 視窗平常整個滑鼠穿透；互動模式下游標停在模型上/正在拖曳時，renderer 請求暫時
+// 接住滑鼠（見 particle-preload.js）。穿透模式下一律維持穿透，不理會請求。
+ipcMain.on('particle-capture-mouse', (_event, capture) => {
+  if (!particleWin || particleWin.isDestroyed()) return;
+  particleWin.setIgnoreMouseEvents(clickThrough || !capture, { forward: true });
+});
+
+// 3D 視窗的位置大小＝所有螢幕「工作區」（扣掉工作列）的外接矩形。frame 是主螢幕工作區
+// 在視窗內的位置——particle-effect.js 把相機對齊在這塊上，模型大小、預設位置、已存的
+// 擺位都跟搬家前（視窗只蓋主螢幕時）一模一樣；displays 是每個螢幕的工作區，給
+// 跨螢幕移動挑目的地用（外接矩形裡不屬於任何螢幕的空白角落不會被選到）。
+// 座標都是 DIP；各螢幕縮放比例不同時跨螢幕視窗可能有尺寸誤差，目前兩個螢幕都是 100%。
+function computeParticleLayout() {
+  const areas = screen.getAllDisplays().map((d) => d.workArea);
+  const left = Math.min(...areas.map((a) => a.x));
+  const top = Math.min(...areas.map((a) => a.y));
+  const right = Math.max(...areas.map((a) => a.x + a.width));
+  const bottom = Math.max(...areas.map((a) => a.y + a.height));
+  const rel = (a) => ({ x: a.x - left, y: a.y - top, width: a.width, height: a.height });
+  return {
+    bounds: { x: left, y: top, width: right - left, height: bottom - top },
+    frame: rel(screen.getPrimaryDisplay().workArea),
+    displays: areas.map(rel),
+  };
+}
+
 // 跟 syncParticleEffectEnabledFromRenderer() 完全同一種必要性、同一種寫法，只是
 // 問的是「模型序列播放」——reload 後 particle-effect.js 是全新模組實例，
 // sequenceModeActive 一定會回到 false，這裡讀回來才能讓系統匣選單勾選狀態對齊。
 function syncParticleSequenceEnabledFromRenderer() {
-  win.webContents
+  particleContents()
     .executeJavaScript(`window.getParticleSequencePlaying ? window.getParticleSequencePlaying() : false`)
     .then((playing) => {
       if (playing !== particleSequenceOn) {
@@ -496,10 +710,6 @@ function applyMyLikeSelection() {
       // 顯示 Live2D」設定是不是 false，這次都要讓它顯示出來，不然選了角色卻還是
       // 因為開機預設值被藏著，使用者會以為選擇沒生效（見 live2dVisible 宣告處說明）。
       live2dVisible = true;
-      // 這次 reload 是切角色引起的，不是使用者在操作光粒子特效，不該套用
-      // 「reload 一律回到關閉」那條規則（見 preserveParticleEffectOnNextReload
-      // 宣告處說明）。
-      preserveParticleEffectOnNextReload = true;
       console.log('[desktop-pet] 已套用角色選擇，重新整理...');
       win.reload();
     })
@@ -533,12 +743,18 @@ function buildCharSubmenu(key) {
       checked: pending === '',
       click: () => setPendingChar(key, ''),
     },
-    ...myLikeManifest.map((e) => ({
-      label: `#${e.id} ${myLikeNames[e.path] || e.character}`,
-      type: 'radio',
-      checked: pending === e.path,
-      click: () => setPendingChar(key, e.path),
-    })),
+    ...myLikeManifest.map((e) => {
+      const check = live2dCheckResultFor(e.path);
+      const broken = !!(check && check.fatal);
+      const partial = !broken && check && check.missingOptional.length > 0;
+      return {
+        label: `#${e.id} ${myLikeNames[e.path] || e.character}${broken ? '（缺模型檔）' : partial ? '（部分動作檔缺少）' : ''}`,
+        type: 'radio',
+        checked: pending === e.path,
+        enabled: !broken,
+        click: () => setPendingChar(key, e.path),
+      };
+    }),
   ];
 }
 
@@ -547,7 +763,14 @@ function buildCharSubmenu(key) {
 function getExtraPetCandidates() {
   return myLikeManifest
     .filter((e) => e.id !== 1 && e.id !== 2)
-    .map((e) => ({ id: e.id, label: `#${e.id} ${myLikeNames[e.path] || e.character}` }));
+    .map((e) => {
+      const broken = isLive2DPathBroken(e.path);
+      return {
+        id: e.id,
+        label: `#${e.id} ${myLikeNames[e.path] || e.character}${broken ? '（缺模型檔）' : ''}`,
+        broken,
+      };
+    });
 }
 
 // 額外寵物勾選視窗：原本用系統匣原生 Menu 的 checkbox 子選單，但原生選單點一下
@@ -715,6 +938,233 @@ ipcMain.on('name-manager-save', (_event, names) => { saveModelNames(names); });
 
 ipcMain.on('name-manager-close', () => {
   if (nameManagerWin) nameManagerWin.close();
+});
+
+// ── 模型設定視窗（2D Live2D／3D 光粒子）──────────────────────────────────
+// 新增模型、調參數都在視窗上填，不用手改 manifest.json／sources.json。讀寫邏輯與檢查
+// 規則在 model-config-store.js（有單元測試），這裡只負責開窗、檔案選擇對話框、存檔後
+// 讓桌寵重新讀設定。
+let modelConfigWin = null;
+
+function modelConfigSnapshot() {
+  let particle = null;
+  let particleError = null;
+  try { particle = modelConfigStore.readParticleConfig(); }
+  catch (err) { particleError = err.message; }
+  let live2d = { manifest: [], names: {} };
+  let live2dError = null;
+  try { live2d = modelConfigStore.readLive2DConfig(); }
+  catch (err) { live2dError = err.message; }
+  let gitignore = '';
+  try { gitignore = fs.readFileSync(modelConfigStore.GITIGNORE_PATH, 'utf8'); } catch {}
+  refreshLive2DAssetCheck();
+  const statusByPath = Object.fromEntries(live2dCheckResults.map((r) => [r.path, r]));
+  return {
+    particle,
+    particleError,
+    glbFiles: modelConfigStore.listFiles(modelConfigStore.MODELS_DIR, ['.glb', '.gltf']),
+    voiceFiles: modelConfigStore.listFiles(modelConfigStore.VOICE_DIR, ['.mp3', '.wav', '.ogg', '.m4a']),
+    bgmFiles: modelConfigStore.listFiles(modelConfigStore.BGM_DIR, ['.mp3', '.wav', '.ogg', '.m4a']),
+    missingParticleKeys: [...missingParticleModelKeys],
+    live2d: live2d.manifest.map((e) => {
+      const folder = e.path.split('/')[1];
+      const st = statusByPath[e.path];
+      return {
+        ...e,
+        name: live2d.names[e.path] || e.character,
+        folder,
+        tracked: modelConfigStore.gitignoreHasLive2DException(gitignore, folder),
+        fatal: !!(st && st.fatal),
+        missingCount: st ? st.missingRequired.length + st.missingOptional.length : 0,
+      };
+    }),
+    live2dError,
+  };
+}
+
+function openModelConfig() {
+  if (modelConfigWin) {
+    raiseAboveDesktopPets(modelConfigWin);
+    modelConfigWin.webContents.send('init', modelConfigSnapshot());
+    return;
+  }
+  modelConfigWin = new BrowserWindow({
+    width: 1080,
+    height: 780,
+    minWidth: 780,
+    minHeight: 520,
+    title: '模型設定',
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
+    alwaysOnTop: true,
+    webPreferences: {
+      contextIsolation: true,
+      preload: path.join(__dirname, 'model-config-preload.js'),
+    },
+  });
+  modelConfigWin.setMenuBarVisibility(false);
+  raiseAboveDesktopPets(modelConfigWin);
+  modelConfigWin.loadFile(path.join(__dirname, 'model-config.html'));
+  modelConfigWin.webContents.on('did-finish-load', () => {
+    modelConfigWin.webContents.send('init', modelConfigSnapshot());
+    raiseAboveDesktopPets(modelConfigWin);
+  });
+  modelConfigWin.on('closed', () => { modelConfigWin = null; });
+}
+
+ipcMain.handle('model-config-reload', () => modelConfigSnapshot());
+
+ipcMain.handle('model-config-glb-animations', (_event, file) => {
+  try {
+    const full = path.join(modelConfigStore.MODELS_DIR, path.basename(String(file)));
+    return { ok: true, names: modelConfigStore.listGlbAnimations(full) };
+  } catch (err) {
+    return { ok: false, error: err.message, names: [] };
+  }
+});
+
+// 選檔案並複製到該放的資料夾。kind：glb（3D 模型）、voice（序列語音）、bgm（序列背景
+// 音樂）、chatSound（Live2D 閒話音效）。前三種回傳檔名（設定檔只填檔名、資料夾固定）；
+// chatSound 回傳相對 desktop-pet/ 的路徑（跟 manifest.json 既有的 "../特定角色語音/cat.mp3"
+// 同格式），repo 外的檔案先複製進 特定角色語音/。
+const AUDIO_FILTERS = [{ name: '音效', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }];
+const MODEL_CONFIG_PICK = {
+  glb: { title: '選擇 3D 模型檔', filters: [{ name: 'glTF 模型', extensions: ['glb', 'gltf'] }], dir: () => modelConfigStore.MODELS_DIR },
+  voice: { title: '選擇序列播放語音', filters: AUDIO_FILTERS, dir: () => modelConfigStore.VOICE_DIR },
+  bgm: { title: '選擇序列播放背景音樂', filters: AUDIO_FILTERS, dir: () => modelConfigStore.BGM_DIR },
+  chatSound: { title: '選擇閒話音效', filters: AUDIO_FILTERS, dir: () => path.join(modelConfigStore.REPO_ROOT, '特定角色語音') },
+};
+ipcMain.handle('model-config-pick-file', async (_event, kind) => {
+  const spec = MODEL_CONFIG_PICK[kind];
+  if (!spec) return { ok: false, error: '不認得的檔案種類：' + kind };
+  const { canceled, filePaths } = await dialog.showOpenDialog(modelConfigWin, {
+    title: spec.title,
+    filters: spec.filters,
+    properties: ['openFile'],
+  });
+  if (canceled || !filePaths.length) return { ok: false, canceled: true };
+  try {
+    const src = filePaths[0];
+    if (kind === 'chatSound') {
+      // 不同磁碟時 path.relative() 會直接回傳絕對路徑（不是 .. 開頭），要一起擋掉
+      const rel = path.relative(modelConfigStore.REPO_ROOT, src);
+      const inRepo = !rel.startsWith('..') && !path.isAbsolute(rel);
+      const file = inRepo ? src : path.join(spec.dir(), modelConfigStore.importFile(src, spec.dir()));
+      return { ok: true, value: path.relative(__dirname, file).split(path.sep).join('/') };
+    }
+    return { ok: true, value: modelConfigStore.importFile(src, spec.dir()) };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+// 新模型的代號（key）依檔名產生；existingKeys 是視窗裡還沒存檔的工作副本，不是磁碟上的
+ipcMain.handle('model-config-suggest-key', (_event, file, existingKeys) =>
+  modelConfigStore.suggestModelKey(file, Array.isArray(existingKeys) ? existingKeys : [])
+);
+
+ipcMain.handle('model-config-save-particle', async (_event, config) => {
+  try {
+    const result = modelConfigStore.saveParticleConfig(config);
+    if (!result.ok) return result;
+    await refreshParticleModelKeys();
+    if (tray) tray.setContextMenu(buildTrayMenu());
+    // 3D 視窗要整頁重載才讀得到新設定（見 reloadParticleWindow() 說明）
+    const reloaded = reloadParticleWindow();
+    return { ...result, reloaded, snapshot: modelConfigSnapshot() };
+  } catch (err) {
+    return { ok: false, errors: [err.message], warnings: [] };
+  }
+});
+
+ipcMain.handle('model-config-pick-live2d-folder', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(modelConfigWin, {
+    title: '選擇 Live2D 模型資料夾（裡面要有 *.model3.json 或 model.json）',
+    properties: ['openDirectory'],
+  });
+  if (canceled || !filePaths.length) return { ok: false, canceled: true };
+  const srcDir = filePaths[0];
+  const jsons = modelConfigStore.findLive2DModelJsons(srcDir);
+  if (!jsons.length) return { ok: false, error: '這個資料夾裡找不到 *.model3.json 或 model.json，確認選的是模型資料夾' };
+  return {
+    ok: true,
+    srcDir,
+    folderName: path.basename(srcDir),
+    modelJsons: jsons.map((f) => path.relative(srcDir, f).split(path.sep).join('/')),
+  };
+});
+
+function addLive2DGitignoreException(folderName) {
+  const text = fs.readFileSync(modelConfigStore.GITIGNORE_PATH, 'utf8');
+  const next = modelConfigStore.addLive2DGitignoreException(text, folderName);
+  if (next !== text) fs.writeFileSync(modelConfigStore.GITIGNORE_PATH, next);
+}
+
+// 新增 Live2D 模型：複製資料夾 → 跑 generate-manifest.js 重新產生清單（既有模型的
+// id/layout 不會變，見那支腳本的說明）→ 視需要在 .gitignore 加例外 → 重讀清單。
+ipcMain.handle('model-config-add-live2d', (_event, { srcDir, folderName, trackInGit }) => {
+  try {
+    const folder = String(folderName || '').trim();
+    const paths = modelConfigStore.importLive2DFolder(srcDir, folder);
+    try {
+      childProcess.execFileSync(
+        process.execPath,
+        [path.join(modelConfigStore.LIVE2D_CONFIG_DIR, 'generate-manifest.js')],
+        { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, encoding: 'utf8' }
+      );
+    } catch (err) {
+      // 清單沒更新成功：把剛複製的資料夾收掉，不然重試會被「已經有同名資料夾」擋住
+      fs.rmSync(path.join(modelConfigStore.LIVE2D_MODELS_DIR, folder), { recursive: true, force: true });
+      throw err;
+    }
+    if (trackInGit) addLive2DGitignoreException(folder);
+    loadMyLikeManifest();
+    if (tray) tray.setContextMenu(buildTrayMenu());
+    return { ok: true, paths, snapshot: modelConfigSnapshot() };
+  } catch (err) {
+    return { ok: false, error: err.stderr ? String(err.stderr) : err.message };
+  }
+});
+
+ipcMain.handle('model-config-track-live2d', (_event, folderName) => {
+  try {
+    addLive2DGitignoreException(String(folderName));
+    return { ok: true, snapshot: modelConfigSnapshot() };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+// 模型裡有哪些 Parameter／Part ID，給覆蓋值欄位當建議清單
+ipcMain.handle('model-config-moc-ids', (_event, modelPath) => {
+  try {
+    const jsonPath = path.join(modelConfigStore.LIVE2D_ROOT, String(modelPath));
+    const json = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    const moc = (json.FileReferences && json.FileReferences.Moc) || json.model;
+    if (!moc) return { ok: true, params: [], parts: [] };
+    return { ok: true, ...modelConfigStore.scanMocIds(path.join(path.dirname(jsonPath), moc)) };
+  } catch (err) {
+    return { ok: false, error: err.message, params: [], parts: [] };
+  }
+});
+
+ipcMain.handle('model-config-save-live2d', (_event, { modelPath, patch, reloadPet }) => {
+  try {
+    const result = modelConfigStore.saveLive2DEntry(modelPath, patch);
+    if (!result.ok) return result;
+    loadMyLikeManifest();
+    if (tray) tray.setContextMenu(buildTrayMenu());
+    // 版面/覆蓋值是 Live2D 載入角色時套用的，要重新整理桌寵畫面才看得到
+    if (reloadPet && _petWindowReady()) win.reload();
+    return { ...result, snapshot: modelConfigSnapshot() };
+  } catch (err) {
+    return { ok: false, errors: [err.message] };
+  }
+});
+
+ipcMain.on('model-config-close', () => {
+  if (modelConfigWin) modelConfigWin.close();
 });
 
 // ── 設定視窗（OpenAI API key）────────────────────────────────────────────
@@ -1118,6 +1568,11 @@ function setClickThrough(value) {
   clearInteractiveAutoRevertTimer();
   clickThrough = value;
   win.setIgnoreMouseEvents(clickThrough, { forward: true });
+  // 3D 視窗：切回穿透模式時立刻放開滑鼠；切到互動模式時維持穿透，等 renderer 偵測到
+  // 游標停在模型上再請求接住（見 particle-capture-mouse）
+  if (clickThrough && particleWin && !particleWin.isDestroyed()) {
+    particleWin.setIgnoreMouseEvents(true, { forward: true });
+  }
   syncParticleEffectStateFromMain();
   const label = clickThrough ? '穿透模式（滑鼠會穿透到桌面）' : '互動模式（可拖曳角色）';
   console.log(`[desktop-pet] 目前狀態：${label}`);
@@ -1465,6 +1920,9 @@ function setBrowserToolActive(charKey, active) {
   else browserLoweredChars.delete(charKey);
   if (!win) return; // 理論上呼叫這個函式時 win 一定已經存在，防禦性檢查避免初始化時序問題
   win.setAlwaysOnTop(true, browserLoweredChars.size > 0 ? 'normal' : 'screen-saver');
+  if (particleWin && !particleWin.isDestroyed()) {
+    particleWin.setAlwaysOnTop(true, browserLoweredChars.size > 0 ? 'normal' : 'screen-saver');
+  }
 }
 
 // ── Esc 的全域快捷鍵版本（只在有東西可以取消時才註冊）───────────────────────
@@ -1874,33 +2332,46 @@ function buildSceneSubmenu() {
 
 // 「光粒子特效」開合成一個子選單：開關 + 分隔線 + particleModelKeys 清單（radio，
 // 選了哪個就打勾）。particleModelKeys 由 refreshParticleModelKeys() 讀
-// particle-effect/sources.js 填好，這裡單純渲染，不重讀檔案（避免每次開選單都
-// 觸發一次動態 import()）。
+// particle-effect/sources.json 填好，這裡單純渲染，不重讀檔案。
 // 兩隻不能同時顯示同一個模型：另一隻開著的話，它正在用的那個模型在這份清單裡
 // 會變灰（renderer 端 setParticleActiveModel() 也會擋，這裡只是讓選單先看得出來）。
 function buildParticleModelItems(slot) {
   if (!particleModelKeys.length) {
-    return [{ label: '（sources.js 讀不到模型，或裡面還沒有任何項目）', enabled: false }];
+    return [{ label: '（sources.json 讀不到模型，或裡面還沒有任何項目）', enabled: false }];
   }
   const otherSlot = slot === 'secondary' ? 'primary' : 'secondary';
   const takenKey = isParticleOn(otherSlot) ? getActiveParticleModel(otherSlot) : null;
-  return particleModelKeys.map((key) => ({
-    label: key === takenKey ? `${key}（另一隻使用中）` : key,
-    type: 'radio',
-    checked: key === getActiveParticleModel(slot),
-    enabled: key !== takenKey,
-    click: () => selectParticleModel(key, slot),
-  }));
+  return particleModelKeys.map((key) => {
+    const missing = isParticleModelMissing(key);
+    return {
+      label: missing ? `${key}（缺模型檔）` : key === takenKey ? `${key}（另一隻使用中）` : key,
+      type: 'radio',
+      checked: key === getActiveParticleModel(slot),
+      enabled: !missing && key !== takenKey,
+      click: () => selectParticleModel(key, slot),
+    };
+  });
 }
 
 function buildParticleEffectSubmenu() {
   const modelItems = buildParticleModelItems('primary');
 
+  const noModels = !hasAnyAvailableParticleModel();
   return [
+    ...(noModels
+      ? [
+          {
+            // 一個模型檔都沒有：開了也只會是一團隨機散點，直接停用並告訴使用者原因
+            label: '⚠ 找不到任何 3D 模型檔（GLB 不跟著 git 版本走，見 particle-effect/models/README.md）',
+            enabled: false,
+          },
+        ]
+      : []),
     {
       label: particleEffectOn ? '關閉' : '開啟',
       type: 'checkbox',
       checked: particleEffectOn,
+      enabled: particleEffectOn || !noModels,
       click: () => toggleParticleEffect(),
     },
     {
@@ -1922,6 +2393,8 @@ function buildParticleEffectSubmenu() {
           label: particleEffect2On ? '關閉' : '開啟',
           type: 'checkbox',
           checked: particleEffect2On,
+          // 第二隻要用跟第一隻不同的模型，可用的模型少於兩個就開不了
+          enabled: particleEffect2On || particleModelKeys.filter((k) => !isParticleModelMissing(k)).length >= 2,
           click: () => toggleParticleEffect('secondary'),
         },
         { type: 'separator' },
@@ -1932,6 +2405,21 @@ function buildParticleEffectSubmenu() {
       // 互動模式下可以直接用滑鼠操作每一隻：左鍵拖曳旋轉、右鍵拖曳移動、滾輪縮放
       label: '重置 3D 模型位置/縮放',
       click: () => resetParticleLayout(),
+    },
+    { type: 'separator' },
+    {
+      // 只有一個螢幕時 renderer 自己會跳過（沒有別的螢幕可以去）
+      label: '隨機跑到其他螢幕',
+      type: 'checkbox',
+      checked: particleMigrationOn,
+      click: () => toggleParticleMigration(),
+    },
+    {
+      label: '現在跑到另一個螢幕（測試）',
+      submenu: [
+        { label: '第一隻', click: () => migrateParticlePetNow('primary') },
+        { label: '第二隻', enabled: particleEffect2On, click: () => migrateParticlePetNow('secondary') },
+      ],
     },
   ];
 }
@@ -1981,6 +2469,7 @@ function buildTrayMenu() {
     ...charMenuItems,
     { type: 'separator' },
     { label: '設定...', click: () => openSettings() },
+    { label: '模型設定（新增/調整 2D、3D 模型）...', click: () => openModelConfig() },
     { label: '模型命名管理...', click: () => openNameManager() },
     { label: '情境編輯器...', click: () => openSceneEditor() },
     { type: 'separator' },
@@ -2027,7 +2516,13 @@ const SHORTCUT_META = {
       app.quit();
     },
   },
-  toggleDevTools: { fn: () => win.webContents.toggleDevTools() },
+  // 3D 模型在獨立的 particle.html 視窗，兩個視窗的 DevTools 一起開關
+  toggleDevTools: {
+    fn: () => {
+      win.webContents.toggleDevTools();
+      if (particleWin && !particleWin.isDestroyed()) particleWin.webContents.toggleDevTools();
+    },
+  },
   toggleParticleSequence: { fn: () => toggleParticleSequence() },
   toggleIdleChatSound: {
     fn: () => {
@@ -2045,8 +2540,10 @@ const SHORTCUT_META = {
   },
   toggleNudgeMode: {
     fn: () => {
-      win.webContents
+      // 微調模式靠鍵盤，3D 模型在獨立的 particle.html 視窗裡，開啟時要把鍵盤焦點給它
+      particleContents()
         .executeJavaScript('window.toggleParticleNudgeMode ? window.toggleParticleNudgeMode() : null')
+        .then((active) => { if (active && particleWin && !particleWin.isDestroyed()) particleWin.focus(); })
         .catch((err) => console.error('[desktop-pet] 切換 3D 模型微調模式失敗：', err));
     },
   },
@@ -2256,6 +2753,138 @@ function resetShortcutsAndReload() {
   return getShortcutsInfo();
 }
 
+// 3D 視窗的 query：layout（蓋住哪些螢幕）、missing（缺 GLB 的模型）、primary（開場
+// 用哪個模型，只有重載時才有值）。
+function particleWindowQuery(layout = computeParticleLayout()) {
+  const query = {
+    layout: JSON.stringify({ frame: layout.frame, displays: layout.displays }),
+    missing: JSON.stringify([...missingParticleModelKeys]),
+  };
+  if (activeParticleModel) query.primary = activeParticleModel;
+  return query;
+}
+
+// 重新載入 3D 視窗，讓 sources.json 的修改生效：particle-effect.js 是 ES module，
+// sources.json 在模組載入時就讀進來了，只能整頁重載才會讀到新內容。重載前記住兩隻
+// 開著沒，載入完成後（見 createParticleWindow() 的 did-finish-load）照原樣打開。
+// 模型序列播放如果正在播，重載後會停掉（跟手動 Ctrl+R 一樣）。
+let particleRestoreAfterReload = null;
+function reloadParticleWindow() {
+  if (!particleWin || particleWin.isDestroyed()) return false;
+  particleRestoreAfterReload = { primary: particleEffectOn, secondary: particleEffect2On };
+  particleWin.loadFile(path.join(__dirname, 'particle.html'), { query: particleWindowQuery() });
+  return true;
+}
+
+// 3D 模型專用視窗（見 particleWin 宣告處說明）。跟主視窗一樣透明、無邊框、
+// 'screen-saver' 置頂，疊在主視窗之上（keepPetOnTopTimer 每次把主視窗頂上來後
+// 也會把它頂上來）。平常整個滑鼠穿透，只有互動模式下游標停在模型上才接住滑鼠，
+// 所以不會擋到底下 Live2D 角色的拖曳/點擊。
+function createParticleWindow() {
+  const layout = computeParticleLayout();
+  particleWin = new BrowserWindow({
+    ...layout.bounds,
+    show: false,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    webPreferences: {
+      contextIsolation: true,
+      preload: path.join(__dirname, 'particle-preload.js'),
+      backgroundThrottling: false,
+    },
+  });
+  // 建構子的寬高在部分 Windows 環境會被夾成單一螢幕大小，建完再設一次確保蓋滿所有螢幕
+  particleWin.setBounds(layout.bounds);
+  particleWin.setAlwaysOnTop(true, 'screen-saver');
+  particleWin.setIgnoreMouseEvents(true, { forward: true });
+  // showInactive：不要一開機就搶走使用者正在用的視窗焦點
+  particleWin.once('ready-to-show', () => {
+    if (win && !win.isDestroyed() && win.isVisible()) particleWin.showInactive();
+  });
+
+  particleWin.loadFile(path.join(__dirname, 'particle.html'), { query: particleWindowQuery(layout) });
+
+  particleWin.webContents.on('did-finish-load', () => {
+    // 新載入的頁面一律從「沒接住滑鼠」開始（renderer 的 mouseCaptured 也歸零），
+    // 重新設一次穿透＋轉發，兩邊狀態才對得上
+    particleWin.setIgnoreMouseEvents(true, { forward: true });
+    syncParticleEffectStateFromMain();
+    syncParticleAudioFromMain();
+    pushParticleMigrationEnabled();
+    syncParticleModelFromRenderer();
+    syncParticleSequenceEnabledFromRenderer();
+    if (!hasAppliedParticleEffectStartupDefault) {
+      // 桌寵這次真的剛啟動：套用使用者設定的開機預設值，不透過
+      // syncParticleEffectEnabledFromRenderer() 校正——renderer 才剛開始載入、還沒套用
+      // 任何東西，讀到的是暫時的關閉狀態，校正只會把 particleEffectOn 錯誤地蓋回 false。
+      hasAppliedParticleEffectStartupDefault = true;
+      if (particleEffectOn && !hasAnyAvailableParticleModel()) {
+        // 開機預設顯示 3D 模型，但一個模型檔都沒有：不要開出一團隨機散點，選單維持關閉
+        particleEffectOn = false;
+        if (tray) tray.setContextMenu(buildTrayMenu());
+      } else if (particleEffectOn) {
+        particleContents()
+          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
+          .catch(() => {});
+      }
+    } else if (particleRestoreAfterReload) {
+      // reloadParticleWindow() 主動重載（「模型設定」存檔後）：原本開著的那幾隻重新打開。
+      // 模型 key：primary 由 ?primary= 帶過去，secondary 本來就記在 localStorage。
+      const restore = particleRestoreAfterReload;
+      particleRestoreAfterReload = null;
+      for (const slot of ['primary', 'secondary']) {
+        setParticleOn(slot, restore[slot]);
+        if (restore[slot]) {
+          particleContents()
+            .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true, ${JSON.stringify(slot)}) : null`)
+            .catch(() => {});
+        }
+      }
+      if (tray) tray.setContextMenu(buildTrayMenu());
+    } else {
+      // 3D 視窗自己被 reload（DevTools Ctrl+R 之類）：renderer 回到關閉，選單勾選跟著對齊
+      syncParticleEffectEnabledFromRenderer();
+    }
+  });
+
+  // 手動微調 debug 工具的 [particle-debug] 訊息轉印到終端機（原本在主視窗的
+  // console-message 轉印，3D 模型搬過來後改在這裡接）
+  particleWin.webContents.on('console-message', (_event, _level, message) => {
+    if (message.startsWith('[particle-debug]') || message.startsWith('[asset-check]')) console.log(message);
+  });
+
+  // 插拔螢幕／改解析度／工作列移位：重新計算範圍、通知 renderer 重新對齊相機。
+  // 這些事件常常一次連發好幾個，等安靜下來再處理一次就好。
+  let relayoutTimer = null;
+  const relayout = () => {
+    clearTimeout(relayoutTimer);
+    relayoutTimer = setTimeout(() => {
+      if (!particleWin || particleWin.isDestroyed()) return;
+      const next = computeParticleLayout();
+      particleWin.setBounds(next.bounds);
+      particleContents()
+        .executeJavaScript(
+          `window.setParticleDisplayLayout ? window.setParticleDisplayLayout(${JSON.stringify({ frame: next.frame, displays: next.displays })}) : false`
+        )
+        .catch(() => {});
+    }, 300);
+  };
+  screen.on('display-added', relayout);
+  screen.on('display-removed', relayout);
+  screen.on('display-metrics-changed', relayout);
+  particleWin.on('closed', () => {
+    clearTimeout(relayoutTimer);
+    screen.removeListener('display-added', relayout);
+    screen.removeListener('display-removed', relayout);
+    screen.removeListener('display-metrics-changed', relayout);
+    particleWin = null;
+  });
+}
+
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -2293,7 +2922,7 @@ function createWindow() {
   // 一旦觸發就蓋到桌寵上面；桌寵這邊只在建視窗時設一次鬥不過。低頻率地把自己重新頂回
   // 最上層來解決。這些事件都是零星觸發，1 秒一次即可，使用者幾乎不會察覺曾被蓋住。
   const petOwnChildWindows = () =>
-    [extraPetsPickerWin, nameManagerWin, settingsWin, sceneEditorWin, clearCacheWin];
+    [extraPetsPickerWin, nameManagerWin, settingsWin, sceneEditorWin, clearCacheWin, modelConfigWin];
   const keepPetOnTopTimer = setInterval(() => {
     if (!win || win.isDestroyed() || !win.isVisible()) return;
     // CLI 模式跑瀏覽器工具時桌寵是「刻意」降級的（見 setBrowserToolActive），那段期間
@@ -2305,8 +2934,17 @@ function createWindow() {
     if (petOwnChildWindows().some((w) => w && !w.isDestroyed() && w.isVisible())) return;
     win.setAlwaysOnTop(true, 'screen-saver');
     win.moveTop();
+    // 3D 模型視窗要疊在主視窗之上（它只在模型上接住滑鼠，蓋在上面不會擋到 Live2D）
+    if (particleWin && !particleWin.isDestroyed() && particleWin.isVisible()) {
+      particleWin.setAlwaysOnTop(true, 'screen-saver');
+      particleWin.moveTop();
+    }
   }, 1000);
-  win.on('closed', () => clearInterval(keepPetOnTopTimer));
+  win.on('closed', () => {
+    clearInterval(keepPetOnTopTimer);
+    // 主視窗關了 3D 視窗也一起收掉，不然 window-all-closed 永遠等不到、app 不會結束
+    if (particleWin && !particleWin.isDestroyed()) particleWin.destroy();
+  });
 
   // 把 renderer 端「手動微調 debug 工具」（particle-effect.js 的
   // handleManualNudgeKey()）印的 [particle-debug] 開頭訊息轉印到這個終端機——
@@ -2359,16 +2997,6 @@ function createWindow() {
   // 每次載入/重新整理完成後，跟畫面上實際生效的角色選擇對一次（包含 applyMyLikeSelection() 觸發的 reload）
   win.webContents.on('did-finish-load', () => {
     syncMyLikeSelectionFromRenderer();
-    // particle-effect.js 每次 reload（F8、套用角色選擇...）都會重新初始化成它
-    // 自己的預設值（開關永遠回到關閉），這裡補兩次同步，讓系統匣選單勾選狀態、
-    // 滑鼠抓取游標判斷跟畫面實際狀態對齊（見 syncParticleModelFromRenderer()／
-    // syncParticleEffectStateFromMain() 開頭的說明）。
-    syncParticleModelFromRenderer();
-    syncParticleEffectStateFromMain();
-    // 模型序列播放沒有「開機預設值」這種東西（見 particleSequenceOn 宣告處的
-    // 說明），每次 reload 都直接同步，不用像下面 particleEffectOn 那樣分
-    // 「第一次啟動」跟「之後 reload」兩種情況處理。
-    syncParticleSequenceEnabledFromRenderer();
 
     // Live2D 顯示：套用 live2dVisible 這個變數（初始值＝使用者存的開機預設值，之後
     // 可能被 applyMyLikeSelection() 撥成 true）——刻意不在這裡重讀
@@ -2379,43 +3007,11 @@ function createWindow() {
       `window.setLive2DVisible ? window.setLive2DVisible(${live2dVisible}) : null`
     ).catch(() => {});
 
-    if (!hasAppliedParticleEffectStartupDefault) {
-      // 桌寵這次真的剛啟動：套用使用者設定的開機預設值，不透過
-      // syncParticleEffectEnabledFromRenderer() 校正——那個函式是拿 renderer 的
-      // 「真實現況」回頭校正 main.js 記的 particleEffectOn，但第一次啟動時
-      // renderer 才剛開始載入、還沒套用任何東西，讀到的是「還沒套用開機預設值前」
-      // 的暫時關閉狀態，這時候校正只會把剛剛從設定畫面讀回來的 particleEffectOn
-      // 錯誤地蓋回 false。
-      hasAppliedParticleEffectStartupDefault = true;
-      if (particleEffectOn) {
-        win.webContents
-          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
-          .catch(() => {});
-      }
-    } else if (preserveParticleEffectOnNextReload) {
-      // 這次 reload 是「套用角色選擇」引起的，不是 F8：使用者在切角色，沒有動到
-      // 光粒子特效，維持 reload 前 particleEffectOn 的值，不要被下面那條「reload
-      // 一律回到關閉」的規則歸零（見 preserveParticleEffectOnNextReload 宣告處說明）。
-      preserveParticleEffectOnNextReload = false;
-      if (particleEffectOn) {
-        win.webContents
-          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true) : null`)
-          .catch(() => {});
-      }
-      if (particleEffect2On) {
-        win.webContents
-          .executeJavaScript(`window.setParticleEffect ? window.setParticleEffect(true, 'secondary') : null`)
-          .catch(() => {});
-      }
-    } else {
-      // 之後任何 reload（F8...）：維持原本修好的行為——particle-effect.js reload
-      // 後一律回到關閉，這裡讓 main.js 記的狀態（系統匣勾選）跟著對齊，不會卡在
-      // reload 前的勾選狀態（見 syncParticleEffectEnabledFromRenderer() 開頭的
-      // 說明）。這裡刻意不再套用開機預設值，不然每次 F8 都會自動重新打開特效，
-      // 跟「F8 reload 一律回到關閉」的既有修正互相矛盾。
-      syncParticleEffectEnabledFromRenderer();
-    }
+    // 主視窗 reload 後閒置閒聊音效回到預設靜音，3D 視窗的音效設定跟著對齊
+    syncParticleAudioFromMain();
   });
+
+  createParticleWindow();
 
   // F8/F9/F10/Ctrl+Alt+C/Ctrl+Shift+I/Ctrl+Alt+S/E/V/N/Z/[/]/-/= 這 14 個可自訂快捷鍵
   // 的實際註冊邏輯，見 createWindow() 之前的 registerCustomShortcuts()（動作內容/預設鍵
@@ -2481,6 +3077,9 @@ app.whenReady().then(async () => {
   watchParticleModelSources();
   createWindow();
   createTray();
+  notifyMissingAssets();
+  reportUntrackedLive2DFiles();
+  watchLive2DModels();
   // 這 14 個現在是可自訂快捷鍵（見 SHORTCUT_META／registerCustomShortcuts()），啟動時
   // 印的是「目前真的生效的組合」，不是寫死的預設值——使用者可能已經在 control-center
   // 的「快捷鍵」分頁改過，印死的舊字串會跟實際狀況兜不起來。Ctrl+Alt+數字鍵盤 1~9
@@ -2498,7 +3097,7 @@ app.whenReady().then(async () => {
       `[desktop-pet]   ${accelDisplay(sc.toggleIdleChatSound)} ${settingsStore.SHORTCUT_LABELS.toggleIdleChatSound}`,
       `[desktop-pet]   ${accelDisplay(sc.toggleTtsSound)} ${settingsStore.SHORTCUT_LABELS.toggleTtsSound}`,
       `[desktop-pet]   ${accelDisplay(sc.toggleNudgeMode)} ${settingsStore.SHORTCUT_LABELS.toggleNudgeMode}（開啟後方向鍵/[ ]/PageUp/PageDown/Home/End/R/P 才會生效）`,
-      `[desktop-pet]   ${accelDisplay(sc.toggleParticleSequence)} ${settingsStore.SHORTCUT_LABELS.toggleParticleSequence}（sources.js 設定的多個 3D 模型間連續變形，跟系統匣「光粒子特效」子選單是同一個開關）`,
+      `[desktop-pet]   ${accelDisplay(sc.toggleParticleSequence)} ${settingsStore.SHORTCUT_LABELS.toggleParticleSequence}（sources.json 設定的多個 3D 模型間連續變形，跟系統匣「光粒子特效」子選單是同一個開關）`,
       `[desktop-pet]   ${accelDisplay(sc.startVoiceChat)} ${settingsStore.SHORTCUT_LABELS.startVoiceChat}（等同點🎤，穿透模式下也按得到）`,
       `[desktop-pet]   ${accelDisplay(sc.idleChatVolDown)} / ${accelDisplay(sc.idleChatVolUp)} 調降/調升閒置閒聊音效音量`,
       `[desktop-pet]   ${accelDisplay(sc.ttsVolDown)} / ${accelDisplay(sc.ttsVolUp)} 調降/調升對話語音回覆音量`,
@@ -2516,6 +3115,7 @@ app.whenReady().then(async () => {
     show: () => {
       if (!win || win.isDestroyed()) return;
       win.show();
+      if (particleWin && !particleWin.isDestroyed()) particleWin.showInactive();
       win.webContents
         .executeJavaScript('window.reloadLive2DForShow ? window.reloadLive2DForShow() : Promise.resolve(false)')
         .catch((err) => console.error('[desktop-pet] 顯示桌寵時重新載入模型失敗：', err));
@@ -2523,6 +3123,7 @@ app.whenReady().then(async () => {
     hide: () => {
       if (!win || win.isDestroyed()) return;
       win.hide();
+      if (particleWin && !particleWin.isDestroyed()) particleWin.hide();
       win.webContents
         .executeJavaScript('window.unloadLive2DForHide ? window.unloadLive2DForHide() : Promise.resolve(false)')
         .catch((err) => console.error('[desktop-pet] 隱藏桌寵時卸載模型失敗：', err));

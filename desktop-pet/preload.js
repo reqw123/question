@@ -41,4 +41,11 @@ contextBridge.exposeInMainWorld('petBridge', {
   // 一模一樣的判斷邏輯處理（isRecording > transcribing > isTtsPlaying > chatRequestPending
   // > voiceInputActive）——不在 main process 另外重寫一份判斷順序，見 index.html。
   onGlobalEscape: (callback) => ipcRenderer.on('global-escape', () => callback()),
+  // 閒置閒聊音效的靜音/音量變動時通知 main process，轉送給 3D 模型專用視窗
+  // （particle.html）——它的序列語音/BGM 沿用同一組靜音/音量設定。
+  idleChatAudioChanged: (enabled, volume) => ipcRenderer.send('idle-chat-audio-changed', { enabled, volume }),
+  // Live2D 角色檔案檢查結果 [{ id, path, name, broken }]（main.js 的 asset-check）。index.html
+  // 在 L2D.init() 之前、套用角色選擇的同步程式碼裡就要用到，所以用 sendSync——只在頁面
+  // 載入時呼叫一次，檢查本身是讀十幾個小 json，不會卡住畫面。
+  getLive2DAssetStatus: () => ipcRenderer.sendSync('live2d-asset-status'),
 });

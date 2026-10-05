@@ -53,12 +53,18 @@
 
   function render(candidates) {
     listEl.innerHTML = '';
-    candidates.forEach(({ id, label }) => {
+    candidates.forEach(({ id, label, broken }) => {
       const row = document.createElement('label');
       row.className = 'item';
       const box = document.createElement('input');
       box.type = 'checkbox';
       box.checked = checkedIds.has(id);
+      // 缺模型檔的角色（main.js 的 asset-check）不能新勾選；之前已經勾著的還是可以取消
+      if (broken && !box.checked) {
+        box.disabled = true;
+        row.style.opacity = '0.5';
+        row.title = '模型檔缺少，無法載入（詳見終端機或 npm run check-assets）';
+      }
       box.addEventListener('change', () => {
         if (box.checked) checkedIds.add(id); else checkedIds.delete(id);
         updateApplyState();

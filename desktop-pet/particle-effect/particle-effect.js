@@ -27,6 +27,14 @@
 // window.* 介面多一個選用的 slot 參數（'primary'／'secondary'，不填＝primary），
 // 舊的呼叫方式行為不變。
 //
+// 多螢幕：這個模組跑在 main.js 另開的 particle.html 視窗裡（不是 Live2D 那個
+// index.html），視窗蓋住所有螢幕工作區的外接矩形。相機用 setViewOffset() 對齊在
+// 「主螢幕工作區」這一塊（見 applyDisplayLayout()），所以模型大小、預設位置、已存的
+// 擺位都跟以前視窗只蓋主螢幕時完全一樣，只是現在可以拖/跑到其他螢幕上。模型會
+// 隨機跑到另一個螢幕（做動作時，或閒置一段時間後），見 ParticlePet.maybeMigrate()。
+// 視窗平常整個滑鼠穿透，只有互動模式下游標停在模型上才請 main.js 接住滑鼠（見
+// updateMouseCapture()），不會擋到底下 Live2D 主視窗。
+//
 // 3D 操作（左鍵拖曳旋轉／滾輪縮放／右鍵拖曳平移）原本用 OrbitControls 轉相機，
 // 兩隻模型會被一起轉；改成自己做的「點到哪隻就動哪隻」（見 setupScene() 的
 // pointer 事件、pickPetAt()），套在每隻模型自己的 root 群組上，位置/縮放存
@@ -104,6 +112,27 @@ const HOVER_STALE_MS = 400; // 超過這麼久沒收到 mousemove 才當作滑�
 // particle.periodicAnimation 沒填 intervalSeconds 時的預設觸發間隔（秒）。
 const DEFAULT_PERIODIC_INTERVAL_SECONDS = 60;
 
+// ── 跨螢幕移動（見 ParticlePet.maybeMigrate()）──────────────────────────
+// 有定時動作（periodicAnimation）的模型：每次動作開始播時，有這個機率「邊做動作邊
+// 跑到另一個螢幕」，移動時間＝動作長度（夾在下面的上下限之間）。
+const MIGRATE_WITH_MOTION_CHANCE = 0.5;
+// 沒有定時動作的模型（一直循環播放 animatedIdle 的、或單幀定格的）：閒置滿一段
+// 隨機秒數（下面兩個值之間）就跑一次，移動時間固定 MIGRATE_DEFAULT_SECONDS。
+const MIGRATE_IDLE_MIN_SECONDS = 60;
+const MIGRATE_IDLE_MAX_SECONDS = 150;
+const MIGRATE_DEFAULT_SECONDS = 4;
+const MIGRATE_MIN_SECONDS = 2.5;
+const MIGRATE_MAX_SECONDS = 8;
+// 途中往上拋一點弧線，看起來像「跳過去」而不是平移滑過去（單位：主螢幕高度的比例）
+const MIGRATE_ARC_HEIGHT_RATIO = 0.12;
+// 目的地挑選：整隻模型（依它目前在畫面上的大小）都要落在目的螢幕裡，外加離邊緣
+// 這麼多的留白（佔該螢幕寬/高的比例）；模型比螢幕還大時就擺在正中間。
+const MIGRATE_EDGE_MARGIN_RATIO = 0.04;
+
+function randomIdleMigrateDelay() {
+  return MIGRATE_IDLE_MIN_SECONDS + Math.random() * (MIGRATE_IDLE_MAX_SECONDS - MIGRATE_IDLE_MIN_SECONDS);
+}
+
 // 「模型序列播放」（一鍵觸發、在 sources.js 設定的多個模型之間連續變形、無限
 // 循環，直到手動停止）每一站拆成「停留」＋「轉換」兩段，秒數來自 sources.js 的
 // sequenceHoldSeconds／sequenceTransitionSeconds（沒填就用這裡的預設值——例如
@@ -125,7 +154,7 @@ const SEQUENCE_TRANSITION_SECONDS = Math.max(
 const SEQUENCE_STAGE_DURATION = SEQUENCE_HOLD_SECONDS + SEQUENCE_TRANSITION_SECONDS;
 
 // sources.js 某模型的 particle.sequenceVoice 填了檔名時，從「這一站進入停留段」
-// 那一刻起算，滿這麼多秒後播放一次（見 sources.js 開頭 sequenceVoice 欄位說明、
+// 那一刻起算，滿這麼多秒後播放一次（見 動畫參數說明.md 的 sequenceVoice 欄位說明、
 // advanceSequencePlayback() 裡的觸發邏輯）。使用者需求就是固定 0.3 秒，不像
 // SEQUENCE_HOLD_SECONDS/SEQUENCE_TRANSITION_SECONDS 那樣開放 sources.js 覆寫——
 // 這是「進場後稍微停頓一下再開口」的節奏設計，不是取樣校正，沒有逐模型客製化
@@ -193,6 +222,44 @@ let lastFrameTime = null;
 // 正在拖曳的那隻：{ pet, button, pointerId, lastX, lastY }，見 setupScene() 的 pointer 事件
 let drag = null;
 let interactiveMode = false; // 桌寵視窗目前是不是「互動模式」，由 main.js 同步（見檔案開頭說明）
+let mouseCaptured = false; // 目前有沒有請 main.js 接住滑鼠（見 updateMouseCapture()）
+let migrationEnabled = true; // 系統匣「隨機跑到其他螢幕」開關，由 main.js 同步
+
+// 螢幕配置（視窗內座標，CSS px）：frame＝主螢幕工作區，相機對齊在這塊；displays＝
+// 每個螢幕的工作區。main.js 開視窗時放在網址 ?layout= 帶進來，插拔螢幕時呼叫
+// window.setParticleDisplayLayout() 更新。單獨開 particle.html（沒帶參數）時退回
+// 「整個視窗＝一個螢幕」。
+function readInitialDisplayLayout() {
+  try {
+    const raw = new URLSearchParams(location.search).get('layout');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.frame && Array.isArray(parsed.displays) && parsed.displays.length) return parsed;
+    }
+  } catch {}
+  const whole = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+  return { frame: whole, displays: [whole] };
+}
+let displayLayout = readInitialDisplayLayout();
+
+// sources.js 列了、但 models/ 底下沒有 GLB 的模型 key（GLB 不進版本控制，見
+// desktop-pet/asset-check.js）。main.js 開視窗時放在網址 ?missing= 帶進來，使用者
+// 之後補上檔案會呼叫 window.setParticleMissingModels() 更新。預設模型、第二隻的
+// 預設模型、序列播放都會避開這些；選單也會停用它們。
+let missingModelKeys = new Set();
+try {
+  const raw = new URLSearchParams(location.search).get('missing');
+  if (raw) missingModelKeys = new Set(JSON.parse(raw));
+} catch {}
+
+function isModelAvailable(key) {
+  return !!sources[key] && !missingModelKeys.has(key);
+}
+
+// 清單裡第一個「有檔案、而且不是 exclude」的模型；一個都沒有回傳 null
+function firstAvailableModel(exclude) {
+  return Object.keys(sources).find((key) => key !== exclude && isModelAvailable(key)) || null;
+}
 // 3D 模型微調 debug 模式是否開啟：由 Ctrl+Alt+N（main.js 全域快捷鍵，見該檔案
 // window.toggleParticleNudgeMode 那段）切換，見 handleManualNudgeKey() 開頭的說明——
 // 原本借用 interactiveMode 當開關，但那個模式在正常使用中（開聊天輸入框打字）就會是
@@ -425,10 +492,10 @@ function handleManualNudgeKey(e) {
   const baseScale = source && source.particle && source.particle.scale;
   console.log(
     `[particle-debug] ${pet.slot} "${pet.modelKey}" ${label} → 累計偏移 position: [${pet.manualOffset.x.toFixed(3)}, ${pet.manualOffset.y.toFixed(3)}, ${pet.manualOffset.z.toFixed(3)}]，rotationY: ${pet.manualRotationY.toFixed(3)}，scale 倍率: ${pet.manualScale.toFixed(3)}\n` +
-      `  目前 sources.js 生效的參考值：position: ${basePosition ? `[${basePosition.join(', ')}]` : '(未填，auto-fit，看模型載入時 Console 印的那行自動置中 log)'}，` +
+      `  目前 sources.json 生效的參考值：position: ${basePosition ? `[${basePosition.join(', ')}]` : '(未填，auto-fit，看模型載入時 Console 印的那行自動置中 log)'}，` +
       `rotationY: ${baseRotationY != null ? baseRotationY.toFixed(3) : '(未填，預設 0)'}，` +
       `scale: ${baseScale ? `[${baseScale.join(', ')}]` : '(未填，auto-fit，看模型載入時 Console 印的那行自動置中 log)'}\n` +
-      `  要填回 sources.js 的數字＝ position/rotationY：參考值 + 累計偏移（相加）；scale：參考值 × 累計倍率（相乘，不是相加）`
+      `  要填回 sources.json（或「模型設定」視窗）的數字＝ position/rotationY：參考值 + 累計偏移（相加）；scale：參考值 × 累計倍率（相乘，不是相加）`
   );
 }
 
@@ -671,12 +738,12 @@ function setupScene() {
   renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setClearColor(0x000000, 0); // alpha 0：疊在透明桌寵視窗上，不能有底色
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight, false); // false：CSS 尺寸已經用 style 設好了
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(0, 0, 4);
   camera.lookAt(0, 0, 0);
+  applyDisplayLayout();
 
   // 「點到哪隻就動哪隻」：左鍵拖曳旋轉、右鍵拖曳平移、滾輪縮放，都只套在滑鼠
   // 底下那隻模型自己的 root 群組上（見 pickPetAt()／ParticlePet.rotateByPixels()
@@ -750,16 +817,58 @@ function setupScene() {
   // 桌寵主視窗 resizable:false，正常情況下不會變尺寸，但螢幕/DPI 設定變動時
   // window.innerWidth/innerHeight 還是可能變，順手處理掉，跟 morph-particles
   // 的 Renderer.resize()/Camera.resize() 是同一種必要性。
-  window.addEventListener('resize', () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    for (const pet of Object.values(pets)) {
-      if (pet.fbo) pet.fbo.renderMaterial.uniforms.uResolution.value.set(width, height);
-    }
-  });
+  window.addEventListener('resize', () => applyDisplayLayout());
+}
+
+// 相機對齊「主螢幕工作區」（displayLayout.frame）：aspect／fov 用 frame 的尺寸，
+// setViewOffset() 把實際的視窗（可能比 frame 大、往左/上延伸到別的螢幕）當成
+// 這個 frame 的延伸視野。效果是 frame 那塊看起來跟以前視窗只蓋主螢幕時一模一樣
+// （世界原點在主螢幕正中央、模型大小不變），frame 以外的區域就是同一個 3D 平面
+// 往外延伸。粒子大小（uResolution）也用 frame 高度，不會因為視窗變高而變大。
+function applyDisplayLayout() {
+  const { frame } = displayLayout;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  renderer.setSize(width, height, false);
+  camera.aspect = frame.width / frame.height;
+  camera.setViewOffset(frame.width, frame.height, -frame.x, -frame.y, width, height);
+  camera.updateProjectionMatrix();
+  for (const pet of Object.values(pets)) {
+    if (pet.fbo) pet.fbo.renderMaterial.uniforms.uResolution.value.set(frame.width, frame.height);
+  }
+}
+
+// 模型所在深度（z）上，主螢幕 1px 對應多少世界座標單位
+function worldPerPixelAt(z) {
+  const distance = camera.position.z - z;
+  return (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / displayLayout.frame.height;
+}
+
+const _projected = new THREE.Vector3();
+// 世界座標 → 視窗內座標（CSS px）
+function worldToWindowPx(worldPos) {
+  _projected.copy(worldPos).project(camera);
+  return {
+    x: ((_projected.x + 1) / 2) * window.innerWidth,
+    y: ((1 - _projected.y) / 2) * window.innerHeight,
+  };
+}
+
+const _plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const _ndc = new THREE.Vector2();
+// 視窗內座標（CSS px）→ 深度 z 那個平面上的世界座標
+function windowPxToWorld(px, py, z, target) {
+  _ndc.set((px / window.innerWidth) * 2 - 1, -(py / window.innerHeight) * 2 + 1);
+  raycaster.setFromCamera(_ndc, camera);
+  _plane.constant = -z;
+  return raycaster.ray.intersectPlane(_plane, target) || target.set(0, 0, z);
+}
+
+// 點在哪個螢幕上（回傳 displays 的索引）；不在任何螢幕上（外接矩形的空白角落）就回傳 -1
+function displayIndexAt(px, py) {
+  return displayLayout.displays.findIndex(
+    (d) => px >= d.x && px < d.x + d.width && py >= d.y && py < d.y + d.height
+  );
 }
 
 // 從粒子位置貼圖（DataTexture，RGBA float）算出這個形狀在 fbo.particles 本地座標
@@ -851,6 +960,13 @@ class ParticlePet {
     this.manualRotationY = 0; // rad，疊加在 idleMotion 算出的值上面
     this.manualScale = 1; // 乘法性質，基準是 1，疊加在 fbo.particles.scale 上面
 
+    // 跨螢幕移動（見 maybeMigrate()）：migration 是進行中的那一趟
+    // { from, to, elapsed, duration, arc }，null 代表沒在移動；沒有定時動作的模型
+    // 靠 idleMigrateTimer 累積閒置秒數，滿 idleMigrateDelay 就跑一趟。
+    this.migration = null;
+    this.idleMigrateTimer = 0;
+    this.idleMigrateDelay = randomIdleMigrateDelay();
+
     this.restoreLayout();
     scene.add(this.root);
   }
@@ -891,8 +1007,7 @@ class ParticlePet {
 
   // 把螢幕上拖了幾 px 換算成模型所在深度的世界座標距離，平移手感才會跟滑鼠同步
   panByPixels(dx, dy) {
-    const distance = camera.position.z - this.root.position.z;
-    const worldPerPixel = (2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / window.innerHeight;
+    const worldPerPixel = worldPerPixelAt(this.root.position.z);
     this.root.position.x += dx * worldPerPixel;
     this.root.position.y -= dy * worldPerPixel;
   }
@@ -976,7 +1091,7 @@ class ParticlePet {
       uniforms: {
         uPositions: { value: null },
         uSize: { value: 8 }, // 跟 morph-particles 原版粒子大小同一個量級（原本動態範圍 5-20）
-        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        uResolution: { value: new THREE.Vector2(displayLayout.frame.width, displayLayout.frame.height) }, // 見 applyDisplayLayout()
         uProgress: { value: 0 },
         uColor: { value: modelResult.color.clone() }, // clone：換模型時用 .copy() 原地覆寫，不用整個 material 重建
         uAnimBlend: { value: 0 }, // 跟 simMaterial 同名 uniform 同步，見 advanceSequencePlayback()
@@ -1004,6 +1119,10 @@ class ParticlePet {
   // 的閒置秒數。順便重算點選用的包圍盒（見 computeTextureBounds()）。
   applyAnimationState(modelResult) {
     this.modelResult = modelResult;
+    // 目前顯示的是「MISSING MODEL FILE」缺檔字樣（GLB 讀不到）：使用者補上檔案後要能
+    // 重新讀取，不能被「已經是這個模型」的捷徑擋掉（見 setParticleActiveModel()／
+    // setParticleMissingModels()）
+    this.showingMissing = !!modelResult.missing;
     const defaultResult = modelResult.default;
     this.animFrames = defaultResult.type === 'animated' ? defaultResult.textures : null;
     this.animClipDuration = defaultResult.type === 'animated' ? defaultResult.clipDuration || 1 : 1;
@@ -1189,6 +1308,137 @@ class ParticlePet {
       this.advanceAnimationPlayback(delta);
       this.advancePeriodicAnimation(delta);
     }
+
+    this.maybeMigrate(delta);
+    this.advanceMigration(delta);
+  }
+
+  // ── 跨螢幕移動 ────────────────────────────────────────────────────────
+  // 兩種觸發時機：
+  //   1. 有定時動作（periodicAnimation）的模型：動作開始播的那一刻，有
+  //      MIGRATE_WITH_MOTION_CHANCE 的機率邊做動作邊跑過去（見 advancePeriodicAnimation()）。
+  //   2. 其他模型（animatedIdle 一直在動的、單幀定格的）：閒置滿隨機秒數就跑一趟（這裡）。
+  // 只有一個螢幕、系統匣開關關掉、正在轉場/拖曳/微調/序列播放時都不會跑。
+
+  // root 中心目前在哪個螢幕（displays 的索引，不在任何螢幕上回傳 -1）
+  currentDisplayIndex() {
+    const p = worldToWindowPx(this.root.position);
+    return displayIndexAt(p.x, p.y);
+  }
+
+  canMigrate() {
+    return (
+      this.ready &&
+      displayLayout.displays.length > 1 &&
+      this.transitionTarget === 1 &&
+      this.transitionStart === null &&
+      !this.dragging &&
+      !this.migration &&
+      !this.hasManualNudge() &&
+      !(this.slot === 'primary' && sequenceModeActive)
+    );
+  }
+
+  maybeMigrate(delta) {
+    if (this.periodicFrames && this.periodicFrames.length >= 2) return; // 跟著定時動作觸發，見 advancePeriodicAnimation()
+    if (!migrationEnabled || !this.canMigrate()) return;
+    this.idleMigrateTimer += delta;
+    if (this.idleMigrateTimer < this.idleMigrateDelay) return;
+    this.idleMigrateTimer = 0;
+    this.idleMigrateDelay = randomIdleMigrateDelay();
+    this.startMigration(MIGRATE_DEFAULT_SECONDS);
+  }
+
+  // 挑另一個螢幕上的隨機一點當目的地（整隻模型落在螢幕內，見 projectedExtents()），
+  // 另一隻模型開著的話多抽幾個點、挑離它最遠的，兩隻比較不會疊在一起。回傳有沒有真的出發。
+  startMigration(durationSeconds) {
+    if (!this.canMigrate()) return false;
+    const displays = displayLayout.displays;
+    const current = this.currentDisplayIndex();
+    const candidates = displays.map((_, i) => i).filter((i) => i !== current);
+    const target = displays[candidates[Math.floor(Math.random() * candidates.length)]];
+
+    const other = otherPet(this);
+    const otherPx = other && other.isEnabled() ? worldToWindowPx(other.root.position) : null;
+    const ext = this.projectedExtents();
+    const mx = target.width * MIGRATE_EDGE_MARGIN_RATIO;
+    const my = target.height * MIGRATE_EDGE_MARGIN_RATIO;
+    // root 中心可以落的範圍；範圍是空的（模型比螢幕大）就退化成正中間那一點
+    const range = (start, size, margin, before, after) => {
+      const lo = start + margin + before;
+      const hi = start + size - margin - after;
+      return lo <= hi ? [lo, hi] : [(lo + hi) / 2, (lo + hi) / 2];
+    };
+    const [xLo, xHi] = range(target.x, target.width, mx, ext.left, ext.right);
+    const [yLo, yHi] = range(target.y, target.height, my, ext.up, ext.down);
+    let best = null;
+    let bestScore = -1;
+    for (let i = 0; i < (otherPx ? 6 : 1); i++) {
+      const px = xLo + Math.random() * (xHi - xLo);
+      const py = yLo + Math.random() * (yHi - yLo);
+      const score = otherPx ? Math.hypot(px - otherPx.x, py - otherPx.y) : 0;
+      if (score > bestScore) {
+        best = { x: px, y: py };
+        bestScore = score;
+      }
+    }
+
+    const z = this.root.position.z;
+    this.migration = {
+      from: this.root.position.clone(),
+      to: windowPxToWorld(best.x, best.y, z, new THREE.Vector3()),
+      elapsed: 0,
+      duration: Math.min(MIGRATE_MAX_SECONDS, Math.max(MIGRATE_MIN_SECONDS, durationSeconds)),
+      arc: worldPerPixelAt(z) * displayLayout.frame.height * MIGRATE_ARC_HEIGHT_RATIO,
+    };
+    return true;
+  }
+
+  // 模型在畫面上大概佔多大：回傳上下左右各離 root 中心幾 px。用取樣包圍盒
+  // （computeTextureBounds()）估，但不直接投影包圍盒的 8 個角——閒置動畫多半會繞 Y 軸
+  // 自轉/擺動，投影出來的大小每一刻都不一樣（實測同一隻模型可以差到一倍），挑目的地
+  // 時剛好轉到窄的那一面，就會把模型擺到半個身體在螢幕外。改成跟旋轉無關的估法：
+  // 上下用包圍盒的 y 範圍，左右用「繞 Y 軸轉一圈會掃到的最大半徑」。
+  projectedExtents() {
+    const ext = { left: 0, right: 0, up: 0, down: 0 };
+    if (!this.fbo || this.localBounds.isEmpty()) return ext;
+    const { min, max } = this.localBounds;
+    const scale = this.root.scale.x * this.fbo.particles.scale.x * this.manualScale;
+    const pxPerWorld = scale / worldPerPixelAt(this.root.position.z);
+    const radius = Math.hypot(Math.max(-min.x, max.x), Math.max(-min.z, max.z));
+    ext.left = ext.right = radius * pxPerWorld;
+    ext.up = Math.max(0, max.y) * pxPerWorld;
+    ext.down = Math.max(0, -min.y) * pxPerWorld;
+    return ext;
+  }
+
+  // easeInOut 移過去，途中加一段往上拋的弧線；被使用者抓住或模型被關掉就停在原地。
+  // 不管怎麼結束都存一次擺位，下次開機在新的位置。
+  advanceMigration(delta) {
+    const m = this.migration;
+    if (!m) return;
+    if (this.dragging || this.transitionTarget !== 1) {
+      this.migration = null;
+      this.saveLayout();
+      return;
+    }
+    m.elapsed += delta;
+    const t = Math.min(m.elapsed / m.duration, 1);
+    this.root.position.lerpVectors(m.from, m.to, easeInOutCubic(t));
+    this.root.position.y += Math.sin(Math.PI * t) * m.arc;
+    if (t >= 1) {
+      this.root.position.copy(m.to);
+      this.migration = null;
+      this.saveLayout();
+    }
+  }
+
+  // 擺位落在任何螢幕之外（例如上次停在第二個螢幕、這次只接一個螢幕）就搬回預設位置
+  keepOnScreen() {
+    if (this.currentDisplayIndex() !== -1) return;
+    const fallback = defaultPetLayout(this.slot);
+    this.root.position.set(fallback.x, fallback.y, fallback.z || 0);
+    this.saveLayout();
   }
 
   // bob/swing 是純函式（用 idleElapsed 算 sin() 相位），本身不會累積誤差；spin 沿用
@@ -1268,6 +1518,10 @@ class ParticlePet {
       if (this.periodicTimer >= this.periodicIntervalSeconds) {
         this.periodicPlaying = true;
         this.periodicPhase = 0;
+        // 動作開始播的同時，隨機決定要不要邊做動作邊跑到另一個螢幕（移動時間＝動作長度）
+        if (migrationEnabled && Math.random() < MIGRATE_WITH_MOTION_CHANCE) {
+          this.startMigration(this.periodicClipDuration / this.periodicAnimSpeed);
+        }
       }
     }
   }
@@ -1300,9 +1554,22 @@ function pickPetAt(ndc) {
 }
 
 function updateHoverAndCursor() {
-  const stale = performance.now() - lastMouseMoveAt > HOVER_STALE_MS;
+  // 已經接住滑鼠時不套用逾時：這時收到的是正常的 mousemove，游標停著不動就不會有
+  // 新事件，套用逾時會在使用者停在模型上滾滾輪時把滑鼠放掉；離開模型改靠 pickPetAt() 判斷。
+  const stale = !mouseCaptured && performance.now() - lastMouseMoveAt > HOVER_STALE_MS;
   hovering = canvas.style.display !== 'none' && !stale && pickPetAt(pointerNDC) !== null;
   canvas.style.cursor = !interactiveMode ? 'default' : drag ? 'grabbing' : hovering ? 'grab' : 'default';
+  setMouseCapture(interactiveMode && (hovering || !!drag));
+}
+
+// 這個視窗蓋住所有螢幕、疊在 Live2D 主視窗上面，平常整個滑鼠穿透（main.js 設的
+// setIgnoreMouseEvents(true, {forward:true})，穿透時 mousemove 照樣送得到這裡，
+// hover 判斷才做得出來）。互動模式下游標停在模型上、或正在拖曳時才請 main.js
+// 接住滑鼠，讓拖曳/滾輪收得到；離開模型就放掉，底下的 Live2D 角色照常可以點。
+function setMouseCapture(capture) {
+  if (capture === mouseCaptured) return;
+  mouseCaptured = capture;
+  if (window.particleBridge) window.particleBridge.setCaptureMouse(capture);
 }
 
 function ensureRenderLoop() {
@@ -1339,6 +1606,7 @@ function tick(now) {
     rafId = null;
     lastFrameTime = null;
     canvas.style.display = 'none';
+    setMouseCapture(false);
   }
 }
 
@@ -1346,12 +1614,20 @@ async function init() {
   setupScene();
   let secondaryKey = null;
   try { secondaryKey = localStorage.getItem(SECONDARY_MODEL_LS_KEY); } catch {}
-  if (!secondaryKey || !sources[secondaryKey]) {
-    secondaryKey = Object.keys(sources).find((key) => key !== DEFAULT_MODEL) || DEFAULT_MODEL;
+  // 預設模型缺檔就換成清單裡第一個有檔案的（全部缺檔才維持原值，載入時會顯示
+  // 「MISSING MODEL FILE」粒子字樣，見 loadModelTexture()）
+  // ?primary=：main.js 重新載入這個視窗（「模型設定」存檔後）時帶上原本在用的模型，
+  // 不然一重載就跳回 DEFAULT_MODEL
+  const requestedKey = new URLSearchParams(location.search).get('primary');
+  const startKey = requestedKey && sources[requestedKey] ? requestedKey : DEFAULT_MODEL;
+  const primaryKey = isModelAvailable(startKey) ? startKey : firstAvailableModel() || startKey;
+  if (!secondaryKey || !isModelAvailable(secondaryKey) || secondaryKey === primaryKey) {
+    secondaryKey = firstAvailableModel(primaryKey) || Object.keys(sources).find((key) => key !== primaryKey) || primaryKey;
   }
-  pets.primary = new ParticlePet('primary', DEFAULT_MODEL);
+  pets.primary = new ParticlePet('primary', primaryKey);
   pets.secondary = new ParticlePet('secondary', secondaryKey);
   activePet = pets.primary;
+  for (const pet of Object.values(pets)) pet.keepOnScreen();
 
   // primary 照舊開機就讀；secondary 第一次開啟才讀（見 ParticlePet.setEnabled()），
   // 沒用到第二隻就不白佔頻寬/GPU 記憶體。
@@ -1393,16 +1669,22 @@ window.setParticleEffect = function setParticleEffect(enabled, slot) {
   if (!pet) return false;
   if (enabled) {
     const other = otherPet(pet);
-    if (other.isEnabled() && other.modelKey === pet.modelKey) {
-      const alt = Object.keys(sources).find((key) => key !== other.modelKey);
-      if (!alt) return false;
-      if (pet.ready) {
-        // 先記住新 key（這隻目前關著，畫面上沒有舊模型），main.js 開完馬上同步就讀得到
+    const clash = other.isEnabled() && other.modelKey === pet.modelKey;
+    // 目前這個模型缺 GLB 檔也要換：換成清單裡另一個有檔案的；一個都沒有就照開，
+    // 畫面會顯示「MISSING MODEL FILE」粒子字樣（見 loadModelTexture()），不是默默壞掉
+    const missing = !isModelAvailable(pet.modelKey);
+    if (clash || missing) {
+      const alt = firstAvailableModel(other.isEnabled() ? other.modelKey : null);
+      if (!alt && clash) return false;
+      if (alt) {
+        if (pet.ready) {
+          // 先記住新 key（這隻目前關著，畫面上沒有舊模型），main.js 開完馬上同步就讀得到
+          pet.rememberModelKey(alt);
+          pet.swapModel(alt).then(() => pet.applyEnabled(true));
+          return true;
+        }
         pet.rememberModelKey(alt);
-        pet.swapModel(alt).then(() => pet.applyEnabled(true));
-        return true;
       }
-      pet.rememberModelKey(alt);
     }
   }
   return pet.setEnabled(enabled);
@@ -1427,11 +1709,12 @@ window.getParticleEffectEnabled = function getParticleEffectEnabled(slot) {
 window.setParticleActiveModel = function setParticleActiveModel(key, slot) {
   const pet = petForSlot(slot);
   if (!pet || !sources[key]) return false;
+  if (!isModelAvailable(key)) return false; // 缺檔（選單本來就會停用，這裡再擋一次）
   if (pet.slot === 'primary' && !pet.ready) return false;
   const other = otherPet(pet);
   if (other.isEnabled() && other.modelKey === key) return false;
   const sequenceBusy = pet.slot === 'primary' && sequenceModeActive;
-  if (key === pet.modelKey && !pet.modelSwapPending && !sequenceBusy) return true;
+  if (key === pet.modelKey && !pet.modelSwapPending && !sequenceBusy && !pet.showingMissing) return true;
   pet.swapModel(key);
   return true;
 };
@@ -1588,10 +1871,19 @@ async function loadModelTexture({ url, particleConfig, color }) {
         return { default: defaultResult, periodic: periodicResult, color: resolvedColor };
       }
     } catch (err) {
+      // 檔案不存在（GLB 不進版本控制，最常見的原因）或檔案壞掉：不要變成一團看不出
+      // 是什麼的隨機散點，改用紅色的「MISSING MODEL FILE」粒子字樣直接告訴使用者。
+      // [asset-check] 開頭的訊息 main.js 會轉印到終端機。
       console.warn(
-        `[particle-effect] 讀不到 ${url}（還沒放 GLB 進去的話這是正常的），先用隨機散點頂著：`,
+        `[asset-check] 3D 模型檔讀不到：${decodeURIComponent(url)}——GLB 不跟著 git 版本走，請另外取得後放進 desktop-pet/particle-effect/models/（見該資料夾的 README.md）。原始錯誤：`,
         err && err.message ? err.message : err
       );
+      return {
+        default: { type: 'static', texture: buildMissingModelTexture() },
+        periodic: null,
+        color: MISSING_MODEL_COLOR.clone(),
+        missing: true, // 見 ParticlePet.showingMissing
+      };
     }
   }
   return {
@@ -1664,6 +1956,7 @@ async function loadSequenceStages() {
   for (const key of keys) {
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
+    if (missingModelKeys.has(key)) continue; // 缺 GLB 檔的直接跳過，不讓「MISSING」字樣混進序列裡
     const modelInfo = resolveModel(key);
     if (!modelInfo.url) continue; // resolveModel() 已經印過 console.error 說明查無此 key
 
@@ -1963,6 +2256,26 @@ function computeSequenceLoadingPositions(sampleCount) {
   ctx.arc(cx, cy, ringRadius, Math.PI * 0.62, Math.PI * 1.38);
   ctx.stroke();
 
+  const sampled = sampleCanvasToPositions(ctx, canvasSize, sampleCount);
+  if (!sampled) {
+    console.warn('[particle-effect] 模型序列播放：loading 佔位圖案畫不出像素（canvas 渲染異常），改用隨機散點頂著。');
+    return null;
+  }
+
+  // 「左到右掃描顯現」動畫（見 advanceSequenceLoadingSweep()）要知道圖案實際的
+  // 世界座標 X 範圍才能掃得剛好從最左跑到最右，不是憑空猜一個數字——直接用
+  // 掃像素時順便記下來的範圍（已經往兩邊各多留半個 jitter，不然邊緣那批粒子的
+  // 抖動偶爾會被掃描線捲進去/漏出去）。
+  sequenceLoadingBoundsMinX = sampled.minX;
+  sequenceLoadingBoundsMaxX = sampled.maxX;
+  return sampled.positions;
+}
+
+// 把 canvas 上畫出來的圖案（不透明像素）轉成粒子位置：每顆粒子隨機抽一個亮像素，
+// 換算成世界座標（整個圖案大致對齊其他模型 auto-fit 的 3 個單位大小）。回傳
+// { positions, minX, maxX }，canvas 畫不出任何像素（渲染異常）回傳 null。
+// 「LOADING」佔位圖案跟「MISSING MODEL FILE」缺檔圖案共用。
+function sampleCanvasToPositions(ctx, canvasSize, sampleCount) {
   const pixels = ctx.getImageData(0, 0, canvasSize, canvasSize).data;
   const litPixels = []; // 攤平存 [x0,y0,x1,y1,...]，避免存一堆小陣列物件的配置開銷
   let minPx = canvasSize;
@@ -1976,23 +2289,11 @@ function computeSequenceLoadingPositions(sampleCount) {
       }
     }
   }
-
-  if (litPixels.length === 0) {
-    console.warn('[particle-effect] 模型序列播放：loading 佔位圖案畫不出像素（canvas 渲染異常），改用隨機散點頂著。');
-    return null;
-  }
+  if (litPixels.length === 0) return null;
 
   const litPixelCount = litPixels.length / 2;
   const worldScale = 3 / canvasSize; // 大致對齊其他模型 auto-fit 目標尺寸（3 個單位）的視覺大小
-  const jitter = worldScale * 1.5; // 同一個文字像素被重複抽到時加一點隨機位移，避免粒子完全疊在同一點
-
-  // 「左到右掃描顯現」動畫（見 advanceSequenceLoadingSweep()）要知道圖案實際的
-  // 世界座標 X 範圍才能掃得剛好從最左跑到最右，不是憑空猜一個數字——直接用
-  // 上面掃像素時順便記下來的 minPx/maxPx 換算，跟 jitter 的抖動量對齊（往兩邊
-  // 各多留半個 jitter，不然邊緣那批粒子的抖動偶爾會被掃描線捲進去/漏出去，
-  // 兩端各差一點點）。
-  sequenceLoadingBoundsMinX = (minPx - canvasSize / 2) * worldScale - jitter / 2;
-  sequenceLoadingBoundsMaxX = (maxPx - canvasSize / 2) * worldScale + jitter / 2;
+  const jitter = worldScale * 1.5; // 同一個像素被重複抽到時加一點隨機位移，避免粒子完全疊在同一點
 
   const positions = new Float32Array(sampleCount * 3);
   for (let i = 0; i < sampleCount; i++) {
@@ -2003,8 +2304,52 @@ function computeSequenceLoadingPositions(sampleCount) {
     positions[i * 3 + 1] = -(py - canvasSize / 2) * worldScale + (Math.random() - 0.5) * jitter; // canvas Y 往下、3D Y 往上，取負號翻轉
     positions[i * 3 + 2] = (Math.random() - 0.5) * jitter; // 一點 z 方向厚度，不要整團完全扁平
   }
+  return {
+    positions,
+    minX: (minPx - canvasSize / 2) * worldScale - jitter / 2,
+    maxX: (maxPx - canvasSize / 2) * worldScale + jitter / 2,
+  };
+}
 
-  return positions;
+// 缺 GLB 檔時顯示的粒子圖案：紅色「MISSING / MODEL FILE」兩行字加一個警告三角形，
+// 一眼看得出是「檔案沒放」而不是程式壞掉（見 loadModelTexture() 的 catch）。英文
+// 等寬字是為了不依賴系統中文字型，在 192px 小畫布上也清楚。
+const MISSING_MODEL_COLOR = new THREE.Color(1.0, 0.25, 0.2);
+let cachedMissingModelPositions = null;
+function buildMissingModelTexture() {
+  const width = FBO_SIZE;
+  const height = FBO_SIZE;
+  if (!cachedMissingModelPositions) {
+    const canvasSize = 192;
+    const cx = canvasSize / 2;
+    const el = document.createElement('canvas');
+    el.width = el.height = canvasSize;
+    const ctx = el.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4;
+    // 警告三角形 + 驚嘆號
+    ctx.beginPath();
+    ctx.moveTo(cx, 30);
+    ctx.lineTo(cx + 30, 82);
+    ctx.lineTo(cx - 30, 82);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillRect(cx - 2, 46, 4, 20);
+    ctx.fillRect(cx - 2, 71, 4, 4);
+    ctx.font = 'bold 22px "Consolas", "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '3px';
+    ctx.fillText('MISSING', cx, 112);
+    ctx.font = 'bold 18px "Consolas", "Courier New", monospace';
+    ctx.fillText('MODEL FILE', cx, 140);
+    const sampled = sampleCanvasToPositions(ctx, canvasSize, width * height);
+    cachedMissingModelPositions = sampled ? sampled.positions : null;
+  }
+  if (!cachedMissingModelPositions) return createRandomDataTexture(width, height, SCATTER_SPREAD * 0.6);
+  return positionsToDataTexture(cachedMissingModelPositions, width, height);
 }
 
 // 「模型序列播放」的載入中佔位樣式，回傳一張可以直接塞進 uTextureModelA/B 的
@@ -2102,7 +2447,48 @@ window.getParticleSequencePlaying = function getParticleSequencePlaying() {
 // 那段說明。
 window.setParticleEffectInteractiveMode = function setParticleEffectInteractiveMode(enabled) {
   interactiveMode = !!enabled;
+  if (!interactiveMode) setMouseCapture(false);
   return true;
+};
+
+// main.js 偵測到插拔螢幕／改解析度時呼叫（見 createParticleWindow() 的 relayout），
+// 格式同網址的 ?layout=（見 readInitialDisplayLayout()）。進行中的跨螢幕移動直接
+// 停在原地，原本停的螢幕不見了的模型搬回預設位置。
+window.setParticleDisplayLayout = function setParticleDisplayLayout(layout) {
+  if (!layout || !layout.frame || !Array.isArray(layout.displays) || !layout.displays.length) return false;
+  displayLayout = layout;
+  applyDisplayLayout();
+  for (const pet of Object.values(pets)) {
+    if (pet.migration) {
+      pet.migration = null;
+      pet.saveLayout();
+    }
+    pet.keepOnScreen();
+  }
+  return true;
+};
+
+// main.js 偵測到 models/ 底下的 GLB 有增減（使用者補上了模型檔）時呼叫
+window.setParticleMissingModels = function setParticleMissingModels(keys) {
+  missingModelKeys = new Set(Array.isArray(keys) ? keys : []);
+  // 正在顯示「MISSING MODEL FILE」的模型，檔案補上了就自動重新讀取
+  for (const pet of Object.values(pets)) {
+    if (pet.ready && pet.showingMissing && isModelAvailable(pet.modelKey)) pet.swapModel(pet.modelKey);
+  }
+  return true;
+};
+
+// 系統匣「隨機跑到其他螢幕」開關
+window.setParticleMigrationEnabled = function setParticleMigrationEnabled(enabled) {
+  migrationEnabled = !!enabled;
+  return true;
+};
+
+// 系統匣「現在跑到另一個螢幕（測試）」：不管機率/閒置秒數，立刻跑一趟。回傳有沒有真的出發
+// （只有一個螢幕、模型沒開、還在載入/轉場/拖曳中都會是 false）。
+window.migrateParticlePet = function migrateParticlePet(slot) {
+  const pet = petForSlot(slot);
+  return !!pet && pet.startMigration(MIGRATE_DEFAULT_SECONDS);
 };
 
 init().catch((err) => {
